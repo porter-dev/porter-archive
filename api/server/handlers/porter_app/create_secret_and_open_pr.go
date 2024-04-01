@@ -133,19 +133,20 @@ func (c *OpenStackPRHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if request.OpenPr || request.DeleteWorkflowFilename != "" {
 		openPRInput := &actions.GithubPROpts{
-			PRAction:       actions.GithubPRAction_NewAppWorkflow,
-			Client:         client,
-			GitRepoOwner:   request.GithubRepoOwner,
-			GitRepoName:    request.GithubRepoName,
-			StackName:      appName,
-			ProjectID:      project.ID,
-			ClusterID:      cluster.ID,
-			ServerURL:      c.Config().ServerConf.ServerURL,
-			DefaultBranch:  request.Branch,
-			SecretName:     secretName,
-			PorterYamlPath: request.PorterYamlPath,
-			Body:           prRequestBody,
-			PRBranch:       prBranchName,
+			PRAction:           actions.GithubPRAction_NewAppWorkflow,
+			Client:             client,
+			GitRepoOwner:       request.GithubRepoOwner,
+			GitRepoName:        request.GithubRepoName,
+			StackName:          appName,
+			ProjectID:          project.ID,
+			ClusterID:          cluster.ID,
+			ServerURL:          c.Config().ServerConf.ServerURL,
+			DefaultBranch:      request.Branch,
+			SecretName:         secretName,
+			PorterYamlPath:     request.PorterYamlPath,
+			Body:               prRequestBody,
+			PRBranch:           prBranchName,
+			DeploymentTargetId: request.DeploymentTargetId,
 		}
 		if request.DeleteWorkflowFilename != "" {
 			openPRInput.PRAction = actions.GithubPRAction_DeleteAppWorkflow

@@ -52,7 +52,7 @@ jobs:
         PORTER_STACK_NAME: ${stackName}
         PORTER_TAG: \${{ steps.vars.outputs.sha_short }}
         PORTER_TOKEN: \${{ secrets.PORTER_STACK_${projectID}_${clusterId} }}
-        ${deploymentTargetId ? `PORTER_DEPLOYMENT_TARGET: ${deploymentTargetId}` : ""}`;
+        ${deploymentTargetId ? `PORTER_DEPLOYMENT_TARGET_ID: ${deploymentTargetId}` : ""}`;
 };
 
 export const getPreviewGithubAction = ({

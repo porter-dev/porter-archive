@@ -37,7 +37,6 @@ const Select: React.FC<Props> = ({
   height,
   noShrink,
 }) => {
-  console.log(noShrink)
   return (
     <Div width={width} noShrink={noShrink}>
       {label && <Label color={labelColor}>{label}</Label>}

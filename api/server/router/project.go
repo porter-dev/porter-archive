@@ -460,6 +460,7 @@ func getProjectRoutes(
 				RelativePath: relPath + "/billing/publishable_key",
 			},
 			Scopes: []types.PermissionScope{
+				types.UserScope,
 				types.ProjectScope,
 			},
 		},

@@ -1,13 +1,12 @@
 import React, {
   useCallback,
-  useEffect,
   useMemo,
   useState,
   type Dispatch,
   type SetStateAction,
 } from "react";
-import { UseFieldArrayAppend, useFormContext } from "react-hook-form";
-import styled, { css } from "styled-components";
+import { useFormContext } from "react-hook-form";
+import styled from "styled-components";
 import { type IterableElement } from "type-fest";
 
 import Button from "components/porter/Button";
@@ -15,9 +14,6 @@ import Modal from "components/porter/Modal";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import { type PorterAppFormData } from "lib/porter-apps";
-
-import doppler from "assets/doppler.png";
-import sliders from "assets/sliders.svg";
 
 import EnvGroupRow from "./EnvGroupRow";
 import { type PopulatedEnvGroup } from "./types";
@@ -29,27 +25,53 @@ type Props = {
 };
 
 const EnvGroupModal: React.FC<Props> = ({ append, setOpen, baseEnvGroups }) => {
-  const [selectedEnvGroup, setSelectedEnvGroup] =
-    useState<PopulatedEnvGroup | null>(null);
+  const [selectedEnvGroups, setSelectedEnvGroups] = useState<
+    PopulatedEnvGroup[]
+  >([]);
 
   const { watch } = useFormContext<PorterAppFormData>();
   const envGroups = watch("app.envGroups", []);
 
   const onSubmit = useCallback(() => {
-    if (selectedEnvGroup) {
+    selectedEnvGroups.forEach((selectedEnvGroup): void => {
       append({
         name: selectedEnvGroup.name,
         version: selectedEnvGroup.latest_version,
       });
-      setOpen(false);
-    }
-  }, [selectedEnvGroup]);
+    });
+    setOpen(false);
+  }, [selectedEnvGroups]);
 
   const remainingEnvGroupOptions = useMemo(() => {
-    return baseEnvGroups.filter((eg) => {
-      return !envGroups.some((eg2) => eg2.name === eg.name);
-    });
+    return baseEnvGroups
+      .filter((eg) => {
+        return !envGroups.some((eg2) => eg2.name === eg.name);
+      })
+      .sort((a, b) => a.name.localeCompare(b.name));
   }, [envGroups, baseEnvGroups]);
+
+  const addToSelectedEnvGroups = (envGroup: PopulatedEnvGroup): void => {
+    if (isInSelectedEnvGroups(envGroup)) {
+      return;
+    }
+    setSelectedEnvGroups([...selectedEnvGroups, envGroup]);
+  };
+
+  const removeFromSelectedEnvGroups = (envGroup: PopulatedEnvGroup): void => {
+    if (isInSelectedEnvGroups(envGroup)) {
+      setSelectedEnvGroups(
+        selectedEnvGroups.filter((selected) => selected.name !== envGroup.name)
+      );
+    }
+  };
+
+  const isInSelectedEnvGroups = (envGroup: PopulatedEnvGroup): boolean => {
+    return (
+      selectedEnvGroups.findIndex(
+        (selected) => selected.name === envGroup.name
+      ) !== -1
+    );
+  };
 
   return (
     <Modal
@@ -72,15 +94,15 @@ const EnvGroupModal: React.FC<Props> = ({ append, setOpen, baseEnvGroups }) => {
                   <EnvGroupRow envGroup={eg} maxHeight="300px" noLink />
                   <SelectedIndicator
                     onClick={() => {
-                      setSelectedEnvGroup(eg);
+                      if (isInSelectedEnvGroups(eg)) {
+                        removeFromSelectedEnvGroups(eg);
+                      } else {
+                        addToSelectedEnvGroups(eg);
+                      }
                     }}
-                    isSelected={
-                      Boolean(selectedEnvGroup) &&
-                      selectedEnvGroup?.name === eg.name
-                    }
+                    isSelected={isInSelectedEnvGroups(eg)}
                   >
-                    {Boolean(selectedEnvGroup) &&
-                    selectedEnvGroup?.name === eg.name ? (
+                    {isInSelectedEnvGroups(eg) ? (
                       <Check className="material-icons">check</Check>
                     ) : (
                       <i className="material-icons">add</i>
@@ -95,7 +117,7 @@ const EnvGroupModal: React.FC<Props> = ({ append, setOpen, baseEnvGroups }) => {
         <Text>No selectable Env Groups</Text>
       )}
       <Spacer y={1} />
-      <Button onClick={onSubmit} disabled={!selectedEnvGroup}>
+      <Button onClick={onSubmit} disabled={!selectedEnvGroups}>
         Load env group
       </Button>
     </Modal>
@@ -149,30 +171,6 @@ const EnvGroupList = styled.div`
   display: flex;
   flex-direction: column;
   gap: 15px;
-`;
-
-const SidebarSection = styled.section<{ $expanded?: boolean }>`
-  height: 100%;
-  overflow-y: auto;
-  ${(props) =>
-    props.$expanded &&
-    css`
-      grid-column: span 2;
-    `}
-`;
-
-const GroupEnvPreview = styled.pre`
-  font-family: monospace;
-  margin: 0 0 10px 0;
-  white-space: pre-line;
-  word-break: break-word;
-  user-select: text;
-  .key {
-    color: white;
-  }
-  .value {
-    color: #3a48ca;
-  }
 `;
 
 const ScrollableContainer = styled.div`

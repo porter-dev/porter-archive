@@ -35,6 +35,7 @@ type GithubPROpts struct {
 	Body                      string
 	WorkflowFileName          string
 	PRBranch                  string
+	DeploymentTargetId        string
 }
 
 type GetStackApplyActionYAMLOpts struct {
@@ -45,6 +46,7 @@ type GetStackApplyActionYAMLOpts struct {
 	SecretName           string
 	PorterYamlPath       string
 	Preview              bool
+	DeploymentTargetId   string
 }
 
 func OpenGithubPR(opts *GithubPROpts) (*github.PullRequest, error) {
@@ -104,14 +106,15 @@ func commitChange(prBranchName string, opts GithubPROpts) error {
 	switch opts.PRAction {
 	case GithubPRAction_NewAppWorkflow:
 		applyWorkflowYAML, err := getStackApplyActionYAML(&GetStackApplyActionYAMLOpts{
-			ServerURL:      opts.ServerURL,
-			ClusterID:      opts.ClusterID,
-			ProjectID:      opts.ProjectID,
-			StackName:      opts.StackName,
-			DefaultBranch:  opts.DefaultBranch,
-			SecretName:     opts.SecretName,
-			PorterYamlPath: opts.PorterYamlPath,
-			Preview:        false,
+			ServerURL:          opts.ServerURL,
+			ClusterID:          opts.ClusterID,
+			ProjectID:          opts.ProjectID,
+			StackName:          opts.StackName,
+			DefaultBranch:      opts.DefaultBranch,
+			SecretName:         opts.SecretName,
+			PorterYamlPath:     opts.PorterYamlPath,
+			DeploymentTargetId: opts.DeploymentTargetId,
+			Preview:            false,
 		})
 		if err != nil {
 			return err
@@ -186,6 +189,7 @@ func getStackApplyActionYAML(opts *GetStackApplyActionYAMLOpts) ([]byte, error) 
 			opts.PorterYamlPath,
 			opts.ProjectID,
 			opts.ClusterID,
+			opts.DeploymentTargetId,
 			opts.Preview,
 		),
 	}

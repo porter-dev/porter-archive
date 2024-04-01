@@ -65,8 +65,8 @@ const GithubActionModal: React.FC<Props> = ({
       stackName,
       branch,
       porterYamlPath,
-      deploymentTargetId,
-  );
+      deploymentTargetId
+    );
   }, [projectId, clusterId, stackName, branch, porterYamlPath]);
 
   const submit = async (): Promise<void> => {
@@ -98,6 +98,7 @@ const GithubActionModal: React.FC<Props> = ({
               branch,
               open_pr: choice === "open_pr" || isChecked,
               porter_yaml_path: porterYamlPath,
+              deployment_target_id: deploymentTargetId,
             },
             {
               project_id: projectId,
@@ -160,7 +161,8 @@ const GithubActionModal: React.FC<Props> = ({
           <Select
             options={[
               {
-                label: "I authorize Porter to open a PR on my behalf (recommended)",
+                label:
+                  "I authorize Porter to open a PR on my behalf (recommended)",
                 value: "open_pr",
               },
               {

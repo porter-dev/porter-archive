@@ -81,6 +81,7 @@ func getCreatePreviewEnvStep(
 func getDeployStackStep(
 	serverURL, porterTokenSecretName, stackName, actionVersion, porterYamlPath string,
 	projectID, clusterID uint,
+	deploymentTargetId string,
 	preview bool,
 ) GithubActionYAMLStep {
 	command := "exec porter apply"
@@ -97,18 +98,24 @@ func getDeployStackStep(
 		name = "Build and deploy preview environment"
 	}
 
+	env := map[string]string{
+		"PORTER_CLUSTER":    fmt.Sprintf("%d", clusterID),
+		"PORTER_HOST":       serverURL,
+		"PORTER_PROJECT":    fmt.Sprintf("%d", projectID),
+		"PORTER_TOKEN":      fmt.Sprintf("${{ secrets.%s }}", porterTokenSecretName),
+		"PORTER_TAG":        "${{ steps.vars.outputs.sha_short }}",
+		"PORTER_STACK_NAME": stackName,
+		"PORTER_PR_NUMBER":  "${{ github.event.number }}",
+	}
+
+	if deploymentTargetId != "" {
+		env["PORTER_DEPLOYMENT_TARGET_ID"] = deploymentTargetId
+	}
+
 	return GithubActionYAMLStep{
-		Name: name,
-		Run:  command,
-		Env: map[string]string{
-			"PORTER_CLUSTER":    fmt.Sprintf("%d", clusterID),
-			"PORTER_HOST":       serverURL,
-			"PORTER_PROJECT":    fmt.Sprintf("%d", projectID),
-			"PORTER_TOKEN":      fmt.Sprintf("${{ secrets.%s }}", porterTokenSecretName),
-			"PORTER_TAG":        "${{ steps.vars.outputs.sha_short }}",
-			"PORTER_STACK_NAME": stackName,
-			"PORTER_PR_NUMBER":  "${{ github.event.number }}",
-		},
+		Name:    name,
+		Run:     command,
+		Env:     env,
 		Timeout: 30,
 	}
 }

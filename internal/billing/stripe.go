@@ -3,6 +3,7 @@ package billing
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
@@ -34,9 +35,13 @@ func (s *StripeBillingManager) CreateCustomer(ctx context.Context, userEmail str
 	if proj.BillingID == "" {
 		// Create customer if not exists
 		customerName := fmt.Sprintf("project_%s", proj.Name)
+		projectIDStr := strconv.FormatUint(uint64(proj.ID), 10)
 		params := &stripe.CustomerParams{
 			Name:  stripe.String(customerName),
 			Email: stripe.String(userEmail),
+			Metadata: map[string]string{
+				"porter_project_id": projectIDStr,
+			},
 		}
 
 		// Create in Stripe

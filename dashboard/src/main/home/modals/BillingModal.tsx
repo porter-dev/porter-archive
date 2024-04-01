@@ -6,7 +6,7 @@ import Link from "components/porter/Link";
 import Modal from "components/porter/Modal";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
-import { checkBillingCustomerExists } from "lib/hooks/useStripe";
+import { usePublishableKey } from "lib/hooks/useStripe";
 
 import PaymentSetupForm from "./PaymentSetupForm";
 
@@ -17,7 +17,7 @@ const BillingModal = ({
   back: (value: React.SetStateAction<boolean>) => void;
   onCreate: () => Promise<void>;
 }) => {
-  const { publishableKey } = checkBillingCustomerExists();
+  const { publishableKey } = usePublishableKey();
   const stripePromise = loadStripe(publishableKey);
 
   const appearance = {

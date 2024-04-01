@@ -441,13 +441,39 @@ func getProjectRoutes(
 
 	getOrCreateBillingCustomerHandler := billing.NewCreateBillingCustomerIfNotExists(
 		config,
-		factory.GetDecoderValidator(),
 		factory.GetResultWriter(),
 	)
 
 	routes = append(routes, &router.Route{
 		Endpoint: getOrCreateBillingCustomerEndpoint,
 		Handler:  getOrCreateBillingCustomerHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/billing/publishable_key -> project.NewGetPublishableKeyHandler
+	publishableKeyEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/billing/publishable_key",
+			},
+			Scopes: []types.PermissionScope{
+				types.ProjectScope,
+			},
+		},
+	)
+
+	publishableKeyHandler := billing.NewGetPublishableKeyHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: publishableKeyEndpoint,
+		Handler:  publishableKeyHandler,
 		Router:   r,
 	})
 

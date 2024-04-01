@@ -97,17 +97,20 @@ func (authn *AuthN) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	est, err := time.LoadLocation("EST")
-	if err != nil {
-		authn.handleForbiddenForSession(w, r, fmt.Errorf("error, contact admin"), session)
-		return
-	}
-	if cancelTokens(time.Date(2024, 0o1, 16, 18, 35, 0, 0, est), "support@porter.run", authn, session) {
-		authn.handleForbiddenForSession(w, r, fmt.Errorf("error, contact admin"), session)
-		return
-	}
-	if cancelTokens(time.Date(2024, 0o1, 16, 18, 35, 0, 0, est), "admin@porter.run", authn, session) {
-		authn.handleForbiddenForSession(w, r, fmt.Errorf("error, contact admin"), session)
-		return
+	// if err == nil {
+	// 	authn.handleForbiddenForSession(w, r, fmt.Errorf("error, contact admin"), session)
+	// 	return
+	// }
+	// TODO: handle error from time.LoadLocation
+	if err == nil {
+		if cancelTokens(time.Date(2024, 0o1, 16, 18, 35, 0, 0, est), "support@porter.run", authn, session) {
+			authn.handleForbiddenForSession(w, r, fmt.Errorf("error, contact admin"), session)
+			return
+		}
+		if cancelTokens(time.Date(2024, 0o1, 16, 18, 35, 0, 0, est), "admin@porter.run", authn, session) {
+			authn.handleForbiddenForSession(w, r, fmt.Errorf("error, contact admin"), session)
+			return
+		}
 	}
 
 	if auth, ok := session.Values["authenticated"].(bool); !auth || !ok {

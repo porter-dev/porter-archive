@@ -57,6 +57,9 @@ type GormRepository struct {
 	appRevision               repository.AppRevisionRepository
 	appTemplate               repository.AppTemplateRepository
 	githubWebhook             repository.GithubWebhookRepository
+	datastore                 repository.DatastoreRepository
+	appInstance               repository.AppInstanceRepository
+	ipam                      repository.IpamRepository
 }
 
 func (t *GormRepository) User() repository.UserRepository {
@@ -263,6 +266,21 @@ func (t *GormRepository) GithubWebhook() repository.GithubWebhookRepository {
 	return t.githubWebhook
 }
 
+// Datastore returns the DatastoreRepository interface implemented by gorm
+func (t *GormRepository) Datastore() repository.DatastoreRepository {
+	return t.datastore
+}
+
+// AppInstance returns the AppInstanceRepository interface implemented by gorm
+func (t *GormRepository) AppInstance() repository.AppInstanceRepository {
+	return t.appInstance
+}
+
+// Ipam returns the IpamRepository interface implemented by gorm
+func (t *GormRepository) Ipam() repository.IpamRepository {
+	return t.ipam
+}
+
 // NewRepository returns a Repository which persists users in memory
 // and accepts a parameter that can trigger read/write errors
 func NewRepository(db *gorm.DB, key *[32]byte, storageBackend credentials.CredentialStorage) repository.Repository {
@@ -317,5 +335,8 @@ func NewRepository(db *gorm.DB, key *[32]byte, storageBackend credentials.Creden
 		appRevision:               NewAppRevisionRepository(db),
 		appTemplate:               NewAppTemplateRepository(db),
 		githubWebhook:             NewGithubWebhookRepository(db),
+		datastore:                 NewDatastoreRepository(db),
+		appInstance:               NewAppInstanceRepository(db),
+		ipam:                      NewIpamRepository(db),
 	}
 }

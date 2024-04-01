@@ -39,7 +39,8 @@ type EnvVariables struct {
 
 // AppEnvVariablesRequest is the request object for the /apps/{porter_app_name}/env-variables endpoint
 type AppEnvVariablesRequest struct {
-	DeploymentTargetID string `schema:"deployment_target_id"`
+	DeploymentTargetID   string `schema:"deployment_target_id"`
+	DeploymentTargetName string `schema:"deployment_target_name"`
 }
 
 // AppEnvVariablesResponse is the response object for the /apps/{porter_app_name}/env-variables endpoint
@@ -73,12 +74,17 @@ func (c *AppEnvVariablesHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 
 	// optional deployment target id - if not provided, use the cluster's default
 	deploymentTargetID := request.DeploymentTargetID
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "deployment-target-id", Value: deploymentTargetID})
+	deploymentTargetName := request.DeploymentTargetName
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "deployment-target-id", Value: deploymentTargetID},
+		telemetry.AttributeKV{Key: "deployment-target-name", Value: deploymentTargetName},
+	)
 
 	var deploymentTargetIdentifer *porterv1.DeploymentTargetIdentifier
-	if deploymentTargetID != "" {
+	if deploymentTargetID != "" || deploymentTargetName != "" {
 		deploymentTargetIdentifer = &porterv1.DeploymentTargetIdentifier{
-			Id: deploymentTargetID,
+			Id:   deploymentTargetID,
+			Name: deploymentTargetName,
 		}
 	}
 

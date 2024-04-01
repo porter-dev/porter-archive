@@ -3,6 +3,8 @@ package user
 import (
 	"net/http"
 
+	"github.com/porter-dev/porter/internal/telemetry"
+
 	"golang.org/x/oauth2"
 
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -27,9 +29,14 @@ func NewUserOAuthGithubHandler(
 }
 
 func (p *UserOAuthGithubHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-project-oauth-github")
+	defer span.End()
+
+	r = r.Clone(ctx)
+
 	state := oauth.CreateRandomState()
 
-	if err := p.PopulateOAuthSession(w, r, state, false, false, "", 0); err != nil {
+	if err := p.PopulateOAuthSession(ctx, w, r, state, false, false, "", 0); err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}

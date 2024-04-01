@@ -58,12 +58,14 @@ func sharedInit() {
 	InstanceEnvConf, _ = envloader.FromEnv()
 
 	InstanceDB, err = adapter.New(InstanceEnvConf.DBConf)
-
 	if err != nil {
 		panic(err)
 	}
 
-	InstanceBillingManager = &billing.NoopBillingManager{}
+	InstanceBillingManager = &billing.StripeBillingManager{
+		StripeSecretKey:      InstanceEnvConf.ServerConf.StripeSecretKey,
+		StripePublishableKey: InstanceEnvConf.ServerConf.StripePublishableKey,
+	}
 }
 
 func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
@@ -121,7 +123,6 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 			Insecure:          envConf.ServerConf.CookieInsecure,
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -251,6 +252,10 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 	}
 	res.LaunchDarklyClient = launchDarklyClient
 
+	if sc.StripeSecretKey == "" {
+		res.Logger.Info().Msg("STRIPE_SECRET_KEY not set, all Stripe functionality will be disabled")
+	}
+
 	if sc.SlackClientID != "" && sc.SlackClientSecret != "" {
 		res.Logger.Info().Msg("Creating Slack client")
 		res.SlackConf = oauth.NewSlackClient(&oauth.Config{
@@ -262,8 +267,8 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 			},
 			BaseURL: sc.ServerURL,
 		})
+		res.Logger.Info().Msg("Created Slack client")
 	}
-	res.Logger.Info().Msg("Created Slack client")
 
 	res.WSUpgrader = &websocket.Upgrader{
 		WSUpgrader: &gorillaws.Upgrader{

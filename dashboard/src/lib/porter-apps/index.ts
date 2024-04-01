@@ -1,5 +1,7 @@
 import {
+  AutoRollback,
   Build,
+  CloudSql,
   EFS,
   HelmOverrides,
   PorterApp,
@@ -80,6 +82,19 @@ export const clientAppValidator = z.object({
     enabled: z.boolean(),
     readOnly: z.boolean().optional(),
   }),
+  cloudSql: z
+    .object({
+      enabled: z.boolean(),
+      connectionName: z.string(),
+      dbPort: z.coerce.number(),
+      serviceAccountJsonSecret: z.string(),
+    })
+    .default({
+      enabled: false,
+      connectionName: "",
+      dbPort: 5432,
+      serviceAccountJsonSecret: "",
+    }),
   envGroups: z
     .object({ name: z.string(), version: z.bigint() })
     .array()
@@ -99,6 +114,12 @@ export const clientAppValidator = z.object({
   build: buildValidator,
   helmOverrides: z.string().optional(),
   requiredApps: z.object({ name: z.string() }).array().default([]),
+  autoRollback: z
+    .object({
+      enabled: z.boolean(),
+      readOnly: z.boolean().optional(),
+    })
+    .default({ enabled: false, readOnly: false }),
 });
 export type ClientPorterApp = z.infer<typeof clientAppValidator>;
 
@@ -318,9 +339,19 @@ export function clientAppToProto(data: PorterAppFormData): PorterApp {
           efsStorage: new EFS({
             enabled: app.efsStorage.enabled,
           }),
+          cloudSql: new CloudSql({
+            enabled: app.cloudSql.enabled,
+            connectionName: app.cloudSql?.connectionName ?? "",
+            serviceAccountJsonSecret:
+              app.cloudSql?.serviceAccountJsonSecret ?? "",
+            dbPort: app.cloudSql?.dbPort ?? 5432,
+          }),
           requiredApps: app.requiredApps.map((app) => ({
             name: app.name,
           })),
+          autoRollback: new AutoRollback({
+            enabled: app.autoRollback.enabled,
+          }),
         })
     )
     .with(
@@ -337,6 +368,9 @@ export function clientAppToProto(data: PorterAppFormData): PorterApp {
             repository: src.image.repository,
             tag: src.image.tag,
           },
+          ...(predeploy && {
+            predeploy: serviceProto(serializeService(predeploy)),
+          }),
           helmOverrides:
             app.helmOverrides != null
               ? new HelmOverrides({ b64Values: btoa(app.helmOverrides) })
@@ -344,9 +378,19 @@ export function clientAppToProto(data: PorterAppFormData): PorterApp {
           efsStorage: new EFS({
             enabled: app.efsStorage.enabled,
           }),
+          cloudSql: new CloudSql({
+            enabled: app.cloudSql.enabled,
+            connectionName: app.cloudSql?.connectionName ?? "",
+            serviceAccountJsonSecret:
+              app.cloudSql?.serviceAccountJsonSecret ?? "",
+            dbPort: app.cloudSql?.dbPort ?? 5432,
+          }),
           requiredApps: app.requiredApps.map((app) => ({
             name: app.name,
           })),
+          autoRollback: new AutoRollback({
+            enabled: app.autoRollback.enabled,
+          }),
         })
     )
     .exhaustive();
@@ -494,9 +538,20 @@ export function clientAppFromProto({
       efsStorage: new EFS({
         enabled: proto.efsStorage?.enabled ?? false,
       }),
+      cloudSql: {
+        enabled: proto.cloudSql?.enabled ?? false,
+        connectionName: proto.cloudSql?.connectionName ?? "",
+        serviceAccountJsonSecret:
+          proto.cloudSql?.serviceAccountJsonSecret ?? "",
+        dbPort: proto.cloudSql?.dbPort ?? 5432,
+      },
       requiredApps: proto.requiredApps.map((app) => ({
         name: app.name,
       })),
+      autoRollback: {
+        enabled: proto.autoRollback?.enabled ?? true, // enabled by default if not found in proto
+        readOnly: false, // TODO: detect autorollback from porter.yaml
+      },
     };
   }
 
@@ -536,9 +591,19 @@ export function clientAppFromProto({
     },
     helmOverrides,
     efsStorage: { enabled: proto.efsStorage?.enabled ?? false },
+    cloudSql: {
+      enabled: proto.cloudSql?.enabled ?? false,
+      connectionName: proto.cloudSql?.connectionName ?? "",
+      serviceAccountJsonSecret: proto.cloudSql?.serviceAccountJsonSecret ?? "",
+      dbPort: proto.cloudSql?.dbPort ?? 5432,
+    },
     requiredApps: proto.requiredApps.map((app) => ({
       name: app.name,
     })),
+    autoRollback: {
+      enabled: proto.autoRollback?.enabled ?? true, // enabled by default if not found in proto
+      readOnly: false, // TODO: detect autorollback from porter.yaml
+    },
   };
 }
 

@@ -14,7 +14,7 @@ Let's get started!
 
 > 📘
 > 
-> Porter will set up CI/CD with [Github Actions](https://github.com/features/actions) to automatically build and deploy new versions of your code. You can learn more about how Porter uses Github Actions [here](https://docs.getporter.dev/docs/auto-deploy-requirements#cicd-with-github-actions).
+> Porter will set up CI/CD with [Github Actions](https://github.com/features/actions) to automatically build and deploy new versions of your code. You can learn more about how Porter uses Github Actions [here](https://docs.porter.run/docs/auto-deploy-requirements#cicd-with-github-actions).
 
 ![Select Repository](https://files.readme.io/0660e91-Screen_Shot_2021-03-17_at_7.20.44_PM.png "Screen Shot 2021-03-17 at 7.20.44 PM.png")
 
@@ -22,7 +22,7 @@ Let's get started!
 
 > 📘
 > 
-> If you specify a folder in your repo to use as source, Porter will autodetect the language runtime and build your application using Cloud Native Buildpacks. For more details refer to our guide on [requirements for auto build](https://docs.getporter.dev/docs/auto-deploy-requirements).
+> If you specify a folder in your repo to use as source, Porter will autodetect the language runtime and build your application using Cloud Native Buildpacks. For more details refer to our guide on [requirements for auto build](https://docs.porter.run/docs/auto-deploy-requirements).
 
 4. Click **Continue** once your source has been connected. This will take you to the **GitHub Actions** page, where you can see a workflow that will be created in the selected repository for automatically deploying new changes as they are pushed.  
 You can skip the creation of this workflow using the **Create workflow file** toggle, in case you wish to manually add the [`porter-update-action`](https://github.com/porter-dev/porter-update-action) to a different workflow of your choice.  

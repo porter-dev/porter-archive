@@ -8,6 +8,7 @@ export const search = <T>(
   if (!searchTerm) {
     return items;
   }
+  
   const fuse = new Fuse<T>(items, options);
   return fuse.search(searchTerm).map((result) => result.item);
 };

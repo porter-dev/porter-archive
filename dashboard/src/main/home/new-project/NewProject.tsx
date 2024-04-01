@@ -99,9 +99,34 @@ export const NewProjectFC = () => {
         .then((res) => res.data as ProjectListType[]);
       setProjects(projectList);
       setCurrentProject(project);
-      setButtonStatus("successful");
       trackCreateNewProject();
-      pushFiltered("/onboarding", []);
+
+      if (project?.sandbox_enabled) {
+        await api.connectProjectToCluster(
+          "<token>",
+          {},
+          { id: project.id }
+        )
+        .then(() => {
+          api.inviteAdmin(
+            "<token>",
+            {},
+            { project_id: project.id }
+          )
+          .then(() => {
+            setButtonStatus("successful");
+            pushFiltered("/apps", []);
+          })
+        })
+        .catch((err) => {
+          setButtonStatus("Couldn't create project, try again.");
+          console.log(err)
+        })
+
+      } else {
+        setButtonStatus("successful");
+        pushFiltered("/onboarding", []);
+      }
     } catch (error) {
       setButtonStatus("Couldn't create project, try again.");
       console.log(error);
@@ -154,13 +179,13 @@ export const NewProjectFC = () => {
           </InputWrapper>
           <NewProjectSaveButton
             text="Create project"
-            disabled={false}
+            disabled={buttonStatus === "loading"}
             onClick={createProject}
             status={buttonStatus}
             makeFlush={true}
             clearPosition={true}
             statusPosition="right"
-            saveText="Creating project..."
+            saveText="Creating project... This may take a minute."
             successText="Project created successfully!"
           />
         </SlideWrapper>

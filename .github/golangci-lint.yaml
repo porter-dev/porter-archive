@@ -4,6 +4,8 @@ run:
   issues-exit-code: 1
   build-tags:
     - codeanalysis
+  skip-dirs:
+    - internal/repository/test
 
 issues:
   new-from-rev: origin/master # default: HEAD, this will only show linting changes in the current change

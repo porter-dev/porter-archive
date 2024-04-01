@@ -21,9 +21,9 @@ const StatusTab: React.FC = () => {
   const { appServiceStatus } = useAppStatus({
     projectId,
     clusterId,
-    serviceNames: latestClientServices
-      .filter((s) => s.config.type === "web" || s.config.type === "worker")
-      .map((s) => s.name.value),
+    services: latestClientServices.filter(
+      (s) => s.config.type === "web" || s.config.type === "worker"
+    ),
     deploymentTargetId: deploymentTarget.id,
     appName,
   });

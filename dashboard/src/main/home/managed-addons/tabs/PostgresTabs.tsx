@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from "react";
 import { Controller, useFormContext } from "react-hook-form";
-import styled from "styled-components";
 import { match } from "ts-pattern";
 
 import CopyToClipboard from "components/CopyToClipboard";
@@ -10,10 +9,13 @@ import Text from "components/porter/Text";
 import TabSelector from "components/TabSelector";
 import IntelligentSlider from "main/home/app-dashboard/validate-apply/services-settings/tabs/IntelligentSlider";
 import { type AppTemplateFormData } from "main/home/cluster-dashboard/preview-environments/v2/setup-app/PreviewAppDataContainer";
+import { useClusterContext } from "main/home/infrastructure-dashboard/ClusterContextProvider";
 import { type ClientAddon } from "lib/addons";
+import { getServiceResourceAllowances } from "lib/porter-apps/services";
 
-import { useClusterResources } from "shared/ClusterResourcesContext";
 import copy from "assets/copy-left.svg";
+
+import { Code, CopyContainer, CopyIcon, IdContainer } from "./shared";
 
 type Props = {
   index: number;
@@ -26,9 +28,10 @@ type Props = {
 
 export const PostgresTabs: React.FC<Props> = ({ index }) => {
   const { register, control, watch } = useFormContext<AppTemplateFormData>();
-  const {
-    currentClusterResources: { maxCPU, maxRAM },
-  } = useClusterResources();
+  const { nodes } = useClusterContext();
+  const { maxRamMegabytes, maxCpuCores } = useMemo(() => {
+    return getServiceResourceAllowances(nodes);
+  }, [nodes]);
 
   const [currentTab, setCurrentTab] = useState<"credentials" | "resources">(
     "credentials"
@@ -43,7 +46,7 @@ export const PostgresTabs: React.FC<Props> = ({ index }) => {
       return "";
     }
 
-    return `postgresql://${username}:${password}@${name.value}-postgres:5432/postgres`;
+    return `postgresql://${username}:${password}@${name.value}-postgres-hl:5432/postgres`;
   }, [username, password, name.value]);
 
   return (
@@ -104,7 +107,7 @@ export const PostgresTabs: React.FC<Props> = ({ index }) => {
                   label="CPUs: "
                   unit="Cores"
                   min={0.01}
-                  max={maxCPU}
+                  max={maxCpuCores}
                   color={"#3f51b5"}
                   value={value.value.toString()}
                   setValue={(e) => {
@@ -132,7 +135,7 @@ export const PostgresTabs: React.FC<Props> = ({ index }) => {
                   label="RAM: "
                   unit="MB"
                   min={1}
-                  max={maxRAM}
+                  max={maxRamMegabytes}
                   color={"#3f51b5"}
                   value={value.value.toString()}
                   setValue={(e) => {
@@ -156,36 +159,3 @@ export const PostgresTabs: React.FC<Props> = ({ index }) => {
     </>
   );
 };
-
-const CopyIcon = styled.img`
-  cursor: pointer;
-  margin-left: 5px;
-  margin-right: 5px;
-  width: 15px;
-  height: 15px;
-  :hover {
-    opacity: 0.8;
-  }
-`;
-
-const Code = styled.span`
-  font-family: monospace;
-`;
-
-const IdContainer = styled.div`
-  background: #26292e;
-  border-radius: 5px;
-  padding: 10px;
-  display: flex;
-  width: 550px;
-  border-radius: 5px;
-  border: 1px solid ${({ theme }) => theme.border};
-  align-items: center;
-  user-select: text;
-`;
-
-const CopyContainer = styled.div`
-  display: flex;
-  align-items: center;
-  margin-left: auto;
-`;

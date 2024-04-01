@@ -7,6 +7,7 @@ const (
 	UserCreate      SegmentEvent = "New User"
 	UserVerifyEmail SegmentEvent = "User Verified Email"
 	ProjectCreate   SegmentEvent = "New Project Event"
+	ProjectConnect  SegmentEvent = "Project Connected to Sandbox"
 	ProjectDelete   SegmentEvent = "Project Deleted"
 	ClusterDelete   SegmentEvent = "Cluster Deleted"
 
@@ -61,4 +62,18 @@ const (
 	StackBuildSuccess     SegmentEvent = "Stack Build Success"
 
 	PorterAppUpdateFailure SegmentEvent = "Porter App Update Failure"
+
+	// billing
+
+	PaymentMethodAttached  SegmentEvent = "Credit Card Linked"
+	PaymentMethodDettached SegmentEvent = "Credit Card Removed"
+
+	// new infra flow
+
+	// CloudProviderPermissionsGranted is a segment event that is triggered when a user grants cloud provider permissions
+	CloudProviderPermissionsGranted SegmentEvent = "Cloud Provider Permissions Granted"
+	// ClusterPreflightChecksFailed is a segment event that is triggered when a user's cluster fails preflight checks
+	ClusterPreflightChecksFailed SegmentEvent = "Cluster Preflight Checks Failed"
+	// ClusterUpdateFailed is a segment event that is triggered when a user's cluster update fails
+	ClusterUpdateFailed SegmentEvent = "Cluster Update Failed"
 )

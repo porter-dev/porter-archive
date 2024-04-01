@@ -2,6 +2,7 @@ import React, { useContext, useEffect, useState } from "react";
 import {
   AWSClusterNetwork,
   Cluster,
+  ComplianceProfile,
   Contract,
   EKS,
   EKSLogging,
@@ -18,6 +19,7 @@ import {
 } from "@porter-dev/api-contracts";
 import { withRouter, type RouteComponentProps } from "react-router";
 import styled from "styled-components";
+import { Integer } from "type-fest";
 
 import Heading from "components/form-components/Heading";
 import SelectRow from "components/form-components/SelectRow";
@@ -27,25 +29,24 @@ import { useIntercom } from "lib/hooks/useIntercom";
 import api from "shared/api";
 import { Context } from "shared/Context";
 import { pushFiltered } from "shared/routing";
-import { type ClusterType, type ClusterState } from "shared/types";
+import { type ClusterState, type ClusterType } from "shared/types";
 import { PREFLIGHT_TO_ENUM } from "shared/util";
 import info from "assets/info-outlined.svg";
 import healthy from "assets/status-healthy.png";
 
+import GPUProvisionSettings from "./GPUProvisionSettings";
 import Loading from "./Loading";
 import Button from "./porter/Button";
 import Checkbox from "./porter/Checkbox";
 import Icon from "./porter/Icon";
 import Input from "./porter/Input";
+import InputSlider from "./porter/InputSlider";
 import Select from "./porter/Select";
 import Spacer from "./porter/Spacer";
 import Text from "./porter/Text";
 import Tooltip from "./porter/Tooltip";
 import VerticalSteps from "./porter/VerticalSteps";
 import PreflightChecks from "./PreflightChecks";
-import { Integer } from "type-fest";
-import InputSlider from "./porter/InputSlider";
-import GPUProvisionSettings from "./GPUProvisionSettings";
 
 const regionOptions = [
   { value: "us-east-1", label: "US East (N. Virginia) us-east-1" },
@@ -102,9 +103,51 @@ const machineTypeOptions = [
   { value: "r6i.16xlarge", label: "r6i.16xlarge" },
   { value: "r6i.24xlarge", label: "r6i.24xlarge" },
   { value: "r6i.32xlarge", label: "r6i.32xlarge" },
+  { value: "m5.large", label: "m5.large" },
+  { value: "m5.xlarge", label: "m5.xlarge" },
+  { value: "m5.2xlarge", label: "m5.2xlarge" },
+  { value: "m5.4xlarge", label: "m5.4xlarge" },
   { value: "m5n.large", label: "m5n.large" },
   { value: "m5n.xlarge", label: "m5n.xlarge" },
   { value: "m5n.2xlarge", label: "m5n.2xlarge" },
+  { value: "m5n.4xlarge", label: "m5n.4xlarge" },
+  { value: "m6a.large", label: "m6a.large" },
+  { value: "m6a.xlarge", label: "m6a.xlarge" },
+  { value: "m6a.2xlarge", label: "m6a.2xlarge" },
+  { value: "m6a.4xlarge", label: "m6a.4xlarge" },
+  { value: "m6a.8xlarge", label: "m6a.8xlarge" },
+  { value: "m6a.12xlarge", label: "m6a.12xlarge" },
+  { value: "m7a.medium", label: "m7a.medium" },
+  { value: "m7a.large", label: "m7a.large" },
+  { value: "m7a.xlarge", label: "m7a.xlarge" },
+  { value: "m7a.2xlarge", label: "m7a.2xlarge" },
+  { value: "m7a.4xlarge", label: "m7a.4xlarge" },
+  { value: "m7a.8xlarge", label: "m7a.8xlarge" },
+  { value: "m7a.12xlarge", label: "m7a.12xlarge" },
+  { value: "m7a.16xlarge", label: "m7a.16xlarge" },
+  { value: "m7a.24xlarge", label: "m7a.24xlarge" },
+  { value: "m7i.large", label: "m7i.large" },
+  { value: "m7i.xlarge", label: "m7i.xlarge" },
+  { value: "m7i.2xlarge", label: "m7i.2xlarge" },
+  { value: "m7i.4xlarge", label: "m7i.4xlarge" },
+  { value: "m7i.8xlarge", label: "m7i.8xlarge" },
+  { value: "m7i.12xlarge", label: "m7i.12xlarge" },
+  { value: "c7a.medium", label: "c7a.medium" },
+  { value: "c7a.large", label: "c7a.large" },
+  { value: "c7a.xlarge", label: "c7a.xlarge" },
+  { value: "c7a.2xlarge", label: "c7a.2xlarge" },
+  { value: "c7a.4xlarge", label: "c7a.4xlarge" },
+  { value: "c7a.8xlarge", label: "c7a.8xlarge" },
+  { value: "c7a.12xlarge", label: "c7a.12xlarge" },
+  { value: "c7a.16xlarge", label: "c7a.16xlarge" },
+  { value: "c7a.24xlarge", label: "c7a.24xlarge" },
+  { value: "c7g.large", label: "c7g.large" },
+  { value: "c7g.xlarge", label: "c7g.xlarge" },
+  { value: "c7g.2xlarge", label: "c7g.2xlarge" },
+  { value: "c7g.4xlarge", label: "c7g.4xlarge" },
+  { value: "c7g.8xlarge", label: "c7g.8xlarge" },
+  { value: "c7g.12xlarge", label: "c7g.12xlarge" },
+  { value: "c7g.16xlarge", label: "c7g.16xlarge" },
 ];
 
 const defaultCidrVpc = "10.78.0.0/16";
@@ -134,6 +177,10 @@ const initialClusterState: ClusterState = {
   gpuInstanceType: "g4dn.xlarge",
   gpuMinInstances: 0,
   gpuMaxInstances: 5,
+  complianceProfiles: {
+    soc2: false,
+    hipaa: false,
+  },
 };
 
 type Props = RouteComponentProps & {
@@ -187,7 +234,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
           project_id: currentProject ? currentProject.id : 0,
         }
       );
-    } catch (err) { }
+    } catch (err) {}
   };
 
   const getStatus = (): React.ReactNode => {
@@ -264,17 +311,19 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     }
 
     // Split the input string by comma, then reduce the resulting array to an object
-    const tags = tagString.split(",").reduce<Record<string, string>>((obj, item) => {
-      // Split each item by "=", and trim whitespace from both key and value
-      const [key, value] = item.split("=").map(part => part.trim());
+    const tags = tagString
+      .split(",")
+      .reduce<Record<string, string>>((obj, item) => {
+        // Split each item by "=", and trim whitespace from both key and value
+        const [key, value] = item.split("=").map((part) => part.trim());
 
-      // Only add the key-value pair to the object if both key and value are present
-      if (key && value) {
-        obj[key] = value;
-      }
+        // Only add the key-value pair to the object if both key and value are present
+        if (key && value) {
+          obj[key] = value;
+        }
 
-      return obj;
-    }, {});
+        return obj;
+      }, {});
 
     return tags;
   }
@@ -314,7 +363,6 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       }
     }
 
-
     const nodeGroups = [
       new EKSNodeGroup({
         instanceType: "t3.medium",
@@ -344,16 +392,22 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
 
     // Conditionally add the last EKSNodeGroup if gpuModal is enabled
     if (props.gpuModal) {
-      nodeGroups.push(new EKSNodeGroup({
-        instanceType: clusterState.gpuInstanceType,
-        minInstances: clusterState.gpuMinInstances || 0,
-        maxInstances: clusterState.gpuMaxInstances || 5,
-        nodeGroupType: NodeGroupType.CUSTOM,
-        isStateful: false,
-        additionalPolicies: clusterState.additionalNodePolicies,
-      }));
+      nodeGroups.push(
+        new EKSNodeGroup({
+          instanceType: clusterState.gpuInstanceType,
+          minInstances: clusterState.gpuMinInstances || 0,
+          maxInstances: clusterState.gpuMaxInstances || 5,
+          nodeGroupType: NodeGroupType.CUSTOM,
+          isStateful: false,
+          additionalPolicies: clusterState.additionalNodePolicies,
+        })
+      );
     }
 
+    const complianceProfiles = new ComplianceProfile({
+      soc2: clusterState.complianceProfiles.soc2,
+      hipaa: clusterState.complianceProfiles.hipaa,
+    });
 
     const data = new Contract({
       cluster: new Cluster({
@@ -365,7 +419,8 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
           case: "eksKind",
           value: new EKS({
             clusterName: clusterState.clusterName,
-            clusterVersion: clusterState.clusterVersion || defaultClusterVersion,
+            clusterVersion:
+              clusterState.clusterVersion || defaultClusterVersion,
             cidrRange: clusterState.cidrRangeVPC || defaultCidrVpc, // deprecated in favour of network.cidrRangeVPC: can be removed after december 2023
             region: clusterState.awsRegion,
             loadBalancer: loadBalancerObj,
@@ -375,12 +430,14 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
             enableEcrScanning: clusterState.ecrScanningEnabled,
             network: new AWSClusterNetwork({
               vpcCidr: clusterState.cidrRangeVPC || defaultCidrVpc,
-              serviceCidr: clusterState.cidrRangeServices || defaultCidrServices,
+              serviceCidr:
+                clusterState.cidrRangeServices || defaultCidrServices,
             }),
             nodeGroups,
           }),
         },
       }),
+      complianceProfiles,
     });
     return data;
   };
@@ -422,15 +479,13 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                 pushFiltered(props, "/cluster-dashboard", ["project_id"], {
                   cluster: cluster.name,
                 });
-              }
-              else {
+              } else {
                 if (props.closeModal) {
                   props.closeModal();
                 }
               }
             }
           });
-
         })
         .catch((err) => {
           if (err) {
@@ -461,8 +516,8 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
   useEffect(() => {
     setIsReadOnly(
       props.clusterId &&
-      (currentCluster.status === "UPDATING" ||
-        currentCluster.status === "UPDATING_UNAVAILABLE")
+        (currentCluster.status === "UPDATING" ||
+          currentCluster.status === "UPDATING_UNAVAILABLE")
     );
     handleClusterStateChange(
       "clusterName",
@@ -474,7 +529,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
 
   useEffect(() => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const contract = props.selectedClusterVersion as any;
+    const contract = props.selectedClusterVersion;
     // Unmarshall Contract here
     if (contract?.cluster) {
       const eksValues: EKS = contract.cluster?.eksKind as EKS;
@@ -523,8 +578,8 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
 
         const awsTags = eksValues.loadBalancer.tags
           ? Object.entries(eksValues.loadBalancer.tags)
-            .map(([key, value]) => `${key}=${value}`)
-            .join(",")
+              .map(([key, value]) => `${key}=${value}`)
+              .join(",")
           : "";
         handleClusterStateChange("awsTags", awsTags);
 
@@ -564,6 +619,13 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
         "certificateARN",
         eksValues.loadBalancer?.additionalCertificateArns?.join(",")
       );
+
+      if (contract.complianceProfiles) {
+        handleClusterStateChange(
+          "complianceProfiles",
+          contract.complianceProfiles
+        );
+      }
     }
   }, [isExpanded, props.selectedClusterVersion]);
 
@@ -580,7 +642,6 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
             setStep(0);
           }
         }
-
       }
     }
   }, [clusterState]);
@@ -630,7 +691,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       const data = new PreflightCheckRequest({
         contract,
       });
-      const preflightDataResp = await api.preflightCheck("<token>", data, {
+      const preflightDataResp = await api.legacyPreflightCheck("<token>", data, {
         id: currentProject.id,
       });
       // Check if any of the preflight checks has a message
@@ -1072,11 +1133,11 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
 
                         {(clusterState.wafV2ARN === undefined ||
                           clusterState.wafV2ARN?.length === 0) && (
-                            <ErrorInLine>
-                              <i className="material-icons">error</i>
-                              {"Required if WafV2 is enabled"}
-                            </ErrorInLine>
-                          )}
+                          <ErrorInLine>
+                            <i className="material-icons">error</i>
+                            {"Required if WafV2 is enabled"}
+                          </ErrorInLine>
+                        )}
                       </>
                     )}
                     <Spacer y={1} />
@@ -1185,9 +1246,8 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     setShowHelpMessage(false);
     try {
       await preflightChecks();
-    } catch (err) { }
+    } catch (err) {}
   };
-
 
   const renderForm = (): JSX.Element => {
     // Render simplified form if initial create
@@ -1236,8 +1296,8 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                         </Text>
                       </CheckItemTop>
                     </CheckItemContainer>
-
-                  </>) :
+                  </>
+                ) : (
                   <>
                     <PreflightChecks
                       provider="AWS"
@@ -1247,67 +1307,94 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                     <Spacer y={0.5} />
                     {preflightFailed && preflightData && (
                       <>
-                        {(showHelpMessage && currentProject?.quota_increase) ? <>
-                          <Text color="helper">
-                            Your account currently is blocked from provisioning in {clusterState.awsRegion} due to a quota limit imposed by AWS. Either change the region or request to increase quotas.
-                          </Text>
-                          <Spacer y={.5} />
-                          <Text color="helper">
-                            Porter can automatically request quota increases on your behalf and email you once the cluster is provisioned.
-                          </Text>
-                          <Spacer y={.5} />
-                          <div style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: '15px' }}>
+                        {showHelpMessage && currentProject?.quota_increase ? (
+                          <>
+                            <Text color="helper">
+                              Your account currently is blocked from
+                              provisioning in {clusterState.awsRegion} due to a
+                              quota limit imposed by AWS. Either change the
+                              region or request to increase quotas.
+                            </Text>
+                            <Spacer y={0.5} />
+                            <Text color="helper">
+                              Porter can automatically request quota increases
+                              on your behalf and email you once the cluster is
+                              provisioned.
+                            </Text>
+                            <Spacer y={0.5} />
+                            <div
+                              style={{
+                                display: "flex",
+                                justifyContent: "flex-start",
+                                alignItems: "center",
+                                gap: "15px",
+                              }}
+                            >
+                              <Button
+                                disabled={isLoading}
+                                onClick={proceedToProvision}
+                              >
+                                Auto request increase
+                              </Button>
+                              <Button
+                                disabled={isLoading}
+                                onClick={dismissPreflight}
+                                color="#313539"
+                              >
+                                I'll do it myself
+                              </Button>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <Text color="helper">
+                              Your account currently is blocked from
+                              provisioning in {clusterState.awsRegion} due to a
+                              quota limit imposed by AWS. Either change the
+                              region or request to increase quotas.
+                            </Text>
+                            <Spacer y={0.5} />
                             <Button
                               disabled={isLoading}
-                              onClick={proceedToProvision}
-
+                              onClick={preflightChecks}
                             >
-                              Auto request increase
-                            </Button>
-                            <Button
-                              disabled={isLoading}
-                              onClick={dismissPreflight}
-                              color="#313539"
-                            >
-                              I'll do it myself
-                            </Button>
-                          </div>
-
-                        </> : (
-                          <><Text color="helper">
-                            Your account currently is blocked from provisioning in {clusterState.awsRegion} due to a quota limit imposed by AWS. Either change the region or request to increase quotas.
-                          </Text><Spacer y={.5} /><Button
-                            disabled={isLoading}
-                            onClick={preflightChecks}
-
-                          >
                               Retry checks
-                            </Button></>)}
-                      </>)}
-                  </>}
-              </>, <>
+                            </Button>
+                          </>
+                        )}
+                      </>
+                    )}
+                  </>
+                )}
+              </>,
+              <>
                 <Text size={16}>Provision your cluster</Text>
                 <Spacer y={1} />
-                {showEmailMessage && <>
-                  <Text color="helper">
-                    After your quota requests have been approved by AWS, Porter will email you when your cluster has been provisioned.
-                  </Text>
-                  <Spacer y={1} />
-                </>}
+                {showEmailMessage && (
+                  <>
+                    <Text color="helper">
+                      After your quota requests have been approved by AWS,
+                      Porter will email you when your cluster has been
+                      provisioned.
+                    </Text>
+                    <Spacer y={1} />
+                  </>
+                )}
                 <Button
                   disabled={(preflightFailed && !showEmailMessage) || isLoading}
-                  onClick={showEmailMessage ? requestQuotasAndProvision : createCluster}
+                  onClick={
+                    showEmailMessage ? requestQuotasAndProvision : createCluster
+                  }
                   status={getStatus()}
                 >
                   Provision
                 </Button>
-                <Spacer y={1} /></>
-              ,
-
+                <Spacer y={1} />
+              </>,
             ].filter((x) => x)}
           />
         </>
-      )
+      );
     }
 
     // If settings, update full form
@@ -1330,9 +1417,8 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
           showEmailMessage={showEmailMessage}
           requestQuotasAndProvision={requestQuotaIncrease}
         />
-      )
+      );
     }
-
 
     return (
       <>
@@ -1390,7 +1476,7 @@ const ExpandHeader = styled.div<{ isExpanded: boolean }>`
         margin - right: 7px;
       margin-left: -7px;
       transform: ${(props) =>
-    props.isExpanded ? "rotate(0deg)" : "rotate(-90deg)"};
+        props.isExpanded ? "rotate(0deg)" : "rotate(-90deg)"};
       transition: transform 0.1s ease;
   }
       `;

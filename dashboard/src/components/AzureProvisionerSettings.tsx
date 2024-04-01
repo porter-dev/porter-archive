@@ -33,7 +33,9 @@ import InputRow from "./form-components/InputRow";
 import Button from "./porter/Button";
 import Error from "./porter/Error";
 import Icon from "./porter/Icon";
+import InputSlider from "./porter/InputSlider";
 import Link from "./porter/Link";
+import Select from "./porter/Select";
 import Spacer from "./porter/Spacer";
 import Step from "./porter/Step";
 import Text from "./porter/Text";
@@ -46,13 +48,14 @@ const skuTierOptions = [
   },
 ];
 
-const clusterVersionOptions = [{ value: "v1.27.3", label: "v1.27" }];
+const clusterVersionOptions = [{ value: "v1.27", label: "v1.27" }];
 
 type Props = RouteComponentProps & {
   selectedClusterVersion?: Contract;
   provisionerError?: string;
   credentialId: string;
   clusterId?: number;
+  gpuModal?: boolean;
 };
 
 const VALID_CIDR_RANGE_PATTERN =
@@ -71,11 +74,16 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
   const [clusterName, setClusterName] = useState("");
   const [azureLocation, setAzureLocation] = useState("eastus");
   const [machineType, setMachineType] = useState("Standard_B2als_v2");
+  const [gpuMinInstances, setGpuMinInstances] = useState(1);
+  const [gpuMaxInstances, setGpuMaxInstances] = useState(5);
+  const [gpuInstanceType, setGpuInstanceType] = useState(
+    "Standard_NC4as_T4_v3"
+  );
   const [isExpanded, setIsExpanded] = useState(false);
   const [minInstances, setMinInstances] = useState(1);
   const [maxInstances, setMaxInstances] = useState(10);
   const [cidrRange, setCidrRange] = useState("10.78.0.0/16");
-  const [clusterVersion, setClusterVersion] = useState("v1.27.3");
+  const [clusterVersion, setClusterVersion] = useState("v1.27");
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [skuTier, setSkuTier] = useState(AksSkuTier.FREE);
   const [errorMessage, setErrorMessage] = useState<string>("");
@@ -85,12 +93,21 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
     regionFilteredMachineTypeOptions,
     setRegionFilteredMachineTypeOptions,
   ] = useState<MachineTypeOption[]>(azureSupportedMachineTypes(azureLocation));
+  const [
+    regionFilteredGPUMachineTypeOptions,
+    setRegionFilteredGPUMachineTypeOptions,
+  ] = useState<MachineTypeOption[]>(
+    azureSupportedMachineTypes(azureLocation, true)
+  );
 
   const { showIntercomWithMessage } = useIntercom();
 
   useEffect(() => {
     setRegionFilteredMachineTypeOptions(
       azureSupportedMachineTypes(azureLocation)
+    );
+    setRegionFilteredGPUMachineTypeOptions(
+      azureSupportedMachineTypes(azureLocation, true)
     );
   }, [azureLocation]);
 
@@ -188,6 +205,42 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
       console.log(err);
     }
 
+    const nodePools = [
+      new AKSNodePool({
+        instanceType: "Standard_B2als_v2",
+        minInstances: 1,
+        maxInstances: 3,
+        nodePoolType: NodePoolType.SYSTEM,
+        mode: "User",
+      }),
+      new AKSNodePool({
+        instanceType: "Standard_B2as_v2",
+        minInstances: 1,
+        maxInstances: 3,
+        nodePoolType: NodePoolType.MONITORING,
+        mode: "User",
+      }),
+      new AKSNodePool({
+        instanceType: machineType,
+        minInstances: minInstances || 1,
+        maxInstances: maxInstances || 10,
+        nodePoolType: NodePoolType.APPLICATION,
+        mode: "User",
+      }),
+    ];
+
+    // Conditionally add the last EKSNodeGroup if gpuModal is enabled
+    if (props.gpuModal) {
+      nodePools.push(
+        new AKSNodePool({
+          instanceType: gpuInstanceType,
+          minInstances: gpuMinInstances || 0,
+          maxInstances: gpuMaxInstances || 5,
+          nodePoolType: NodePoolType.CUSTOM,
+        })
+      );
+    }
+
     const data = new Contract({
       cluster: new Cluster({
         projectId: currentProject.id,
@@ -198,32 +251,10 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
           case: "aksKind",
           value: new AKS({
             clusterName,
-            clusterVersion: clusterVersion || "v1.27.3",
+            clusterVersion: clusterVersion || "v1.27",
             cidrRange: cidrRange || "10.78.0.0/16",
             location: azureLocation,
-            nodePools: [
-              new AKSNodePool({
-                instanceType: "Standard_B2als_v2",
-                minInstances: 1,
-                maxInstances: 3,
-                nodePoolType: NodePoolType.SYSTEM,
-                mode: "User",
-              }),
-              new AKSNodePool({
-                instanceType: "Standard_B2as_v2",
-                minInstances: 1,
-                maxInstances: 3,
-                nodePoolType: NodePoolType.MONITORING,
-                mode: "User",
-              }),
-              new AKSNodePool({
-                instanceType: machineType,
-                minInstances: minInstances || 1,
-                maxInstances: maxInstances || 10,
-                nodePoolType: NodePoolType.APPLICATION,
-                mode: "User",
-              }),
-            ],
+            nodePools,
             skuTier,
           }),
         },
@@ -317,7 +348,10 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
 
     // TODO: pass in contract as the already parsed object, rather than JSON (requires changes to AWS/GCP provisioning)
     const contract = Contract.fromJsonString(
-      JSON.stringify(props.selectedClusterVersion)
+      JSON.stringify(props.selectedClusterVersion),
+      {
+        ignoreUnknownFields: true,
+      }
     );
 
     if (
@@ -335,7 +369,9 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
       setCreateStatus("");
       setClusterName(aksValues.clusterName);
       setAzureLocation(aksValues.location);
-      setClusterVersion(aksValues.clusterVersion);
+      const clusterVersionSplit = aksValues.clusterVersion.split(".");
+      const minorClusterVersion = clusterVersionSplit.slice(0, 2).join(".");
+      setClusterVersion(minorClusterVersion);
       setCidrRange(aksValues.cidrRange);
       if (aksValues.skuTier !== AksSkuTier.UNSPECIFIED) {
         setSkuTier(aksValues.skuTier);
@@ -408,7 +444,7 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
             <SelectRow
               options={regionFilteredMachineTypeOptions}
               width="350px"
-              disabled={true}
+              disabled={isReadOnly}
               value={machineType}
               scrollBuffer={true}
               dropdownMaxHeight="240px"
@@ -470,6 +506,46 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
       </>
     );
   };
+
+  if (props.gpuModal) {
+    return (
+      <>
+        <Select
+          options={regionFilteredGPUMachineTypeOptions}
+          width="350px"
+          disabled={isReadOnly}
+          value={gpuInstanceType}
+          setValue={(x: string) => {
+            setGpuInstanceType(x);
+          }}
+          label="GPU Instance type"
+        />
+        <Spacer y={1} />
+        <InputSlider
+          label="Max Instances: "
+          unit="nodes"
+          min={0}
+          max={5}
+          step={1}
+          width="350px"
+          disabled={isReadOnly}
+          value={gpuMaxInstances.toString()}
+          setValue={(x: number) => {
+            setGpuMaxInstances(x);
+          }}
+        />
+        <Button
+          disabled={isDisabled()}
+          onClick={createCluster}
+          status={getStatus()}
+        >
+          Provision
+        </Button>
+
+        <Spacer y={0.5} />
+      </>
+    );
+  }
 
   return (
     <>

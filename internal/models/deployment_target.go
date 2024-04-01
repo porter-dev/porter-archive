@@ -49,14 +49,14 @@ type DeploymentTarget struct {
 // ToDeploymentTargetType generates an external types.PorterApp to be shared over REST
 func (d *DeploymentTarget) ToDeploymentTargetType() *types.DeploymentTarget {
 	return &types.DeploymentTarget{
-		ID:        d.ID,
-		ProjectID: uint(d.ProjectID),
-		ClusterID: uint(d.ClusterID),
-		Namespace: d.Selector,
-		IsPreview: d.Preview,
-		IsDefault: d.IsDefault,
-		Name:      d.VanityName,
-		CreatedAt: d.CreatedAt,
-		UpdatedAt: d.UpdatedAt,
+		ID:           d.ID,
+		ProjectID:    uint(d.ProjectID),
+		ClusterID:    uint(d.ClusterID),
+		Namespace:    d.Selector,
+		IsPreview:    d.Preview,
+		IsDefault:    d.IsDefault,
+		Name:         d.VanityName,
+		CreatedAtUTC: d.CreatedAt,
+		UpdatedAtUTC: d.UpdatedAt,
 	}
 }

@@ -1,42 +1,76 @@
+import { useEffect, useRef, useState } from "react";
+import Anser from "anser";
 import dayjs, { type Dayjs } from "dayjs";
 import _ from "lodash";
-import { useEffect, useRef, useState } from "react";
+import { z } from "zod";
+
 import api from "shared/api";
-import Anser from "anser";
-import { useWebsockets, type NewWebsocketOptions } from "shared/hooks/useWebsockets";
 import {
-  type AgentLog,
+  useWebsockets,
+  type NewWebsocketOptions,
+} from "shared/hooks/useWebsockets";
+
+import {
   agentLogValidator,
   Direction,
-  type PorterLog,
-  type PaginationInfo,
+  GenericFilter,
+  type AgentLog,
   type FilterName,
-  GenericFilter
+  type PaginationInfo,
 } from "../../expanded-app/logs/types";
 
 const MAX_LOGS = 5000;
 const MAX_BUFFER_LOGS = 1000;
 const QUERY_LIMIT = 1000;
 
-export const parseLogs = (logs: any[] = []): PorterLog[] => {
-  return logs.map((log: any, idx) => {
+const porterLogValidator = z.object({
+  timestamp: z.string(),
+  line: z.string().transform((val) => Anser.ansiToJson(val)),
+  output_stream: z.string(),
+  service_name: z.string(),
+  app_revision_id: z.string(),
+  deployment_target_id: z.string(),
+  job_name: z.string().default(""),
+  job_run_id: z.string().default(""),
+  lineNumber: z.number().default(0),
+  revision: z.string().default("0"),
+});
+export type PorterLog = z.infer<typeof porterLogValidator>;
+
+export const parseLogsFromAgent = (logs: unknown[] = []): PorterLog[] => {
+  return logs.map((log, idx) => {
     try {
       const parsed: AgentLog = agentLogValidator.parse(log);
       // TODO Move log parsing to the render method
       const ansiLog = Anser.ansiToJson(parsed.line);
       return {
-        line: ansiLog,
-        lineNumber: idx + 1,
         timestamp: parsed.timestamp,
-        metadata: parsed.metadata,
+        line: ansiLog,
+        output_stream: parsed.metadata?.output_stream ?? "",
+        service_name:
+          parsed.metadata?.raw_labels?.porter_run_service_name ?? "",
+        app_revision_id:
+          parsed.metadata?.raw_labels?.porter_run_app_revision_id ?? "",
+        deployment_target_id:
+          parsed.metadata?.raw_labels?.porter_run_deployment_target_id ?? "",
+        job_name: parsed.metadata?.raw_labels?.job_name ?? "",
+        job_run_id: parsed.metadata?.raw_labels?.controller_uid ?? "",
+        revision: "0",
+        lineNumber: idx + 1,
       };
     } catch (err) {
-      console.log(err)
       return {
-        line: Anser.ansiToJson(log.toString()),
+        timestamp: "",
+        line: Anser.ansiToJson(JSON.stringify(log)),
+        output_stream: "",
+        service_name: "",
+        app_revision_id: "",
+        deployment_target_id: "",
+        job_name: "",
+        job_run_id: "",
+        revision: "0",
         lineNumber: idx + 1,
-        timestamp: undefined,
-      }
+      };
     }
   });
 };
@@ -51,35 +85,38 @@ export const useLogs = ({
   notify,
   setLoading,
   revisionIdToNumber,
+  revisionNumberToId,
   setDate,
   appRevisionId = "",
   timeRange,
   filterPredeploy,
   appID,
-  jobRunID = ""
+  jobRunName = "",
 }: {
-  projectID: number,
-  clusterID: number,
-  selectedFilterValues: Record<FilterName, string>,
-  appName: string,
-  deploymentTargetId: string,
-  searchParam: string,
-  notify: (message: string) => void,
-  setLoading: (isLoading: boolean) => void,
-  revisionIdToNumber: Record<string, number>,
+  projectID: number;
+  clusterID: number;
+  selectedFilterValues: Record<FilterName, string>;
+  appName: string;
+  deploymentTargetId: string;
+  searchParam: string;
+  notify: (message: string) => void;
+  setLoading: (isLoading: boolean) => void;
+  revisionIdToNumber: Record<string, number>;
+  revisionNumberToId: Record<number, string>;
   // if setDate is set, results are not live
-  setDate?: Date,
-  appRevisionId?: string,
+  setDate?: Date;
+  appRevisionId?: string;
   timeRange?: {
-    startTime?: Dayjs,
-    endTime?: Dayjs,
-  },
-  filterPredeploy: boolean,
-  appID: number,
-  jobRunID?: string,
-}
-) => {
-  const [isLive, setIsLive] = useState<boolean>(!setDate && (timeRange?.startTime == null && timeRange?.endTime == null));
+    startTime?: Dayjs;
+    endTime?: Dayjs;
+  };
+  filterPredeploy: boolean;
+  appID: number;
+  jobRunName?: string;
+}) => {
+  const [isLive, setIsLive] = useState<boolean>(
+    !setDate && timeRange?.startTime == null && timeRange?.endTime == null
+  );
   const logsBufferRef = useRef<PorterLog[]>([]);
   const [logs, setLogs] = useState<PorterLog[]>([]);
   const [paginationInfo, setPaginationInfo] = useState<PaginationInfo>({
@@ -98,16 +135,12 @@ export const useLogs = ({
   //   result of the initial query
   // - moving the cursor both forward and backward changes the start and end dates
 
-  const {
-    newWebsocket,
-    openWebsocket,
-    closeAllWebsockets,
-  } = useWebsockets();
+  const { newWebsocket, openWebsocket, closeAllWebsockets } = useWebsockets();
 
   const updateLogs = (
     newLogs: PorterLog[],
     direction: Direction = Direction.forward
-  ) => {
+  ): void => {
     // Nothing to update here
     if (!newLogs.length) {
       return;
@@ -187,7 +220,7 @@ export const useLogs = ({
       search_param: searchParam,
       app_revision_id: appRevisionId,
       app_id: appID.toString(),
-    }
+    };
 
     const q = new URLSearchParams(searchParams).toString();
 
@@ -202,31 +235,30 @@ export const useLogs = ({
         if (evt.data == null) {
           return;
         }
-        const jsonData = evt.data.trim().split("\n")
-        const newLogs: any[] = [];
-        jsonData.forEach((data: string) => {
-          try {
-            const jsonLog = JSON.parse(data);
-            newLogs.push(jsonLog)
-          } catch (err) {
-            // TODO: better error handling
-            // console.log(err)
+        const jsonData = evt.data.trim().split("\n");
+        const newLogs = jsonData.map((data: string) => {
+          const parsedLogData = z
+            .record(z.unknown())
+            .safeParse(JSON.parse(data));
+          if (!parsedLogData.success) {
+            return {};
           }
+
+          return parsedLogData.data;
         });
-        const newLogsParsed = parseLogs(newLogs);
-        newLogsParsed.filter((log) => {
-          return log.metadata?.raw_labels?.porter_run_app_revision_id != null
-            && revisionIdToNumber[log.metadata.raw_labels.porter_run_app_revision_id] != null
-            && revisionIdToNumber[log.metadata.raw_labels.porter_run_app_revision_id] != 0
-        }).forEach((log) => {
-          if (log.metadata?.raw_labels?.porter_run_app_revision_id != null) {
-            const revisionNumber = revisionIdToNumber[log.metadata.raw_labels.porter_run_app_revision_id];
-            if (revisionNumber != null && revisionNumber != 0) {
-              log.metadata.revision = revisionNumber.toString();
-            }
-          }
-        })
-        const newLogsFiltered = filterLogs(newLogsParsed);
+        const newLogsParsed = parseLogsFromAgent(newLogs);
+
+        const logsWithRevisionNumber = newLogsParsed.map((log) => ({
+          ...log,
+          revision:
+            !!log.app_revision_id &&
+            !!revisionIdToNumber[log.app_revision_id] &&
+            revisionIdToNumber[log.app_revision_id] !== 0
+              ? revisionIdToNumber[log.app_revision_id].toString()
+              : "",
+        }));
+
+        const newLogsFiltered = filterLogs(logsWithRevisionNumber);
         pushLogs(newLogsFiltered);
       },
       onclose: () => {
@@ -238,32 +270,23 @@ export const useLogs = ({
     openWebsocket(websocketKey);
   };
 
-  const filterLogs = (logs: PorterLog[]) => {
-    return logs.filter(log => {
-      if (log.metadata == null) {
-        return true;
-      }
-
-      if (jobRunID !== "" && log.metadata.raw_labels?.controller_uid !== jobRunID) {
+  const filterLogs = (logs: PorterLog[]): PorterLog[] => {
+    return logs.filter((log) => {
+      if (
+        selectedFilterValues.output_stream !==
+          GenericFilter.getDefaultOption("output_stream").value &&
+        log.output_stream !== selectedFilterValues.output_stream
+      ) {
         return false;
       }
 
-      if (selectedFilterValues.output_stream !== GenericFilter.getDefaultOption("output_stream").value &&
-        log.metadata.output_stream !== selectedFilterValues.output_stream) {
+      // if we are filtering out predeploy logs, filter out logs that have "predeploy" in the service name
+      if (filterPredeploy && log.service_name.endsWith("predeploy")) {
         return false;
       }
 
-      if (filterPredeploy && (log.metadata.raw_labels?.porter_run_service_name ?? "").endsWith("predeploy")) {
-        return false;
-      }
-
-      if (selectedFilterValues.revision !== GenericFilter.getDefaultOption("revision").value &&
-        log.metadata.revision !== selectedFilterValues.revision) {
-        return false;
-      }
-
-      if (selectedFilterValues.revision_id !== GenericFilter.getDefaultOption("revision_id").value &&
-        log.metadata.raw_labels?.porter_run_app_revision_id !== selectedFilterValues.revision_id) {
+      // if we are missing a revision number, filter out the log unless we are showing predeploy logs (which don't have a revision number)
+      if (!log.revision && filterPredeploy) {
         return false;
       }
 
@@ -283,7 +306,6 @@ export const useLogs = ({
   }> => {
     try {
       const getLogsReq = {
-        app_id: appID,
         service_name: selectedFilterValues.service_name,
         deployment_target_id: deploymentTargetId,
         search_param: searchParam,
@@ -291,20 +313,26 @@ export const useLogs = ({
         end_range: endDate,
         limit,
         direction,
-        app_revision_id: appRevisionId,
+        app_revision_id:
+          revisionNumberToId[parseInt(selectedFilterValues.revision)],
+        job_run_name: jobRunName,
       };
 
-      const logsResp = await api.appLogs(
-        "<token>",
-        getLogsReq,
-        {
-          cluster_id: clusterID,
-          project_id: projectID,
-          porter_app_name: appName,
-        }
-      )
+      const logsResp = await api.appLogs("<token>", getLogsReq, {
+        cluster_id: clusterID,
+        project_id: projectID,
+        porter_app_name: appName,
+      });
 
-      if (logsResp.data == null) {
+      const parsedRes = z
+        .object({
+          logs: z.array(porterLogValidator),
+          backward_continue_time: z.string().nullable(),
+          forward_continue_time: z.string().nullable(),
+        })
+        .safeParse(logsResp.data);
+
+      if (!parsedRes.success) {
         return {
           logs: [],
           previousCursor: null,
@@ -312,32 +340,30 @@ export const useLogs = ({
         };
       }
 
-      const newLogs = parseLogs(logsResp.data.logs);
+      const newLogs = parsedRes.data.logs;
       if (direction === Direction.backward) {
         newLogs.reverse();
       }
 
-      newLogs.filter((log) => {
-        return log.metadata?.raw_labels?.porter_run_app_revision_id != null
-          && revisionIdToNumber[log.metadata.raw_labels.porter_run_app_revision_id] != null
-          && revisionIdToNumber[log.metadata.raw_labels.porter_run_app_revision_id] != 0
-      }).forEach((log) => {
-        if (log.metadata?.raw_labels?.porter_run_app_revision_id != null) {
-          const revisionNumber = revisionIdToNumber[log.metadata.raw_labels.porter_run_app_revision_id];
-          if (revisionNumber != null && revisionNumber != 0) {
-            log.metadata.revision = revisionNumber.toString();
-          }
-        }
-      })
+      const logsWithRevisionNumber = newLogs.map((log) => ({
+        ...log,
+        revision:
+          !!log.app_revision_id &&
+          !!revisionIdToNumber[log.app_revision_id] &&
+          revisionIdToNumber[log.app_revision_id] !== 0
+            ? revisionIdToNumber[log.app_revision_id].toString()
+            : "",
+      }));
 
       return {
-        logs: newLogs,
+        logs: logsWithRevisionNumber,
         previousCursor:
           // There are no more historical logs so don't set the previous cursor
-          newLogs.length < QUERY_LIMIT && direction == Direction.backward
+          logsWithRevisionNumber.length < QUERY_LIMIT &&
+          direction === Direction.backward
             ? null
-            : logsResp.data.backward_continue_time,
-        nextCursor: logsResp.data.forward_continue_time,
+            : parsedRes.data.backward_continue_time,
+        nextCursor: parsedRes.data.forward_continue_time,
       };
     } catch {
       return {
@@ -352,10 +378,18 @@ export const useLogs = ({
     setLoading(true);
     setLogs([]);
     flushLogsBuffer(true);
-    const endDate = timeRange?.endTime != null ? timeRange.endTime : dayjs(setDate);
-    const oneDayAgo = timeRange?.startTime != null ? timeRange.startTime : endDate.subtract(1, "day");
+    const endDate =
+      timeRange?.endTime != null ? timeRange.endTime : dayjs(setDate);
+    const oneDayAgo =
+      timeRange?.startTime != null
+        ? timeRange.startTime
+        : endDate.subtract(1, "day");
 
-    const { logs: initialLogs, previousCursor, nextCursor } = await queryLogs(
+    const {
+      logs: initialLogs,
+      previousCursor,
+      nextCursor,
+    } = await queryLogs(
       oneDayAgo.toISOString(),
       endDate.toISOString(),
       Direction.backward
@@ -468,14 +502,18 @@ export const useLogs = ({
 
     const flushLogsBufferInterval = setInterval(flushLogsBuffer, 3000);
 
-    return () => { clearInterval(flushLogsBufferInterval); };
+    return () => {
+      clearInterval(flushLogsBufferInterval);
+    };
   }, []);
 
   useEffect(() => {
     if (Object.keys(revisionIdToNumber).length) {
       // if a complete time range is not given, then we are live
-      const isLive = !setDate && (timeRange?.startTime == null || timeRange?.endTime == null);
-      refresh({ isLive });
+      const isLive =
+        !setDate &&
+        (timeRange?.startTime == null || timeRange?.endTime == null);
+      void refresh({ isLive });
       setIsLive(isLive);
     }
   }, [

@@ -215,7 +215,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             cluster_id: currentCluster?.id,
           }
         )
-        .then((res) => res?.data?.environmentGroups)
+        .then((res) => res?.data?.environment_groups)
         .catch((error) => {
           console.error("Failed to fetch environment groups:", error);
           return [];
@@ -413,7 +413,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           repo_name: tempPorterApp.repo_name,
           git_branch: tempPorterApp.git_branch,
           buildpacks: "",
-          environmentGroups: syncedEnvGroups?.map((env) => env.name),
+          environment_groups: syncedEnvGroups?.map((env) => env.name),
           user_update: true,
           ...options,
         }

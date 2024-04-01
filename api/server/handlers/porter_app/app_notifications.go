@@ -85,36 +85,10 @@ func (c *AppNotificationsHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	}
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "deployment-target-id", Value: request.DeploymentTargetID})
 
-	porterApps, err := c.Repo().PorterApp().ReadPorterAppsByProjectIDAndName(project.ID, appName)
-	if err != nil {
-		err := telemetry.Error(ctx, span, err, "error getting porter apps")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-		return
-	}
-	if len(porterApps) == 0 {
-		err := telemetry.Error(ctx, span, err, "no porter apps returned")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-		return
-	}
-	if len(porterApps) > 1 {
-		err := telemetry.Error(ctx, span, err, "multiple porter apps returned; unable to determine which one to use")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-		return
-	}
-
-	appId := porterApps[0].ID
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "app-id", Value: appId})
-
-	if appId == 0 {
-		err := telemetry.Error(ctx, span, err, "porter app id is missing")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-		return
-	}
-
 	listAppRevisionsReq := connect.NewRequest(&porterv1.ListAppRevisionsRequest{
 		ProjectId:                  int64(project.ID),
-		AppId:                      int64(appId),
 		DeploymentTargetIdentifier: &porterv1.DeploymentTargetIdentifier{Id: request.DeploymentTargetID},
+		AppName:                    appName,
 	})
 
 	listAppRevisionsResp, err := c.Config().ClusterControlPlaneClient.ListAppRevisions(ctx, listAppRevisionsReq)

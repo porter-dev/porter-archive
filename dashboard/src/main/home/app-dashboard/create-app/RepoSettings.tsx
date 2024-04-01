@@ -1,25 +1,30 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import api from "shared/api";
+import AnimateHeight from "react-animate-height";
 import { Controller, useFormContext } from "react-hook-form";
-import Text from "components/porter/Text";
-import Spacer from "components/porter/Spacer";
 import styled from "styled-components";
-import Input from "components/porter/Input";
-import { ControlledInput } from "components/porter/ControlledInput";
-import Select from "components/porter/Select";
-import AnimateHeight, { Height } from "react-animate-height";
-import { z } from "zod";
-import { PorterAppFormData, SourceOptions } from "lib/porter-apps";
-import RepositorySelector from "../build-settings/RepositorySelector";
-import BranchSelector from "../build-settings/BranchSelector";
-import BuildpackSettings, { DEFAULT_BUILDERS } from "../validate-apply/build-settings/buildpacks/BuildpackSettings";
 import { match } from "ts-pattern";
-import { BuildOptions } from "lib/porter-apps/build";
+import { z } from "zod";
+
 import Loading from "components/Loading";
+import { ControlledInput } from "components/porter/ControlledInput";
+import Input from "components/porter/Input";
+import Select from "components/porter/Select";
+import Spacer from "components/porter/Spacer";
+import Text from "components/porter/Text";
+import { type PorterAppFormData, type SourceOptions } from "lib/porter-apps";
+import { type BuildOptions } from "lib/porter-apps/build";
+
+import api from "shared/api";
+import { Context } from "shared/Context";
+
+import BranchSelector from "../build-settings/BranchSelector";
+import RepositorySelector from "../build-settings/RepositorySelector";
+import BuildpackSettings, {
+  DEFAULT_BUILDERS,
+} from "../validate-apply/build-settings/buildpacks/BuildpackSettings";
 import DockerfileSettings from "../validate-apply/build-settings/docker/DockerfileSettings";
-import useResizeObserver from "lib/hooks/useResizeObserver";
-import CollapsibleContainer from "components/porter/CollapsibleContainer";
+import PorterYamlInput from "./PorterYamlInput";
 
 type Props = {
   projectId: number;
@@ -43,18 +48,27 @@ const RepoSettings: React.FC<Props> = ({
   build,
   appExists,
 }) => {
+  const { currentProject } = useContext(Context);
   const { control, register, setValue } = useFormContext<PorterAppFormData>();
   const [showSettings, setShowSettings] = useState<boolean>(false);
 
-  const repoIsSet = useMemo(() => source.git_repo_name !== "", [
-    source.git_repo_name,
-  ]);
-  const branchIsSet = useMemo(() => source.git_branch !== "", [
-    source.git_branch,
-  ]);
+  const repoIsSet = useMemo(
+    () => source.git_repo_name !== "",
+    [source.git_repo_name]
+  );
+  const branchIsSet = useMemo(
+    () => source.git_branch !== "",
+    [source.git_branch]
+  );
 
   const { data: branchContents, isLoading } = useQuery<BranchContents>(
-    ["getBranchContents", projectId, source.git_branch, source.git_repo_name, appExists],
+    [
+      "getBranchContents",
+      projectId,
+      source.git_branch,
+      source.git_repo_name,
+      appExists,
+    ],
     async () => {
       const res = await api.getBranchContents(
         "<token>",
@@ -81,11 +95,16 @@ const RepoSettings: React.FC<Props> = ({
       return;
     }
 
-    const item = branchContents.find((item) =>
-      item.path.includes("Dockerfile") && item.type === "file"
+    const item = branchContents.find(
+      (item) => item.path.includes("Dockerfile") && item.type === "file"
     );
     if (item) {
-      setValue("app.build.dockerfile", item.path.startsWith("./") || item.path.startsWith("/") ? item.path : `./${item.path}`);
+      setValue(
+        "app.build.dockerfile",
+        item.path.startsWith("./") || item.path.startsWith("/")
+          ? item.path
+          : `./${item.path}`
+      );
       setValue("app.build.method", "docker");
     } else {
       setValue("app.build.buildpacks", []);
@@ -97,12 +116,12 @@ const RepoSettings: React.FC<Props> = ({
     <div>
       <Text size={16}>Build settings</Text>
       <Spacer y={0.5} />
-      {!appExists && 
+      {!appExists && (
         <>
           <Text color="helper">Specify your GitHub repository.</Text>
           <Spacer y={0.5} />
         </>
-      } 
+      )}
       {!source.git_repo_name && (
         <Controller
           name="source.git_repo_name"
@@ -135,7 +154,7 @@ const RepoSettings: React.FC<Props> = ({
             label="GitHub repository:"
             width="100%"
             value={source.git_repo_name}
-            setValue={() => { }}
+            setValue={() => {}}
             placeholder=""
           />
           {!appExists && (
@@ -148,7 +167,7 @@ const RepoSettings: React.FC<Props> = ({
                     git_repo_name: "",
                     git_branch: "",
                     git_repo_id: 0,
-                    porter_yaml_path: "./porter.yaml",
+                    porter_yaml_path: "",
                   });
 
                   setValue("app.build.context", "./");
@@ -161,12 +180,12 @@ const RepoSettings: React.FC<Props> = ({
             </>
           )}
           <Spacer y={0.5} />
-          {!appExists && 
+          {!appExists && (
             <>
               <Text color="helper">Specify your GitHub branch.</Text>
               <Spacer y={0.5} />
             </>
-          }
+          )}
           {!source.git_branch && (
             <Controller
               name="source.git_branch"
@@ -174,7 +193,9 @@ const RepoSettings: React.FC<Props> = ({
               render={({ field: { onChange } }) => (
                 <ExpandedWrapper>
                   <BranchSelector
-                    setBranch={(branch: string) => onChange(branch)}
+                    setBranch={(branch: string) => {
+                      onChange(branch);
+                    }}
                     repo_name={source.git_repo_name}
                     git_repo_id={source.git_repo_id}
                   />
@@ -190,10 +211,10 @@ const RepoSettings: React.FC<Props> = ({
                 type="text"
                 width="100%"
                 value={source.git_branch}
-                setValue={() => { }}
+                setValue={() => {}}
                 placeholder=""
               />
-              {!appExists &&
+              {!appExists && (
                 <>
                   <BackButton
                     width="145px"
@@ -201,7 +222,7 @@ const RepoSettings: React.FC<Props> = ({
                       setValue("source", {
                         ...source,
                         git_branch: "",
-                        porter_yaml_path: "./porter.yaml",
+                        porter_yaml_path: "",
                       });
 
                       setValue("app.build.context", "./");
@@ -212,14 +233,16 @@ const RepoSettings: React.FC<Props> = ({
                   </BackButton>
                   <Spacer y={0.5} />
                 </>
-              }
+              )}
               <Spacer y={0.5} />
-              {!appExists &&
+              {!appExists && (
                 <>
-                  <Text color="helper">Specify your application root path.</Text>
+                  <Text color="helper">
+                    Specify your application root path.
+                  </Text>
                   <Spacer y={0.5} />
                 </>
-              }
+              )}
               <ControlledInput
                 placeholder="ex: ./"
                 width="100%"
@@ -228,18 +251,41 @@ const RepoSettings: React.FC<Props> = ({
                 label={"Application root path:"}
               />
               <Spacer y={1} />
-              {isLoading && !appExists ?
+              {!appExists && currentProject?.id && (
+                <>
+                  <Text color="helper">
+                    (Optional) Specify your porter.yaml path.{" "}
+                    <a
+                      href="https://docs.porter.run/deploy/configuration-as-code/overview"
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      &nbsp;(?)
+                    </a>
+                  </Text>
+                  <Spacer y={0.5} />
+                  <PorterYamlInput
+                    projectId={currentProject.id}
+                    repoId={source.git_repo_id}
+                    repoOwner={source.git_repo_name.split("/")[0]}
+                    repoName={source.git_repo_name.split("/")[1]}
+                    branch={source.git_branch}
+                  />
+                  <Spacer y={1} />
+                </>
+              )}
+              {isLoading && !appExists ? (
                 <AdvancedBuildTitle>
                   <Loading />
                 </AdvancedBuildTitle>
-                :
+              ) : (
                 <StyledAdvancedBuildSettings
                   showSettings={showSettings}
                   onClick={() => {
                     setShowSettings(!showSettings);
                   }}
                 >
-                  {build.method == "docker" ? (
+                  {build.method === "docker" ? (
                     <AdvancedBuildTitle>
                       <i className="material-icons dropdown">arrow_drop_down</i>
                       Configure Dockerfile settings
@@ -251,11 +297,8 @@ const RepoSettings: React.FC<Props> = ({
                     </AdvancedBuildTitle>
                   )}
                 </StyledAdvancedBuildSettings>
-              }
-              <AnimateHeight
-                duration={500}
-                height={showSettings ? "auto" : 0}
-              >
+              )}
+              <AnimateHeight duration={500} height={showSettings ? "auto" : 0}>
                 <StyledSourceBox>
                   <Controller
                     name="app.build.method"
@@ -269,13 +312,13 @@ const RepoSettings: React.FC<Props> = ({
                           { value: "pack", label: "Buildpacks" },
                         ]}
                         setValue={(option: string) => {
-                          if (option == "docker") {
+                          if (option === "docker") {
                             onChange("docker");
-                          } else if (option == "pack") {
+                          } else if (option === "pack") {
                             // if toggling from docker to pack, initialize buildpacks to empty array and builder to default
                             onChange("pack");
                             setValue("app.build.buildpacks", []);
-                            setValue("app.build.builder", DEFAULT_BUILDERS[0])
+                            setValue("app.build.builder", DEFAULT_BUILDERS[0]);
                           }
                         }}
                         label="Build method"
@@ -383,7 +426,7 @@ const StyledAdvancedBuildSettings = styled.div`
     cursor: pointer;
     border-radius: 20px;
     transform: ${(props: { showSettings: boolean }) =>
-    props.showSettings ? "" : "rotate(-90deg)"};
+      props.showSettings ? "" : "rotate(-90deg)"};
   }
 `;
 

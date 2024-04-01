@@ -1,5 +1,7 @@
-import { appRevisionValidator } from "lib/revisions/types";
 import { z } from "zod";
+
+import { appRevisionValidator } from "lib/revisions/types";
+
 import { porterAppValidator } from "../app-view/AppView";
 
 export const appRevisionWithSourceValidator = z.object({
@@ -10,3 +12,14 @@ export const appRevisionWithSourceValidator = z.object({
 export type AppRevisionWithSource = z.infer<
   typeof appRevisionWithSourceValidator
 >;
+
+export const appInstanceValidator = z.object({
+  id: z.string(),
+  name: z.string(),
+  deployment_target: z.object({
+    id: z.string().optional(),
+    name: z.string().optional(),
+  }),
+});
+
+export type AppInstance = z.infer<typeof appInstanceValidator>;

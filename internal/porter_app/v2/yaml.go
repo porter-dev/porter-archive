@@ -98,17 +98,19 @@ const (
 
 // PorterApp represents all the possible fields in a Porter YAML file
 type PorterApp struct {
-	Version  string            `yaml:"version,omitempty"`
-	Name     string            `yaml:"name"`
-	Services []Service         `yaml:"services"`
-	Image    *Image            `yaml:"image,omitempty"`
-	Build    *Build            `yaml:"build,omitempty"`
-	Env      map[string]string `yaml:"env,omitempty"`
+	Version  string    `yaml:"version,omitempty"`
+	Name     string    `yaml:"name"`
+	Services []Service `yaml:"services"`
+	Image    *Image    `yaml:"image,omitempty"`
+	Build    *Build    `yaml:"build,omitempty"`
+	Env      Env       `yaml:"env,omitempty"`
 
-	Predeploy    *Service      `yaml:"predeploy,omitempty"`
-	EnvGroups    []string      `yaml:"envGroups,omitempty"`
-	EfsStorage   *EfsStorage   `yaml:"efsStorage,omitempty"`
-	RequiredApps []RequiredApp `yaml:"requiredApps,omitempty"`
+	Predeploy     *Service      `yaml:"predeploy,omitempty"`
+	InitialDeploy *Service      `yaml:"initialDeploy,omitempty"`
+	EnvGroups     []string      `yaml:"envGroups,omitempty"`
+	EfsStorage    *EfsStorage   `yaml:"efsStorage,omitempty"`
+	RequiredApps  []RequiredApp `yaml:"requiredApps,omitempty"`
+	AutoRollback  *AutoRollback `yaml:"autoRollback,omitempty"`
 }
 
 // PorterAppWithAddons is the definition of a porter app in a Porter YAML file with addons
@@ -141,6 +143,11 @@ type RequiredApp struct {
 
 // EfsStorage represents the EFS storage settings for a Porter app
 type EfsStorage struct {
+	Enabled bool `yaml:"enabled"`
+}
+
+// AutoRollback represents the auto rollback settings for a Porter app
+type AutoRollback struct {
 	Enabled bool `yaml:"enabled"`
 }
 
@@ -183,6 +190,7 @@ type Service struct {
 	Private                       *bool             `yaml:"private,omitempty" validate:"excluded_unless=Type web"`
 	IngressAnnotations            map[string]string `yaml:"ingressAnnotations,omitempty" validate:"excluded_unless=Type web"`
 	DisableTLS                    *bool             `yaml:"disableTLS,omitempty" validate:"excluded_unless=Type web"`
+	Sleep                         *bool             `yaml:"sleep,omitempty" validate:"excluded_unless=Type job"`
 }
 
 // AutoScaling represents the autoscaling settings for web services
@@ -205,10 +213,13 @@ type Domains struct {
 	Name string `yaml:"name"`
 }
 
-// HealthCheck is the health check settings for a web service
+// HealthCheck contains the health check settings
 type HealthCheck struct {
-	Enabled  bool   `yaml:"enabled"`
-	HttpPath string `yaml:"httpPath"`
+	Enabled             bool   `yaml:"enabled"`
+	HttpPath            string `yaml:"httpPath,omitempty"`
+	Command             string `yaml:"command,omitempty"`
+	TimeoutSeconds      int    `yaml:"timeoutSeconds,omitempty"`
+	InitialDelaySeconds *int32 `yaml:"initialDelaySeconds,omitempty"`
 }
 
 // ProtoFromApp converts a PorterApp type to a base PorterApp proto type and returns env variables
@@ -238,8 +249,6 @@ func ProtoFromApp(ctx context.Context, porterApp PorterApp) (*porterv1.PorterApp
 		}
 	}
 
-	// service map is only needed for backwards compatibility at this time
-	serviceMap := make(map[string]*porterv1.Service)
 	var services []*porterv1.Service
 
 	for _, service := range porterApp.Services {
@@ -254,10 +263,8 @@ func ProtoFromApp(ctx context.Context, porterApp PorterApp) (*porterv1.PorterApp
 		}
 
 		services = append(services, serviceProto)
-		serviceMap[service.Name] = serviceProto
 	}
 	appProto.ServiceList = services
-	appProto.Services = serviceMap // nolint:staticcheck // temporarily using deprecated field for backwards compatibility
 
 	if porterApp.Predeploy != nil {
 		predeployProto, err := serviceProtoFromConfig(*porterApp.Predeploy, porterv1.ServiceType_SERVICE_TYPE_JOB)
@@ -265,6 +272,14 @@ func ProtoFromApp(ctx context.Context, porterApp PorterApp) (*porterv1.PorterApp
 			return appProto, nil, telemetry.Error(ctx, span, err, "error casting predeploy config")
 		}
 		appProto.Predeploy = predeployProto
+	}
+
+	if porterApp.InitialDeploy != nil {
+		initialDeployProto, err := serviceProtoFromConfig(*porterApp.InitialDeploy, porterv1.ServiceType_SERVICE_TYPE_JOB)
+		if err != nil {
+			return appProto, nil, telemetry.Error(ctx, span, err, "error casting initial deploy config")
+		}
+		appProto.InitialDeploy = initialDeployProto
 	}
 
 	for _, envGroup := range porterApp.EnvGroups {
@@ -277,6 +292,12 @@ func ProtoFromApp(ctx context.Context, porterApp PorterApp) (*porterv1.PorterApp
 	if porterApp.EfsStorage != nil {
 		appProto.EfsStorage = &porterv1.EFS{
 			Enabled: porterApp.EfsStorage.Enabled,
+		}
+	}
+
+	if porterApp.AutoRollback != nil {
+		appProto.AutoRollback = &porterv1.AutoRollback{
+			Enabled: porterApp.AutoRollback.Enabled,
 		}
 	}
 
@@ -299,7 +320,42 @@ func ProtoFromApp(ctx context.Context, porterApp PorterApp) (*porterv1.PorterApp
 		})
 	}
 
-	return appProto, porterApp.Env, nil
+	envMap := make(map[string]string)
+	var envVariables []*porterv1.EnvVariable
+
+	for _, envVar := range porterApp.Env {
+		switch envVar.Source {
+		case EnvVariableSource_Value:
+			if !envVar.Value.IsSet {
+				return appProto, nil, telemetry.Error(ctx, span, nil, "no value set for env variable")
+			}
+
+			envMap[envVar.Key] = envVar.Value.Value
+		case EnvVariableSource_FromApp:
+			if !envVar.FromApp.IsSet {
+				return appProto, nil, telemetry.Error(ctx, span, nil, "no value set for env variable")
+			}
+
+			fromApp, err := EnvVarFromAppToProto(envVar.FromApp.Value)
+			if err != nil {
+				return appProto, nil, telemetry.Error(ctx, span, err, "error converting env variable from app to proto")
+			}
+
+			envVariables = append(envVariables, &porterv1.EnvVariable{
+				Key:    envVar.Key,
+				Source: porterv1.EnvVariableSource_ENV_VARIABLE_SOURCE_FROM_APP,
+				Definition: &porterv1.EnvVariable_FromApp{
+					FromApp: fromApp,
+				},
+			})
+		default:
+			return appProto, nil, telemetry.Error(ctx, span, nil, "invalid definition for env variable")
+		}
+	}
+
+	appProto.Env = envVariables
+
+	return appProto, envMap, nil
 }
 
 func protoEnumFromType(name string, service Service) porterv1.ServiceType {
@@ -372,8 +428,11 @@ func serviceProtoFromConfig(service Service, serviceType porterv1.ServiceType) (
 		var healthCheck *porterv1.HealthCheck
 		if service.HealthCheck != nil {
 			healthCheck = &porterv1.HealthCheck{
-				Enabled:  service.HealthCheck.Enabled,
-				HttpPath: service.HealthCheck.HttpPath,
+				Enabled:             service.HealthCheck.Enabled,
+				HttpPath:            service.HealthCheck.HttpPath,
+				Command:             service.HealthCheck.Command,
+				TimeoutSeconds:      int32(service.HealthCheck.TimeoutSeconds),
+				InitialDelaySeconds: service.HealthCheck.InitialDelaySeconds,
 			}
 		}
 		webConfig.HealthCheck = healthCheck
@@ -395,6 +454,9 @@ func serviceProtoFromConfig(service Service, serviceType porterv1.ServiceType) (
 		if service.DisableTLS != nil {
 			webConfig.DisableTls = service.DisableTLS
 		}
+		if service.Sleep != nil {
+			serviceProto.Sleep = service.Sleep
+		}
 
 		serviceProto.Config = &porterv1.Service_WebConfig{
 			WebConfig: webConfig,
@@ -413,6 +475,22 @@ func serviceProtoFromConfig(service Service, serviceType porterv1.ServiceType) (
 			}
 		}
 		workerConfig.Autoscaling = autoscaling
+
+		var healthCheck *porterv1.HealthCheck
+		if service.HealthCheck != nil {
+			healthCheck = &porterv1.HealthCheck{
+				Enabled:             service.HealthCheck.Enabled,
+				HttpPath:            service.HealthCheck.HttpPath,
+				Command:             service.HealthCheck.Command,
+				TimeoutSeconds:      int32(service.HealthCheck.TimeoutSeconds),
+				InitialDelaySeconds: service.HealthCheck.InitialDelaySeconds,
+			}
+		}
+		workerConfig.HealthCheck = healthCheck
+
+		if service.Sleep != nil {
+			serviceProto.Sleep = service.Sleep
+		}
 
 		serviceProto.Config = &porterv1.Service_WorkerConfig{
 			WorkerConfig: workerConfig,
@@ -480,6 +558,15 @@ func AppFromProto(appProto *porterv1.PorterApp) (PorterApp, error) {
 		porterApp.Predeploy = &appPredeploy
 	}
 
+	if appProto.InitialDeploy != nil {
+		appInitialDeploy, err := appServiceFromProto(appProto.InitialDeploy)
+		if err != nil {
+			return porterApp, err
+		}
+
+		porterApp.InitialDeploy = &appInitialDeploy
+	}
+
 	for _, envGroup := range appProto.EnvGroups {
 		if envGroup != nil {
 			porterApp.EnvGroups = append(porterApp.EnvGroups, fmt.Sprintf("%s:v%d", envGroup.Name, envGroup.Version))
@@ -489,6 +576,12 @@ func AppFromProto(appProto *porterv1.PorterApp) (PorterApp, error) {
 	if appProto.EfsStorage != nil {
 		porterApp.EfsStorage = &EfsStorage{
 			Enabled: appProto.EfsStorage.Enabled,
+		}
+	}
+
+	if appProto.AutoRollback != nil {
+		porterApp.AutoRollback = &AutoRollback{
+			Enabled: appProto.AutoRollback.Enabled,
 		}
 	}
 
@@ -515,6 +608,7 @@ func appServiceFromProto(service *porterv1.Service) (Service, error) {
 		SmartOptimization:             service.SmartOptimization,
 		GPU:                           gpu,
 		TerminationGracePeriodSeconds: service.TerminationGracePeriodSeconds,
+		Sleep:                         service.Sleep,
 	}
 
 	switch service.Type {
@@ -541,8 +635,11 @@ func appServiceFromProto(service *porterv1.Service) (Service, error) {
 		var healthCheck *HealthCheck
 		if webConfig.HealthCheck != nil {
 			healthCheck = &HealthCheck{
-				Enabled:  webConfig.HealthCheck.Enabled,
-				HttpPath: webConfig.HealthCheck.HttpPath,
+				Enabled:             webConfig.HealthCheck.Enabled,
+				HttpPath:            webConfig.HealthCheck.HttpPath,
+				Command:             webConfig.HealthCheck.Command,
+				TimeoutSeconds:      int(webConfig.HealthCheck.TimeoutSeconds),
+				InitialDelaySeconds: webConfig.HealthCheck.InitialDelaySeconds,
 			}
 		}
 		appService.HealthCheck = healthCheck
@@ -579,6 +676,18 @@ func appServiceFromProto(service *porterv1.Service) (Service, error) {
 			}
 		}
 		appService.Autoscaling = autoscaling
+
+		var healthCheck *HealthCheck
+		if workerConfig.HealthCheck != nil {
+			healthCheck = &HealthCheck{
+				Enabled:             workerConfig.HealthCheck.Enabled,
+				HttpPath:            workerConfig.HealthCheck.HttpPath,
+				Command:             workerConfig.HealthCheck.Command,
+				TimeoutSeconds:      int(workerConfig.HealthCheck.TimeoutSeconds),
+				InitialDelaySeconds: workerConfig.HealthCheck.InitialDelaySeconds,
+			}
+		}
+		appService.HealthCheck = healthCheck
 	case porterv1.ServiceType_SERVICE_TYPE_JOB:
 		jobConfig := service.GetJobConfig()
 		appService.Type = "job"

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useHistory, useLocation } from "react-router";
 import styled from "styled-components";
 
@@ -10,6 +10,7 @@ import { type DeploymentTarget } from "lib/hooks/useDeploymentTarget";
 import { type ClientNotification } from "lib/porter-apps/notification";
 
 import { useLatestRevision } from "../../LatestRevisionContext";
+import { NotificationContextProvider } from "./expanded-views/NotificationContextProvider";
 import NotificationExpandedView from "./expanded-views/NotificationExpandedView";
 import NotificationList from "./NotificationList";
 
@@ -36,62 +37,37 @@ const NotificationFeed: React.FC<Props> = ({
   const queryParams = new URLSearchParams(search);
   const notificationId = queryParams.get("notification_id");
 
-  const [selectedNotification, setSelectedNotification] = useState<
-    ClientNotification | undefined
-  >(undefined);
-
-  useEffect(() => {
-    if (
-      notificationId &&
-      notifications.length &&
-      notifications.find((n) => n.id === notificationId)
-    ) {
-      setSelectedNotification(
-        notifications.find((n) => n.id === notificationId)
-      );
-    } else {
-      setSelectedNotification(undefined);
-    }
-  }, [notificationId, JSON.stringify(notifications)]);
-
-  if (notifications.length === 0) {
-    return (
-      <Fieldset>
-        <Text size={16}>This application currently has no notifications. </Text>
-        <Spacer height="15px" />
-        <Text color="helper">
-          You will receive notifications here if we need to alert you about any
-          issues with your services.
-        </Text>
-      </Fieldset>
-    );
-  }
-
   return (
     <StyledNotificationFeed>
-      {selectedNotification ? (
-        <>
-          <Link
-            to={tabUrlGenerator({
-              tab: "notifications",
-            })}
-          >
-            <BackButton>
-              <i className="material-icons">keyboard_backspace</i>
-              Notifications
-            </BackButton>
-          </Link>
-          <Spacer y={0.25} />
-          <NotificationExpandedView
-            notification={selectedNotification}
-            projectId={projectId}
-            clusterId={clusterId}
-            appName={appName}
-            deploymentTargetId={deploymentTarget.id}
-            appId={appId}
-          />
-        </>
-      ) : (
+      {notificationId ? (
+        <NotificationContextProvider
+          notificationId={notificationId}
+          projectId={projectId}
+          clusterId={clusterId}
+          appName={appName}
+        >
+          <div>
+            <Link
+              to={tabUrlGenerator({
+                tab: "notifications",
+              })}
+            >
+              <BackButton>
+                <i className="material-icons">keyboard_backspace</i>
+                Notifications
+              </BackButton>
+            </Link>
+            <Spacer y={0.25} />
+            <NotificationExpandedView
+              projectId={projectId}
+              clusterId={clusterId}
+              appName={appName}
+              deploymentTargetId={deploymentTarget.id}
+              appId={appId}
+            />
+          </div>
+        </NotificationContextProvider>
+      ) : notifications.length !== 0 ? (
         <NotificationList
           notifications={notifications}
           onNotificationClick={(notification: ClientNotification) => {
@@ -109,6 +85,17 @@ const NotificationFeed: React.FC<Props> = ({
           appName={appName}
           deploymentTargetId={deploymentTarget.id}
         />
+      ) : (
+        <Fieldset>
+          <Text size={16}>
+            This application currently has no notifications.{" "}
+          </Text>
+          <Spacer height="15px" />
+          <Text color="helper">
+            No issues have been found. You will receive notifications here if we
+            need to alert you about any issues with your services.
+          </Text>
+        </Fieldset>
       )}
     </StyledNotificationFeed>
   );

@@ -38,8 +38,12 @@ type buildInput struct {
 	// CurrentImageTag is used in docker build to cache from
 	CurrentImageTag string
 	RepositoryURL   string
+	// PullImageBeforeBuild is used to pull the docker image before building
+	PullImageBeforeBuild bool
 
 	Env map[string]string
+	// SkipPush is used to skip pushing the image to the registry
+	SkipPush bool
 }
 
 type buildOutput struct {
@@ -112,6 +116,7 @@ func build(ctx context.Context, client api.Client, inp buildInput) buildOutput {
 			IsDockerfileInCtx: isDockerfileInCtx,
 			Env:               inp.Env,
 			LogFile:           logFile,
+			UseCache:          inp.PullImageBeforeBuild,
 		}
 
 		err = dockerAgent.BuildLocal(
@@ -148,6 +153,13 @@ func build(ctx context.Context, client api.Client, inp buildInput) buildOutput {
 			Buildpacks: inp.BuildPacks,
 		}
 
+		if buildConfig.Builder == "heroku/buildpacks:20" {
+			if opts.Env == nil {
+				opts.Env = map[string]string{}
+			}
+			opts.Env["ALLOW_EOL_SHIMMED_BUILDER"] = "1"
+		}
+
 		err := packAgent.Build(ctx, opts, buildConfig, "")
 		if err != nil {
 			output.Error = fmt.Errorf("error building image with pack: %w", err)
@@ -168,13 +180,50 @@ func build(ctx context.Context, client api.Client, inp buildInput) buildOutput {
 		return output
 	}
 
-	err = dockerAgent.PushImage(ctx, fmt.Sprintf("%s:%s", repositoryURL, tag))
-	if err != nil {
-		output.Error = fmt.Errorf("error pushing image: %w", err)
-		return output
+	if !inp.SkipPush {
+		err = dockerAgent.PushImage(ctx, fmt.Sprintf("%s:%s", repositoryURL, tag))
+		if err != nil {
+			output.Error = fmt.Errorf("error pushing image: %w", err)
+			return output
+		}
 	}
 
 	return output
+}
+
+type pushInput struct {
+	ProjectID     uint
+	ImageTag      string
+	RepositoryURL string
+}
+
+func push(ctx context.Context, client api.Client, inp pushInput) error {
+	if inp.ProjectID == 0 {
+		return errors.New("must specify a project id")
+	}
+	projectID := inp.ProjectID
+
+	if inp.ImageTag == "" {
+		return errors.New("must specify an image tag")
+	}
+	tag := inp.ImageTag
+
+	if inp.RepositoryURL == "" {
+		return errors.New("must specify a registry url")
+	}
+	repositoryURL := strings.TrimPrefix(inp.RepositoryURL, "https://")
+
+	dockerAgent, err := docker.NewAgentWithAuthGetter(ctx, client, projectID)
+	if err != nil {
+		return fmt.Errorf("error getting docker agent: %w", err)
+	}
+
+	err = dockerAgent.PushImage(ctx, fmt.Sprintf("%s:%s", repositoryURL, tag))
+	if err != nil {
+		return fmt.Errorf("error pushing image: %w", err)
+	}
+
+	return nil
 }
 
 func createImageRepositoryIfNotExists(ctx context.Context, client api.Client, projectID uint, imageURL string) error {

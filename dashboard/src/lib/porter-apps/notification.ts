@@ -1,11 +1,19 @@
+import { PorterApp } from "@porter-dev/api-contracts";
 import _ from "lodash";
+import { z } from "zod";
 
 import {
   isRevisionNotification,
   isServiceNotification,
+  porterAppNotificationEventMetadataValidator,
   type PorterAppNotification,
 } from "main/home/app-dashboard/app-view/tabs/activity-feed/events/types";
+import { appRevisionValidator } from "lib/revisions/types";
 
+import api from "shared/api";
+import { valueExists } from "shared/util";
+
+import { clientAppFromProto } from ".";
 import {
   ERROR_CODE_APPLICATION_ROLLBACK,
   ERROR_CODE_APPLICATION_ROLLBACK_FAILED,
@@ -16,6 +24,7 @@ type BaseClientNotification = {
   id: string;
   timestamp: string;
   messages: PorterAppNotification[];
+  isHistorical: boolean; // refers to whether the notification currently applies or not
 };
 
 export type ClientServiceNotification = BaseClientNotification & {
@@ -51,20 +60,27 @@ export const isClientRevisionNotification = (
   return notification.scope === "REVISION";
 };
 
-export function deserializeNotifications(
-  notifications: PorterAppNotification[],
-  latestClientServices: ClientService[],
-  latestRevisionId: string
-): ClientNotification[] {
+export function deserializeNotifications({
+  notifications,
+  clientServices,
+  revisionId,
+  isHistorical,
+}: {
+  notifications: PorterAppNotification[];
+  clientServices: ClientService[];
+  revisionId: string;
+  isHistorical: boolean;
+}): ClientNotification[] {
   const revisionNotifications = orderNotificationsByTimestamp(
-    clientRevisionNotifications(notifications),
+    clientRevisionNotifications(notifications, isHistorical),
     "asc"
   );
   const serviceNotifications = orderNotificationsByTimestamp(
     clientServiceNotifications(
       notifications,
-      latestClientServices,
-      latestRevisionId
+      clientServices,
+      revisionId,
+      isHistorical
     ),
     "asc"
   );
@@ -74,11 +90,12 @@ export function deserializeNotifications(
 
 const clientServiceNotifications = (
   notifications: PorterAppNotification[],
-  latestClientServices: ClientService[],
-  latestRevisionId: string
+  clientServices: ClientService[],
+  revisionId: string,
+  isHistorical: boolean
 ): ClientServiceNotification[] => {
   const serviceNotifications = notifications
-    .filter((n) => n.app_revision_id === latestRevisionId)
+    .filter((n) => n.app_revision_id === revisionId)
     .filter(isServiceNotification);
 
   const notificationsGroupedByService = _.groupBy(
@@ -86,7 +103,7 @@ const clientServiceNotifications = (
     (notification) => notification.metadata.service_name
   );
 
-  return latestClientServices
+  return clientServices
     .filter((svc) => notificationsGroupedByService[svc.name.value] != null)
     .map((svc) => {
       const serviceName = svc.name.value;
@@ -112,12 +129,14 @@ const clientServiceNotifications = (
         messages,
         appRevisionId,
         service: svc,
+        isHistorical,
       };
     });
 };
 
 const clientRevisionNotifications = (
-  notifications: PorterAppNotification[]
+  notifications: PorterAppNotification[],
+  isHistorical: boolean
 ): ClientRevisionNotification[] => {
   const revisionNotifications = notifications.filter(isRevisionNotification);
 
@@ -134,6 +153,7 @@ const clientRevisionNotifications = (
       isRollbackRelated:
         notification.error.code === ERROR_CODE_APPLICATION_ROLLBACK ||
         notification.error.code === ERROR_CODE_APPLICATION_ROLLBACK_FAILED,
+      isHistorical,
     };
   });
 };
@@ -151,4 +171,70 @@ const orderNotificationsByTimestamp = <T extends Array<{ timestamp: string }>>(
       return bTimestamp.getTime() - aTimestamp.getTime();
     }
   });
+};
+
+// TODO: make this generic so that latestrevisioncontext can use the same function
+export const getClientNotificationById = async ({
+  notificationId,
+  projectId,
+  clusterId,
+  appName,
+}: {
+  notificationId: string;
+  projectId: number;
+  clusterId: number;
+  appName: string;
+}): Promise<ClientNotification | undefined> => {
+  try {
+    const res = await api.getNotification(
+      "<token>",
+      {},
+      {
+        project_id: projectId,
+        notification_id: notificationId,
+      }
+    );
+    const { notification: porterAppNotification } = await z
+      .object({
+        notification: porterAppNotificationEventMetadataValidator,
+      })
+      .parseAsync(res.data);
+    const revisionId = porterAppNotification.app_revision_id;
+    const revisionRes = await api.getRevision(
+      "<token>",
+      {},
+      {
+        project_id: projectId,
+        cluster_id: clusterId,
+        porter_app_name: appName,
+        revision_id: revisionId,
+      }
+    );
+    const { app_revision: appRevision } = await z
+      .object({ app_revision: appRevisionValidator })
+      .parseAsync(revisionRes.data);
+
+    const proto = PorterApp.fromJsonString(atob(appRevision.b64_app_proto), {
+      ignoreUnknownFields: true,
+    });
+    const appFromRevision = clientAppFromProto({ proto, overrides: null });
+    const servicesFromRevision = [
+      ...appFromRevision.services,
+      appFromRevision.predeploy?.length
+        ? appFromRevision.predeploy[0]
+        : undefined,
+    ].filter(valueExists);
+
+    const notifications = deserializeNotifications({
+      notifications: [porterAppNotification],
+      clientServices: servicesFromRevision,
+      revisionId,
+      isHistorical: true,
+    });
+
+    if (notifications.length > 1) {
+      return;
+    }
+    return notifications[0];
+  } catch (err) {}
 };

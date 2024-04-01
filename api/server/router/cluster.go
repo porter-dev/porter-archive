@@ -262,6 +262,35 @@ func getClusterRoutes(
 		Router:   r,
 	})
 
+	// POST /api/projects/{project_id}/clusters/{cluster_id}/rename -> cluster.NewRenameClusterHandler
+	renameClusterEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/rename",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	renameClusterHandler := cluster.NewRenameClusterHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: renameClusterEndpoint,
+		Handler:  renameClusterHandler,
+		Router:   r,
+	})
+
 	// GET /api/projects/{project_id}/clusters/{cluster_id}/databases -> database.NewDatabaseListHandler
 	listDatabaseEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
@@ -290,14 +319,14 @@ func getClusterRoutes(
 		Router:   r,
 	})
 
-	// GET /api/projects/{project_id}/clusters/{cluster_id}/datastore/status -> datastore.NewStatusHandler
-	datastoreStatusEndpoint := factory.NewAPIEndpoint(
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/compliance/checks -> cluster.NewListComplianceChecksHandler
+	listComplianceChecksEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbList,
 			Method: types.HTTPVerbGet,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: relPath + "/datastore/status",
+				RelativePath: relPath + "/compliance/checks",
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
@@ -307,15 +336,15 @@ func getClusterRoutes(
 		},
 	)
 
-	datastoreStatusHandler := datastore.NewStatusHandler(
+	listComplianceChecksHandler := cluster.NewListComplianceChecksHandler(
 		config,
 		factory.GetDecoderValidator(),
 		factory.GetResultWriter(),
 	)
 
 	routes = append(routes, &router.Route{
-		Endpoint: datastoreStatusEndpoint,
-		Handler:  datastoreStatusHandler,
+		Endpoint: listComplianceChecksEndpoint,
+		Handler:  listComplianceChecksHandler,
 		Router:   r,
 	})
 
@@ -738,35 +767,6 @@ func getClusterRoutes(
 		routes = append(routes, &router.Route{
 			Endpoint: enablePullRequestEndpoint,
 			Handler:  enablePullRequestHandler,
-			Router:   r,
-		})
-
-		// POST /api/projects/{project_id}/clusters/{cluster_id}/rename -> cluster.NewRenameClusterHandler
-		renameClusterEndpoint := factory.NewAPIEndpoint(
-			&types.APIRequestMetadata{
-				Verb:   types.APIVerbCreate,
-				Method: types.HTTPVerbPost,
-				Path: &types.Path{
-					Parent:       basePath,
-					RelativePath: relPath + "/rename",
-				},
-				Scopes: []types.PermissionScope{
-					types.UserScope,
-					types.ProjectScope,
-					types.ClusterScope,
-				},
-			},
-		)
-
-		renameClusterHandler := cluster.NewRenameClusterHandler(
-			config,
-			factory.GetDecoderValidator(),
-			factory.GetResultWriter(),
-		)
-
-		routes = append(routes, &router.Route{
-			Endpoint: renameClusterEndpoint,
-			Handler:  renameClusterHandler,
 			Router:   r,
 		})
 
@@ -1835,6 +1835,35 @@ func getClusterRoutes(
 	routes = append(routes, &router.Route{
 		Endpoint: areExternalProvidersEnabledEndpoint,
 		Handler:  areExternalProvidersEnabledHandler,
+		Router:   r,
+	})
+
+	// POST /api/projects/{project_id}/clusters/{cluster_id}/datastores -> cluster.NewUpdateDatastoreHandler
+	updateDatastoreEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbUpdate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/datastores", relPath),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	updateDatastoreHandler := datastore.NewUpdateDatastoreHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: updateDatastoreEndpoint,
+		Handler:  updateDatastoreHandler,
 		Router:   r,
 	})
 

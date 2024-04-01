@@ -10,6 +10,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/telemetry"
 )
 
 type RenameClusterHandler struct {
@@ -29,10 +30,15 @@ func NewRenameClusterHandler(
 }
 
 func (c *RenameClusterHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-rename-cluster")
+	defer span.End()
+
+	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
 
 	request := &types.UpdateClusterRequest{}
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
+		err := telemetry.Error(ctx, span, nil, "invalid request")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
 
@@ -42,7 +48,8 @@ func (c *RenameClusterHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 
 	cluster, err := c.Repo().Cluster().UpdateCluster(cluster, c.Config().LaunchDarklyClient)
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		err = telemetry.Error(ctx, span, err, "error updating cluster")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 

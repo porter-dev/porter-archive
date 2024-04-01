@@ -7,7 +7,8 @@ const theme = {
     bg: "linear-gradient(180deg, #26292e, #24272c)",
   },
   text: {
-    primary: "#ffffff",
+    primary: "#fefefe",
+    secondary: "#9999aa",
   },
 }
 

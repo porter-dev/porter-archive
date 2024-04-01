@@ -2,6 +2,7 @@ package commands
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"io"
@@ -12,9 +13,11 @@ import (
 	"github.com/fatih/color"
 	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/cli/cmd/commands/flags"
 	"github.com/porter-dev/porter/cli/cmd/config"
 	"github.com/porter-dev/porter/cli/cmd/utils"
 	v2 "github.com/porter-dev/porter/cli/cmd/v2"
+	appV2 "github.com/porter-dev/porter/internal/porter_app/v2"
 	"github.com/spf13/cobra"
 	batchv1 "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"
@@ -34,16 +37,17 @@ import (
 )
 
 var (
-	appNamespace     string
-	appVerbose       bool
-	appExistingPod   bool
-	appInteractive   bool
-	appContainerName string
-	appTag           string
-	deploymentTarget string
-	appCpuMilli      int
-	appMemoryMi      int
-	jobName          string
+	appContainerName     string
+	appCpuMilli          int
+	appExistingPod       bool
+	appInteractive       bool
+	appMemoryMi          int
+	appNamespace         string
+	appTag               string
+	appVerbose           bool
+	appWait              bool
+	deploymentTargetName string
+	jobName              string
 )
 
 const (
@@ -60,12 +64,110 @@ func registerCommand_App(cliConf config.CLIConfig) *cobra.Command {
 	}
 
 	appCmd.PersistentFlags().StringVarP(
-		&deploymentTarget,
+		&deploymentTargetName,
 		"target",
 		"x",
-		"default",
-		"the deployment target for the app, default is \"default\"",
+		"",
+		"the name of the deployment target for the app",
 	)
+
+	appBuildCommand := &cobra.Command{
+		Use:   "build [application]",
+		Args:  cobra.MinimumNArgs(1),
+		Short: "Builds your application.",
+		Long: fmt.Sprintf(`
+  %s
+
+Builds a new version of the specified app. Attempts to use any build settings
+previously configured for the app, which can be overridden with flags.
+
+If you would like to change the build context, you can do so by using the --build-context flag:
+
+  %s
+
+When using "--method docker", you can specify the path to the Dockerfile using the
+--dockerfile flag. This will also override the Dockerfile path that you may have linked
+for the application:
+
+  %s
+
+To use buildpacks with the "--method pack" flag, you can specify the builder and attach
+buildpacks using the --builder and --attach-buildpacks flags:
+
+	%s
+`,
+			color.New(color.FgBlue, color.Bold).Sprintf("Help for \"porter app build\":"),
+			color.New(color.FgGreen, color.Bold).Sprintf("porter app build example --build-context ./app"),
+			color.New(color.FgGreen, color.Bold).Sprintf("porter app build example-app --method docker --dockerfile ./prod.Dockerfile"),
+			color.New(color.FgGreen, color.Bold).Sprintf("porter app build example-app --method pack --builder heroku/buildpacks:20 --attach-buildpacks heroku/nodejs"),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return checkLoginAndRunWithConfig(cmd, cliConf, args, appBuild)
+		},
+	}
+	flags.UseAppBuildFlags(appBuildCommand)
+	appBuildCommand.PersistentFlags().String(
+		flags.App_ImageTag,
+		"",
+		"set the image tag to use for the build",
+	)
+	appCmd.AddCommand(appBuildCommand)
+
+	appPushCommand := &cobra.Command{
+		Use:   "push [application]",
+		Args:  cobra.MinimumNArgs(1),
+		Short: "Pushes your application to a remote registry.",
+		Long: fmt.Sprintf(`
+	%s
+
+Pushes the specified app to your default Porter registry. If no tag is specified, the latest
+commit SHA from the current branch will be used as the tag.
+
+You can specify a tag using the --tag flag:
+
+	%s
+`,
+			color.New(color.FgBlue, color.Bold).Sprintf("Help for \"porter app push\":"),
+			color.New(color.FgGreen, color.Bold).Sprintf("porter app push example-app --tag v1.0.0"),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return checkLoginAndRunWithConfig(cmd, cliConf, args, appPush)
+		},
+	}
+	appPushCommand.PersistentFlags().String(
+		flags.App_ImageTag,
+		"",
+		"set the image tag to use for the push",
+	)
+	appCmd.AddCommand(appPushCommand)
+
+	appUpdateCommand := &cobra.Command{
+		Use:   "update [application]",
+		Args:  cobra.MinimumNArgs(1),
+		Short: "Updates an application with the provided configuration.",
+		Long: fmt.Sprintf(`
+	%s
+
+Updates the specified app with the provided configuration. This command differs from "porter apply"
+in that it only updates the app, but does not attempt to build a new image.`,
+			color.New(color.FgBlue, color.Bold).Sprintf("Help for \"porter app update\":"),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return checkLoginAndRunWithConfig(cmd, cliConf, args, appUpdate)
+		},
+	}
+	appUpdateCommand.PersistentFlags().StringVarP(&porterYAML, "file", "f", "", "path to porter.yaml")
+	appUpdateCommand.PersistentFlags().BoolVarP(
+		&appWait,
+		"wait",
+		"w",
+		false,
+		"set this to wait until an update has rolled out successfully, otherwise time out",
+	)
+	flags.UseAppConfigFlags(appUpdateCommand)
+	flags.UseAppImageFlags(appUpdateCommand)
+
+	appCmd.AddCommand(appUpdateCommand)
 
 	// appRunCmd represents the "porter app run" subcommand
 	appRunCmd := &cobra.Command{
@@ -109,6 +211,14 @@ func registerCommand_App(cliConf config.CLIConfig) *cobra.Command {
 		},
 	}
 
+	appUpdateTagCmd.PersistentFlags().BoolVarP(
+		&appWait,
+		"wait",
+		"w",
+		false,
+		"set this to wait and be notified when an update is successful, otherwise time out",
+	)
+
 	appUpdateTagCmd.PersistentFlags().StringVarP(
 		&appTag,
 		"tag",
@@ -128,6 +238,17 @@ func registerCommand_App(cliConf config.CLIConfig) *cobra.Command {
 		},
 	}
 	appCmd.AddCommand(appRollbackCmd)
+
+	// appManifestsCmd represents the "porter app manifest" subcommand
+	appManifestsCmd := &cobra.Command{
+		Use:   "manifests [application]",
+		Args:  cobra.MinimumNArgs(1),
+		Short: "Prints the kubernetes manifests for an application.",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return checkLoginAndRunWithConfig(cmd, cliConf, args, appManifests)
+		},
+	}
+	appCmd.AddCommand(appManifestsCmd)
 
 	return appCmd
 }
@@ -154,6 +275,13 @@ func appRunFlags(appRunCmd *cobra.Command) {
 		"interactive",
 		false,
 		"whether to run in interactive mode (default false)",
+	)
+
+	appRunCmd.PersistentFlags().BoolVar(
+		&appWait,
+		"wait",
+		false,
+		"whether to wait for the command to complete before exiting for non-interactive mode (default false)",
 	)
 
 	appRunCmd.PersistentFlags().IntVarP(
@@ -186,6 +314,142 @@ func appRunFlags(appRunCmd *cobra.Command) {
 		"",
 		"name of the job to run (will run the job as defined instead of the provided command, and returns the job run id without waiting for the job to complete or displaying logs)",
 	)
+}
+
+func appBuild(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ config.FeatureFlags, cmd *cobra.Command, args []string) error {
+	appName := args[0]
+	if appName == "" {
+		return fmt.Errorf("app name must be specified")
+	}
+
+	buildValues, err := flags.AppBuildValuesFromCmd(cmd)
+	if err != nil {
+		return err
+	}
+
+	patchOperations := appV2.PatchOperationsFromFlagValues(appV2.PatchOperationsFromFlagValuesInput{
+		BuildMethod:  buildValues.BuildMethod,
+		Dockerfile:   buildValues.Dockerfile,
+		Builder:      buildValues.Builder,
+		Buildpacks:   buildValues.Buildpacks,
+		BuildContext: buildValues.BuildContext,
+	})
+
+	tag, err := cmd.Flags().GetString(flags.App_ImageTag)
+	if err != nil {
+		return fmt.Errorf("error getting tag: %w", err)
+	}
+
+	err = v2.AppBuild(ctx, v2.AppBuildInput{
+		CLIConfig:            cliConfig,
+		Client:               client,
+		AppName:              appName,
+		DeploymentTargetName: deploymentTargetName,
+		BuildMethod:          buildValues.BuildMethod,
+		Dockerfile:           buildValues.Dockerfile,
+		Builder:              buildValues.Builder,
+		Buildpacks:           buildValues.Buildpacks,
+		BuildContext:         buildValues.BuildContext,
+		ImageTag:             tag,
+		PatchOperations:      patchOperations,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to build app: %w", err)
+	}
+
+	return nil
+}
+
+func appPush(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ config.FeatureFlags, cmd *cobra.Command, args []string) error {
+	appName := args[0]
+	if appName == "" {
+		return fmt.Errorf("app name must be specified")
+	}
+
+	tag, err := cmd.Flags().GetString(flags.App_ImageTag)
+	if err != nil {
+		return fmt.Errorf("error getting tag: %w", err)
+	}
+
+	err = v2.AppPush(ctx, v2.AppPushInput{
+		CLIConfig:            cliConfig,
+		Client:               client,
+		AppName:              appName,
+		DeploymentTargetName: deploymentTargetName,
+		ImageTag:             tag,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to push image for app: %w", err)
+	}
+
+	return nil
+}
+
+func appUpdate(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ config.FeatureFlags, cmd *cobra.Command, args []string) error {
+	appName := args[0]
+	if appName == "" {
+		return fmt.Errorf("app name must be specified")
+	}
+
+	extraAppConfig, err := flags.AppConfigValuesFromCmd(cmd)
+	if err != nil {
+		return fmt.Errorf("could not retrieve app config values from command")
+	}
+
+	imageValues, err := flags.AppImageValuesFromCmd(cmd)
+	if err != nil {
+		return fmt.Errorf("could not retrieve image values from command")
+	}
+
+	patchOperations := appV2.PatchOperationsFromFlagValues(appV2.PatchOperationsFromFlagValuesInput{
+		EnvGroups:       extraAppConfig.AttachEnvGroups,
+		ImageRepository: imageValues.Repository,
+		ImageTag:        imageValues.Tag,
+	})
+
+	inp := v2.ApplyInput{
+		CLIConfig:                   cliConfig,
+		Client:                      client,
+		PorterYamlPath:              porterYAML,
+		AppName:                     appName,
+		ImageTagOverride:            imageValues.Tag,
+		PreviewApply:                previewApply,
+		WaitForSuccessfulDeployment: appWait,
+		Exact:                       exact,
+		PatchOperations:             patchOperations,
+		SkipBuild:                   true, // skip build for update
+	}
+
+	err = v2.Apply(ctx, inp)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func appManifests(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ config.FeatureFlags, _ *cobra.Command, args []string) error {
+	appName := args[0]
+	if appName == "" {
+		return fmt.Errorf("app name must be specified")
+	}
+
+	manifest, err := client.GetAppManifests(ctx, cliConfig.Project, cliConfig.Cluster, appName)
+	if err != nil {
+		return fmt.Errorf("failed to get app manifest: %w", err)
+	}
+
+	decoded, err := base64.StdEncoding.DecodeString(manifest.Base64Manifests)
+	if err != nil {
+		return fmt.Errorf("failed to decode app manifest: %w", err)
+	}
+
+	_, err = os.Stdout.WriteString(string(decoded))
+	if err != nil {
+		return fmt.Errorf("failed to write app manifest: %w", err)
+	}
+
+	return nil
 }
 
 func appRollback(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ config.FeatureFlags, _ *cobra.Command, args []string) error {
@@ -222,10 +486,12 @@ func appRun(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client a
 		}
 
 		return v2.RunAppJob(ctx, v2.RunAppJobInput{
-			CLIConfig: cliConfig,
-			Client:    client,
-			AppName:   args[0],
-			JobName:   jobName,
+			CLIConfig:            cliConfig,
+			Client:               client,
+			DeploymentTargetName: deploymentTargetName,
+			AppName:              args[0],
+			JobName:              jobName,
+			WaitForExit:          appWait,
 		})
 	}
 
@@ -247,7 +513,7 @@ func appRun(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client a
 	// updated exec args includes launcher command prepended if needed, otherwise it is the same as execArgs
 	var updatedExecArgs []string
 	if project.ValidateApplyV2 {
-		podsSimple, updatedExecArgs, namespace, err = getPodsFromV2PorterYaml(ctx, execArgs, client, cliConfig, args[0], deploymentTarget)
+		podsSimple, updatedExecArgs, namespace, err = getPodsFromV2PorterYaml(ctx, execArgs, client, cliConfig, args[0], deploymentTargetName)
 		if err != nil {
 			return err
 		}
@@ -289,17 +555,8 @@ func appRun(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client a
 
 	var selectedContainerName string
 
-	if len(selectedPod.ContainerNames) == 0 {
-		return fmt.Errorf("At least one container must exist in the selected pod.")
-	} else if len(selectedPod.ContainerNames) == 1 {
-		if appContainerName != "" && appContainerName != selectedPod.ContainerNames[0] {
-			return fmt.Errorf("provided container %s does not exist in pod %s", appContainerName, selectedPod.Name)
-		}
-
-		selectedContainerName = selectedPod.ContainerNames[0]
-	}
-
-	if appContainerName != "" && selectedContainerName == "" {
+	// if --container is provided, check whether the provided container exists in the pod.
+	if appContainerName != "" {
 		// check if provided container name exists in the pod
 		for _, name := range selectedPod.ContainerNames {
 			if name == appContainerName {
@@ -313,26 +570,18 @@ func appRun(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client a
 		}
 	}
 
-	if selectedContainerName == "" {
-		if !appInteractive {
-			return fmt.Errorf("container name must be specified using the --container flag when not using interactive mode")
-		}
-
-		selectedContainer, err := utils.PromptSelect("Select the container:", selectedPod.ContainerNames)
-		if err != nil {
-			return err
-		}
-
-		selectedContainerName = selectedContainer
+	if len(selectedPod.ContainerNames) == 0 {
+		return fmt.Errorf("At least one container must exist in the selected pod.")
+	} else if len(selectedPod.ContainerNames) >= 1 {
+		selectedContainerName = selectedPod.ContainerNames[0]
 	}
 
-	config := &AppPorterRunSharedConfig{
+	config := &KubernetesSharedConfig{
 		Client:    client,
 		CLIConfig: cliConfig,
 	}
 
 	err = config.setSharedConfig(ctx)
-
 	if err != nil {
 		return fmt.Errorf("Could not retrieve kube credentials: %s", err.Error())
 	}
@@ -368,7 +617,7 @@ func getImageNameFromPod(ctx context.Context, clientset *kubernetes.Clientset, n
 }
 
 func appCleanup(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ config.FeatureFlags, _ *cobra.Command, _ []string) error {
-	config := &AppPorterRunSharedConfig{
+	config := &KubernetesSharedConfig{
 		Client:    client,
 		CLIConfig: cliConfig,
 	}
@@ -456,7 +705,8 @@ func appGetEphemeralPods(ctx context.Context, namespace string, clientset *kuber
 	return podNames, nil
 }
 
-type AppPorterRunSharedConfig struct {
+// KubernetesSharedConfig allows for interacting with a kubernetes cluster
+type KubernetesSharedConfig struct {
 	Client     api.Client
 	RestConf   *rest.Config
 	Clientset  *kubernetes.Clientset
@@ -464,7 +714,7 @@ type AppPorterRunSharedConfig struct {
 	CLIConfig  config.CLIConfig
 }
 
-func (p *AppPorterRunSharedConfig) setSharedConfig(ctx context.Context) error {
+func (p *KubernetesSharedConfig) setSharedConfig(ctx context.Context) error {
 	pID := p.CLIConfig.Project
 	cID := p.CLIConfig.Cluster
 
@@ -609,7 +859,7 @@ func appGetPodsV2PorterYaml(ctx context.Context, cliConfig config.CLIConfig, cli
 	return res, namespace, containerHasLauncherStartCommand, nil
 }
 
-func appExecuteRun(config *AppPorterRunSharedConfig, namespace, name, container string, args []string) error {
+func appExecuteRun(config *KubernetesSharedConfig, namespace, name, container string, args []string) error {
 	req := config.RestClient.Post().
 		Resource("pods").
 		Name(name).
@@ -649,7 +899,7 @@ func appExecuteRun(config *AppPorterRunSharedConfig, namespace, name, container 
 	})
 }
 
-func appExecuteRunEphemeral(ctx context.Context, config *AppPorterRunSharedConfig, namespace, name, container string, args []string) error {
+func appExecuteRunEphemeral(ctx context.Context, config *KubernetesSharedConfig, namespace, name, container string, args []string) error {
 	existing, err := appGetExistingPod(ctx, config, name, namespace)
 	if err != nil {
 		return err
@@ -742,7 +992,7 @@ func appExecuteRunEphemeral(ctx context.Context, config *AppPorterRunSharedConfi
 	return err
 }
 
-func appCheckForPodDeletionCronJob(ctx context.Context, config *AppPorterRunSharedConfig) error {
+func appCheckForPodDeletionCronJob(ctx context.Context, config *KubernetesSharedConfig) error {
 	// try and create the cron job and all of the other required resources as necessary,
 	// starting with the service account, then role and then a role binding
 
@@ -832,7 +1082,7 @@ func appCheckForPodDeletionCronJob(ctx context.Context, config *AppPorterRunShar
 	return nil
 }
 
-func appCheckForServiceAccount(ctx context.Context, config *AppPorterRunSharedConfig) error {
+func appCheckForServiceAccount(ctx context.Context, config *KubernetesSharedConfig) error {
 	namespaces, err := config.Clientset.CoreV1().Namespaces().List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return err
@@ -881,7 +1131,7 @@ func appCheckForServiceAccount(ctx context.Context, config *AppPorterRunSharedCo
 	return nil
 }
 
-func appCheckForClusterRole(ctx context.Context, config *AppPorterRunSharedConfig) error {
+func appCheckForClusterRole(ctx context.Context, config *KubernetesSharedConfig) error {
 	roles, err := config.Clientset.RbacV1().ClusterRoles().List(
 		ctx, metav1.ListOptions{},
 	)
@@ -922,7 +1172,7 @@ func appCheckForClusterRole(ctx context.Context, config *AppPorterRunSharedConfi
 	return nil
 }
 
-func appCheckForRoleBinding(ctx context.Context, config *AppPorterRunSharedConfig) error {
+func appCheckForRoleBinding(ctx context.Context, config *KubernetesSharedConfig) error {
 	bindings, err := config.Clientset.RbacV1().ClusterRoleBindings().List(
 		ctx, metav1.ListOptions{},
 	)
@@ -964,7 +1214,7 @@ func appCheckForRoleBinding(ctx context.Context, config *AppPorterRunSharedConfi
 	return nil
 }
 
-func appWaitForPod(ctx context.Context, config *AppPorterRunSharedConfig, pod *v1.Pod) error {
+func appWaitForPod(ctx context.Context, config *KubernetesSharedConfig, pod *v1.Pod) error {
 	var (
 		w   watch.Interface
 		err error
@@ -1028,7 +1278,7 @@ func appIsPodExited(pod *v1.Pod) bool {
 	return pod.Status.Phase == v1.PodSucceeded || pod.Status.Phase == v1.PodFailed
 }
 
-func appHandlePodAttachError(ctx context.Context, err error, config *AppPorterRunSharedConfig, namespace, podName, container string) error {
+func appHandlePodAttachError(ctx context.Context, err error, config *KubernetesSharedConfig, namespace, podName, container string) error {
 	if appVerbose {
 		color.New(color.FgYellow).Fprintf(os.Stderr, "Error: %s\n", err)
 	}
@@ -1044,7 +1294,7 @@ func appHandlePodAttachError(ctx context.Context, err error, config *AppPorterRu
 	return err
 }
 
-func appPipePodLogsToStdout(ctx context.Context, config *AppPorterRunSharedConfig, namespace, name, container string, follow bool) (int64, error) {
+func appPipePodLogsToStdout(ctx context.Context, config *KubernetesSharedConfig, namespace, name, container string, follow bool) (int64, error) {
 	podLogOpts := v1.PodLogOptions{
 		Container: container,
 		Follow:    follow,
@@ -1064,7 +1314,7 @@ func appPipePodLogsToStdout(ctx context.Context, config *AppPorterRunSharedConfi
 	return io.Copy(os.Stdout, podLogs)
 }
 
-func appPipeEventsToStdout(ctx context.Context, config *AppPorterRunSharedConfig, namespace, name, _ string, _ bool) error {
+func appPipeEventsToStdout(ctx context.Context, config *KubernetesSharedConfig, namespace, name, _ string, _ bool) error {
 	// update the config in case the operation has taken longer than token expiry time
 	config.setSharedConfig(ctx) //nolint:errcheck,gosec // do not want to change logic of CLI. New linter error
 
@@ -1086,7 +1336,7 @@ func appPipeEventsToStdout(ctx context.Context, config *AppPorterRunSharedConfig
 	return nil
 }
 
-func appGetExistingPod(ctx context.Context, config *AppPorterRunSharedConfig, name, namespace string) (*v1.Pod, error) {
+func appGetExistingPod(ctx context.Context, config *KubernetesSharedConfig, name, namespace string) (*v1.Pod, error) {
 	return config.Clientset.CoreV1().Pods(namespace).Get(
 		ctx,
 		name,
@@ -1094,7 +1344,7 @@ func appGetExistingPod(ctx context.Context, config *AppPorterRunSharedConfig, na
 	)
 }
 
-func appDeletePod(ctx context.Context, config *AppPorterRunSharedConfig, name, namespace string) error {
+func appDeletePod(ctx context.Context, config *KubernetesSharedConfig, name, namespace string) error {
 	// update the config in case the operation has taken longer than token expiry time
 	config.setSharedConfig(ctx) //nolint:errcheck,gosec // do not want to change logic of CLI. New linter error
 
@@ -1115,7 +1365,7 @@ func appDeletePod(ctx context.Context, config *AppPorterRunSharedConfig, name, n
 
 func appCreateEphemeralPodFromExisting(
 	ctx context.Context,
-	config *AppPorterRunSharedConfig,
+	config *KubernetesSharedConfig,
 	existing *v1.Pod,
 	container string,
 	args []string,
@@ -1213,11 +1463,18 @@ func appUpdateTag(ctx context.Context, user *types.GetAuthenticatedUserResponse,
 	}
 
 	if project.ValidateApplyV2 {
-		tag, err := v2.UpdateImage(ctx, appTag, client, cliConf.Project, cliConf.Cluster, args[0], deploymentTarget)
+		err := v2.UpdateImage(ctx, v2.UpdateImageInput{
+			ProjectID:                   cliConf.Project,
+			ClusterID:                   cliConf.Cluster,
+			AppName:                     args[0],
+			DeploymentTargetName:        deploymentTargetName,
+			Tag:                         appTag,
+			Client:                      client,
+			WaitForSuccessfulDeployment: appWait,
+		})
 		if err != nil {
 			return fmt.Errorf("error updating tag: %w", err)
 		}
-		_, _ = color.New(color.FgGreen).Printf("Successfully updated application %s to use tag \"%s\"\n", args[0], tag)
 		return nil
 	} else {
 		namespace := fmt.Sprintf("porter-stack-%s", args[0])

@@ -1,16 +1,10 @@
-import React, {
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type PorterApp } from "@porter-dev/api-contracts";
 import axios from "axios";
 import _ from "lodash";
 import { FormProvider, useForm } from "react-hook-form";
-import { Redirect, useHistory } from "react-router";
+import { useHistory } from "react-router";
 import { match } from "ts-pattern";
 import { z } from "zod";
 
@@ -19,7 +13,6 @@ import Spacer from "components/porter/Spacer";
 import TabSelector from "components/TabSelector";
 import { useLatestRevision } from "main/home/app-dashboard/app-view/LatestRevisionContext";
 import Environment from "main/home/app-dashboard/app-view/tabs/Environment";
-import GithubActionModal from "main/home/app-dashboard/new-app-flow/GithubActionModal";
 import {
   clientAddonFromProto,
   clientAddonToProto,
@@ -33,10 +26,10 @@ import {
 } from "lib/porter-apps";
 
 import api from "shared/api";
-import { Context } from "shared/Context";
 
 import { type ExistingTemplateWithEnv } from "../types";
 import { Addons } from "./Addons";
+import { PreviewGHAModal } from "./PreviewGHAModal";
 import { RequiredApps } from "./RequiredApps";
 import { ServiceSettings } from "./ServiceSettings";
 
@@ -68,7 +61,6 @@ export const PreviewAppDataContainer: React.FC<Props> = ({
   existingTemplate,
 }) => {
   const history = useHistory();
-  const { currentProject } = useContext(Context);
 
   const [tab, setTab] = useState<PreviewEnvSettingsTab>("services");
   const [validatedAppProto, setValidatedAppProto] = useState<PorterApp | null>(
@@ -189,16 +181,22 @@ export const PreviewAppDataContainer: React.FC<Props> = ({
       setValidatedAppProto(proto);
 
       const addons = data.addons.map((addon) => {
-        const variables = match(addon.config.type)
-          .with("postgres", () => ({
-            POSTGRESQL_USERNAME: addon.config.username,
+        const variables = match(addon.config)
+          .with({ type: "postgres" }, (conf) => ({
+            POSTGRESQL_USERNAME: conf.username,
           }))
-          .otherwise(() => ({}));
-        const secrets = match(addon.config.type)
-          .with("postgres", () => ({
-            POSTGRESQL_PASSWORD: addon.config.password,
+          .with({ type: "redis" }, (conf) => ({
+            REDIS_PASSWORD: conf.password,
           }))
-          .otherwise(() => ({}));
+          .exhaustive();
+        const secrets = match(addon.config)
+          .with({ type: "postgres" }, (conf) => ({
+            POSTGRESQL_PASSWORD: conf.password,
+          }))
+          .with({ type: "redis" }, (conf) => ({
+            REDIS_PASSWORD: conf.password,
+          }))
+          .exhaustive();
 
         const proto = clientAddonToProto(addon);
 
@@ -312,10 +310,6 @@ export const PreviewAppDataContainer: React.FC<Props> = ({
     });
   }, [withPreviewOverrides, latestSource, existingAddonsWithEnv]);
 
-  if (latestSource.type !== "github") {
-    return <Redirect to={`/apps/${porterApp.name}`} />;
-  }
-
   return (
     <FormProvider {...porterAppFormMethods}>
       <TabSelector
@@ -323,12 +317,8 @@ export const PreviewAppDataContainer: React.FC<Props> = ({
         options={[
           { label: "App Services", value: "services" },
           { label: "Environment Variables", value: "variables" },
-          ...(currentProject?.beta_features_enabled
-            ? [
-                // { label: "Required Apps", value: "required-apps" },
-                // { label: "Add-ons", value: "addons" },
-              ]
-            : []),
+          { label: "Required Apps", value: "required-apps" },
+          { label: "Add-ons", value: "addons" },
         ]}
         currentTab={tab}
         setCurrentTab={(tab: string) => {
@@ -362,19 +352,15 @@ export const PreviewAppDataContainer: React.FC<Props> = ({
           .exhaustive()}
       </form>
       {showGHAModal && (
-        <GithubActionModal
-          type="preview"
-          closeModal={() => {
-            setShowGHAModal(false);
-          }}
-          githubAppInstallationID={latestSource.git_repo_id}
-          githubRepoOwner={latestSource.git_repo_name.split("/")[0]}
-          githubRepoName={latestSource.git_repo_name.split("/")[1]}
-          branch={latestSource.git_branch}
-          stackName={porterApp.name}
+        <PreviewGHAModal
           projectId={projectId}
           clusterId={clusterId}
-          deployPorterApp={async () =>
+          onClose={() => {
+            setShowGHAModal(false);
+          }}
+          latestSource={latestSource}
+          appName={porterApp.name}
+          savePreviewConfig={async () =>
             await createTemplateAndWorkflow({
               app: validatedAppProto,
               variables,
@@ -382,9 +368,7 @@ export const PreviewAppDataContainer: React.FC<Props> = ({
               addons: encodedAddons,
             })
           }
-          deploymentError={createError}
-          porterYamlPath={latestSource.porter_yaml_path}
-          redirectPath={"/preview-environments"}
+          error={createError}
         />
       )}
     </FormProvider>

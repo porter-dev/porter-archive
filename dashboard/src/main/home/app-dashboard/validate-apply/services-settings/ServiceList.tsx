@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Controller,
@@ -10,26 +10,27 @@ import styled from "styled-components";
 import { z } from "zod";
 
 import Button from "components/porter/Button";
-import Container from "components/porter/Container";
 import { ControlledInput } from "components/porter/ControlledInput";
 import Modal from "components/porter/Modal";
-import Select from "components/porter/Select";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
-import { type ClientServiceVersionInstanceStatus } from "lib/hooks/useAppStatus";
+import { useClusterContext } from "main/home/infrastructure-dashboard/ClusterContextProvider";
+import { type ClientCluster } from "lib/clusters/types";
+import { type ClientServiceStatus } from "lib/hooks/useAppStatus";
 import { type PorterAppFormData } from "lib/porter-apps";
 import {
   defaultSerialized,
   deserializeService,
+  getServiceResourceAllowances,
   isPredeployService,
-  type ClientService,
 } from "lib/porter-apps/services";
 
-import { useClusterResources } from "shared/ClusterResourcesContext";
+import { Context } from "shared/Context";
 import job from "assets/job.png";
 import web from "assets/web.png";
 import worker from "assets/worker.png";
 
+import Tiles from "../../../../../components/porter/Tiles";
 import ServiceContainer from "./ServiceContainer";
 
 const addServiceFormValidator = z.object({
@@ -46,21 +47,20 @@ type AddServiceFormValues = z.infer<typeof addServiceFormValidator>;
 
 type ServiceListProps = {
   addNewText: string;
-  prePopulateService?: ClientService;
   isPredeploy?: boolean;
   existingServiceNames?: string[];
   fieldArrayName: "app.services" | "app.predeploy";
-  serviceVersionStatus?: Record<string, ClientServiceVersionInstanceStatus[]>;
+  serviceVersionStatus?: Record<string, ClientServiceStatus[]>;
   internalNetworkingDetails?: {
     namespace: string;
     appName: string;
   };
   allowAddServices?: boolean;
+  cluster?: ClientCluster;
 };
 
 const ServiceList: React.FC<ServiceListProps> = ({
   addNewText,
-  prePopulateService,
   fieldArrayName,
   isPredeploy = false,
   existingServiceNames = [],
@@ -73,18 +73,16 @@ const ServiceList: React.FC<ServiceListProps> = ({
 }) => {
   // top level app form
   const { control: appControl } = useFormContext<PorterAppFormData>();
+  const { currentProject } = useContext(Context);
 
-  const {
-    currentClusterResources: {
-      maxCPU,
-      maxRAM,
-      clusterContainsGPUNodes,
-      clusterIngressIp,
-      defaultCPU,
-      defaultRAM,
-      loadBalancerType,
-    },
-  } = useClusterResources();
+  const { nodes } = useClusterContext();
+  const { newServiceDefaultCpuCores, newServiceDefaultRamMegabytes } =
+    useMemo(() => {
+      return getServiceResourceAllowances(
+        nodes,
+        currentProject?.sandbox_enabled
+      );
+    }, [nodes]);
 
   // add service modal form
   const {
@@ -120,7 +118,6 @@ const ServiceList: React.FC<ServiceListProps> = ({
         : "deletions.predeploy",
   });
 
-  const serviceType = watch("type");
   const serviceName = watch("name");
 
   const [showAddServiceModal, setShowAddServiceModal] =
@@ -168,12 +165,22 @@ const ServiceList: React.FC<ServiceListProps> = ({
       <>
         <AddServiceButton
           onClick={() => {
-            if (!prePopulateService) {
+            if (!isPredeploy) {
               setShowAddServiceModal(true);
               return;
             }
 
-            append(prePopulateService);
+            append(
+              deserializeService({
+                service: defaultSerialized({
+                  name: "pre-deploy",
+                  type: "predeploy",
+                  defaultCPU: newServiceDefaultCpuCores,
+                  defaultRAM: newServiceDefaultRamMegabytes,
+                }),
+                expanded: true,
+              })
+            );
           }}
         >
           <i className="material-icons add-icon">add_icon</i>
@@ -199,8 +206,8 @@ const ServiceList: React.FC<ServiceListProps> = ({
       deserializeService({
         service: defaultSerialized({
           ...data,
-          defaultCPU,
-          defaultRAM,
+          defaultCPU: newServiceDefaultCpuCores,
+          defaultRAM: newServiceDefaultRamMegabytes,
         }),
         expanded: true,
       })
@@ -232,12 +239,8 @@ const ServiceList: React.FC<ServiceListProps> = ({
                 update={update}
                 remove={onRemove}
                 status={serviceVersionStatus?.[svc.name.value]}
-                maxCPU={maxCPU}
-                maxRAM={maxRAM}
-                clusterContainsGPUNodes={clusterContainsGPUNodes}
                 internalNetworkingDetails={internalNetworkingDetails}
-                clusterIngressIp={clusterIngressIp}
-                showDisableTls={loadBalancerType === "ALB"}
+                existingServiceNames={existingServiceNames}
               />
             ) : null;
           })}
@@ -249,38 +252,44 @@ const ServiceList: React.FC<ServiceListProps> = ({
           closeModal={() => {
             setShowAddServiceModal(false);
           }}
-          width="500px"
+          width="800px"
         >
           <Text size={16}>{addNewText}</Text>
           <Spacer y={1} />
           <Text color="helper">Select a service type:</Text>
           <Spacer y={0.5} />
-          <Container row>
-            <ServiceIcon>
-              {serviceType === "web" && <img src={web} />}
-              {serviceType === "worker" && <img src={worker} />}
-              {serviceType === "job" && <img src={job} />}
-            </ServiceIcon>
-            <Controller
-              name="type"
-              control={control}
-              render={({ field: { onChange } }) => (
-                <Select
-                  value={serviceType}
-                  width="100%"
-                  setValue={(value: string) => {
-                    onChange(value);
-                  }}
-                  options={[
-                    { label: "Web", value: "web" },
-                    { label: "Worker", value: "worker" },
-                    { label: "Cron Job", value: "job" },
-                  ]}
-                />
-              )}
-            />
-          </Container>
-          <Spacer y={1} />
+          <Controller
+            name="type"
+            control={control}
+            render={({ field: { onChange, value } }) => (
+              <Tiles
+                tileables={[
+                  {
+                    icon: web,
+                    label: "Web",
+                    value: "web",
+                    description: "Exposed to internal and/or external traffic",
+                  },
+                  {
+                    icon: worker,
+                    label: "Worker",
+                    value: "worker",
+                    description: "Long running background processes",
+                  },
+                  {
+                    icon: job,
+                    label: "Job",
+                    value: "job",
+                    description: "Scheduled tasks or one-off runs",
+                  },
+                ]}
+                onSelect={onChange}
+                selectedValue={value}
+                widthPercentage={30}
+                gapPixels={20}
+              />
+            )}
+          />
           <Text color="helper">Name this service:</Text>
           <Spacer y={0.5} />
           <ControlledInput
@@ -305,33 +314,6 @@ const ServiceList: React.FC<ServiceListProps> = ({
 };
 
 export default ServiceList;
-
-const ServiceIcon = styled.div`
-  border: 1px solid #494b4f;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 35px;
-  width: 35px;
-  min-width: 35px;
-  margin-right: 10px;
-  overflow: hidden;
-  border-radius: 5px;
-  > img {
-    height: 18px;
-    animation: floatIn 0.5s 0s;
-    @keyframes floatIn {
-      from {
-        opacity: 0;
-        transform: translateY(7px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0px);
-      }
-    }
-  }
-`;
 
 const I = styled.i`
   color: white;
@@ -365,6 +347,7 @@ const AddServiceButton = styled.div`
   display: flex;
   align-items: center;
   border-radius: 5px;
+  transition: all 0.2s;
   height: 40px;
   font-size: 13px;
   width: 100%;

@@ -55,6 +55,8 @@ type TestRepository struct {
 	appRevision               repository.AppRevisionRepository
 	appTemplate               repository.AppTemplateRepository
 	githubWebhook             repository.GithubWebhookRepository
+	datastore                 repository.DatastoreRepository
+	appInstance               repository.AppInstanceRepository
 }
 
 func (t *TestRepository) User() repository.UserRepository {
@@ -261,6 +263,16 @@ func (t *TestRepository) GithubWebhook() repository.GithubWebhookRepository {
 	return t.githubWebhook
 }
 
+// Datastore returns a test DatastoreRepository
+func (t *TestRepository) Datastore() repository.DatastoreRepository {
+	return t.datastore
+}
+
+// AppInstance returns a test AppInstanceRepository
+func (t *TestRepository) AppInstance() repository.AppInstanceRepository {
+	return t.appInstance
+}
+
 // NewRepository returns a Repository which persists users in memory
 // and accepts a parameter that can trigger read/write errors
 func NewRepository(canQuery bool, failingMethods ...string) repository.Repository {
@@ -315,5 +327,7 @@ func NewRepository(canQuery bool, failingMethods ...string) repository.Repositor
 		appRevision:               NewAppRevisionRepository(),
 		appTemplate:               NewAppTemplateRepository(),
 		githubWebhook:             NewGithubWebhookRepository(),
+		datastore:                 NewDatastoreRepository(),
+		appInstance:               NewAppInstanceRepository(),
 	}
 }

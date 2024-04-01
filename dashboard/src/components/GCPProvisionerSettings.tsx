@@ -545,7 +545,7 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
           })
         }
       });
-      const preflightDataResp = await api.preflightCheck(
+      const preflightDataResp = await api.legacyPreflightCheck(
         "<token>", data,
         {
           id: currentProject.id,

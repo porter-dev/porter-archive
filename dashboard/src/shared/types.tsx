@@ -1,10 +1,30 @@
+import { z } from "zod";
+
+export const clusterValidator = z.object({
+  id: z.number(),
+  name: z.string(),
+  vanity_name: z.string().optional(),
+  server: z.string(),
+  service_account_id: z.number().optional(),
+  agent_integration_enabled: z.boolean().optional(),
+  infra_id: z.number().optional(),
+  service: z.string().optional(),
+  aws_integration_id: z.number().optional(),
+  aws_cluster_id: z.string().optional(),
+  preview_envs_enabled: z.boolean().optional(),
+  cloud_provider_credential_identifier: z.string().optional(),
+  status: z.string().optional(),
+  cloud_provider: z.string(),
+  gpuCluster: z.boolean().optional(),
+});
+
 export type ClusterType = {
   id: number;
   name: string;
   vanity_name?: string;
-  server: string;
-  service_account_id: number;
-  agent_integration_enabled: boolean;
+  server?: string;
+  service_account_id?: number;
+  agent_integration_enabled?: boolean;
   infra_id?: number;
   service?: string;
   aws_integration_id?: number;
@@ -14,7 +34,25 @@ export type ClusterType = {
   status?: string;
   cloud_provider: string;
   gpuCluster?: boolean;
-}
+};
+
+export const NilCluster: ClusterType = {
+  id: -1,
+  name: "",
+  server: "",
+  service_account_id: -1,
+  infra_id: -1,
+  service: "",
+  agent_integration_enabled: false,
+  aws_cluster_id: "",
+  aws_integration_id: 0,
+  cloud_provider: "",
+  cloud_provider_credential_identifier: "",
+  gpuCluster: false,
+  preview_envs_enabled: false,
+  status: "",
+  vanity_name: "",
+};
 
 export type AddonCard = {
   id: string;
@@ -34,7 +72,7 @@ export type DetailedIngressError = {
 };
 export type Annotations = {
   category: string;
-}
+};
 
 export type ChartType = {
   stack_id: string;
@@ -273,9 +311,11 @@ export type ProjectListType = {
 export type ProjectType = {
   id: number;
   name: string;
+  advanced_infra_enabled: boolean;
   api_tokens_enabled: boolean;
   azure_enabled: boolean;
   beta_features_enabled: boolean;
+  billing_enabled: boolean;
   capi_provisioner_enabled: boolean;
   db_enabled: boolean;
   efs_enabled: boolean;
@@ -294,6 +334,8 @@ export type ProjectType = {
   validate_apply_v2: boolean;
   managed_deployment_targets_enabled: boolean;
   aws_ack_auth_enabled: boolean;
+  sandbox_enabled: boolean;
+  advanced_rbac_enabled: boolean;
   roles: Array<{
     id: number;
     kind: string;
@@ -709,4 +751,24 @@ export type ClusterState = {
   gpuInstanceType?: string;
   gpuMinInstances: number;
   gpuMaxInstances: number;
+  complianceProfiles: {
+    soc2: boolean;
+    hipaa: boolean;
+  };
+};
+
+export type Soc2Check = {
+  message: string;
+  enabled: boolean;
+  hideToggle?: boolean;
+  status: string;
+  disabledTooltip?: string;
+  link?: string;
+  locked?: boolean;
+  enabledField?: string;
+  info?: string;
+};
+
+export type Soc2Data = {
+  soc2_checks: Record<string, Soc2Check>;
 };

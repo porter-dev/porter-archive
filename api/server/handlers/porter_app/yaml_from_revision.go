@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"net/http"
+	"sort"
 	"strings"
 
 	"github.com/porter-dev/porter/internal/kubernetes"
@@ -167,6 +168,41 @@ func (c *PorterYAMLFromRevisionHandler) ServeHTTP(w http.ResponseWriter, r *http
 		app = formatForExport(app, c.Config().ServerConf.AppRootDomain)
 	}
 
+	// sort services by name
+	sortedServices := app.Services
+	sort.Slice(sortedServices, func(i, j int) bool {
+		serviceTypeSortPriorityA, ok := serviceTypeSortPriority[sortedServices[i].Type]
+		if !ok {
+			return false
+		}
+		serviceTypeSortPriorityB, ok := serviceTypeSortPriority[sortedServices[j].Type]
+		if !ok {
+			return false
+		}
+		if serviceTypeSortPriorityA != serviceTypeSortPriorityB {
+			return serviceTypeSortPriorityA < serviceTypeSortPriorityB
+		}
+		return sortedServices[i].Name < sortedServices[j].Name
+	})
+	app.Services = sortedServices
+
+	servicesWithDomainsSorted := app.Services
+	for i := range servicesWithDomainsSorted {
+		sortedDomains := servicesWithDomainsSorted[i].Domains
+		sort.Slice(sortedDomains, func(i, j int) bool {
+			return sortedDomains[i].Name < sortedDomains[j].Name
+		})
+		servicesWithDomainsSorted[i].Domains = sortedDomains
+	}
+	app.Services = servicesWithDomainsSorted
+
+	// sort env variables by key
+	sortedEnv := app.Env
+	sort.Slice(sortedEnv, func(i, j int) bool {
+		return sortedEnv[i].Key < sortedEnv[j].Key
+	})
+	app.Env = sortedEnv
+
 	porterYAMLString, err := yaml.Marshal(app)
 	if err != nil {
 		err = telemetry.Error(ctx, span, err, "error marshaling porter yaml")
@@ -194,11 +230,11 @@ type formatDefaultEnvGroupInput struct {
 	PorterAppRepository       repository.PorterAppRepository
 }
 
-func defaultEnvGroup(ctx context.Context, input formatDefaultEnvGroupInput) (map[string]string, string, error) {
+func defaultEnvGroup(ctx context.Context, input formatDefaultEnvGroupInput) ([]v2.EnvVariableDefinition, string, error) {
 	ctx, span := telemetry.NewSpan(ctx, "format-default-env-group")
 	defer span.End()
 
-	env := map[string]string{}
+	var env []v2.EnvVariableDefinition
 
 	revision, err := porter_app.GetAppRevision(ctx, porter_app.GetAppRevisionInput{
 		AppRevisionID: input.AppRevisionID,
@@ -243,10 +279,46 @@ func defaultEnvGroup(ctx context.Context, input formatDefaultEnvGroupInput) (map
 	}
 
 	for key, val := range revisionWithEnv.Env.Variables {
-		env[key] = val
+		env = append(env, v2.EnvVariableDefinition{
+			Key:    key,
+			Source: v2.EnvVariableSource_Value,
+			Value: v2.EnvValueOptional{
+				Value: val,
+				IsSet: true,
+			},
+		})
 	}
 	for key, val := range revisionWithEnv.Env.SecretVariables {
-		env[key] = val
+		env = append(env, v2.EnvVariableDefinition{
+			Key:    key,
+			Source: v2.EnvVariableSource_Value,
+			Value: v2.EnvValueOptional{
+				Value: val,
+				IsSet: true,
+			},
+		})
+	}
+
+	for _, ev := range appProto.Env {
+		if ev.Source == porterv1.EnvVariableSource_ENV_VARIABLE_SOURCE_FROM_APP {
+			fromAppProto := ev.GetFromApp()
+			if fromAppProto == nil {
+				continue
+			}
+
+			fromApp, err := v2.EnvVarFromAppFromProto(fromAppProto)
+			if err != nil {
+				return env, "", telemetry.Error(ctx, span, err, "error converting env var from app to proto")
+			}
+
+			envVar := v2.EnvVariableDefinition{
+				Key:     ev.Key,
+				Source:  v2.EnvVariableSource_FromApp,
+				FromApp: fromApp,
+			}
+
+			env = append(env, envVar)
+		}
 	}
 
 	return env, revisionWithEnv.Env.Name, nil
@@ -280,11 +352,13 @@ func formatForExport(app v2.PorterApp, appRootDomain string) v2.PorterApp {
 	}
 
 	// remove env secrets from env
-	for key, val := range app.Env {
-		if val == "********" {
-			delete(app.Env, key)
+	var filtered []v2.EnvVariableDefinition
+	for _, ev := range app.Env {
+		if ev.Value.Value != "********" {
+			filtered = append(filtered, ev)
 		}
 	}
+	app.Env = filtered
 
 	// don't show env group versions
 	for i := range app.EnvGroups {
@@ -403,5 +477,36 @@ func zeroOutValues(app v2.PorterApp) v2.PorterApp {
 		app.Predeploy.TimeoutSeconds = 0
 	}
 
+	if app.InitialDeploy != nil {
+		// remove name
+		app.InitialDeploy.Name = ""
+		// remove type
+		app.InitialDeploy.Type = ""
+		// remove smart optimization
+		app.InitialDeploy.SmartOptimization = nil
+		// remove launcher
+		if app.InitialDeploy.Run != nil {
+			launcherLess := strings.TrimPrefix(*app.InitialDeploy.Run, "launcher ")
+			launcherLess = strings.TrimPrefix(launcherLess, "/cnb/lifecycle/launcher ")
+			app.InitialDeploy.Run = &launcherLess
+		}
+		// remove port
+		app.InitialDeploy.Port = 0
+		// remove instances
+		app.InitialDeploy.Instances = nil
+		// remove suspendCron
+		app.InitialDeploy.SuspendCron = nil
+		// remove allowConcurrency
+		app.InitialDeploy.AllowConcurrent = nil
+		// remove timeout
+		app.InitialDeploy.TimeoutSeconds = 0
+	}
+
 	return app
+}
+
+var serviceTypeSortPriority = map[v2.ServiceType]int{
+	v2.ServiceType_Web:    0,
+	v2.ServiceType_Worker: 1,
+	v2.ServiceType_Job:    2,
 }

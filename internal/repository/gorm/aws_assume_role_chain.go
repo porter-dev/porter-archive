@@ -47,3 +47,44 @@ func (cr AWSAssumeRoleChain) List(ctx context.Context, projectID uint) ([]*model
 
 	return confs, nil
 }
+
+// ListByAwsAccountId returns a list of aws assume role chains where the target arn is owned by the supplied AWS account ID.
+func (cr AWSAssumeRoleChain) ListByAwsAccountId(ctx context.Context, awsAccountID string) ([]*models.AWSAssumeRoleChain, error) {
+	var confs []*models.AWSAssumeRoleChain
+	if awsAccountID == "" {
+		return nil, errors.New("must provide an AWS account ID")
+	}
+	if len(awsAccountID) != 12 {
+		return nil, fmt.Errorf("must provide a valid AWS account ID: %s", awsAccountID)
+	}
+
+	targetArn := fmt.Sprintf("arn:aws:iam::%s:role/porter-manager", awsAccountID)
+	tx := cr.db.Where("target_arn = ?", targetArn).Find(&confs)
+	if tx.Error != nil {
+		return nil, tx.Error
+	}
+
+	return confs, nil
+}
+
+// Delete deletes an AWS assume role chain by project ID
+func (cr AWSAssumeRoleChain) Delete(ctx context.Context, projectID uint) error {
+	if projectID == 0 {
+		return errors.New("must provide a project ID")
+	}
+
+	var confs []*models.AWSAssumeRoleChain
+	tx := cr.db.Where("project_id = ?", projectID).Find(&confs)
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	for _, conf := range confs {
+		tx := cr.db.Delete(conf)
+		if tx.Error != nil {
+			return tx.Error
+		}
+	}
+
+	return nil
+}

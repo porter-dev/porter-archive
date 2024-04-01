@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/porter-dev/porter/internal/telemetry"
+
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
@@ -28,31 +30,41 @@ func NewOAuthCallbackSlackHandler(
 }
 
 func (p *OAuthCallbackSlackHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-oauth-callback-slack")
+	defer span.End()
+
+	r = r.Clone(ctx)
+
 	session, err := p.Config().Store.Get(r, p.Config().ServerConf.CookieName)
 	if err != nil {
-		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		err = telemetry.Error(ctx, span, err, "session could not be retrieved")
+		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
 	if _, ok := session.Values["state"]; !ok {
-		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		err = telemetry.Error(ctx, span, nil, "state not found in session")
+		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
 	if r.URL.Query().Get("state") != session.Values["state"] {
-		p.HandleAPIError(w, r, apierrors.NewErrForbidden(err))
+		err = telemetry.Error(ctx, span, nil, "state does not match")
+		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
 	token, err := p.Config().SlackConf.Exchange(context.TODO(), r.URL.Query().Get("code"))
 	if err != nil {
-		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		err = telemetry.Error(ctx, span, err, "exchange failed")
+		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
 	slackInt, err := slack.TokenToSlackIntegration(token)
 	if err != nil {
-		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		err = telemetry.Error(ctx, span, err, "token to slack integration failed")
+		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
@@ -63,7 +75,8 @@ func (p *OAuthCallbackSlackHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 	slackInt.ProjectID = projID
 
 	if _, err = p.Repo().SlackIntegration().CreateSlackIntegration(slackInt); err != nil {
-		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		err = telemetry.Error(ctx, span, err, "create slack integration failed")
+		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 

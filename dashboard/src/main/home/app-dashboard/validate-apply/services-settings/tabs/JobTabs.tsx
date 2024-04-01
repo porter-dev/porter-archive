@@ -21,20 +21,10 @@ type Props = {
       type: "job" | "predeploy";
     };
   };
-  maxRAM: number;
-  maxCPU: number;
-  clusterContainsGPUNodes: boolean;
   isPredeploy?: boolean;
 };
 
-const JobTabs: React.FC<Props> = ({
-  index,
-  service,
-  maxRAM,
-  clusterContainsGPUNodes,
-  maxCPU,
-  isPredeploy,
-}) => {
+const JobTabs: React.FC<Props> = ({ index, service, isPredeploy }) => {
   const { control, register } = useFormContext<PorterAppFormData>();
   const [currentTab, setCurrentTab] = React.useState<
     "main" | "resources" | "advanced"
@@ -65,9 +55,6 @@ const JobTabs: React.FC<Props> = ({
         .with("resources", () => (
           <Resources
             index={index}
-            maxCPU={maxCPU}
-            maxRAM={maxRAM}
-            clusterContainsGPUNodes={clusterContainsGPUNodes}
             service={service}
             isPredeploy={isPredeploy}
           />

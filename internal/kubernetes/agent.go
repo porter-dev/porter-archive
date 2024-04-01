@@ -587,6 +587,31 @@ func (a *Agent) GetSecret(name string, namespace string) (*v1.Secret, error) {
 	)
 }
 
+// CreateSecret creates the secret given its name and namespace
+func (a *Agent) CreateSecret(secret *v1.Secret, namespace string) (*v1.Secret, error) {
+	_, err := a.Clientset.CoreV1().Secrets(namespace).Get(
+		context.TODO(),
+		secret.Name,
+		metav1.GetOptions{},
+	)
+	if err != nil {
+		if !errors.IsNotFound(err) {
+			return nil, err
+		}
+		return a.Clientset.CoreV1().Secrets(namespace).Create(
+			context.TODO(),
+			secret,
+			metav1.CreateOptions{},
+		)
+	}
+
+	return a.Clientset.CoreV1().Secrets(namespace).Update(
+		context.TODO(),
+		secret,
+		metav1.UpdateOptions{},
+	)
+}
+
 // ListConfigMaps simply lists namespaces
 func (a *Agent) ListConfigMaps(namespace string) (*v1.ConfigMapList, error) {
 	return a.Clientset.CoreV1().ConfigMaps(namespace).List(
@@ -1781,6 +1806,7 @@ func (a *Agent) StreamHelmReleases(namespace string, chartList []string, selecto
 }
 
 func (a *Agent) StreamPorterAgentLokiLog(
+	ctx context.Context,
 	labels []string,
 	startTime string,
 	searchParam string,
@@ -1830,7 +1856,7 @@ func (a *Agent) StreamPorterAgentLokiLog(
 
 			defer wg.Done()
 
-			podList, err := a.Clientset.CoreV1().Pods("porter-agent-system").List(context.Background(), metav1.ListOptions{
+			podList, err := a.Clientset.CoreV1().Pods("porter-agent-system").List(ctx, metav1.ListOptions{
 				LabelSelector: "control-plane=controller-manager",
 			})
 			if err != nil {
@@ -1893,7 +1919,7 @@ func (a *Agent) StreamPorterAgentLokiLog(
 				return
 			}
 
-			err = exec.Stream(remotecommand.StreamOptions{
+			err = exec.StreamWithContext(ctx, remotecommand.StreamOptions{
 				Stdin:  nil,
 				Stdout: rw,
 				Stderr: rw,

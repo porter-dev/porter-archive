@@ -189,6 +189,18 @@ func (repo *PorterAppEventRepository) ReadNotificationsByAppRevisionID(ctx conte
 	return notifications, nil
 }
 
+// NotificationByID returns a notification by the notification id
+func (repo *PorterAppEventRepository) NotificationByID(ctx context.Context, notificationID string) (*models.PorterAppEvent, error) {
+	notification := &models.PorterAppEvent{}
+
+	// TODO: make app_revision_id a column in porter_app_event table: https://linear.app/porter/issue/POR-2096/add-app-revision-id-column-to-porter-app-events-table
+	if err := repo.db.Where("type = 'NOTIFICATION' AND metadata->>'id' = ?", notificationID).Find(&notification).Error; err != nil {
+		return notification, err
+	}
+
+	return notification, nil
+}
+
 func (repo *PorterAppEventRepository) ReadDeployEventByRevision(ctx context.Context, porterAppID uint, revision float64) (models.PorterAppEvent, error) {
 	appEvent := models.PorterAppEvent{}
 

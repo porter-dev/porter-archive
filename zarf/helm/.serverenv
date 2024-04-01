@@ -66,3 +66,9 @@ HELM_APP_REPO_URL=http://chartmuseum:8080
 
 TELEMETRY_NAME=porter
 TELEMETRY_COLLECTOR_URL=otel-collector:4317
+
+# STRIPE_SECRET_KEY is required if billing is enabled
+STRIPE_SECRET_KEY=
+
+# STRIPE_PUBLISHABLE_KEY is used in the frontend to create Stripe Web Elements
+STRIPE_PUBLISHABLE_KEY=

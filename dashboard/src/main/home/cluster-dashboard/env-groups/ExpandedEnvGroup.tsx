@@ -176,7 +176,10 @@ export const ExpandedEnvGroupFC = ({
   }, [currentEnvGroup]);
   const populateEnvGroup = async () => {
 
-    if (currentProject?.simplified_view_enabled) {
+    // apply v2 already supplies the full env group
+    if (currentProject?.validate_apply_v2) {
+      updateEnvGroup(envGroup);
+    } else if (currentProject?.simplified_view_enabled) {
       try {
         const populatedEnvGroup = await api
           .getAllEnvGroups(
@@ -481,7 +484,7 @@ export const ExpandedEnvGroupFC = ({
           git_branch: newAppData?.git_branch,
           buildpacks: "",
           // full_helm_values: yaml.dump(values),
-          environmentGroups: filteredEnvGroups?.map((env) => env.name),
+          environment_groups: filteredEnvGroups?.map((env) => env.name),
           user_update: true,
         }
 

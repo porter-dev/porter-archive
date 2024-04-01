@@ -5,13 +5,14 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/porter-dev/porter/api/server/handlers/deployment_target"
+	"github.com/porter-dev/porter/api/server/handlers/porter_app"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/server/shared/router"
 	"github.com/porter-dev/porter/api/types"
 )
 
-// NewDeploymentTargetScopedRegisterer applies /api/projects/{project_id}/clusters/{cluster_id}/deployment-targets routes to the gin Router
+// NewDeploymentTargetScopedRegisterer applies /api/projects/{project_id}/targets routes to the gin Router
 func NewDeploymentTargetScopedRegisterer(children ...*router.Registerer) *router.Registerer {
 	return &router.Registerer{
 		GetRoutes: GetDeploymentTargetScopedRoutes,
@@ -42,14 +43,14 @@ func GetDeploymentTargetScopedRoutes(
 	return routes
 }
 
-// getDeploymentTargetRoutes gets the routes specific to deployment targets
+// getDeploymentTargetRoutes gets the routes that use deployment targets as a first class object instead of scoped to clusters
 func getDeploymentTargetRoutes(
 	r chi.Router,
 	config *config.Config,
 	basePath *types.Path,
 	factory shared.APIEndpointFactory,
 ) ([]*router.Route, *types.Path) {
-	relPath := "/deployment-targets"
+	relPath := "/targets/{deployment_target_identifier}"
 
 	newPath := &types.Path{
 		Parent:       basePath,
@@ -58,106 +59,19 @@ func getDeploymentTargetRoutes(
 
 	var routes []*router.Route
 
-	// POST /api/projects/{project_id}/clusters/{cluster_id}/deployment-targets -> deployment_target.CreateDeploymentTargetHandler
-	createDeploymentTargetEndpoint := factory.NewAPIEndpoint(
-		&types.APIRequestMetadata{
-			Verb:   types.APIVerbCreate,
-			Method: types.HTTPVerbPost,
-			Path: &types.Path{
-				Parent:       basePath,
-				RelativePath: relPath,
-			},
-			Scopes: []types.PermissionScope{
-				types.UserScope,
-				types.ProjectScope,
-				types.ClusterScope,
-			},
-		},
-	)
-
-	createDeploymentTargetHandler := deployment_target.NewCreateDeploymentTargetHandler(
-		config,
-		factory.GetDecoderValidator(),
-		factory.GetResultWriter(),
-	)
-
-	routes = append(routes, &router.Route{
-		Endpoint: createDeploymentTargetEndpoint,
-		Handler:  createDeploymentTargetHandler,
-		Router:   r,
-	})
-
-	// GET /api/projects/{project_id}/clusters/{cluster_id}/deployment-targets -> deployment_target.ListDeploymentTargetsHandler
-	listDeploymentTargetsEndpoint := factory.NewAPIEndpoint(
-		&types.APIRequestMetadata{
-			Verb:   types.APIVerbList,
-			Method: types.HTTPVerbGet,
-			Path: &types.Path{
-				Parent:       basePath,
-				RelativePath: relPath,
-			},
-			Scopes: []types.PermissionScope{
-				types.UserScope,
-				types.ProjectScope,
-				types.ClusterScope,
-			},
-		},
-	)
-
-	listDeploymentTargetsHandler := deployment_target.NewListDeploymentTargetsHandler(
-		config,
-		factory.GetDecoderValidator(),
-		factory.GetResultWriter(),
-	)
-
-	routes = append(routes, &router.Route{
-		Endpoint: listDeploymentTargetsEndpoint,
-		Handler:  listDeploymentTargetsHandler,
-		Router:   r,
-	})
-
-	// DELETE /api/projects/{project_id}/clusters/{cluster_id}/deployment-targets/{deployment_target_id} -> deployment_target.DeleteDeploymentTargetHandler
-	deleteDeploymentTargetEndpoint := factory.NewAPIEndpoint(
-		&types.APIRequestMetadata{
-			Verb:   types.APIVerbDelete,
-			Method: types.HTTPVerbDelete,
-			Path: &types.Path{
-				Parent:       basePath,
-				RelativePath: fmt.Sprintf("%s/{%s}", relPath, types.URLParamDeploymentTargetID),
-			},
-			Scopes: []types.PermissionScope{
-				types.UserScope,
-				types.ProjectScope,
-				types.ClusterScope,
-			},
-		},
-	)
-
-	deleteDeploymentTargetHandler := deployment_target.NewDeleteDeploymentTargetHandler(
-		config,
-		factory.GetDecoderValidator(),
-		factory.GetResultWriter(),
-	)
-
-	routes = append(routes, &router.Route{
-		Endpoint: deleteDeploymentTargetEndpoint,
-		Handler:  deleteDeploymentTargetHandler,
-		Router:   r,
-	})
-
-	// GET /api/projects/{project_id}/clusters/{cluster_id}/deployment-targets/{deployment_target_id} -> deployment_target.GetDeploymentTargetHandler
+	// GET /api/projects/{project_id}/targets/{deployment_target_identifier} -> deployment_target.GetDeploymentTargetHandler
 	getDeploymentTargetEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbGet,
 			Method: types.HTTPVerbGet,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: fmt.Sprintf("%s/{%s}", relPath, types.URLParamDeploymentTargetID),
+				RelativePath: relPath,
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
 				types.ProjectScope,
-				types.ClusterScope,
+				types.DeploymentTargetScope,
 			},
 		},
 	)
@@ -171,6 +85,63 @@ func getDeploymentTargetRoutes(
 	routes = append(routes, &router.Route{
 		Endpoint: getDeploymentTargetEndpoint,
 		Handler:  getDeploymentTargetHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/targets/{deployment_target_identifier}/apps/{porter_app_name}/cloudsql -> porter_app.GetCloudSqlSecretHandler
+	getCloudSqlSecretEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/apps/{porter_app_name}/cloudsql", relPath),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.DeploymentTargetScope,
+			},
+		},
+	)
+
+	getCloudSqlSecretHandler := porter_app.NewGetCloudSqlSecretHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: getCloudSqlSecretEndpoint,
+		Handler:  getCloudSqlSecretHandler,
+		Router:   r,
+	})
+
+	// POST /api/projects/{project_id}/targets/{deployment_target_identifier}/apps/{porter_app_name}/cloudsql -> porter_app.CreateCloudSqlSecretHandler
+	createCloudSqlSecretEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/apps/{porter_app_name}/cloudsql", relPath),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.DeploymentTargetScope,
+			},
+		},
+	)
+
+	createCloudSqlSecretHandler := porter_app.NewCreateCloudSqlSecretHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: createCloudSqlSecretEndpoint,
+		Handler:  createCloudSqlSecretHandler,
 		Router:   r,
 	})
 

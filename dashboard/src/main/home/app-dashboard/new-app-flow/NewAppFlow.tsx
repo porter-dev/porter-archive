@@ -338,7 +338,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
         git_repo_id: porterApp.git_repo_id,
         build_context: porterApp.build_context,
         image_repo_uri: porterApp.image_repo_uri,
-        environmentGroups: syncedEnvGroups?.map((env: NewPopulatedEnvGroup) => env.name),
+        environment_groups: syncedEnvGroups?.map((env: NewPopulatedEnvGroup) => env.name),
         user_update: true,
       }
       if (porterApp.image_repo_uri && imageTag) {

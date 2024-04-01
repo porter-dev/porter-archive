@@ -46,7 +46,7 @@ const AWSCostConsent: React.FC<Props> = ({
           noWrapper
           expandText="[+] Show details"
           collapseText="[-] Hide details"
-          Header={<Cost>$224.58 / mo</Cost>}
+          Header={<Text size={20} weight={600}>$224.58 / mo</Text>}
           ExpandedSection={
             <>
               <Spacer height="15px" />
@@ -122,11 +122,6 @@ const AWSCostConsent: React.FC<Props> = ({
 };
 
 export default AWSCostConsent;
-
-const Cost = styled.div`
-  font-weight: 600;
-  font-size: 20px;
-`;
 
 const Tab = styled.span`
   margin-left: 20px;

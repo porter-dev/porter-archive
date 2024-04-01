@@ -51,6 +51,7 @@ func (c *GetAppTemplateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	defer span.End()
 
 	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
+	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
 
 	if !project.GetFeatureFlag(models.ValidateApplyV2, c.Config().LaunchDarklyClient) {
 		err := telemetry.Error(ctx, span, nil, "project does not have validate apply v2 enabled")
@@ -67,30 +68,17 @@ func (c *GetAppTemplateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "app-name", Value: appName})
 
-	porterApps, err := c.Repo().PorterApp().ReadPorterAppsByProjectIDAndName(project.ID, appName)
+	app, err := c.Repo().PorterApp().ReadPorterAppByName(cluster.ID, appName)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error getting porter app from repo")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
-	if len(porterApps) == 0 {
-		err := telemetry.Error(ctx, span, err, "no porter apps returned")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-		return
-	}
-	if len(porterApps) > 1 {
-		err := telemetry.Error(ctx, span, err, "multiple porter apps returned; unable to determine which one to use")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-		return
-	}
-
-	if porterApps[0].ID == 0 {
+	if app.ID == 0 {
 		err := telemetry.Error(ctx, span, err, "porter app id is missing")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
-
-	app := porterApps[0]
 
 	templateReq := connect.NewRequest(&porterv1.AppTemplateRequest{
 		ProjectId: int64(project.ID),

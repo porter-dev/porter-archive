@@ -40,12 +40,16 @@ type RevisionStatus struct {
 type InstanceStatusDescriptor string
 
 const (
+	// InstanceStatusDescriptor_Failed means the instance has failed
+	InstanceStatusDescriptor_Failed InstanceStatusDescriptor = "FAILED"
 	// InstanceStatusDescriptor_Pending means the instance is pending
 	InstanceStatusDescriptor_Pending InstanceStatusDescriptor = "PENDING"
 	// InstanceStatusDescriptor_Running means the instance is running normally
 	InstanceStatusDescriptor_Running InstanceStatusDescriptor = "RUNNING"
-	// InstanceStatusDescriptor_Failed means the instance has failed
-	InstanceStatusDescriptor_Failed InstanceStatusDescriptor = "FAILED"
+	// InstanceStatusDescriptor_Succeeded means the instance is succeeded
+	InstanceStatusDescriptor_Succeeded InstanceStatusDescriptor = "SUCCEEDED"
+	// InstanceStatusDescriptor_Unknown means the instance is unknown
+	InstanceStatusDescriptor_Unknown InstanceStatusDescriptor = "UNKNOWN"
 )
 
 // CrashLoopBackOff is a string that describes the status of a pod that is in a crash loop backoff
@@ -154,7 +158,7 @@ func revisionStatusFromPods(ctx context.Context, inp revisionStatusFromPodsInput
 			instanceStatusList = []InstanceStatus{}
 		}
 
-		instanceStatus, err := instanceStatusFromPod(ctx, instanceStatusFromPodInput{
+		instanceStatus, err := InstanceStatusFromPod(ctx, InstanceStatusFromPodInput{
 			Pod:         pod,
 			AppName:     inp.AppName,
 			ServiceName: inp.ServiceName,
@@ -188,13 +192,15 @@ func revisionStatusFromPods(ctx context.Context, inp revisionStatusFromPodsInput
 	return revisionStatusList, nil
 }
 
-type instanceStatusFromPodInput struct {
+// InstanceStatusFromPodInput contains all the data necessary to get the status of the primary service container from a pod
+type InstanceStatusFromPodInput struct {
 	Pod         v1.Pod
 	AppName     string
 	ServiceName string
 }
 
-func instanceStatusFromPod(ctx context.Context, inp instanceStatusFromPodInput) (InstanceStatus, error) {
+// InstanceStatusFromPod gets the status of the primary service container from a pod
+func InstanceStatusFromPod(ctx context.Context, inp InstanceStatusFromPodInput) (InstanceStatus, error) {
 	ctx, span := telemetry.NewSpan(ctx, "instance-status-from-pod")
 	defer span.End()
 
@@ -223,12 +229,16 @@ func instanceStatusFromPod(ctx context.Context, inp instanceStatusFromPodInput) 
 	instanceStatus.RestartCount = int(appContainerStatus.RestartCount)
 
 	switch inp.Pod.Status.Phase {
+	case v1.PodFailed:
+		instanceStatus.Status = InstanceStatusDescriptor_Failed
 	case v1.PodPending:
 		instanceStatus.Status = InstanceStatusDescriptor_Pending
 	case v1.PodRunning:
 		instanceStatus.Status = InstanceStatusDescriptor_Running
-	case v1.PodFailed:
-		instanceStatus.Status = InstanceStatusDescriptor_Failed
+	case v1.PodSucceeded:
+		instanceStatus.Status = InstanceStatusDescriptor_Succeeded
+	case v1.PodUnknown:
+		instanceStatus.Status = InstanceStatusDescriptor_Unknown
 	}
 
 	if appContainerStatus.State.Waiting != nil && appContainerStatus.State.Waiting.Reason == CrashLoopBackOff {

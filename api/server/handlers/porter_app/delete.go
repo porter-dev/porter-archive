@@ -37,6 +37,7 @@ func (c *DeletePorterAppByNameHandler) ServeHTTP(w http.ResponseWriter, r *http.
 	defer span.End()
 
 	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
+	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
 
 	appName, reqErr := requestutils.GetURLParamString(r, types.URLParamPorterAppName)
 	if reqErr != nil {
@@ -55,6 +56,7 @@ func (c *DeletePorterAppByNameHandler) ServeHTTP(w http.ResponseWriter, r *http.
 
 	deleteReq := connect.NewRequest[porterv1.DeletePorterAppRequest](&porterv1.DeletePorterAppRequest{
 		ProjectId: int64(project.ID),
+		ClusterId: int64(cluster.ID),
 		AppName:   appName,
 	})
 	ccpResp, err := c.Config().ClusterControlPlaneClient.DeletePorterApp(r.Context(), deleteReq)

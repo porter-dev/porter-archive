@@ -96,7 +96,8 @@ type CreateAWSRequest struct {
 
 type CreateAWSResponse struct {
 	*AWSIntegration
-	CloudProviderCredentialIdentifier string `json:"cloud_provider_credentials_id"`
+	CloudProviderCredentialIdentifier string  `json:"cloud_provider_credentials_id"`
+	PercentCompleted                  float32 `json:"percent_completed"`
 }
 
 type OverwriteAWSRequest struct {

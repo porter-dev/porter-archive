@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   Contract,
+  GKENodePoolType,
   LoadBalancerType,
   NodeGroupType,
   NodePoolType,
@@ -10,10 +11,8 @@ import convert from "convert";
 import { match } from "ts-pattern";
 import { z } from "zod";
 
-import {
-  AWS_INSTANCE_LIMITS,
-  AZURE_INSTANCE_LIMITS,
-} from "main/home/app-dashboard/validate-apply/services-settings/tabs/utils";
+import { azureMachineTypeDetails } from "components/azureUtils";
+import { AWS_INSTANCE_LIMITS } from "main/home/app-dashboard/validate-apply/services-settings/tabs/utils";
 
 import api from "shared/api";
 
@@ -99,14 +98,16 @@ const clusterNodesValidator = z
         AWS_INSTANCE_LIMITS[DEFAULT_INSTANCE_CLASS][DEFAULT_INSTANCE_SIZE].vCPU,
       maxRAM:
         AWS_INSTANCE_LIMITS[DEFAULT_INSTANCE_CLASS][DEFAULT_INSTANCE_SIZE].RAM,
-      instanceClass: DEFAULT_INSTANCE_CLASS,
-      instanceSize: DEFAULT_INSTANCE_SIZE,
+      maxGPU: 1,
     };
     if (!data.labels) {
       return defaultResources;
     }
     const workloadKind = data.labels["porter.run/workload-kind"];
-    if (!workloadKind || workloadKind !== "application") {
+    if (
+      !workloadKind ||
+      (workloadKind !== "application" && workloadKind !== "custom")
+    ) {
       return defaultResources;
     }
     const instanceType = data.labels["beta.kubernetes.io/instance-type"];
@@ -117,12 +118,13 @@ const clusterNodesValidator = z
 
     // Azure instance types are all prefixed with "Standard_"
     if (instanceType.startsWith("Standard_")) {
-      if (AZURE_INSTANCE_LIMITS[instanceType]) {
-        const { vCPU, RAM } = AZURE_INSTANCE_LIMITS[instanceType];
+      const azureMachineType = azureMachineTypeDetails(instanceType);
+      if (azureMachineType) {
+        const { vCPU, RAM, GPU } = azureMachineType.resources;
         return {
           maxCPU: vCPU,
           maxRAM: RAM,
-          azureType: instanceType,
+          maxGPU: GPU || 1,
         };
       } else {
         return defaultResources;
@@ -150,12 +152,12 @@ const clusterNodesValidator = z
 
     const [instanceClass, instanceSize] = parsedType.data;
     if (AWS_INSTANCE_LIMITS[instanceClass]?.[instanceSize]) {
-      const { vCPU, RAM } = AWS_INSTANCE_LIMITS[instanceClass][instanceSize];
+      const { vCPU, RAM, GPU } =
+        AWS_INSTANCE_LIMITS[instanceClass][instanceSize];
       return {
         maxCPU: vCPU,
         maxRAM: RAM,
-        instanceClass,
-        instanceSize,
+        maxGPU: GPU || 1,
       };
     }
     return defaultResources;
@@ -176,6 +178,7 @@ export const useClusterResourceLimits = ({
   defaultCPU: number;
   defaultRAM: number;
   clusterContainsGPUNodes: boolean;
+  maxGPU: number;
   clusterIngressIp: string;
   loadBalancerType: ClientLoadBalancerType;
 } => {
@@ -183,6 +186,7 @@ export const useClusterResourceLimits = ({
   const LARGE_INSTANCE_UPPER_BOUND = 0.9;
   const DEFAULT_MULTIPLIER = 0.125;
   const [clusterContainsGPUNodes, setClusterContainsGPUNodes] = useState(false);
+  const [maxGPU, setMaxGPU] = useState(1);
   const [maxCPU, setMaxCPU] = useState(
     AWS_INSTANCE_LIMITS[DEFAULT_INSTANCE_CLASS][DEFAULT_INSTANCE_SIZE].vCPU *
       SMALL_INSTANCE_UPPER_BOUND
@@ -287,10 +291,13 @@ export const useClusterResourceLimits = ({
         const maxRAM = data.reduce((acc, curr) => {
           return Math.max(acc, curr.maxRAM);
         }, 0);
+        const maxGPU = data.reduce((acc, curr) => {
+          return Math.max(acc, curr.maxGPU);
+        }, 0);
         let maxMultiplier = SMALL_INSTANCE_UPPER_BOUND;
-        // if the instance type has more than 4 GB ram, we use 90% of the ram/cpu
+        // if the instance type has more than 16 GB ram, we use 90% of the ram/cpu
         // otherwise, we use 75%
-        if (maxRAM > 4) {
+        if (maxRAM > 16) {
           maxMultiplier = LARGE_INSTANCE_UPPER_BOUND;
         }
         // round down to nearest 0.5 cores
@@ -301,6 +308,7 @@ export const useClusterResourceLimits = ({
           100;
         setMaxCPU(newMaxCPU);
         setMaxRAM(newMaxRAM);
+        setMaxGPU(maxGPU);
         setDefaultCPU(Number((newMaxCPU * DEFAULT_MULTIPLIER).toFixed(2)));
         setDefaultRAM(Number((newMaxRAM * DEFAULT_MULTIPLIER).toFixed(0)));
       }
@@ -308,7 +316,7 @@ export const useClusterResourceLimits = ({
   }, [getClusterNodes]);
 
   const getCluster = useQuery(
-    ["getCluster", projectId, clusterId],
+    ["getClusterIngressIp", projectId, clusterId],
     async () => {
       if (!projectId || !clusterId || clusterId === -1) {
         return await Promise.resolve({ ingress_ip: "" });
@@ -345,18 +353,26 @@ export const useClusterResourceLimits = ({
           return c.kindValues.value.nodeGroups.some(
             (ng) =>
               (ng.nodeGroupType === NodeGroupType.CUSTOM &&
-                ng.instanceType.includes("g4dn")) ||
+                (ng.instanceType.includes("g4dn") ||
+                  ng.instanceType.includes("p4d"))) ||
               (ng.nodeGroupType === NodeGroupType.APPLICATION &&
-                ng.instanceType.includes("g4dn"))
+                (ng.instanceType.includes("g4dn") ||
+                  ng.instanceType.includes("p4d")))
           );
         })
         .with({ kindValues: { case: "gkeKind" } }, (c) => {
           return c.kindValues.value.nodePools.some(
             (ng) =>
-              (ng.nodePoolType === NodePoolType.CUSTOM &&
+              (ng.nodePoolType === GKENodePoolType.GKE_NODE_POOL_TYPE_CUSTOM &&
                 ng.instanceType.includes("n1")) ||
-              (ng.nodePoolType === NodePoolType.APPLICATION &&
+              (ng.nodePoolType ===
+                GKENodePoolType.GKE_NODE_POOL_TYPE_APPLICATION &&
                 ng.instanceType.includes("n1"))
+          );
+        })
+        .with({ kindValues: { case: "aksKind" } }, (c) => {
+          return c.kindValues.value.nodePools.some(
+            (ng) => ng.nodePoolType === NodePoolType.CUSTOM
           );
         })
         .otherwise(() => false);
@@ -374,6 +390,8 @@ export const useClusterResourceLimits = ({
         })
         .otherwise(() => "UNSPECIFIED");
 
+      // console.log(gpu);
+      // setMaxGPU(gpu);
       setClusterContainsGPUNodes(containsCustomNodeGroup);
       setLoadBalancerType(loadBalancerType);
     }
@@ -385,6 +403,7 @@ export const useClusterResourceLimits = ({
     defaultCPU,
     defaultRAM,
     clusterContainsGPUNodes,
+    maxGPU,
     clusterIngressIp,
     loadBalancerType,
   };

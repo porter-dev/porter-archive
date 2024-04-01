@@ -4,7 +4,7 @@ import DashboardHeader from "../cluster-dashboard/DashboardHeader";
 import semver from "semver";
 import _ from "lodash";
 
-import addOn from "assets/add-ons.svg";
+import addOnGrad from "assets/add-on-grad.svg";
 import notFound from "assets/not-found.png";
 
 import { Context } from "shared/Context";
@@ -36,7 +36,8 @@ const HIDDEN_CHARTS = [
   "rds-chart",
   "rds-postgresql",
   "rds-postgresql-aurora",
-  "postgresql-managed"
+  "postgresql-managed",
+  "redis-managed",
 ];
 
 //For Charts that don't exist locally we need to add them in manually
@@ -147,8 +148,8 @@ const NewAddOnFlow: React.FC<Props> = ({
           <>
             <Back to="/addons" />
             <DashboardHeader
-              image={addOn}
-              title="Deploy a new add-on"
+              image={addOnGrad}
+              title="Create a new add-on"
               capitalize={false}
               description="Select an add-on to deploy to this project."
               disableLineBreak

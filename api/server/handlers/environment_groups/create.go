@@ -13,7 +13,6 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
-	"github.com/porter-dev/porter/internal/kubernetes/environment_groups"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/telemetry"
 )
@@ -34,6 +33,14 @@ func NewUpdateEnvironmentGroupHandler(
 	}
 }
 
+// EnvVariableDeletions is the set of keys to delete from the environment group
+type EnvVariableDeletions struct {
+	// Variables is a set of variable keys to delete from the environment group
+	Variables []string `json:"variables"`
+	// Secrets is a set of secret variable keys to delete from the environment group
+	Secrets []string `json:"secrets"`
+}
+
 type UpdateEnvironmentGroupRequest struct {
 	// Name of the env group to create or update
 	Name string `json:"name"`
@@ -49,6 +56,15 @@ type UpdateEnvironmentGroupRequest struct {
 
 	// SecretVariables are sensitive values. All values must be a string due to a kubernetes limitation.
 	SecretVariables map[string]string `json:"secret_variables"`
+
+	// IsEnvOverride is a flag to determine if provided variables should override or merge with existing variables
+	IsEnvOverride bool `json:"is_env_override"`
+
+	// Deletions is a set of keys to delete from the environment group
+	Deletions EnvVariableDeletions `json:"deletions"`
+
+	// SkipAppAutoDeploy is a flag to determine if the app should be auto deployed
+	SkipAppAutoDeploy bool `json:"skip_app_auto_deploy"`
 }
 type UpdateEnvironmentGroupResponse struct {
 	// Name of the env group to create or update
@@ -78,14 +94,6 @@ func (c *UpdateEnvironmentGroupHandler) ServeHTTP(w http.ResponseWriter, r *http
 		telemetry.AttributeKV{Key: "environment-group-type", Value: request.Type},
 	)
 
-	agent, err := c.GetAgent(r, cluster, "")
-	if err != nil {
-		err := telemetry.Error(ctx, span, err, "unable to connect to kubernetes cluster")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-		return
-	}
-
-	var envGroup environment_groups.EnvironmentGroup
 	switch request.Type {
 	case "doppler":
 		_, err := c.Config().ClusterControlPlaneClient.CreateOrUpdateEnvGroup(ctx, connect.NewRequest(&porterv1.CreateOrUpdateEnvGroupRequest{
@@ -101,29 +109,33 @@ func (c *UpdateEnvironmentGroupHandler) ServeHTTP(w http.ResponseWriter, r *http
 			return
 		}
 
-		envGroup = environment_groups.EnvironmentGroup{
-			Name:         request.Name,
-			CreatedAtUTC: time.Now().UTC(),
-		}
 	default:
-		envGroup := environment_groups.EnvironmentGroup{
-			Name:            request.Name,
-			Variables:       request.Variables,
-			SecretVariables: request.SecretVariables,
-			CreatedAtUTC:    time.Now().UTC(),
-		}
-
-		err = environment_groups.CreateOrUpdateBaseEnvironmentGroup(ctx, agent, envGroup, nil)
+		_, err := c.Config().ClusterControlPlaneClient.CreateOrUpdateEnvGroup(ctx, connect.NewRequest(&porterv1.CreateOrUpdateEnvGroupRequest{
+			ProjectId:            int64(cluster.ProjectID),
+			ClusterId:            int64(cluster.ID),
+			EnvGroupProviderType: porterv1.EnumEnvGroupProviderType_ENUM_ENV_GROUP_PROVIDER_TYPE_PORTER,
+			EnvGroupName:         request.Name,
+			EnvVars: &porterv1.EnvGroupVariables{
+				Normal: request.Variables,
+				Secret: request.SecretVariables,
+			},
+			EnvVariableDeletions: &porterv1.EnvVariableDeletions{
+				Variables: request.Deletions.Variables,
+				Secrets:   request.Deletions.Secrets,
+			},
+			IsEnvOverride:     request.IsEnvOverride,
+			SkipAppAutoDeploy: request.SkipAppAutoDeploy,
+		}))
 		if err != nil {
-			err := telemetry.Error(ctx, span, err, "unable to create or update environment group")
+			err := telemetry.Error(ctx, span, err, "unable to create environment group")
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 			return
 		}
 	}
 
 	envGroupResponse := &UpdateEnvironmentGroupResponse{
-		Name:      envGroup.Name,
-		CreatedAt: envGroup.CreatedAtUTC,
+		Name:      request.Name,
+		CreatedAt: time.Now().UTC(),
 	}
 	c.WriteResult(w, r, envGroupResponse)
 }

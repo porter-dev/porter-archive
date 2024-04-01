@@ -3,6 +3,7 @@ import { withRouter } from "react-router";
 import styled from "styled-components";
 
 import Icon from "components/porter/Icon";
+import { useClusterList } from "lib/hooks/useCluster";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
@@ -30,6 +31,7 @@ const ClusterList: React.FC = (props) => {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [clusters, setClusters] = useState<ClusterType[]>([]);
   const [options, setOptions] = useState<ClusterOptions[]>([]);
+  const { clusters: clusterList } = useClusterList();
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent): void => {
@@ -82,8 +84,44 @@ const ClusterList: React.FC = (props) => {
   const truncate = (input: string): string =>
     input.length > 27 ? `${input.substring(0, 27)}...` : input;
 
-  const renderOptionList = (): JSX.Element[] =>
-    options.map((option, i: number) => (
+  const renderOptionList = (): JSX.Element[] => {
+    if (
+      currentProject?.simplified_view_enabled &&
+      currentProject?.capi_provisioner_enabled
+    ) {
+      return clusterList.map((c) => (
+        <OptionDiv
+          key={c.name}
+          selected={c.name === currentCluster?.name}
+          title={c.vanity_name}
+          onClick={() => {
+            setExpanded(false);
+            const cluster = clusterList.find(
+              (cluster) => cluster.name === c.name
+            );
+            if (cluster) {
+              // TODO: remove the need for this conversion
+              // TODO: project_id is required for the current cluster to persist on page refresh - find out why
+              const clusterToOldType: ClusterType & { project_id: number } = {
+                id: cluster.id,
+                name: cluster.name,
+                vanity_name: cluster.vanity_name,
+                cloud_provider: cluster.cloud_provider.name,
+                status: cluster.status,
+                project_id: currentProject.id,
+              };
+              setCurrentCluster?.(clusterToOldType);
+              pushFiltered(props, "/apps", ["project_id"], {});
+            }
+          }}
+        >
+          <Icon src={infra} height={"14px"} />
+          <ClusterLabel>{c.vanity_name}</ClusterLabel>
+        </OptionDiv>
+      ));
+    }
+
+    return options.map((option, i: number) => (
       <OptionDiv
         key={i}
         selected={option.value === currentCluster?.name}
@@ -91,31 +129,39 @@ const ClusterList: React.FC = (props) => {
         onClick={() => {
           setExpanded(false);
           const cluster = clusters.find((c) => c.name === option.value);
-          setCurrentCluster(cluster);
-          pushFiltered(props, "/apps", ["project_id"], {});
+          if (cluster) {
+            setCurrentCluster?.(cluster);
+            pushFiltered(props, "/apps", ["project_id"], {});
+          }
         }}
       >
         <Icon src={infra} height={"14px"} />
         <ClusterLabel>{option.label}</ClusterLabel>
       </OptionDiv>
     ));
+  };
 
   const renderDropdown = (): false | JSX.Element =>
     expanded && (
       <>
         <Dropdown>
           {renderOptionList()}
-          {currentProject?.enable_reprovision && (
-            <OptionDiv
-              selected={false}
-              onClick={() => {
+          <OptionDiv
+            selected={false}
+            onClick={() => {
+              setExpanded(false);
+              if (
+                currentProject?.simplified_view_enabled &&
+                currentProject?.capi_provisioner_enabled
+              ) {
+                pushFiltered(props, "/infrastructure/new", []);
+              } else {
                 setClusterModalVisible(true);
-                setExpanded(false);
-              }}
-            >
-              <Plus>+</Plus> Deploy new cluster
-            </OptionDiv>
-          )}
+              }
+            }}
+          >
+            <Plus>+</Plus> Deploy new cluster
+          </OptionDiv>
         </Dropdown>
       </>
     );
@@ -157,9 +203,16 @@ const ClusterList: React.FC = (props) => {
   return (
     <InitializeButton
       onClick={() => {
-        pushFiltered(props, "/new-cluster", ["cluster_id"], {
-          new_cluster: true,
-        });
+        if (
+          currentProject?.simplified_view_enabled &&
+          currentProject?.capi_provisioner_enabled
+        ) {
+          pushFiltered(props, "/infrastructure/new", []);
+        } else {
+          pushFiltered(props, "/new-cluster", ["cluster_id"], {
+            new_cluster: true,
+          });
+        }
       }}
     >
       <Plus>+</Plus> Create a cluster
@@ -274,7 +327,7 @@ const MainSelector = styled.div`
     justify-content: center;
     border-radius: 20px;
     background: ${(props: { expanded: boolean }) =>
-    props.expanded ? "#ffffff22" : ""};
+      props.expanded ? "#ffffff22" : ""};
   }
 `;
 
@@ -302,7 +355,7 @@ const NavButton = styled(SidebarLink)`
 
   :hover {
     background: ${(props: NavButtonProps) =>
-    props.active ? "#ffffff11" : "#ffffff08"};
+      props.active ? "#ffffff11" : "#ffffff08"};
   }
 
   &.active {

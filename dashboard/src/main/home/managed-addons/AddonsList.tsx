@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Controller,
@@ -12,7 +12,6 @@ import { z } from "zod";
 
 import Button from "components/porter/Button";
 import Container from "components/porter/Container";
-import { ControlledInput } from "components/porter/ControlledInput";
 import Modal from "components/porter/Modal";
 import Select from "components/porter/Select";
 import Spacer from "components/porter/Spacer";
@@ -21,18 +20,12 @@ import { type AppTemplateFormData } from "main/home/cluster-dashboard/preview-en
 import { defaultClientAddon } from "lib/addons";
 
 import postgresql from "assets/postgresql.svg";
+import redis from "assets/redis.svg";
 
 import { AddonListRow } from "./AddonListRow";
 
 const addAddonFormValidator = z.object({
-  name: z
-    .string()
-    .min(1, { message: "A service name is required" })
-    .max(30)
-    .regex(/^[a-z0-9-]+$/, {
-      message: 'Lowercase letters, numbers, and " - " only.',
-    }),
-  type: z.enum(["postgres"]),
+  type: z.enum(["postgres", "redis"]),
 });
 type AddAddonFormValues = z.infer<typeof addAddonFormValidator>;
 
@@ -42,25 +35,14 @@ export const AddonsList: React.FC = () => {
   const { control: appTemplateControl } = useFormContext<AppTemplateFormData>();
 
   // add addon modal form
-  const {
-    register,
-    watch,
-    control,
-    reset,
-    handleSubmit,
-    formState: { errors },
-    setError,
-    clearErrors,
-  } = useForm<AddAddonFormValues>({
+  const { watch, control, reset, handleSubmit } = useForm<AddAddonFormValues>({
     reValidateMode: "onChange",
     resolver: zodResolver(addAddonFormValidator),
     defaultValues: {
-      name: "",
       type: "postgres",
     },
   });
 
-  const addonName = watch("name");
   const addonType = watch("type");
 
   const { append, update, remove, fields } = useFieldArray({
@@ -68,26 +50,9 @@ export const AddonsList: React.FC = () => {
     name: "addons",
   });
 
-  useEffect(() => {
-    const existingAddonNames = fields.map((f) => f.name);
-    if (existingAddonNames.some((n) => n.value === addonName)) {
-      setError("name", {
-        message: "Addon name must be unique",
-      });
-    } else {
-      clearErrors("name");
-    }
-  }, [fields]);
-
   const onSubmit = handleSubmit((data) => {
-    const baseAddon = defaultClientAddon();
-    append({
-      ...baseAddon,
-      name: {
-        value: data.name,
-        readOnly: false,
-      },
-    });
+    const baseAddon = defaultClientAddon(data.type);
+    append(baseAddon);
 
     reset();
     setShowAddAddonModal(false);
@@ -106,19 +71,15 @@ export const AddonsList: React.FC = () => {
           />
         ))}
       </AddonsContainer>
-      {fields.length === 0 && (
-        <>
-          <AddAddonButton
-            onClick={() => {
-              setShowAddAddonModal(true);
-            }}
-          >
-            <I className="material-icons add-icon">add</I>
-            Include add-on in preview environments
-          </AddAddonButton>
-          <Spacer y={0.5} />
-        </>
-      )}
+      <AddAddonButton
+        onClick={() => {
+          setShowAddAddonModal(true);
+        }}
+      >
+        <I className="material-icons add-icon">add</I>
+        Include add-on in preview environments
+      </AddAddonButton>
+      <Spacer y={0.5} />
       {showAddAddonModal && (
         <Modal
           closeModal={() => {
@@ -134,6 +95,7 @@ export const AddonsList: React.FC = () => {
             <AddonIcon>
               {match(addonType)
                 .with("postgres", () => <img src={postgresql} />)
+                .with("redis", () => <img src={redis} />)
                 .exhaustive()}
             </AddonIcon>
             <Controller
@@ -146,28 +108,17 @@ export const AddonsList: React.FC = () => {
                   setValue={(value: string) => {
                     onChange(value);
                   }}
-                  options={[{ label: "Postgres", value: "postgres" }]}
+                  options={[
+                    { label: "Postgres", value: "postgres" },
+                    { label: "Redis", value: "redis" },
+                  ]}
                 />
               )}
             />
           </Container>
           <Spacer y={1} />
-          <Text color="helper">Name this service:</Text>
-          <Spacer y={0.5} />
-          <ControlledInput
-            type="text"
-            placeholder="ex: my-postgres"
-            width="100%"
-            error={errors.name?.message}
-            {...register("name")}
-          />
-          <Spacer y={1} />
-          <Button
-            type="button"
-            onClick={onSubmit}
-            disabled={!!errors.name?.message}
-          >
-            <I className="material-icons">add</I> Add service
+          <Button type="button" onClick={onSubmit}>
+            <I className="material-icons">add</I> Add
           </Button>
         </Modal>
       )}

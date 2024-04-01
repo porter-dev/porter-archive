@@ -1,20 +1,19 @@
 import React from "react";
 import { useFormContext } from "react-hook-form";
 
-import Button from "components/porter/Button";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import { useAppStatus } from "lib/hooks/useAppStatus";
+import { useCluster } from "lib/hooks/useCluster";
 import { type PorterAppFormData } from "lib/porter-apps";
 import {
-  defaultSerialized,
-  deserializeService,
+  isClientWebService,
+  isClientWorkerService,
 } from "lib/porter-apps/services";
-
-import { useClusterResources } from "shared/ClusterResourcesContext";
 
 import ServiceList from "../../validate-apply/services-settings/ServiceList";
 import { type ButtonStatus } from "../AppDataContainer";
+import AppSaveButton from "../AppSaveButton";
 import { useLatestRevision } from "../LatestRevisionContext";
 
 type Props = {
@@ -24,48 +23,40 @@ type Props = {
 const Overview: React.FC<Props> = ({ buttonStatus }) => {
   const { formState } = useFormContext<PorterAppFormData>();
 
-  const { currentClusterResources } = useClusterResources();
-
   const {
     porterApp,
     latestProto,
-    latestRevision,
     projectId,
     clusterId,
     deploymentTarget,
+    latestClientServices,
   } = useLatestRevision();
+
+  const { cluster } = useCluster({
+    clusterId,
+  });
 
   const { serviceVersionStatus } = useAppStatus({
     projectId,
     clusterId,
-    serviceNames: latestProto.serviceList.map((s) => s.name),
+    services: latestClientServices.filter(
+      (s) => isClientWebService(s) || isClientWorkerService(s) // we only care about the pod status of web and workers
+    ),
     deploymentTargetId: deploymentTarget.id,
     appName: latestProto.name,
   });
 
   return (
     <>
-      {porterApp.git_repo_id && (
-        <>
-          <Text size={16}>Pre-deploy job</Text>
-          <Spacer y={0.5} />
-          <ServiceList
-            addNewText={"Add a new pre-deploy job"}
-            prePopulateService={deserializeService({
-              service: defaultSerialized({
-                name: "pre-deploy",
-                type: "predeploy",
-                defaultCPU: currentClusterResources.defaultCPU,
-                defaultRAM: currentClusterResources.defaultRAM,
-              }),
-            })}
-            existingServiceNames={latestProto.predeploy ? ["pre-deploy"] : []}
-            isPredeploy
-            fieldArrayName={"app.predeploy"}
-          />
-          <Spacer y={0.5} />
-        </>
-      )}
+      <Text size={16}>Pre-deploy job</Text>
+      <Spacer y={0.5} />
+      <ServiceList
+        addNewText={"Add a new pre-deploy job"}
+        existingServiceNames={latestProto.predeploy ? ["pre-deploy"] : []}
+        isPredeploy
+        fieldArrayName={"app.predeploy"}
+      />
+      <Spacer y={0.5} />
       <Text size={16}>Application services</Text>
       <Spacer y={0.5} />
       <ServiceList
@@ -77,17 +68,14 @@ const Overview: React.FC<Props> = ({ buttonStatus }) => {
           namespace: deploymentTarget.namespace,
           appName: porterApp.name,
         }}
+        cluster={cluster}
       />
       <Spacer y={0.75} />
-      <Button
-        type="submit"
+      <AppSaveButton
         status={buttonStatus}
-        loadingText={"Updating..."}
-        disabled={formState.isSubmitting || latestRevision.status === "CREATED"}
+        isDisabled={formState.isSubmitting}
         disabledTooltipMessage="Please wait for the deploy to complete before updating services"
-      >
-        Update app
-      </Button>
+      />
     </>
   );
 };

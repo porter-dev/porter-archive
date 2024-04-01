@@ -47,82 +47,6 @@ func TestParseYAML(t *testing.T) {
 
 var result_nobuild = &porterv1.PorterApp{
 	Name: "test-app",
-	Services: map[string]*porterv1.Service{
-		"example-web": {
-			Name:         "example-web",
-			RunOptional:  pointer.String("node index.js"),
-			Port:         8080,
-			CpuCores:     0.1,
-			RamMegabytes: 256,
-			Gpu: &porterv1.GPU{
-				Enabled:        false,
-				GpuCoresNvidia: 0,
-			},
-			Config: &porterv1.Service_WebConfig{
-				WebConfig: &porterv1.WebServiceConfig{
-					Autoscaling: &porterv1.Autoscaling{
-						Enabled:                true,
-						MinInstances:           1,
-						MaxInstances:           3,
-						CpuThresholdPercent:    60,
-						MemoryThresholdPercent: 60,
-					},
-					Domains: []*porterv1.Domain{
-						{
-							Name: "test1.example.com",
-						},
-						{
-							Name: "test2.example.com",
-						},
-					},
-					HealthCheck: &porterv1.HealthCheck{
-						Enabled:  true,
-						HttpPath: "/healthz",
-					},
-				},
-			},
-			Type: 1,
-		},
-		"example-wkr": {
-			Name:              "example-wkr",
-			RunOptional:       pointer.String("echo 'work'"),
-			InstancesOptional: pointer.Int32(1),
-			Port:              80,
-			CpuCores:          0.1,
-			RamMegabytes:      256,
-			GpuCoresNvidia:    0,
-			Gpu: &porterv1.GPU{
-				Enabled:        false,
-				GpuCoresNvidia: 0,
-			},
-			Config: &porterv1.Service_WorkerConfig{
-				WorkerConfig: &porterv1.WorkerServiceConfig{
-					Autoscaling: nil,
-				},
-			},
-			Type: 2,
-		},
-		"example-job": {
-			Name:           "example-job",
-			RunOptional:    pointer.String("echo 'hello world'"),
-			CpuCores:       0.1,
-			RamMegabytes:   256,
-			GpuCoresNvidia: 0,
-			Gpu: &porterv1.GPU{
-				Enabled:        false,
-				GpuCoresNvidia: 0,
-			},
-			Config: &porterv1.Service_JobConfig{
-				JobConfig: &porterv1.JobServiceConfig{
-					AllowConcurrentOptional: pointer.Bool(true),
-					Cron:                    "*/10 * * * *",
-					SuspendCron:             pointer.Bool(false),
-					TimeoutSeconds:          60,
-				},
-			},
-			Type: 3,
-		},
-	},
 	ServiceList: []*porterv1.Service{
 		{
 			Name:           "example-web",
@@ -153,8 +77,11 @@ var result_nobuild = &porterv1.PorterApp{
 						},
 					},
 					HealthCheck: &porterv1.HealthCheck{
-						Enabled:  true,
-						HttpPath: "/healthz",
+						Enabled:             true,
+						HttpPath:            "/healthz",
+						Command:             "",
+						InitialDelaySeconds: &initialDelaySeconds10,
+						TimeoutSeconds:      5,
 					},
 				},
 			},
@@ -210,8 +137,8 @@ var result_nobuild = &porterv1.PorterApp{
 			Enabled:        false,
 			GpuCoresNvidia: 0,
 		},
-		Config:         &porterv1.Service_JobConfig{},
-		Type:           3,
+		Config: &porterv1.Service_JobConfig{},
+		Type:   3,
 	},
 	Image: &porterv1.AppImage{
 		Repository: "nginx",
@@ -227,102 +154,8 @@ var (
 
 var v1_result_nobuild_no_image = &porterv1.PorterApp{
 	Name: "test-app",
-	Services: map[string]*porterv1.Service{
-		"example-job": {
-			Name:           "example-job",
-			RunOptional:    pointer.String("echo 'hello world'"),
-			CpuCores:       0.1,
-			RamMegabytes:   256,
-			GpuCoresNvidia: 0,
-			Config: &porterv1.Service_JobConfig{
-				JobConfig: &porterv1.JobServiceConfig{
-					AllowConcurrentOptional: &trueBool,
-					Cron:                    "*/10 * * * *",
-				},
-			},
-			Type: 3,
-		},
-		"example-wkr": {
-			Name:              "example-wkr",
-			RunOptional:       pointer.String("echo 'work'"),
-			InstancesOptional: &oneInt32,
-			Port:              80,
-			CpuCores:          0.1,
-			RamMegabytes:      256,
-			GpuCoresNvidia:    0,
-			Config: &porterv1.Service_WorkerConfig{
-				WorkerConfig: &porterv1.WorkerServiceConfig{
-					Autoscaling: nil,
-				},
-			},
-			Type: 2,
-		},
-		"example-web": {
-			Name:              "example-web",
-			RunOptional:       pointer.String("node index.js"),
-			InstancesOptional: &zeroInt32,
-			Port:              8080,
-			CpuCores:          0.1,
-			GpuCoresNvidia:    0,
-			RamMegabytes:      256,
-			Config: &porterv1.Service_WebConfig{
-				WebConfig: &porterv1.WebServiceConfig{
-					Autoscaling: &porterv1.Autoscaling{
-						Enabled:                true,
-						MinInstances:           1,
-						MaxInstances:           3,
-						CpuThresholdPercent:    60,
-						MemoryThresholdPercent: 60,
-					},
-					Domains: []*porterv1.Domain{
-						{
-							Name: "test1.example.com",
-						},
-						{
-							Name: "test2.example.com",
-						},
-					},
-					HealthCheck: &porterv1.HealthCheck{
-						Enabled:  true,
-						HttpPath: "/healthz",
-					},
-					Private: pointer.Bool(false),
-				},
-			},
-			Type: 1,
-		},
-	},
 	ServiceList: []*porterv1.Service{
 		{
-			Name:           "example-job",
-			RunOptional:    pointer.String("echo 'hello world'"),
-			CpuCores:       0.1,
-			RamMegabytes:   256,
-			GpuCoresNvidia: 0,
-			Config: &porterv1.Service_JobConfig{
-				JobConfig: &porterv1.JobServiceConfig{
-					AllowConcurrentOptional: &trueBool,
-					Cron:                    "*/10 * * * *",
-				},
-			},
-			Type: 3,
-		},
-		{
-			Name:              "example-wkr",
-			RunOptional:       pointer.String("echo 'work'"),
-			InstancesOptional: &oneInt32,
-			Port:              80,
-			CpuCores:          0.1,
-			RamMegabytes:      256,
-			GpuCoresNvidia:    0,
-			Config: &porterv1.Service_WorkerConfig{
-				WorkerConfig: &porterv1.WorkerServiceConfig{
-					Autoscaling: nil,
-				},
-			},
-			Type: 2,
-		},
-		{
 			Name:              "example-web",
 			RunOptional:       pointer.String("node index.js"),
 			InstancesOptional: &zeroInt32,
@@ -350,11 +183,41 @@ var v1_result_nobuild_no_image = &porterv1.PorterApp{
 					HealthCheck: &porterv1.HealthCheck{
 						Enabled:  true,
 						HttpPath: "/healthz",
+						Command:  "",
 					},
 					Private: pointer.Bool(false),
 				},
 			},
 			Type: 1,
+		},
+		{
+			Name:              "example-wkr",
+			RunOptional:       pointer.String("echo 'work'"),
+			InstancesOptional: &oneInt32,
+			Port:              80,
+			CpuCores:          0.1,
+			RamMegabytes:      256,
+			GpuCoresNvidia:    0,
+			Config: &porterv1.Service_WorkerConfig{
+				WorkerConfig: &porterv1.WorkerServiceConfig{
+					Autoscaling: nil,
+				},
+			},
+			Type: 2,
+		},
+		{
+			Name:           "example-job",
+			RunOptional:    pointer.String("echo 'hello world'"),
+			CpuCores:       0.1,
+			RamMegabytes:   256,
+			GpuCoresNvidia: 0,
+			Config: &porterv1.Service_JobConfig{
+				JobConfig: &porterv1.JobServiceConfig{
+					AllowConcurrentOptional: &trueBool,
+					Cron:                    "*/10 * * * *",
+				},
+			},
+			Type: 3,
 		},
 	},
 	Predeploy: &porterv1.Service{
@@ -368,6 +231,8 @@ var v1_result_nobuild_no_image = &porterv1.PorterApp{
 		Type:           3,
 	},
 }
+
+var initialDelaySeconds10 = int32(10)
 
 func diffProtoWithFailTest(t *testing.T, is *is.I, want, got *porterv1.PorterApp) {
 	t.Helper()

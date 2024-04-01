@@ -95,7 +95,6 @@ func (c *RegistryGetECRTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 			// if the aws integration doesn't have an ARN populated, populate it
 			if awsInt.AWSArn == "" {
 				err = awsInt.PopulateAWSArn()
-
 				if err != nil {
 					continue
 				}
@@ -230,8 +229,12 @@ func (c *RegistryGetGARTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 	request := &types.GetRegistryGCRTokenRequest{}
 
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
+		err := telemetry.Error(ctx, span, nil, "error decoding request")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
+
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "server-url", Value: request.ServerURL})
 
 	// list registries and find one that matches the region
 	regs, err := c.Repo().Registry().ListRegistriesByProjectID(proj.ID)
@@ -251,17 +254,28 @@ func (c *RegistryGetGARTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 		var registryURL string
 
 		for _, reg := range regs {
-			if strings.Contains(reg.URL, "-docker.pkg.dev") {
+			if strings.Contains(reg.URL, request.ServerURL) {
 				registryURL = reg.URL
 				break
 			}
 		}
 
 		if registryURL == "" {
-			e := telemetry.Error(ctx, span, err, "no matching registry found")
-			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusNotFound))
-			return
+			for _, reg := range regs {
+				if strings.Contains(reg.URL, "-docker.pkg.dev") {
+					registryURL = reg.URL
+					break
+				}
+			}
+
+			if registryURL == "" {
+				e := telemetry.Error(ctx, span, err, "no matching registry found")
+				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusNotFound))
+				return
+			}
 		}
+
+		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "registry-url", Value: registryURL})
 
 		regInput := connect.NewRequest(&porterv1.TokenForRegistryRequest{
 			ProjectId:   int64(proj.ID),
@@ -316,6 +330,27 @@ func (c *RegistryGetGARTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 			token = oauthTok.AccessToken
 			expiresAt = oauthTok.Expiry
 			break
+		}
+	}
+
+	if token == "" && len(regs) > 0 {
+		_reg := registry.Registry(*regs[0])
+
+		oauthTok, err := _reg.GetGARToken(ctx, c.Repo())
+		if err != nil {
+			// if the oauth token is not nil, we still return the token but log an error
+			if oauthTok == nil {
+				e := telemetry.Error(ctx, span, err, "error getting gar token")
+				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusInternalServerError))
+				return
+			}
+			e := telemetry.Error(ctx, span, err, "error getting gar token, but token was returned")
+			c.HandleAPIErrorNoWrite(w, r, apierrors.NewErrInternal(e))
+		}
+
+		if oauthTok != nil {
+			token = oauthTok.AccessToken
+			expiresAt = oauthTok.Expiry
 		}
 	}
 

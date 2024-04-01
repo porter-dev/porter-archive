@@ -193,25 +193,7 @@ func (p *CreateUpdatePorterAppEventHandler) createNewAppEvent(ctx context.Contex
 				}
 				return event, nil
 			} else {
-				betaFeaturesEnabled := project.GetFeatureFlag(models.BetaFeaturesEnabled, p.Config().LaunchDarklyClient)
-				telemetry.WithAttributes(span,
-					telemetry.AttributeKV{Key: "beta_features_enabled", Value: betaFeaturesEnabled},
-				)
-				// if beta features are not enabled, then porter makes a request to ccp to update the deploy status
-				// if beta features are enabled, ccp is checking the deploy status, so this request is not necessary
-				// TODO remove this entire branch once beta features are enabled by default
-				if !betaFeaturesEnabled {
-					err := p.updateDeployEventV2(ctx, updateDeployEventV2Input{
-						projectID:             cluster.ProjectID,
-						appName:               porterAppName,
-						appID:                 app.ID,
-						deploymentTargetID:    deploymentTargetID,
-						updatedStatusMetadata: requestMetadata,
-					})
-					if err != nil {
-						return types.PorterAppEvent{}, telemetry.Error(ctx, span, err, "error updating v2 deploy event")
-					}
-				}
+				// v2 handles its own deploy events
 				return types.PorterAppEvent{}, nil
 			}
 		}
@@ -240,6 +222,7 @@ func (p *CreateUpdatePorterAppEventHandler) createNewAppEvent(ctx context.Contex
 			ProjectId:          int64(cluster.ProjectID),
 			AppId:              int64(app.ID),
 			DeploymentTargetId: deploymentTargetID,
+			AppName:            porterAppName,
 		}))
 		if err != nil {
 			return types.PorterAppEvent{}, telemetry.Error(ctx, span, err, "error getting current app revision from cluster control plane client")
@@ -573,6 +556,7 @@ func (p *CreateUpdatePorterAppEventHandler) handleNotification(ctx context.Conte
 	if agentEventMetadata == nil {
 		return telemetry.Error(ctx, span, nil, "app event metadata is nil")
 	}
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "app-event-type", Value: agentEventMetadata.AppEventType.String()})
 
 	createNotificationRequest := connect.NewRequest(&porterv1.CreateNotificationRequest{
 		ProjectId: int64(projectId),
@@ -584,6 +568,7 @@ func (p *CreateUpdatePorterAppEventHandler) handleNotification(ctx context.Conte
 		ServiceName:        agentEventMetadata.ServiceName,
 		AppRevisionId:      agentEventMetadata.AppRevisionID,
 		PorterAgentEventId: int64(agentEventMetadata.AgentEventID),
+		AppEventType:       agentEventMetadata.AppEventType,
 		RawSummary:         agentEventMetadata.Summary,
 		RawDetail:          agentEventMetadata.Detail,
 		JobRunId:           agentEventMetadata.JobRunID,

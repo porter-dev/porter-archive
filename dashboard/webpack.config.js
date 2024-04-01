@@ -75,7 +75,7 @@ module.exports = () => {
       rules: [
         {
           test: /\.(ts|tsx|mjs|js|jsx)$/,
-          exclude: /node_modules/,
+          exclude: /node_modules\/(?!(chart.js|react-chartjs-2)\/).*/,
           use: [
             {
               loader: require.resolve("babel-loader"),

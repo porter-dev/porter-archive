@@ -35,7 +35,7 @@ If you want to start getting familiar with Porter's codebase, we do our best to 
 
 ### Improving Documentation and Writing Tutorials
 
-Documentation is hosted at [docs.getporter.dev](https://docs.getporter.dev). To update existing documentation, you can suggest changes directly from the docs website. To create new documentation or write a tutorial, you can add a document in the `/docs` folder and make a PR directly. 
+Documentation is hosted at [docs.porter.run](https://docs.porter.run). To update existing documentation, you can suggest changes directly from the docs website. To create new documentation or write a tutorial, you can add a document in the `/docs` folder and make a PR directly. 
 
 ### Features
 

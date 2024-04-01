@@ -38,6 +38,7 @@ const AppGrid: React.FC<AppGridProps> = ({
   view,
   sort,
 }) => {
+  const { user } = useContext(Context);
   const { currentDeploymentTarget } = useDeploymentTarget();
   const { currentProject } = useContext(Context);
 
@@ -60,7 +61,7 @@ const AppGrid: React.FC<AppGridProps> = ({
 
   const filteredApps = useMemo(() => {
     const filteredBySearch = search(appsWithProto ?? [], searchValue, {
-      keys: ["name"],
+      keys: ["source.name"],
       isCaseSensitive: false,
     });
 
@@ -118,7 +119,10 @@ const AppGrid: React.FC<AppGridProps> = ({
 
             return (
               <Link to={appLink} key={i}>
-                <Block>
+                <Block
+                  locked={false}
+                  appId={user.isPorterUser ? source.id : ""}
+                >
                   <Container row>
                     <AppIcon
                       buildpacks={proto.build?.buildpacks ?? []}
@@ -219,7 +223,7 @@ const GridList = styled.div`
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
 `;
 
-export const Block = styled.div<{ locked?: boolean }>`
+export const Block = styled.div<{ locked?: boolean; appId?: string }>`
   height: 150px;
   flex-direction: column;
   display: flex;
@@ -228,6 +232,7 @@ export const Block = styled.div<{ locked?: boolean }>`
   padding: 20px;
   color: ${(props) => props.theme.text.primary};
   position: relative;
+  transition: all 0.2s;
   border-radius: 5px;
   background: ${(props) =>
     props.locked ? props.theme.fg : props.theme.clickable.bg};
@@ -235,7 +240,21 @@ export const Block = styled.div<{ locked?: boolean }>`
 
   :hover {
     border: ${(props) => (props.locked ? "" : `1px solid #7a7b80`)};
+
+    ::after {
+      content: ${(props) =>
+    props.locked || !props.appId ? "''" : `"AppID: ${props.appId}"`};
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      background:  ${(props) => props.appId && `#ffffff44`};
+      opacity: 0.3;
+      padding: 5px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
   }
+
   animation: fadeIn 0.3s 0s;
   @keyframes fadeIn {
     from {
@@ -246,7 +265,6 @@ export const Block = styled.div<{ locked?: boolean }>`
     }
   }
 `;
-
 const List = styled.div`
   overflow: hidden;
 `;
@@ -263,6 +281,7 @@ export const Row = styled.div<{ isAtBottom?: boolean; locked?: boolean }>`
   border-radius: 5px;
   margin-bottom: 15px;
   animation: fadeIn 0.3s 0s;
+  transition: all 0.2s;
 `;
 
 const SmallIcon = styled.img<{ opacity?: string; height?: string }>`

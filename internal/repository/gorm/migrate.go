@@ -67,6 +67,7 @@ func AutoMigrate(db *gorm.DB, debug bool) error {
 		&models.DeploymentTarget{},
 		&models.AppTemplate{},
 		&models.GithubWebhook{},
+		&models.Datastore{},
 		&ints.KubeIntegration{},
 		&ints.BasicIntegration{},
 		&ints.OIDCIntegration{},
@@ -83,5 +84,6 @@ func AutoMigrate(db *gorm.DB, debug bool) error {
 		&ints.GithubAppInstallation{},
 		&ints.GithubAppOAuthIntegration{},
 		&ints.SlackIntegration{},
+		&models.Ipam{},
 	)
 }

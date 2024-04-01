@@ -1,10 +1,5 @@
 package types
 
-// CreateBillingCustomerRequest is a request for creating a new billing customer.
-type CreateBillingCustomerRequest struct {
-	UserEmail string `json:"user_email" form:"required"`
-}
-
 // PaymentMethod is a subset of the Stripe PaymentMethod type,
 // with only the fields used in the dashboard
 type PaymentMethod = struct {

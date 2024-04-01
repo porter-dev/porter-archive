@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"connectrpc.com/connect"
-	"github.com/google/uuid"
 	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -37,8 +36,9 @@ func NewRollbackAppRevisionHandler(
 
 // RollbackAppRevisionRequest is the request body for the /apps/{porter_app_name}/rollback endpoint
 type RollbackAppRevisionRequest struct {
-	DeploymentTargetID string `json:"deployment_target_id"`
-	AppRevisionID      string `json:"app_revision_id"`
+	DeploymentTargetID   string `json:"deployment_target_id"`
+	DeploymentTargetName string `json:"deployment_target_name"`
+	AppRevisionID        string `json:"app_revision_id"`
 }
 
 // RollbackAppRevisionResponse is the response body for the /apps/{porter_app_name}/rollback endpoint
@@ -67,18 +67,6 @@ func (c *RollbackAppRevisionHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	deploymentTargetID, err := uuid.Parse(request.DeploymentTargetID)
-	if err != nil {
-		err := telemetry.Error(ctx, span, err, "error parsing deployment target id")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-		return
-	}
-	if deploymentTargetID == uuid.Nil {
-		err := telemetry.Error(ctx, span, nil, "deployment target id is nil")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-		return
-	}
-
 	appName, reqErr := requestutils.GetURLParamString(r, types.URLParamPorterAppName)
 	if reqErr != nil {
 		err := telemetry.Error(ctx, span, nil, "error parsing porter app name")
@@ -99,11 +87,35 @@ func (c *RollbackAppRevisionHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 		return
 	}
 
+	deploymentTargetName := request.DeploymentTargetName
+	if request.DeploymentTargetName == "" && request.DeploymentTargetID == "" {
+		defaultDeploymentTarget, err := defaultDeploymentTarget(ctx, defaultDeploymentTargetInput{
+			ProjectID:                 project.ID,
+			ClusterID:                 cluster.ID,
+			ClusterControlPlaneClient: c.Config().ClusterControlPlaneClient,
+		})
+		if err != nil {
+			err := telemetry.Error(ctx, span, err, "error getting default deployment target")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+		deploymentTargetName = defaultDeploymentTarget.Name
+	}
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "deployment-target-id", Value: request.DeploymentTargetID},
+		telemetry.AttributeKV{Key: "deployment-target-name", Value: request.DeploymentTargetName},
+	)
+
 	rollbackReq := connect.NewRequest(&porterv1.RollbackRevisionRequest{
-		ProjectId:          int64(project.ID),
-		AppId:              int64(app.ID),
-		DeploymentTargetId: deploymentTargetID.String(),
-		AppRevisionId:      request.AppRevisionID,
+		ProjectId: int64(project.ID),
+		AppId:     int64(app.ID),
+		DeploymentTargetIdentifier: &porterv1.DeploymentTargetIdentifier{
+			Id:   request.DeploymentTargetID,
+			Name: deploymentTargetName,
+		},
+		AppRevisionId: request.AppRevisionID,
+		AppName:       appName,
 	})
 	ccpResp, err := c.Config().ClusterControlPlaneClient.RollbackRevision(ctx, rollbackReq)
 	if err != nil {

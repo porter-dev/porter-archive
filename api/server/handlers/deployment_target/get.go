@@ -49,6 +49,7 @@ func (c *GetDeploymentTargetHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 
 	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
 	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
+	deploymentTarget, deploymentTargetOK := ctx.Value(types.DeploymentTargetScope).(types.DeploymentTarget)
 
 	if !project.GetFeatureFlag(models.ValidateApplyV2, c.Config().LaunchDarklyClient) {
 		err := telemetry.Error(ctx, span, nil, "project does not have validate apply v2 enabled")
@@ -56,55 +57,59 @@ func (c *GetDeploymentTargetHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	deploymentTargetID, reqErr := requestutils.GetURLParamString(r, types.URLParamDeploymentTargetID)
-	if reqErr != nil {
-		err := telemetry.Error(ctx, span, reqErr, "error parsing deployment target id")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-		return
-	}
-	if deploymentTargetID == "" {
-		err := telemetry.Error(ctx, span, nil, "deployment target id cannot be empty")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-		return
-	}
+	if !deploymentTargetOK {
+		deploymentTargetID, reqErr := requestutils.GetURLParamString(r, types.URLParamDeploymentTargetID)
+		if reqErr != nil {
+			err := telemetry.Error(ctx, span, reqErr, "error parsing deployment target id")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+			return
+		}
+		if deploymentTargetID == "" {
+			err := telemetry.Error(ctx, span, nil, "deployment target id cannot be empty")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+			return
+		}
 
-	deploymentTarget, err := deployment_target.DeploymentTargetDetails(ctx, deployment_target.DeploymentTargetDetailsInput{
-		ProjectID:          int64(project.ID),
-		ClusterID:          int64(cluster.ID),
-		DeploymentTargetID: deploymentTargetID,
-		CCPClient:          c.Config().ClusterControlPlaneClient,
-	})
-	if err != nil {
-		err := telemetry.Error(ctx, span, err, "error getting deployment target details")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-		return
-	}
+		deploymentTargetDetails, err := deployment_target.DeploymentTargetDetails(ctx, deployment_target.DeploymentTargetDetailsInput{
+			ProjectID:          int64(project.ID),
+			ClusterID:          int64(cluster.ID),
+			DeploymentTargetID: deploymentTargetID,
+			CCPClient:          c.Config().ClusterControlPlaneClient,
+		})
+		if err != nil {
+			err := telemetry.Error(ctx, span, err, "error getting deployment target details")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
 
-	id, err := uuid.Parse(deploymentTarget.ID)
-	if err != nil {
-		err := telemetry.Error(ctx, span, err, "error parsing deployment target id")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-		return
-	}
+		id, err := uuid.Parse(deploymentTargetDetails.ID)
+		if err != nil {
+			err := telemetry.Error(ctx, span, err, "error parsing deployment target id")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
 
-	if id == uuid.Nil {
-		err := telemetry.Error(ctx, span, err, "deployment target id is nil")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-		return
+		if id == uuid.Nil {
+			err := telemetry.Error(ctx, span, err, "deployment target id is nil")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+
+		deploymentTarget = types.DeploymentTarget{
+			ID:           id,
+			ProjectID:    project.ID,
+			ClusterID:    cluster.ID,
+			Name:         deploymentTargetDetails.Name,
+			Namespace:    deploymentTargetDetails.Namespace,
+			IsPreview:    deploymentTargetDetails.IsPreview,
+			IsDefault:    deploymentTargetDetails.IsDefault,
+			CreatedAtUTC: time.Time{}, // not provided by deployment target details response
+			UpdatedAtUTC: time.Time{}, // not provided by deployment target details response
+		}
 	}
 
 	res := &GetDeploymentTargetResponse{
-		DeploymentTarget: types.DeploymentTarget{
-			ID:        id,
-			ProjectID: project.ID,
-			ClusterID: cluster.ID,
-			Name:      deploymentTarget.Name,
-			Namespace: deploymentTarget.Namespace,
-			IsPreview: deploymentTarget.IsPreview,
-			IsDefault: deploymentTarget.IsDefault,
-			CreatedAt: time.Time{}, // not provided by deployment target details response
-			UpdatedAt: time.Time{}, // not provided by deployment target details response
-		},
+		DeploymentTarget: deploymentTarget,
 	}
 
 	c.WriteResult(w, r, res)

@@ -1,23 +1,47 @@
 import React, { useState } from "react";
 import styled from "styled-components";
-import tag_icon from "assets/tag.png";
-import addCircle from "assets/add-circle.png";
-import { ArtifactType, ImageType } from "./types";
+
+import Loading from "components/Loading";
 import SearchBar from "components/SearchBar";
+
+import addCircle from "assets/add-circle.png";
+import tag_icon from "assets/tag.png";
+
+import { type ArtifactType, type ImageType } from "./types";
 
 type Props = {
   selectedImage?: ImageType;
   setSelectedTag: (x: string) => void;
+  loading: boolean;
 };
 
 const TagList: React.FC<Props> = ({
   selectedImage,
   setSelectedTag,
+  loading,
 }) => {
   const [searchFilter, setSearchFilter] = useState<string>("");
 
-  const renderTagList = () => {
-    if (selectedImage == null) {
+  const renderTagList = (): JSX.Element => {
+    if (loading) {
+      return (
+        <div>
+          {searchFilter !== "" && (
+            <TagItem
+              onClick={() => {
+                setSelectedTag(searchFilter);
+              }}
+            >
+              <img src={addCircle} />
+              {`Use tag "${searchFilter}"`}
+            </TagItem>
+          )}
+          <LoadingWrapper>
+            <Loading message={"Loading all images linked to your project"} />
+          </LoadingWrapper>
+        </div>
+      );
+    } else if (selectedImage == null) {
       if (searchFilter) {
         return (
           <TagItem
@@ -26,47 +50,62 @@ const TagList: React.FC<Props> = ({
             }}
           >
             <img src={addCircle} />
-            {`Use tag \"${searchFilter}\"`}
+            {`Use tag "${searchFilter}"`}
           </TagItem>
         );
       }
-      return <LoadingWrapper>Please specify an tag.</LoadingWrapper>;
+      return <LoadingWrapper>Please specify a tag.</LoadingWrapper>;
     }
-    
+
     if (selectedImage.artifacts.length === 0 && !searchFilter) {
-      return <LoadingWrapper>Image has no tags; please specify a different image.</LoadingWrapper>;
+      return (
+        <LoadingWrapper>
+          Image has no tags; please specify a different image.
+        </LoadingWrapper>
+      );
     }
 
     const sortedArtifacts = searchFilter
       ? selectedImage.artifacts
-        .filter(({ tag }) => tag.toLowerCase().includes(searchFilter.toLowerCase()))
-        .sort((a, b) => {
-          const aIndex = a.tag.toLowerCase().indexOf(searchFilter.toLowerCase());
-          const bIndex = b.tag.toLowerCase().indexOf(searchFilter.toLowerCase());
-          return aIndex - bIndex;
-        })
+          .filter(({ tag }) =>
+            tag.toLowerCase().includes(searchFilter.toLowerCase())
+          )
+          .sort((a, b) => {
+            const aIndex = a.tag
+              .toLowerCase()
+              .indexOf(searchFilter.toLowerCase());
+            const bIndex = b.tag
+              .toLowerCase()
+              .indexOf(searchFilter.toLowerCase());
+            return aIndex - bIndex;
+          })
       : selectedImage.artifacts.sort((a, b) => {
+          return (
+            new Date(b.updated_at ?? "").getTime() -
+            new Date(a.updated_at ?? "").getTime()
+          );
+        });
+
+    const tagCards = sortedArtifacts.map(
+      (artifact: ArtifactType, i: number) => {
         return (
-          new Date(b.updated_at ?? "").getTime() -
-          new Date(a.updated_at ?? "").getTime()
+          <TagItem
+            key={i}
+            onClick={() => {
+              setSelectedTag(artifact.tag);
+            }}
+          >
+            <img src={tag_icon} />
+            {artifact.tag}
+          </TagItem>
         );
-      })
+      }
+    );
 
-    const tagCards = sortedArtifacts.map((artifact: ArtifactType, i: number) => {
-      return (
-        <TagItem
-          key={i}
-          onClick={() => {
-            setSelectedTag(artifact.tag);
-          }}
-        >
-          <img src={tag_icon} />
-          {artifact.tag}
-        </TagItem>
-      );
-    });
-
-    if (searchFilter !== "" && !sortedArtifacts.some(({ tag }) => tag === searchFilter)) {
+    if (
+      searchFilter !== "" &&
+      !sortedArtifacts.some(({ tag }) => tag === searchFilter)
+    ) {
       tagCards.push(
         <TagItem
           onClick={() => {
@@ -74,12 +113,12 @@ const TagList: React.FC<Props> = ({
           }}
         >
           <img src={addCircle} />
-          {`Use tag \"${searchFilter}\"`}
+          {`Use tag "${searchFilter}"`}
         </TagItem>
       );
     }
 
-    return tagCards;
+    return <>{tagCards}</>;
   };
 
   return (
@@ -89,9 +128,7 @@ const TagList: React.FC<Props> = ({
         disabled={false}
         prompt={"Search tags..."}
       />
-      <ExpandedWrapper>
-        {renderTagList()}
-      </ExpandedWrapper>
+      <ExpandedWrapper>{renderTagList()}</ExpandedWrapper>
     </>
   );
 };

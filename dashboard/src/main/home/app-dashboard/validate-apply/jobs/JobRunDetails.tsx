@@ -1,85 +1,192 @@
-import Spacer from "components/porter/Spacer";
-import React from "react";
-import Text from "components/porter/Text";
-import { readableDate } from "shared/string_utils";
-import Icon from "components/porter/Icon";
-import loading from "assets/loading.gif";
-import Container from "components/porter/Container";
-import Logs from "main/home/app-dashboard/validate-apply/logs/Logs";
-import { useLatestRevision } from "main/home/app-dashboard/app-view/LatestRevisionContext";
-import { type JobRun } from "lib/hooks/useJobs";
-import { match } from "ts-pattern";
-import { getStatusColor } from "../../app-view/tabs/activity-feed/events/utils";
-import { AppearingView } from "../../app-view/tabs/activity-feed/events/focus-views/EventFocusView";
-import { getDuration } from "./utils";
-import { Link } from "react-router-dom";
-import styled from "styled-components";
+import React, { useCallback, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
+import { Link, useHistory } from "react-router-dom";
+import styled from "styled-components";
+import { match } from "ts-pattern";
+
+import Button from "components/porter/Button";
+import Container from "components/porter/Container";
+import Error from "components/porter/Error";
+import Icon from "components/porter/Icon";
+import Spacer from "components/porter/Spacer";
+import Text from "components/porter/Text";
+import { useLatestRevision } from "main/home/app-dashboard/app-view/LatestRevisionContext";
+import Logs from "main/home/app-dashboard/validate-apply/logs/Logs";
+import { getErrorMessageFromNetworkCall } from "lib/hooks/useCluster";
+import { type JobRun } from "lib/hooks/useJobs";
+
+import api from "shared/api";
+import { readableDate } from "shared/string_utils";
+import cancel from "assets/cancel.svg";
+import loading from "assets/loading.gif";
+
+import { AppearingView } from "../../app-view/tabs/activity-feed/events/focus-views/EventFocusView";
+import { getStatusColor } from "../../app-view/tabs/activity-feed/events/utils";
+import { getDuration } from "./utils";
 
 type Props = {
-    jobRun: JobRun;
+  jobRun: JobRun;
 };
 
-const JobRunDetails: React.FC<Props> = ({
-    jobRun,
-}) => {
-    const { projectId, clusterId, latestProto, deploymentTarget } = useLatestRevision();
+const JobRunDetails: React.FC<Props> = ({ jobRun }) => {
+  const queryClient = useQueryClient();
+  const { projectId, clusterId, latestProto, deploymentTarget, porterApp } =
+    useLatestRevision();
+  const history = useHistory();
+  const [jobRunCancelling, setJobRunCancelling] = useState<boolean>(false);
+  const [jobRunCancelError, setJobRunCancelError] = useState<string>("");
 
-    const appName = latestProto.name
+  const appName = latestProto.name;
 
-    const renderHeaderText = () => {
-        return match(jobRun)
-            .with({ status: { succeeded: 1 } }, () => <Text color={getStatusColor("SUCCESS")} size={16}>Job run succeeded</Text>)
-            .with({ status: { failed: 1 } }, () => <Text color={getStatusColor("FAILED")} size={16}>Job run failed</Text>)
-            .otherwise(() => (
-                <Container row>
-                    <Icon height="16px" src={loading} />
-                    <Spacer inline width="10px" />
-                    <Text size={16} color={getStatusColor("PROGRESSING")}>Job run in progress...</Text>
-                </Container>
-            ));
-    };
+  const renderHeaderText = (): JSX.Element => {
+    return match(jobRun)
+      .with({ status: "SUCCESSFUL" }, () => (
+        <Text color={getStatusColor("SUCCESS")} size={16}>
+          Job run succeeded
+        </Text>
+      ))
+      .with({ status: "FAILED" }, () => (
+        <Text color={getStatusColor("FAILED")} size={16}>
+          Job run failed
+        </Text>
+      ))
+      .with({ status: "CANCELED" }, () => (
+        <Text color={getStatusColor("CANCELED")} size={16}>
+          Job run canceled
+        </Text>
+      ))
+      .otherwise(() => (
+        <Container row>
+          <Icon height="16px" src={loading} />
+          <Spacer inline width="10px" />
+          <Text size={16} color={getStatusColor("PROGRESSING")}>
+            Job run in progress...
+          </Text>
+        </Container>
+      ));
+  };
 
-    const renderDurationText = () => {
-        return match(jobRun)
-            .with({ status: { succeeded: 1 } }, () => <Text color="helper">Started {readableDate(jobRun.status.startTime ?? jobRun.metadata.creationTimestamp)} and ran for {getDuration(jobRun)}.</Text>)
-            .with({ status: { failed: 1 } }, () => <Text color="helper">Started {readableDate(jobRun.status.startTime ?? jobRun.metadata.creationTimestamp)} and ran for {getDuration(jobRun)}.</Text>)
-            .otherwise(() => <Text color="helper">Started {readableDate(jobRun.status.startTime ?? jobRun.metadata.creationTimestamp)}.</Text>);
+  const cancelRun = useCallback(async () => {
+    try {
+      setJobRunCancelling(true);
+      setJobRunCancelError("");
+
+      await api.cancelJob(
+        "<token>",
+        {
+          deployment_target_id: deploymentTarget.id,
+        },
+        {
+          project_id: projectId,
+          cluster_id: clusterId,
+          porter_app_name: appName,
+          job_run_name: jobRun.name,
+        }
+      );
+
+      await queryClient.invalidateQueries([
+        "jobRuns",
+        appName,
+        deploymentTarget.id,
+        jobRun.name,
+      ]);
+
+      history.push(
+        `/apps/${appName}/job-history?service=${jobRun.service_name}`
+      );
+    } catch (err) {
+      setJobRunCancelError(
+        getErrorMessageFromNetworkCall(err, "Error canceling job run")
+      );
+    } finally {
+      setJobRunCancelling(false);
     }
+  }, [jobRun.name, deploymentTarget.id, projectId, clusterId, appName]);
 
-    return (
-        <>
-            <Link to={`/apps/${latestProto.name}/job-history?service=${jobRun.jobName}`}>
-                <BackButton>
-                    <i className="material-icons">keyboard_backspace</i>
-                    Job run history
-                </BackButton>
-            </Link>
-            <Spacer y={0.5} />
-            <AppearingView>
-                {renderHeaderText()}
-            </AppearingView>
-            <Spacer y={0.5} />
-            {renderDurationText()}
-            <Spacer y={0.5} />
-            <Logs
-                projectId={projectId}
-                clusterId={clusterId}
-                appName={appName}
-                serviceNames={[jobRun.jobName ?? "all"]}
-                deploymentTargetId={deploymentTarget.id}
-                appRevisionId={jobRun.metadata.labels["porter.run/app-revision-id"]}
-                logFilterNames={["service_name"]}
-                timeRange={{
-                    startTime: dayjs(jobRun.status.startTime ?? jobRun.metadata.creationTimestamp).subtract(30, 'second'),
-                    endTime: jobRun.status.completionTime != null ? dayjs(jobRun.status.completionTime).add(30, 'second') : undefined,
-                }}
-                appId={parseInt(jobRun.metadata.labels["porter.run/app-id"])}
-                defaultLatestRevision={false}
-                jobRunID={jobRun.metadata.uid}
-            />
-        </>
-    );
+  const renderDurationText = (): JSX.Element => {
+    return match(jobRun)
+      .with({ status: "SUCCESSFUL" }, () => (
+        <Text color="helper">
+          Started {readableDate(jobRun.created_at)} and ran for{" "}
+          {getDuration(jobRun)}.
+        </Text>
+      ))
+      .with({ status: "FAILED" }, () => (
+        <Text color="helper">
+          Started {readableDate(jobRun.created_at)} and ran for{" "}
+          {getDuration(jobRun)}.
+        </Text>
+      ))
+      .otherwise(() => (
+        <Text color="helper">Started {readableDate(jobRun.created_at)}.</Text>
+      ));
+  };
+
+  return (
+    <>
+      <Container row spaced>
+        <Link
+          to={
+            deploymentTarget.is_preview
+              ? `/preview-environments/apps/${latestProto.name}/job-history?service=${jobRun.service_name}&target=${deploymentTarget.id}`
+              : `/apps/${latestProto.name}/job-history?service=${jobRun.service_name}`
+          }
+        >
+          <BackButton>
+            <i className="material-icons">keyboard_backspace</i>
+            Job run history
+          </BackButton>
+        </Link>
+        {jobRun.status === "RUNNING" && (
+          <Button
+            color="red"
+            onClick={() => {
+              void cancelRun();
+            }}
+            disabled={jobRunCancelling}
+            status={
+              jobRunCancelling ? (
+                "loading"
+              ) : jobRunCancelError ? (
+                <Error message={jobRunCancelError} />
+              ) : (
+                ""
+              )
+            }
+          >
+            <Icon src={cancel} height={"15px"} />
+            <Spacer inline x={0.5} />
+            Cancel Run
+          </Button>
+        )}
+      </Container>
+      <Spacer y={0.5} />
+      <AppearingView>{renderHeaderText()}</AppearingView>
+      <Spacer y={0.5} />
+      {renderDurationText()}
+      <Spacer y={0.5} />
+      <Logs
+        projectId={projectId}
+        clusterId={clusterId}
+        appName={appName}
+        serviceNames={[jobRun.service_name]}
+        deploymentTargetId={deploymentTarget.id}
+        appRevisionId={jobRun.app_revision_id}
+        logFilterNames={["service_name"]}
+        timeRange={{
+          startTime: dayjs(jobRun.created_at).subtract(30, "second"),
+          endTime:
+            new Date(jobRun.finished_at) > new Date(jobRun.created_at)
+              ? dayjs(jobRun.finished_at).add(30, "second")
+              : undefined,
+        }}
+        appId={porterApp.id}
+        defaultLatestRevision={false}
+        jobRunName={jobRun.name}
+      />
+    </>
+  );
 };
 
 export default JobRunDetails;

@@ -3,6 +3,8 @@ import _ from "lodash";
 import pluralize from "pluralize";
 import z from "zod";
 
+import { type ClientService } from "lib/porter-apps/services";
+
 import api from "shared/api";
 import {
   useWebsockets,
@@ -43,14 +45,14 @@ type SerializedServiceStatus = z.infer<typeof serviceStatusValidator>;
 export const useAppStatus = ({
   projectId,
   clusterId,
-  serviceNames,
+  services,
   deploymentTargetId,
   appName,
   kind = "pod",
 }: {
   projectId: number;
   clusterId: number;
-  serviceNames: string[];
+  services: ClientService[];
   deploymentTargetId: string;
   appName: string;
   kind?: string;
@@ -116,6 +118,7 @@ export const useAppStatus = ({
   };
 
   useEffect(() => {
+    const serviceNames = services.map((s) => s.name.value);
     void Promise.all(serviceNames.map(updatePods));
     for (const serviceName of serviceNames) {
       setupWebsocket(serviceName);

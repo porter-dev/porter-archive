@@ -1,7 +1,6 @@
 package cluster
 
 import (
-	"fmt"
 	"net/http"
 
 	"connectrpc.com/connect"
@@ -13,6 +12,8 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/repository"
+	"github.com/porter-dev/porter/internal/telemetry"
 )
 
 type ClusterDeleteHandler struct {
@@ -31,20 +32,22 @@ func NewClusterDeleteHandler(
 }
 
 func (c *ClusterDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-delete-cluster")
+	defer span.End()
+
 	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
 
 	if cluster.ProvisionedBy == "CAPI" {
 		if c.Config().EnableCAPIProvisioner {
-			revisions, err := c.Config().Repo.APIContractRevisioner().List(ctx, cluster.ProjectID, cluster.ID)
+			revisions, err := c.Config().Repo.APIContractRevisioner().List(ctx, cluster.ProjectID, repository.WithClusterID(cluster.ID))
 			if err != nil {
-				e := fmt.Errorf("error listing revisions for cluster %d: %w", cluster.ID, err)
-				c.HandleAPIError(w, r, apierrors.NewErrInternal(e))
+				err = telemetry.Error(ctx, span, err, "error listing revisions for cluster")
+				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 				return
 			}
 			if cluster.Status == types.UpdatingUnavailable || cluster.Status == types.Updating {
-				e := fmt.Errorf("unable to delete cluster %d that is updating", cluster.ID)
-				c.HandleAPIError(w, r, apierrors.NewErrInternal(e))
+				err = telemetry.Error(ctx, span, nil, "unable to delete cluster that is updating")
+				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 				return
 			}
 			var revisionID string
@@ -63,8 +66,8 @@ func (c *ClusterDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 			})
 			_, err = c.Config().ClusterControlPlaneClient.DeleteCluster(ctx, cl)
 			if err != nil {
-				e := fmt.Errorf("error deleting cluster %d: %w", cluster.ID, err)
-				c.HandleAPIError(w, r, apierrors.NewErrInternal(e))
+				err = telemetry.Error(ctx, span, err, "error deleting cluster")
+				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 				return
 			}
 		}
@@ -72,7 +75,8 @@ func (c *ClusterDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 
 	err := c.Repo().Cluster().DeleteCluster(cluster)
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		err = telemetry.Error(ctx, span, err, "error deleting cluster")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 

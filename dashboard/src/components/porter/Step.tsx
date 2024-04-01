@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
+import Container from "./Container";
 
 type Props = {
   number: number;
@@ -13,18 +14,14 @@ const Step: React.FC<Props> = ({
   return (
     <StyledStep>
       <StepNumber>{number}</StepNumber>
-      <Block>
+      <Container>
         {children}
-      </Block>
+      </Container>
     </StyledStep>
   );
 };
 
 export default Step;
-
-const Block = styled.div`
-  display: block;
-`;
 
 const StepNumber = styled.div`
   height: 20px;

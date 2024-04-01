@@ -45,6 +45,8 @@ const (
 	AppRevisionStatus_DeploymentSuccessful AppRevisionStatus = "DEPLOYMENT_SUCCESSFUL"
 	// AppRevisionStatus_DeploymentFailed is the status for a revision that failed to deploy
 	AppRevisionStatus_DeploymentFailed AppRevisionStatus = "DEPLOYMENT_FAILED"
+	// AppRevisionStatus_DeploymentSuperseded is the status for a revision that was superseded by a newer revision
+	AppRevisionStatus_DeploymentSuperseded AppRevisionStatus = "DEPLOYMENT_SUPERSEDED"
 	// AppRevisionStatus_RollbackSuccessful is the status for a revision that successfully rolled back
 	AppRevisionStatus_RollbackSuccessful AppRevisionStatus = "ROLLBACK_SUCCESSFUL"
 	// AppRevisionStatus_RollbackFailed is the status for a revision that failed to rollback

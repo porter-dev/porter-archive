@@ -1,27 +1,29 @@
 import React from "react";
-import Button from "components/porter/Button";
+import { useFieldArray, useFormContext } from "react-hook-form";
 import styled from "styled-components";
+
+import CopyToClipboard from "components/CopyToClipboard";
+import Button from "components/porter/Button";
+import { ControlledInput } from "components/porter/ControlledInput";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
-import { useFieldArray, useFormContext } from "react-hook-form";
-import { PorterAppFormData } from "lib/porter-apps";
-import { ControlledInput } from "components/porter/ControlledInput";
-import CopyToClipboard from "components/CopyToClipboard";
+import { useClusterContext } from "main/home/infrastructure-dashboard/ClusterContextProvider";
+import { type PorterAppFormData } from "lib/porter-apps";
+
+import { stringifiedDNSRecordType } from "utils/ip";
 import copy from "assets/copy-left.svg";
 
-interface Props {
+type Props = {
   index: number;
-  clusterIngressIp: string;
-}
+};
 
-const isCustomDomain = (domain: string) => {
+const isCustomDomain = (domain: string): boolean => {
   return !domain.includes("onporter.run") && !domain.includes("withporter.run");
-}
+};
 
-const CustomDomains: React.FC<Props> = ({ 
-  index, 
-  clusterIngressIp,
- }) => {
+const CustomDomains: React.FC<Props> = ({ index }) => {
+  const { cluster } = useClusterContext();
+
   const { control, register } = useFormContext<PorterAppFormData>();
   const { remove, append, fields } = useFieldArray({
     control,
@@ -32,7 +34,7 @@ const CustomDomains: React.FC<Props> = ({
     name: `app.services.${index}.domainDeletions`,
   });
 
-  const onRemove = (i: number, name: string) => {
+  const onRemove = (i: number, name: string): void => {
     remove(i);
     appendDomainDeletion({
       name,
@@ -44,33 +46,35 @@ const CustomDomains: React.FC<Props> = ({
       {fields.length !== 0 && (
         <>
           {fields.map((customDomain, i) => {
-            return isCustomDomain(customDomain.name.value) && (
-              <div key={customDomain.id}>
-                <AnnotationContainer>
-                  <ControlledInput
-                    type="text"
-                    placeholder="ex: my-app.my-domain.com"
-                    disabled={customDomain.name.readOnly}
-                    width="275px"
-                    disabledTooltip={
-                      "You may only edit this field in your porter.yaml."
-                    }
-                    {...register(
-                      `app.services.${index}.config.domains.${i}.name.value`
-                    )}
-                  />
-                  <DeleteButton
-                    onClick={() => {
-                      if (!customDomain.name.readOnly) {
-                        onRemove(i, customDomain.name.value);
+            return (
+              isCustomDomain(customDomain.name.value) && (
+                <div key={customDomain.id}>
+                  <AnnotationContainer>
+                    <ControlledInput
+                      type="text"
+                      placeholder="ex: my-app.my-domain.com"
+                      disabled={customDomain.name.readOnly}
+                      width="275px"
+                      disabledTooltip={
+                        "You may only edit this field in your porter.yaml."
                       }
-                    }}
-                  >
-                    <i className="material-icons">cancel</i>
-                  </DeleteButton>
-                </AnnotationContainer>
-                <Spacer y={0.25} />
-              </div>
+                      {...register(
+                        `app.services.${index}.config.domains.${i}.name.value`
+                      )}
+                    />
+                    <DeleteButton
+                      onClick={() => {
+                        if (!customDomain.name.readOnly) {
+                          onRemove(i, customDomain.name.value);
+                        }
+                      }}
+                    >
+                      <i className="material-icons">cancel</i>
+                    </DeleteButton>
+                  </AnnotationContainer>
+                  <Spacer y={0.25} />
+                </div>
+              )
             );
           })}
         </>
@@ -87,19 +91,23 @@ const CustomDomains: React.FC<Props> = ({
       >
         + Add Custom Domain
       </Button>
-      {clusterIngressIp !== "" && (
+      {cluster.ingress_ip !== "" && (
         <>
           <Spacer y={0.5} />
-          <div style={{width: "550px"}}>
-            <Text color="helper">To configure a custom domain, you must add a CNAME record pointing to the following Ingress IP for your cluster: </Text>
+          <div style={{ width: "550px" }}>
+            <Text color="helper">
+              To configure a custom domain, you must add{" "}
+              {stringifiedDNSRecordType(cluster.ingress_ip)} pointing to the
+              following Ingress IP for your cluster:{" "}
+            </Text>
           </div>
           <Spacer y={0.5} />
           <IdContainer>
-            <Code>{clusterIngressIp}</Code>
+            <Code>{cluster.ingress_ip}</Code>
             <CopyContainer>
-                <CopyToClipboard text={clusterIngressIp}>
-                    <CopyIcon src={copy} alt="copy" />
-                </CopyToClipboard>
+              <CopyToClipboard text={cluster.ingress_ip}>
+                <CopyIcon src={copy} alt="copy" />
+              </CopyToClipboard>
             </CopyContainer>
           </IdContainer>
           <Spacer y={0.5} />
@@ -146,15 +154,15 @@ const Code = styled.span`
 `;
 
 const IdContainer = styled.div`
-    background: #26292E;  
-    border-radius: 5px;
-    padding: 10px;
-    display: flex;
-    width: 550px;
-    border-radius: 5px;
-    border: 1px solid ${({ theme }) => theme.border};
-    align-items: center;
-    user-select: text;
+  background: #26292e;
+  border-radius: 5px;
+  padding: 10px;
+  display: flex;
+  width: 550px;
+  border-radius: 5px;
+  border: 1px solid ${({ theme }) => theme.border};
+  align-items: center;
+  user-select: text;
 `;
 
 const CopyContainer = styled.div`

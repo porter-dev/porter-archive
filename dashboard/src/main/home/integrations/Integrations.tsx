@@ -4,7 +4,7 @@ import { Route, RouteComponentProps, Switch, withRouter } from "react-router";
 import { integrationList } from "shared/common";
 import styled from "styled-components";
 import { pushFiltered } from "shared/routing";
-import integrations from "assets/integrations.svg";
+import integrationGrad from "assets/integration-grad.svg";
 
 import CreateIntegrationForm from "./create-integration/CreateIntegrationForm";
 import IntegrationCategories from "./IntegrationCategories";
@@ -17,14 +17,14 @@ import DashboardHeader from "../cluster-dashboard/DashboardHeader";
 type PropsType = RouteComponentProps;
 
 const Integrations: React.FC<PropsType> = (props) => {
-  const { enableGitlab } = useContext(Context);
+  const { enableGitlab, currentProject } = useContext(Context);
 
   const IntegrationCategoryStrings = useMemo(() => {
     if (!enableGitlab) {
-      return ["registry", "slack", "doppler"];
+      return ["slack", "doppler"];
     }
 
-    return ["registry", "slack", "doppler", "gitlab"];
+    return ["slack", "doppler", "gitlab"];
   }, [enableGitlab]);
 
   return (
@@ -78,7 +78,7 @@ const Integrations: React.FC<PropsType> = (props) => {
         <Route>
           <>
             <DashboardHeader
-              image={integrations}
+              image={integrationGrad}
               title="Integrations"
               description="Manage third-party integrations for your Porter project."
               disableLineBreak

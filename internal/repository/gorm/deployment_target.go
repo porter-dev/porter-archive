@@ -32,14 +32,45 @@ func (repo *DeploymentTargetRepository) DeploymentTargetBySelectorAndSelectorTyp
 	return deploymentTarget, nil
 }
 
-// List finds all deployment targets for a given project
-func (repo *DeploymentTargetRepository) List(projectID uint, clusterID uint, preview bool) ([]*models.DeploymentTarget, error) {
+// ListForCluster finds all deployment targets for a given project
+func (repo *DeploymentTargetRepository) ListForCluster(projectID uint, clusterID uint, preview bool) ([]*models.DeploymentTarget, error) {
 	deploymentTargets := []*models.DeploymentTarget{}
 	if err := repo.db.Where("project_id = ? AND cluster_id = ? AND preview = ?", projectID, clusterID, preview).Find(&deploymentTargets).Error; err != nil {
 		return nil, err
 	}
 
 	return deploymentTargets, nil
+}
+
+// List finds all deployment targets for a given project
+func (repo *DeploymentTargetRepository) List(projectID uint, preview bool) ([]*models.DeploymentTarget, error) {
+	deploymentTargets := []*models.DeploymentTarget{}
+	if err := repo.db.Where("project_id = ? AND preview = ?", projectID, preview).Find(&deploymentTargets).Error; err != nil {
+		return nil, err
+	}
+
+	return deploymentTargets, nil
+}
+
+// DeploymentTarget finds all deployment targets for a given project
+func (repo *DeploymentTargetRepository) DeploymentTarget(projectID uint, deploymentTargetIdentifier string) (*models.DeploymentTarget, error) {
+	if deploymentTargetIdentifier == "" {
+		return nil, errors.New("deployment target identifier is empty")
+	}
+
+	whereArg := "project_id = ? AND id = ?"
+
+	_, err := uuid.Parse(deploymentTargetIdentifier)
+	if err != nil {
+		whereArg = "project_id = ? AND vanity_name = ?"
+	}
+
+	deploymentTarget := &models.DeploymentTarget{}
+	if err := repo.db.Where(whereArg, projectID, deploymentTargetIdentifier).Find(deploymentTarget).Error; err != nil {
+		return nil, err
+	}
+
+	return deploymentTarget, nil
 }
 
 // CreateDeploymentTarget creates a new deployment target

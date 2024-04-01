@@ -1,18 +1,23 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
+import { type Column } from "react-table";
 import styled from "styled-components";
 
-import { type InviteType } from "shared/types";
+import CopyToClipboard from "components/CopyToClipboard";
+import Heading from "components/form-components/Heading";
+import Helper from "components/form-components/Helper";
+import InputRow from "components/form-components/InputRow";
+import Loading from "components/Loading";
+import Table from "components/OldTable";
+import Button from "components/porter/Button";
+import Spacer from "components/porter/Spacer";
+import RadioSelector from "components/RadioSelector";
+
 import api from "shared/api";
 import { Context } from "shared/Context";
+import { type InviteType } from "shared/types";
 
-import Loading from "components/Loading";
-import InputRow from "components/form-components/InputRow";
-import Helper from "components/form-components/Helper";
-import Heading from "components/form-components/Heading";
-import CopyToClipboard from "components/CopyToClipboard";
-import { type Column } from "react-table";
-import Table from "components/OldTable";
-import RadioSelector from "components/RadioSelector";
+import PermissionGroup from "./PermissionGroup";
+import RoleModal from "./RoleModal";
 
 type Props = {};
 
@@ -24,7 +29,7 @@ export type Collaborator = {
   kind: string;
 };
 
-const InvitePage: React.FunctionComponent<Props> = ({ }) => {
+const InvitePage: React.FunctionComponent<Props> = ({}) => {
   const {
     currentProject,
     setCurrentModal,
@@ -41,6 +46,7 @@ const InvitePage: React.FunctionComponent<Props> = ({ }) => {
   const [roleList, setRoleList] = useState([]);
   const [isInvalidEmail, setIsInvalidEmail] = useState(false);
   const [isHTTPS] = useState(() => window.location.protocol === "https:");
+  const [showNewGroupModal, setShowNewGroupModal] = useState(false);
 
   useEffect(() => {
     api
@@ -150,7 +156,9 @@ const InvitePage: React.FunctionComponent<Props> = ({ }) => {
         }
       )
       .then(getData)
-      .catch((err) => { console.log(err); });
+      .catch((err) => {
+        console.log(err);
+      });
   };
 
   const replaceInvite = (
@@ -164,15 +172,16 @@ const InvitePage: React.FunctionComponent<Props> = ({ }) => {
         { email: inviteEmail, kind },
         { id: currentProject.id }
       )
-      .then(async () =>
-        await api.deleteInvite(
-          "<token>",
-          {},
-          {
-            id: currentProject.id,
-            invId: inviteId,
-          }
-        )
+      .then(
+        async () =>
+          await api.deleteInvite(
+            "<token>",
+            {},
+            {
+              id: currentProject.id,
+              invId: inviteId,
+            }
+          )
       )
       .then(getData)
       .catch((err) => {
@@ -188,7 +197,8 @@ const InvitePage: React.FunctionComponent<Props> = ({ }) => {
     const trimmedEmail = email.trim();
     setEmail(trimmedEmail);
 
-    const regex = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+    const regex =
+      /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
     if (!regex.test(trimmedEmail.toLowerCase())) {
       setIsInvalidEmail(true);
       return;
@@ -222,13 +232,15 @@ const InvitePage: React.FunctionComponent<Props> = ({ }) => {
   };
 
   const columns = useMemo<
-    Array<Column<{
-      email: string;
-      id: number;
-      status: string;
-      invite_link: string;
-      kind: string;
-    }>>
+    Array<
+      Column<{
+        email: string;
+        id: number;
+        status: string;
+        invite_link: string;
+        kind: string;
+      }>
+    >
   >(
     () => [
       {
@@ -258,13 +270,13 @@ const InvitePage: React.FunctionComponent<Props> = ({ }) => {
           if (row.values.status === "expired") {
             return (
               <NewLinkButton
-                onClick={() =>
-                  { replaceInvite(
+                onClick={() => {
+                  replaceInvite(
                     row.values.email,
                     row.original.id,
                     row.values.kind
-                  ); }
-                }
+                  );
+                }}
               >
                 <u>Generate a new link</u>
               </NewLinkButton>
@@ -298,13 +310,17 @@ const InvitePage: React.FunctionComponent<Props> = ({ }) => {
               <Flex>
                 <SettingsButton
                   invis={row.original.currentUser}
-                  onClick={() => { openEditModal(row.original); }}
+                  onClick={() => {
+                    openEditModal(row.original);
+                  }}
                 >
                   <i className="material-icons">more_vert</i>
                 </SettingsButton>
                 <DeleteButton
                   invis={row.original.currentUser}
-                  onClick={() => { removeCollaborator(row.original.id); }}
+                  onClick={() => {
+                    removeCollaborator(row.original.id);
+                  }}
                 >
                   <i className="material-icons">delete</i>
                 </DeleteButton>
@@ -315,13 +331,17 @@ const InvitePage: React.FunctionComponent<Props> = ({ }) => {
             <Flex>
               <SettingsButton
                 invis={row.original.currentUser}
-                onClick={() => { openEditModal(row.original); }}
+                onClick={() => {
+                  openEditModal(row.original);
+                }}
               >
                 <i className="material-icons">more_vert</i>
               </SettingsButton>
               <DeleteButton
                 invis={row.original.currentUser}
-                onClick={() => { deleteInvite(row.original.id); }}
+                onClick={() => {
+                  deleteInvite(row.original.id);
+                }}
               >
                 <i className="material-icons">delete</i>
               </DeleteButton>
@@ -338,7 +358,8 @@ const InvitePage: React.FunctionComponent<Props> = ({ }) => {
     inviteList.sort((a: any, b: any) => (a.email > b.email ? 1 : -1));
     inviteList.sort((a: any, b: any) => (a.accepted > b.accepted ? 1 : -1));
     const buildInviteLink = (token: string) => `
-      ${isHTTPS ? "https://" : ""}${window.location.host}/api/projects/${currentProject.id
+      ${isHTTPS ? "https://" : ""}${window.location.host}/api/projects/${
+        currentProject.id
       }/invites/${token}
     `;
 
@@ -404,18 +425,212 @@ const InvitePage: React.FunctionComponent<Props> = ({ }) => {
   return (
     <>
       <>
+        {currentProject?.advanced_rbac_enabled && (
+          <>
+            <Heading isAtTop={true}>Permission groups</Heading>
+            <Helper>Manage permission groups for your organization.</Helper>
+            <PermissionGroup
+              name="Admin"
+              permissions={{
+                applications: {
+                  read: true,
+                  write: true,
+                  create: true,
+                  delete: true,
+                  tabs: {
+                    notifications: true,
+                    activity: true,
+                    overview: true,
+                    logs: true,
+                    metrics: true,
+                    environment: true,
+                    build_settings: true,
+                    settings: true,
+                  },
+                  actions: {
+                    app_rollbacks: true,
+                  },
+                },
+                datastores: {
+                  read: true,
+                  write: true,
+                  create: true,
+                  delete: true,
+                  tabs: {
+                    connection_info: true,
+                    connected_apps: true,
+                    configuration: true,
+                    settings: true,
+                  },
+                },
+                addOns: {
+                  read: true,
+                  write: true,
+                  create: true,
+                  delete: true,
+                },
+                envGroups: {
+                  read: true,
+                  write: true,
+                  create: true,
+                  delete: true,
+                  tabs: {
+                    environment_variables: true,
+                    synced_applications: true,
+                    settings: true,
+                  },
+                },
+                previewEnvironments: {
+                  read: true,
+                  manage: true,
+                  tabs: {
+                    app_services: true,
+                    environment_variables: true,
+                    required_apps: true,
+                    add_ons: true,
+                  },
+                },
+                integrations: {
+                  read: true,
+                  manage: true,
+                },
+              }}
+            />
+            <PermissionGroup
+              name="Developer"
+              permissions={{
+                applications: {
+                  read: true,
+                  write: true,
+                  tabs: {
+                    notifications: true,
+                    activity: true,
+                    overview: true,
+                    logs: true,
+                    metrics: true,
+                    environment: true,
+                  },
+                  actions: {
+                    app_rollbacks: true,
+                  },
+                },
+                datastores: {
+                  read: true,
+                  write: true,
+                  tabs: {
+                    connection_info: true,
+                    connected_apps: true,
+                    configuration: true,
+                  },
+                },
+                addOns: {
+                  read: true,
+                  write: true,
+                },
+                envGroups: {
+                  read: true,
+                  write: true,
+                  tabs: {
+                    environment_variables: true,
+                    synced_applications: true,
+                  },
+                },
+                previewEnvironments: {
+                  read: true,
+                  tabs: {
+                    app_services: true,
+                    environment_variables: true,
+                    required_apps: true,
+                    add_ons: true,
+                  },
+                },
+                integrations: {
+                  read: true,
+                },
+              }}
+            />
+            <PermissionGroup
+              name="Viewer"
+              permissions={{
+                applications: {
+                  read: true,
+                  tabs: {
+                    notifications: true,
+                    activity: true,
+                    overview: true,
+                    logs: true,
+                    metrics: true,
+                    environment: true,
+                  },
+                },
+                datastores: {
+                  read: true,
+                  tabs: {
+                    connection_info: true,
+                    connected_apps: true,
+                    configuration: true,
+                  },
+                },
+                addOns: {
+                  read: true,
+                },
+                envGroups: {
+                  read: true,
+                  tabs: {
+                    environment_variables: true,
+                    synced_applications: true,
+                  },
+                },
+                previewEnvironments: {
+                  read: true,
+                  tabs: {
+                    app_services: true,
+                    environment_variables: true,
+                    required_apps: true,
+                    add_ons: true,
+                  },
+                },
+                integrations: {
+                  read: true,
+                },
+              }}
+            />
+            <Spacer y={0.4} />
+            <Button
+              alt
+              onClick={() => {
+                setShowNewGroupModal(true);
+              }}
+            >
+              <I className="material-icons">add</I>
+              New group
+            </Button>
+            <Spacer y={1.7} />
+            {showNewGroupModal && (
+              <RoleModal
+                name=""
+                readOnly={false}
+                closeModal={() => {
+                  setShowNewGroupModal(false);
+                }}
+              />
+            )}
+          </>
+        )}
         <Heading isAtTop={true}>Share project</Heading>
         <Helper>Generate a project invite for another user.</Helper>
         <InputRowWrapper>
           <InputRow
             value={email}
             type="text"
-            setValue={(newEmail: string) => { setEmail(newEmail); }}
+            setValue={(newEmail: string) => {
+              setEmail(newEmail);
+            }}
             width="100%"
             placeholder="ex: mrp@porter.run"
           />
         </InputRowWrapper>
-        <Helper>Specify a role for this user.</Helper>
+        <Helper>Specify a project role for this user.</Helper>
         <RoleSelectorWrapper>
           <RadioSelector
             selected={role}
@@ -424,7 +639,12 @@ const InvitePage: React.FunctionComponent<Props> = ({ }) => {
           />
         </RoleSelectorWrapper>
         <ButtonWrapper>
-          <InviteButton disabled={!hasSeats} onClick={() => { validateEmail(); }}>
+          <InviteButton
+            disabled={!hasSeats}
+            onClick={() => {
+              validateEmail();
+            }}
+          >
             Create invite
           </InviteButton>
           {isInvalidEmail && (
@@ -456,11 +676,17 @@ const InvitePage: React.FunctionComponent<Props> = ({ }) => {
           </Placeholder>
         )
       )}
+      <Spacer y={2} />
     </>
   );
 };
 
 export default InvitePage;
+
+const I = styled.i`
+  margin-right: 10px;
+  font-size: 18px;
+`;
 
 const Flex = styled.div`
   display: flex;

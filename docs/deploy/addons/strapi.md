@@ -11,7 +11,7 @@ This is a quick guide on how to deploy Strapi to a Kubernetes cluster in AWS/GCP
 6. Hit Deploy!
 
 ## Deploying PostgresDB
-1. Strapi instance deployed through Porter connects to PostgresDB. You can connect Strapi instance deployed on Porter to any external database, but it is also possible to use a database that is also deployed on Porter. Follow [this guide to deploy a PostgresDB instance to your cluster in one click](https://docs.getporter.dev/docs/postgresdb).
+1. Strapi instance deployed through Porter connects to PostgresDB. You can connect Strapi instance deployed on Porter to any external database, but it is also possible to use a database that is also deployed on Porter. Follow [this guide to deploy a PostgresDB instance to your cluster in one click](https://docs.porter.run/docs/postgresdb).
 2. After the database has been deployed, navigate to the **Environment variables** tab of your deployed Strapi instance. Configure the following environment variables:
 ```
 NODE_ENV=production
@@ -21,7 +21,7 @@ DATABASE_NAME=
 DATABASE_USERNAME=
 DATABASE_PASSWORD=
 ```
-To determine what the correct environment variables are in order to connect to the deployed database, [see this guide](https://docs.getporter.dev/docs/postgresdb#connecting-to-the-database).
+To determine what the correct environment variables are in order to connect to the deployed database, [see this guide](https://docs.porter.run/docs/postgresdb#connecting-to-the-database).
 
 # Development
 To develop, clone the [example repository](https://github.com/porter-dev/strapi) to your local environment and run `npm install && npm run develop;` from the `app` directory. Porter will automatically handle CI/CD and propagate your changes to production on every push to the repository.

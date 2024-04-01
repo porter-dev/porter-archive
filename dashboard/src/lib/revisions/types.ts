@@ -22,6 +22,7 @@ export const appRevisionValidator = z.object({
     "DEPLOYMENT_PROGRESSING",
     "DEPLOYMENT_SUCCESSFUL",
     "DEPLOYMENT_FAILED",
+    "DEPLOYMENT_SUPERSEDED",
     "ROLLBACK_SUCCESSFUL",
     "ROLLBACK_FAILED",
     "ROLLBACK_SKIPPED",
@@ -35,6 +36,7 @@ export const appRevisionValidator = z.object({
   id: z.string(),
   created_at: z.string(),
   updated_at: z.string(),
+  app_instance_id: z.string(),
 });
 
 export type AppRevision = z.infer<typeof appRevisionValidator>;

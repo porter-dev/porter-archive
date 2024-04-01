@@ -630,6 +630,35 @@ func getPorterAppRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/apps/{porter_app_name}/manifests -> porter_app.NewGetAppManifestsHandler
+	getAppManifestsEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/{%s}/manifests", relPathV2, types.URLParamPorterAppName),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	getAppManifestsHandler := porter_app.NewAppManifestsHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: getAppManifestsEndpoint,
+		Handler:  getAppManifestsHandler,
+		Router:   r,
+	})
+
 	// GET /api/projects/{project_id}/clusters/{cluster_id}/apps/{porter_app_name}/env-variables -> porter_app.AppEnvVariablesHandler
 	appEnvVariablesEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
@@ -688,35 +717,6 @@ func getPorterAppRoutes(
 		Router:   r,
 	})
 
-	// POST /api/projects/{project_id}/clusters/{cluster_id}/apps/validate -> porter_app.NewValidatePorterAppHandler
-	validatePorterAppEndpoint := factory.NewAPIEndpoint(
-		&types.APIRequestMetadata{
-			Verb:   types.APIVerbGet,
-			Method: types.HTTPVerbPost,
-			Path: &types.Path{
-				Parent:       basePath,
-				RelativePath: fmt.Sprintf("%s/validate", relPathV2),
-			},
-			Scopes: []types.PermissionScope{
-				types.UserScope,
-				types.ProjectScope,
-				types.ClusterScope,
-			},
-		},
-	)
-
-	validatePorterAppHandler := porter_app.NewValidatePorterAppHandler(
-		config,
-		factory.GetDecoderValidator(),
-		factory.GetResultWriter(),
-	)
-
-	routes = append(routes, &router.Route{
-		Endpoint: validatePorterAppEndpoint,
-		Handler:  validatePorterAppHandler,
-		Router:   r,
-	})
-
 	// POST /api/projects/{project_id}/clusters/{cluster_id}/apps/create -> porter_app.NewCreateAppHandler
 	createAppEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
@@ -746,14 +746,14 @@ func getPorterAppRoutes(
 		Router:   r,
 	})
 
-	// POST /api/projects/{project_id}/clusters/{cluster_id}/apps/apply -> porter_app.NewApplyPorterAppHandler
-	applyPorterAppEndpoint := factory.NewAPIEndpoint(
+	// POST /api/projects/{project_id}/clusters/{cluster_id}/apps/attach-env-group -> porter_app.NewAttachEnvGroupHandler
+	attachEnvGroupEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbUpdate,
 			Method: types.HTTPVerbPost,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: fmt.Sprintf("%s/apply", relPathV2),
+				RelativePath: fmt.Sprintf("%s/attach-env-group", relPathV2),
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
@@ -763,15 +763,15 @@ func getPorterAppRoutes(
 		},
 	)
 
-	applyPorterAppHandler := porter_app.NewApplyPorterAppHandler(
+	attachEnvGroupHandler := porter_app.NewAttachEnvGroupHandler(
 		config,
 		factory.GetDecoderValidator(),
 		factory.GetResultWriter(),
 	)
 
 	routes = append(routes, &router.Route{
-		Endpoint: applyPorterAppEndpoint,
-		Handler:  applyPorterAppHandler,
+		Endpoint: attachEnvGroupEndpoint,
+		Handler:  attachEnvGroupHandler,
 		Router:   r,
 	})
 
@@ -1007,7 +1007,7 @@ func getPorterAppRoutes(
 		Router:   r,
 	})
 
-	// GET /api/projects/{project_id}/clusters/{cluster_id}/apps/revisions -> porter_app.NewCurrentAppRevisionHandler
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/apps/revisions -> porter_app.NewLatestAppRevisionsHandler
 	latestAppRevisionsEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbGet,
@@ -1033,6 +1033,35 @@ func getPorterAppRoutes(
 	routes = append(routes, &router.Route{
 		Endpoint: latestAppRevisionsEndpoint,
 		Handler:  latestAppRevisionsHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/apps/instances -> porter_app.NewAppInstancesHandler
+	latestAppInstancesEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/instances", relPathV2),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	latestAppInstancesHandler := porter_app.NewAppInstancesHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: latestAppInstancesEndpoint,
+		Handler:  latestAppInstancesHandler,
 		Router:   r,
 	})
 
@@ -1270,6 +1299,64 @@ func getPorterAppRoutes(
 		Router:   r,
 	})
 
+	// GET  /api/projects/{project_id}/clusters/{cluster_id}/apps/{porter_app_name}/jobs/{job_run_name} -> porter_app.JobStatusByNameHandler
+	appJobStatusByNameEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/{%s}/jobs/{%s}", relPathV2, types.URLParamPorterAppName, types.URLParamJobRunName),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	appJobStatusByNameHandler := porter_app.NewJobStatusByNameHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: appJobStatusByNameEndpoint,
+		Handler:  appJobStatusByNameHandler,
+		Router:   r,
+	})
+
+	// POST /api/projects/{project_id}/clusters/{cluster_id}/apps/{porter_app_name}/jobs/{job_run_name}/cancel -> porter_app.CancelJobRunHandler
+	appJobCancelEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbUpdate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/{%s}/jobs/{%s}/cancel", relPathV2, types.URLParamPorterAppName, types.URLParamJobRunName),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	appJobCancelHandler := porter_app.NewCancelJobRunHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: appJobCancelEndpoint,
+		Handler:  appJobCancelHandler,
+		Router:   r,
+	})
+
 	// GET /api/projects/{project_id}/clusters/{cluster_id}/apps/{porter_app_name}/revisions/{app_revision_id} -> porter_app.NewGetAppRevisionHandler
 	getAppRevisionEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
@@ -1386,7 +1473,7 @@ func getPorterAppRoutes(
 		Router:   r,
 	})
 
-	// GET /api/projects/{project_id}/clusters/{cluster_id}/apps/{porter_app_name}/revisions/{app_revision_id}/build-env -> porter_app.NewGetBuildFromRevisionHandler
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/apps/{porter_app_name}/revisions/{app_revision_id}/build -> porter_app.NewGetBuildFromRevisionHandler
 	getBuildFromRevisionEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbGet,
@@ -1441,35 +1528,6 @@ func getPorterAppRoutes(
 	routes = append(routes, &router.Route{
 		Endpoint: reportRevisionStatusEndpoint,
 		Handler:  reportRevisionStatusHandler,
-		Router:   r,
-	})
-
-	// POST /api/projects/{project_id}/clusters/{cluster_id}/apps/{porter_app_name}/update-environment -> porter_app.NewUpdateAppEnvironmentHandler
-	updateAppEnvironmentGroupEndpoint := factory.NewAPIEndpoint(
-		&types.APIRequestMetadata{
-			Verb:   types.APIVerbUpdate,
-			Method: types.HTTPVerbPost,
-			Path: &types.Path{
-				Parent:       basePath,
-				RelativePath: fmt.Sprintf("/apps/{%s}/update-environment", types.URLParamPorterAppName),
-			},
-			Scopes: []types.PermissionScope{
-				types.UserScope,
-				types.ProjectScope,
-				types.ClusterScope,
-			},
-		},
-	)
-
-	updateAppEnvironmentGroupHandler := porter_app.NewUpdateAppEnvironmentHandler(
-		config,
-		factory.GetDecoderValidator(),
-		factory.GetResultWriter(),
-	)
-
-	routes = append(routes, &router.Route{
-		Endpoint: updateAppEnvironmentGroupEndpoint,
-		Handler:  updateAppEnvironmentGroupHandler,
 		Router:   r,
 	})
 
@@ -1618,37 +1676,8 @@ func getPorterAppRoutes(
 		Router:   r,
 	})
 
-	// GET /api/projects/{project_id}/clusters/{cluster_id}/apps/use-new-apply-logic -> porter_app.NewUseNewApplyLogicHandler
-	useNewApplyLogicEndpoint := factory.NewAPIEndpoint(
-		&types.APIRequestMetadata{
-			Verb:   types.APIVerbGet,
-			Method: types.HTTPVerbGet,
-			Path: &types.Path{
-				Parent:       basePath,
-				RelativePath: fmt.Sprintf("%s/use-new-apply-logic", relPathV2),
-			},
-			Scopes: []types.PermissionScope{
-				types.UserScope,
-				types.ProjectScope,
-				types.ClusterScope,
-			},
-		},
-	)
-
-	useNewApplyLogicHandler := porter_app.NewUseNewApplyLogicHandler(
-		config,
-		factory.GetDecoderValidator(),
-		factory.GetResultWriter(),
-	)
-
-	routes = append(routes, &router.Route{
-		Endpoint: useNewApplyLogicEndpoint,
-		Handler:  useNewApplyLogicHandler,
-		Router:   r,
-	})
-
-	// POST /api/projects/{project_id}/clusters/{cluster_id}/apps/{app_name}/run -> porter_app.NewAppRunHandler
-	appRunEndpoint := factory.NewAPIEndpoint(
+	// POST /api/projects/{project_id}/clusters/{cluster_id}/apps/{app_name}/run -> porter_app.NewRunAppJobHandler
+	runAppJobEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbUpdate,
 			Method: types.HTTPVerbPost,
@@ -1664,15 +1693,44 @@ func getPorterAppRoutes(
 		},
 	)
 
-	appRunHandler := porter_app.NewAppRunHandler(
+	runAppJobHandler := porter_app.NewRunAppJobHandler(
 		config,
 		factory.GetDecoderValidator(),
 		factory.GetResultWriter(),
 	)
 
 	routes = append(routes, &router.Route{
-		Endpoint: appRunEndpoint,
-		Handler:  appRunHandler,
+		Endpoint: runAppJobEndpoint,
+		Handler:  runAppJobHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/apps/{app_name}/run-status -> porter_app.NewAppJobRunStatusHandler
+	appJobRunStatusEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/{%s}/run-status", relPathV2, types.URLParamPorterAppName),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	appJobRunStatusHandler := porter_app.NewAppJobRunStatusHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: appJobRunStatusEndpoint,
+		Handler:  appJobRunStatusHandler,
 		Router:   r,
 	})
 

@@ -1,17 +1,13 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import styled from "styled-components";
 
-import placeholder from "assets/placeholder.png";
+import placeholder from "assets/placeholder.svg";
 
 type Props = {
   children: React.ReactNode;
 };
 
-const DashboardPlaceholder: React.FC<Props> = ({
-  children,
-}) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-
+const DashboardPlaceholder: React.FC<Props> = ({ children }) => {
   return (
     <StyledDashboardPlaceholder>
       <Bg src={placeholder} />
@@ -35,11 +31,11 @@ const Bg = styled.img`
   z-index: 0;
 `;
 
-const StyledDashboardPlaceholder = styled.div<{
-}>`
+const StyledDashboardPlaceholder = styled.div`
   width: 100%;
   padding: 25px 30px;
   border-radius: 10px;
   position: relative;
   overflow: hidden;
+  height: fit-content;
 `;

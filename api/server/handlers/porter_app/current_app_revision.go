@@ -10,8 +10,6 @@ import (
 
 	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
 
-	"github.com/google/uuid"
-
 	"github.com/porter-dev/porter/internal/porter_app"
 	"github.com/porter-dev/porter/internal/telemetry"
 
@@ -43,7 +41,8 @@ func NewLatestAppRevisionHandler(
 
 // LatestAppRevisionRequest is the request object for the /apps/{porter_app_name}/latest endpoint
 type LatestAppRevisionRequest struct {
-	DeploymentTargetID string `schema:"deployment_target_id"`
+	DeploymentTargetID   string `schema:"deployment_target_id,omitempty"`
+	DeploymentTargetName string `schema:"deployment_target_name,omitempty"`
 }
 
 // LatestAppRevisionResponse is the response object for the /apps/{porter_app_name}/latest endpoint
@@ -82,44 +81,32 @@ func (c *LatestAppRevisionHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	_, err := uuid.Parse(request.DeploymentTargetID)
-	if err != nil {
-		err := telemetry.Error(ctx, span, err, "error parsing deployment target id")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-		return
+	deploymentTargetName := request.DeploymentTargetName
+	if request.DeploymentTargetName == "" && request.DeploymentTargetID == "" {
+		defaultDeploymentTarget, err := defaultDeploymentTarget(ctx, defaultDeploymentTargetInput{
+			ProjectID:                 project.ID,
+			ClusterID:                 cluster.ID,
+			ClusterControlPlaneClient: c.Config().ClusterControlPlaneClient,
+		})
+		if err != nil {
+			err := telemetry.Error(ctx, span, err, "error getting default deployment target")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+		deploymentTargetName = defaultDeploymentTarget.Name
 	}
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "deployment-target-id", Value: request.DeploymentTargetID})
-
-	porterApps, err := c.Repo().PorterApp().ReadPorterAppsByProjectIDAndName(project.ID, appName)
-	if err != nil {
-		err := telemetry.Error(ctx, span, err, "error getting porter app from repo")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-		return
-	}
-	if len(porterApps) == 0 {
-		err := telemetry.Error(ctx, span, err, "no porter apps returned")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-		return
-	}
-	if len(porterApps) > 1 {
-		err := telemetry.Error(ctx, span, err, "multiple porter apps returned; unable to determine which one to use")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-		return
-	}
-
-	appId := porterApps[0].ID
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "app-id", Value: appId})
-
-	if appId == 0 {
-		err := telemetry.Error(ctx, span, err, "porter app id is missing")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-		return
-	}
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "deployment-target-name", Value: deploymentTargetName},
+		telemetry.AttributeKV{Key: "deployment-target-id", Value: request.DeploymentTargetID},
+	)
 
 	currentAppRevisionReq := connect.NewRequest(&porterv1.CurrentAppRevisionRequest{
-		ProjectId:          int64(project.ID),
-		AppId:              int64(appId),
-		DeploymentTargetId: request.DeploymentTargetID,
+		ProjectId: int64(project.ID),
+		DeploymentTargetIdentifier: &porterv1.DeploymentTargetIdentifier{
+			Id:   request.DeploymentTargetID,
+			Name: deploymentTargetName,
+		},
+		AppName: appName,
 	})
 
 	currentAppRevisionResp, err := c.Config().ClusterControlPlaneClient.CurrentAppRevision(ctx, currentAppRevisionReq)

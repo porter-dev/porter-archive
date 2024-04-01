@@ -1,22 +1,23 @@
-import React, { useEffect, useState, useContext } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import styled from "styled-components";
-
-import github from "assets/github-icon.png";
-import logo from "assets/logo.png";
-import GoogleIcon from "assets/GoogleIcon";
-
-import api from "shared/api";
-import { emailRegex } from "shared/regex";
-import { Context } from "shared/Context";
 
 import Heading from "components/form-components/Heading";
 import Button from "components/porter/Button";
 import Container from "components/porter/Container";
 import Input from "components/porter/Input";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
 import Link from "components/porter/Link";
 import Select from "components/porter/Select";
+import Spacer from "components/porter/Spacer";
+import Text from "components/porter/Text";
+
+import api from "shared/api";
+import { Context } from "shared/Context";
+import { emailRegex } from "shared/regex";
+import github from "assets/github-icon.png";
+import GoogleIcon from "assets/GoogleIcon";
+import logo from "assets/logo.png";
+
+import InfoPanel from "./InfoPanel";
 
 type Props = {
   authenticate: () => void;
@@ -25,11 +26,9 @@ type Props = {
 const getWindowDimensions = () => {
   const { innerWidth: width, innerHeight: height } = window;
   return { width, height };
-}
+};
 
-const Register: React.FC<Props> = ({
-  authenticate,
-}) => {
+const Register: React.FC<Props> = ({ authenticate }) => {
   const { setUser, setCurrentError } = useContext(Context);
   const [firstName, setFirstName] = useState("");
   const [firstNameError, setFirstNameError] = useState(false);
@@ -45,16 +44,22 @@ const Register: React.FC<Props> = ({
   const [hasBasic, setHasBasic] = useState(true);
   const [hasGithub, setHasGithub] = useState(true);
   const [hasGoogle, setHasGoogle] = useState(false);
-  const [windowDimensions, setWindowDimensions] = useState(getWindowDimensions());
+  const [windowDimensions, setWindowDimensions] = useState(
+    getWindowDimensions()
+  );
   const [buttonDisabled, setButtonDisabled] = useState(false);
 
-  const [chosenReferralOption, setChosenReferralOption] = useState<string>("(None provided)");
+  const [chosenReferralOption, setChosenReferralOption] =
+    useState<string>("(None provided)");
   const [referralOtherText, setReferralOtherText] = useState<string>("");
 
   const referralOptions = [
     { value: "(None provided)", label: "Please select an option:" },
     { value: "Email", label: "Email" },
-    { value: "Word of mouth", label: "Word of mouth (friend, colleague, etc.)" },
+    {
+      value: "Word of mouth",
+      label: "Word of mouth (friend, colleague, etc.)",
+    },
     { value: "YC", label: "YC" },
     { value: "YC Startup School", label: "YC Startup School" },
     { value: "Facebook", label: "Facebook" },
@@ -64,18 +69,19 @@ const Register: React.FC<Props> = ({
     { value: "LinkedIn", label: "LinkedIn" },
     { value: "Porter blog", label: "Porter blog" },
     { value: "Other", label: "Other" },
-  ]
+  ];
 
   const handleRegister = (): void => {
+    const isHosted = window.location.hostname === "cloud.porter.run";
     if (!emailRegex.test(email)) {
       setEmailError(true);
     }
 
-    if (firstName === "") {
+    if (firstName === "" && !isHosted) {
       setFirstNameError(true);
     }
 
-    if (lastName === "") {
+    if (lastName === "" && !isHosted) {
       setLastNameError(true);
     }
 
@@ -83,12 +89,13 @@ const Register: React.FC<Props> = ({
       setPasswordError(true);
     }
 
-    if (companyName === "") {
+    if (companyName === "" && !isHosted) {
       setCompanyNameError(true);
     }
 
     // Check for valid input
     if (
+      !isHosted &&
       emailRegex.test(email) &&
       firstName !== "" &&
       lastName !== "" &&
@@ -102,12 +109,15 @@ const Register: React.FC<Props> = ({
         .registerUser(
           "",
           {
-            email: email,
-            password: password,
+            email,
+            password,
             first_name: firstName,
             last_name: lastName,
             company_name: companyName,
-            referral_method: chosenReferralOption === "Other" ? `Other: ${referralOtherText}` : chosenReferralOption,
+            referral_method:
+              chosenReferralOption === "Other"
+                ? `Other: ${referralOtherText}`
+                : chosenReferralOption,
           },
           {}
         )
@@ -117,14 +127,14 @@ const Register: React.FC<Props> = ({
           } else {
             setUser(res?.data?.id, res?.data?.email);
             authenticate();
-            
+
             try {
               window.dataLayer?.push({
-                event: 'sign-up',
+                event: "sign-up",
                 data: {
-                  method: 'email',
-                  email: res?.data?.email
-                }
+                  method: "email",
+                  email: res?.data?.email,
+                },
               });
             } catch (err) {
               console.log(err);
@@ -138,7 +148,60 @@ const Register: React.FC<Props> = ({
         .catch((err) => {
           console.log("registration:", err);
           if (err.response?.data?.error) {
-            setCurrentError(err.response.data.error)
+            setCurrentError(err.response.data.error);
+          } else {
+            location.reload();
+          }
+          setButtonDisabled(false);
+        });
+    } else if (isHosted && emailRegex.test(email) && password !== "") {
+      setButtonDisabled(true);
+
+      // Attempt user registration
+      api
+        .registerUser(
+          "",
+          {
+            email,
+            password,
+            first_name: email,
+            last_name: email,
+            company_name: email,
+            referral_method:
+              chosenReferralOption === "Other"
+                ? `Other: ${referralOtherText}`
+                : chosenReferralOption,
+          },
+          {}
+        )
+        .then((res: any) => {
+          if (res?.data?.redirect) {
+            window.location.href = res.data.redirect;
+          } else {
+            setUser(res?.data?.id, res?.data?.email);
+            authenticate();
+
+            try {
+              window.dataLayer?.push({
+                event: "sign-up",
+                data: {
+                  method: "email",
+                  email: res?.data?.email,
+                },
+              });
+            } catch (err) {
+              console.log(err);
+            }
+          }
+
+          // Temp
+          location.reload();
+          setButtonDisabled(false);
+        })
+        .catch((err) => {
+          console.log("registration:", err);
+          if (err.response?.data?.error) {
+            setCurrentError(err.response.data.error);
           } else {
             location.reload();
           }
@@ -154,7 +217,7 @@ const Register: React.FC<Props> = ({
   const handleKeyDown = (e: any) => {
     if (e.key === "Enter") {
       handleRegister();
-    };
+    }
   };
 
   // Manually re-register event listener on email/password change
@@ -167,67 +230,48 @@ const Register: React.FC<Props> = ({
   }, [email, password, firstName, lastName]);
 
   useEffect(() => {
-    let qs = window.location.search;
-    let urlParams = new URLSearchParams(qs);
-    let email = urlParams.get('email');
+    const qs = window.location.search;
+    const urlParams = new URLSearchParams(qs);
+    const email = urlParams.get("email");
 
     if (email) {
       setEmail(email);
       setDisabled(true);
     }
-
   }, []);
 
   useEffect(() => {
-
     // Get capabilities to case on login methods
-    api.getMetadata("", {}, {})
+    api
+      .getMetadata("", {}, {})
       .then((res) => {
         setHasBasic(res.data?.basic_login);
         setHasGithub(res.data?.github_login);
         setHasGoogle(res.data?.google_login);
       })
-      .catch((err) => console.log(err));
+      .catch((err) => {
+        console.log(err);
+      });
 
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
   }, []);
 
   const githubRedirect = () => {
-    let redirectUrl = `/api/oauth/login/github`;
+    const redirectUrl = `/api/oauth/login/github`;
     window.location.href = redirectUrl;
   };
 
   const googleRedirect = () => {
-    let redirectUrl = `/api/oauth/login/google`;
+    const redirectUrl = `/api/oauth/login/google`;
     window.location.href = redirectUrl;
   };
 
   return (
     <StyledRegister>
-      {windowDimensions.width > windowDimensions.height && (
-        <Wrapper>
-          <a href="https://porter.run">
-            <Logo src={logo} />
-          </a>
-          <Spacer y={2} />
-          <Jumbotron>
-            Deploy and scale <Shiny>effortlessly</Shiny> with Porter
-          </Jumbotron>
-          <Spacer y={2} />
-          <CheckRow>
-            <i className="material-icons">done</i> 14 day free trial (no credit card required)
-          </CheckRow>
-          <Spacer y={0.5} />
-          <CheckRow>
-            <i className="material-icons">done</i>  Generous startup program for seed-stage companies
-          </CheckRow>
-          <Spacer y={0.5} />
-          <CheckRow>
-            <i className="material-icons">done</i> Use your AWS credits
-          </CheckRow>
-        </Wrapper>
-      )}
+      {windowDimensions.width > windowDimensions.height && <InfoPanel />}
       <Wrapper>
         {windowDimensions.width <= windowDimensions.height && (
           <Flex>
@@ -237,11 +281,9 @@ const Register: React.FC<Props> = ({
             <Spacer y={2} />
           </Flex>
         )}
-        <Heading isAtTop>
-          Create your Porter account
-        </Heading>
+        <Heading isAtTop>Create your Porter account</Heading>
         <Spacer y={1} />
-        {((hasGithub || hasGoogle) && !disabled) && (
+        {(hasGithub || hasGoogle) && !disabled && (
           <>
             <Container row>
               {hasGithub && (
@@ -250,9 +292,7 @@ const Register: React.FC<Props> = ({
                   Sign up with GitHub
                 </OAuthButton>
               )}
-              {hasGithub && hasGoogle && (
-                <Spacer inline x={2} />
-              )}
+              {hasGithub && hasGoogle && <Spacer inline x={2} />}
               {hasGoogle && (
                 <OAuthButton onClick={googleRedirect}>
                   <StyledGoogleIcon />
@@ -270,57 +310,61 @@ const Register: React.FC<Props> = ({
         )}
         {hasBasic && (
           <>
-            <Container row>
-              <RowWrapper>
+            {window.location.hostname !== "cloud.porter.run" && (
+              <>
+                <Container row>
+                  <RowWrapper>
+                    <Input
+                      placeholder="First name"
+                      label="First name"
+                      value={firstName}
+                      setValue={(x) => {
+                        setFirstName(x);
+                        setFirstNameError(false);
+                      }}
+                      width="100%"
+                      height="40px"
+                      error={firstNameError && "First name cannot be blank"}
+                    />
+                    {!firstNameError && lastNameError && (
+                      <Spacer height="27px" />
+                    )}
+                  </RowWrapper>
+                  <Spacer inline x={2} />
+                  <RowWrapper>
+                    <Input
+                      placeholder="Last name"
+                      label="Last name"
+                      value={lastName}
+                      setValue={(x) => {
+                        setLastName(x);
+                        setLastNameError(false);
+                      }}
+                      width="100%"
+                      height="40px"
+                      error={lastNameError && "Last name cannot be blank"}
+                    />
+                    {!lastNameError && firstNameError && (
+                      <Spacer height="27px" />
+                    )}
+                  </RowWrapper>
+                </Container>
+                <Spacer y={1} />
                 <Input
-                  placeholder="First name"
-                  label="First name"
-                  value={firstName}
+                  placeholder="Company name"
+                  label="Company name"
+                  value={companyName}
                   setValue={(x) => {
-                    setFirstName(x);
-                    setFirstNameError(false);
+                    setCompanyName(x);
+                    setCompanyNameError(false);
                   }}
                   width="100%"
                   height="40px"
-                  error={(firstNameError && "First name cannot be blank")}
+                  error={companyNameError && ""}
                 />
-                {!firstNameError && lastNameError && (
-                  <Spacer height="27px" />
-                )}
-              </RowWrapper>
-              <Spacer inline x={2} />
-              <RowWrapper>
-                <Input
-                  placeholder="Last name"
-                  label="Last name"
-                  value={lastName}
-                  setValue={(x) => {
-                    setLastName(x);
-                    setLastNameError(false);
-                  }}
-                  width="100%"
-                  height="40px"
-                  error={(lastNameError && "Last name cannot be blank")}
-                />
-                {!lastNameError && firstNameError && (
-                  <Spacer height="27px" />
-                )}
-              </RowWrapper>
-            </Container>
-            <Spacer y={1} />
-            <Input
-              placeholder="Company name"
-              label="Company name"
-              value={companyName}
-              setValue={(x) => {
-                setCompanyName(x);
-                setCompanyNameError(false);
-              }}
-              width="100%"
-              height="40px"
-              error={(companyNameError && "")}
-            />
-            <Spacer y={1} />
+                <Spacer y={1} />
+              </>
+            )}
             <Input
               type="email"
               placeholder="Email"
@@ -332,7 +376,7 @@ const Register: React.FC<Props> = ({
               }}
               width="100%"
               height="40px"
-              error={(emailError && "Please enter a valid email")}
+              error={emailError && "Please enter a valid email"}
               disabled={disabled}
             />
             <Spacer y={1} />
@@ -344,15 +388,17 @@ const Register: React.FC<Props> = ({
               width="100%"
               height="40px"
               type="password"
-              error={(passwordError && "")}
+              error={passwordError && ""}
             />
             <Spacer y={1} />
             <Text color="helper">(Optional) How did you hear about us?</Text>
             <Spacer y={0.5} />
             <Select
               width="100%"
+              height="40px"
               options={referralOptions}
               setValue={setChosenReferralOption}
+              value={chosenReferralOption}
             />
             {chosenReferralOption === "Other" && (
               <>
@@ -360,13 +406,20 @@ const Register: React.FC<Props> = ({
                 <FeedbackInput
                   autoFocus={true}
                   value={referralOtherText}
-                  onChange={(e) => setReferralOtherText(e.target.value)}
+                  onChange={(e) => {
+                    setReferralOtherText(e.target.value);
+                  }}
                   placeholder="Tell us more..."
                 />
               </>
             )}
             <Spacer y={1} />
-            <Button disabled={buttonDisabled} onClick={handleRegister} width="100%" height="40px">
+            <Button
+              disabled={buttonDisabled}
+              onClick={handleRegister}
+              width="100%"
+              height="40px"
+            >
               Continue
             </Button>
           </>
@@ -374,11 +427,10 @@ const Register: React.FC<Props> = ({
         {!disabled && (
           <>
             <Spacer y={1} />
-            <Text
-              size={13}
-              color="helper"
-            >
-              Already have an account?<Spacer width="5px" inline /><Link to="/login">Log in</Link>
+            <Text size={13} color="helper">
+              Already have an account?
+              <Spacer width="5px" inline />
+              <Link to="/login">Log in</Link>
             </Text>
           </>
         )}

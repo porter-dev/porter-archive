@@ -80,7 +80,7 @@ const getGitlabIntegration = baseApi<{}, { project_id: number }>(
   ({ project_id }) => `/api/projects/${project_id}/integrations/gitlab`
 );
 
-const preflightCheck = baseApi<PreflightCheckRequest, { id: number }>(
+const legacyPreflightCheck = baseApi<PreflightCheckRequest, { id: number }>(
   "POST",
   (pathParams) => {
     return `/api/projects/${pathParams.id}/integrations/preflightcheck`;
@@ -282,7 +282,6 @@ const getLogsWithinTimeRange = baseApi<
 
 const appLogs = baseApi<
   {
-    app_id: number;
     service_name: string;
     deployment_target_id: string;
     limit: number;
@@ -291,6 +290,7 @@ const appLogs = baseApi<
     search_param?: string;
     direction?: string;
     app_revision_id?: string;
+    job_run_name?: string;
   },
   {
     project_id: number;
@@ -335,6 +335,20 @@ const appJobs = baseApi<
   ({ project_id, cluster_id, porter_app_name }) =>
     `/api/projects/${project_id}/clusters/${cluster_id}/apps/${porter_app_name}/jobs`
 );
+
+const cancelJob = baseApi<
+  {
+    deployment_target_id: string;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+    porter_app_name: string;
+    job_run_name: string;
+  }
+>("POST", ({ project_id, cluster_id, porter_app_name, job_run_name }) => {
+  return `/api/projects/${project_id}/clusters/${cluster_id}/apps/${porter_app_name}/jobs/${job_run_name}/cancel`;
+});
 
 const appServiceStatus = baseApi<
   {
@@ -584,6 +598,17 @@ const createProject = baseApi<{ name: string }, {}>("POST", (pathParams) => {
   return `/api/projects`;
 });
 
+const connectProjectToCluster = baseApi<
+  {},
+  {
+    id: number;
+  }
+>("POST", (pathParams) => {
+  const { id } = pathParams;
+
+  return `/api/projects/${id}/connect`;
+});
+
 const createSubdomain = baseApi<
   {},
   {
@@ -655,7 +680,7 @@ const deleteSlackIntegration = baseApi<
   return `/api/projects/${pathParams.project_id}/slack_integrations/${pathParams.slack_integration_id}`;
 });
 
-const updateNotificationConfig = baseApi<
+const legacyUpdateNotificationConfig = baseApi<
   {
     payload: any;
   },
@@ -669,6 +694,58 @@ const updateNotificationConfig = baseApi<
   const { project_id, cluster_id, namespace, name } = pathParams;
 
   return `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${name}/notifications`;
+});
+
+const getNotificationConfig = baseApi<
+  {},
+  {
+    project_id: number;
+    notification_config_id: number;
+  }
+>("GET", (pathParams) => {
+  const { project_id, notification_config_id } = pathParams;
+
+  return `/api/projects/${project_id}/notifications/config/${notification_config_id}`;
+});
+
+const updateNotificationConfig = baseApi<
+  {
+    slack_integration_id: number;
+    config: {
+      mention: string;
+      statuses: {
+        successful: boolean;
+        failed: boolean;
+        progressing: boolean;
+      };
+      types: {
+        deploy: boolean;
+        predeploy: boolean;
+        build: boolean;
+        alert: boolean;
+      };
+    };
+  },
+  {
+    project_id: number;
+    notification_config_id: number;
+  }
+>("POST", (pathParams) => {
+  const { project_id, notification_config_id } = pathParams;
+
+  return `/api/projects/${project_id}/notifications/config/${notification_config_id}`;
+});
+
+const getNotification = baseApi<
+  {},
+  {
+    project_id: number;
+    notification_id: string;
+  }
+>("GET", (pathParams) => {
+  const { project_id, notification_id } = pathParams;
+
+  return `/api/projects/${project_id}/notifications/${notification_id}`;
 });
 
 const getPRDeploymentList = baseApi<
@@ -712,7 +789,7 @@ const deletePRDeployment = baseApi<
   return `/api/projects/${project_id}/clusters/${cluster_id}/deployments/${deployment_id}`;
 });
 
-const getNotificationConfig = baseApi<
+const legacyGetNotificationConfig = baseApi<
   {},
   {
     project_id: number;
@@ -893,6 +970,18 @@ const parsePorterYaml = baseApi<
   return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/apps/parse`;
 });
 
+const attachEnvGroup = baseApi<
+  {
+    env_group_name: string;
+    app_instance_ids: string[];
+  },
+  { project_id: number; cluster_id: number }
+>(
+  "POST",
+  ({ project_id, cluster_id }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/apps/attach-env-group`
+);
+
 const getDefaultDeploymentTarget = baseApi<
   {},
   {
@@ -930,33 +1019,6 @@ const getBranchHead = baseApi<
   }/repos/${pathParams.kind}/${pathParams.owner}/${
     pathParams.name
   }/${encodeURIComponent(pathParams.branch)}/head`;
-});
-
-const validatePorterApp = baseApi<
-  {
-    b64_app_proto: string;
-    deployment_target_id: string;
-    commit_sha: string;
-    deletions: {
-      service_names: string[];
-      predeploy: string[];
-      env_variable_names: string[];
-      env_group_names: string[];
-      service_deletions: Record<
-        string,
-        {
-          domain_names: string[];
-          ingress_annotation_keys: string[];
-        }
-      >;
-    };
-  },
-  {
-    project_id: number;
-    cluster_id: number;
-  }
->("POST", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/apps/validate`;
 });
 
 const createApp = baseApi<
@@ -1033,6 +1095,7 @@ const updateApp = baseApi<
         }
       >;
     };
+    with_predeploy?: boolean;
   },
   {
     project_id: number;
@@ -1074,24 +1137,6 @@ const updateBuildSettings = baseApi<
   }
 >("POST", (pathParams) => {
   return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/apps/${pathParams.porter_app_name}/build`;
-});
-
-const applyApp = baseApi<
-  {
-    deployment_target_id: string;
-    b64_app_proto?: string;
-    app_revision_id?: string;
-    force_build?: boolean;
-    variables?: Record<string, string>;
-    secrets?: Record<string, string>;
-    hard_env_update?: boolean;
-  },
-  {
-    project_id: number;
-    cluster_id: number;
-  }
->("POST", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/apps/apply`;
 });
 
 const revertApp = baseApi<
@@ -1198,6 +1243,18 @@ const getLatestAppRevisions = baseApi<
   return `/api/projects/${project_id}/clusters/${cluster_id}/apps/revisions`;
 });
 
+const getAppInstances = baseApi<
+  {
+    deployment_target_id: string | undefined;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+  }
+>("GET", ({ project_id, cluster_id }) => {
+  return `/api/projects/${project_id}/clusters/${cluster_id}/apps/instances`;
+});
+
 const listDeploymentTargets = baseApi<
   {
     preview: boolean;
@@ -1227,11 +1284,10 @@ const getDeploymentTarget = baseApi<
   {},
   {
     project_id: number;
-    cluster_id: number;
     deployment_target_id: string;
   }
->("GET", ({ project_id, cluster_id, deployment_target_id }) => {
-  return `/api/projects/${project_id}/clusters/${cluster_id}/deployment-targets/${deployment_target_id}`;
+>("GET", ({ project_id, deployment_target_id }) => {
+  return `/api/projects/${project_id}/targets/${deployment_target_id}`;
 });
 
 const getAppTemplate = baseApi<
@@ -1243,6 +1299,18 @@ const getAppTemplate = baseApi<
   }
 >("GET", ({ project_id, cluster_id, porter_app_name }) => {
   return `/api/projects/${project_id}/clusters/${cluster_id}/apps/${porter_app_name}/templates`;
+});
+
+const listLatestAddons = baseApi<
+  {
+    deployment_target_id?: string;
+  },
+  {
+    projectId: number;
+    clusterId: number;
+  }
+>("GET", ({ projectId, clusterId }) => {
+  return `/api/projects/${projectId}/clusters/${clusterId}/addons/latest`;
 });
 
 const getGitlabProcfileContents = baseApi<
@@ -1520,12 +1588,19 @@ const createContract = baseApi<Contract, { project_id: number }>(
   }
 );
 
-const getContracts = baseApi<{ cluster_id?: number }, { project_id: number }>(
-  "GET",
+const cloudContractPreflightCheck = baseApi<Contract, { project_id: number }>(
+  "POST",
   ({ project_id }) => {
-    return `/api/projects/${project_id}/contracts`;
+    return `/api/projects/${project_id}/contract/preflight`;
   }
 );
+
+const getContracts = baseApi<
+  { cluster_id?: number; latest?: boolean },
+  { project_id: number }
+>("GET", ({ project_id }) => {
+  return `/api/projects/${project_id}/contracts`;
+});
 
 const deleteContract = baseApi<{}, { project_id: number; revision_id: string }>(
   "DELETE",
@@ -1540,6 +1615,13 @@ const getClusterState = baseApi<{}, { project_id: number; cluster_id: number }>(
     return `/api/projects/${project_id}/clusters/${cluster_id}/state`;
   }
 );
+
+const getComplianceChecks = baseApi<
+  { vendor: "vanta" | "oneleet"; profile: "soc2" | "hipaa" },
+  { projectId: number; clusterId: number }
+>("GET", ({ projectId, clusterId }) => {
+  return `/api/projects/${projectId}/clusters/${clusterId}/compliance/checks`;
+});
 
 const provisionInfra = baseApi<
   {
@@ -1911,19 +1993,6 @@ const updateDatabaseStatus = baseApi<
 >("POST", (pathParams) => {
   return `/api/projects/${pathParams.project_id}/infras/${pathParams.infra_id}/database`;
 });
-// GET /api/projects/{project_id}/clusters/{cluster_id}/datastore/status
-const getDatabaseStatus = baseApi<
-  {
-    name: string;
-    type: string;
-  },
-  {
-    project_id: number;
-    cluster_id: number;
-  }
->("GET", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/datastore/status`;
-});
 
 const getRepoIntegrations = baseApi("GET", "/api/integrations/repo");
 
@@ -2227,6 +2296,7 @@ const createEnvironmentGroups = baseApi<
     secret_variables?: Record<string, string>;
     type?: string;
     auth_token?: string;
+    is_env_override?: boolean;
   },
   {
     id: number;
@@ -2518,17 +2588,6 @@ const getUsage = baseApi<{}, { project_id: number }>(
   ({ project_id }) => `/api/projects/${project_id}/usage`
 );
 
-// Used for billing purposes
-const getCustomerToken = baseApi<{}, { project_id: number }>(
-  "GET",
-  ({ project_id }) => `/api/projects/${project_id}/billing/token`
-);
-
-const getHasBilling = baseApi<{}, { project_id: number }>(
-  "GET",
-  ({ project_id }) => `/api/projects/${project_id}/billing`
-);
-
 const getOnboardingState = baseApi<{}, { project_id: number }>(
   "GET",
   ({ project_id }) => `/api/projects/${project_id}/onboarding`
@@ -2663,6 +2722,15 @@ const provisionDatabase = baseApi<
     `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/provision/rds`
 );
 
+const getAwsCloudProviders = baseApi<
+  {},
+  {
+    project_id: number;
+  }
+>("GET", ({ project_id }) => {
+  return `/api/projects/${project_id}/cloud-providers/aws`;
+});
+
 const getDatabases = baseApi<
   {},
   {
@@ -2674,6 +2742,106 @@ const getDatabases = baseApi<
   ({ project_id, cluster_id }) =>
     `/api/projects/${project_id}/clusters/${cluster_id}/databases`
 );
+
+const getDatastores = baseApi<
+  {},
+  {
+    project_id: number;
+    cloud_provider_name: string;
+    cloud_provider_id: string;
+    datastore_name?: string;
+    datastore_type?: string;
+    include_env_group?: boolean;
+    include_metadata?: boolean;
+  }
+>(
+  "GET",
+  ({
+    project_id,
+    cloud_provider_name,
+    cloud_provider_id,
+    datastore_name,
+    datastore_type,
+    include_env_group,
+    include_metadata,
+  }) => {
+    const queryParams = new URLSearchParams();
+
+    if (datastore_name) {
+      queryParams.set("name", datastore_name);
+    }
+
+    if (datastore_type) {
+      queryParams.set("type", datastore_type);
+    }
+
+    if (include_env_group) {
+      queryParams.set("include_env_group", "true");
+    }
+
+    if (include_metadata) {
+      queryParams.set("include_metadata", "true");
+    }
+
+    return `/api/projects/${project_id}/cloud-providers/${cloud_provider_name}/${cloud_provider_id}/datastores?${queryParams.toString()}`;
+  }
+);
+
+const listDatastores = baseApi<
+  {},
+  {
+    project_id: number;
+  }
+>("GET", ({ project_id }) => {
+  return `/api/projects/${project_id}/datastores`;
+});
+
+const getDatastore = baseApi<
+  {},
+  {
+    project_id: number;
+    datastore_name: string;
+  }
+>("GET", ({ project_id, datastore_name }) => {
+  return `/api/projects/${project_id}/datastores/${datastore_name}`;
+});
+
+const getDatastoreCredential = baseApi<
+  {},
+  {
+    project_id: number;
+    datastore_name: string;
+  }
+>("GET", ({ project_id, datastore_name }) => {
+  return `/api/projects/${project_id}/datastores/${datastore_name}/credential`;
+});
+
+const updateDatastore = baseApi<
+  {
+    name: string;
+    type: "RDS" | "ELASTICACHE";
+    engine: "POSTGRES" | "AURORA-POSTGRES" | "REDIS";
+    values: any;
+  },
+  { project_id: number; cluster_id: number }
+>(
+  "POST",
+  ({ project_id, cluster_id }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/datastores`
+);
+
+const deleteDatastore = baseApi<
+  {},
+  {
+    project_id: number;
+    datastore_name: string;
+  }
+>(
+  "DELETE",
+  ({ project_id, datastore_name }) =>
+    `/api/projects/${project_id}/datastores/${datastore_name}`
+);
+
 const getPreviousLogsForContainer = baseApi<
   {
     container_name: string;
@@ -3066,12 +3234,14 @@ const updateOnboardingStep = baseApi<
   {
     step: string;
     provider?: string;
+    cloud_provider_credential_identifier?: string;
     account_id?: string;
     cloudformation_url?: string;
     error_message?: string;
     login_url?: string;
     external_id?: string;
     region?: string;
+    cluster_name?: string;
   },
   {
     project_id: number;
@@ -3270,6 +3440,65 @@ const removeStackEnvGroup = baseApi<
     `/api/v1/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/stacks/${stack_id}/remove_env_group/${env_group_name}`
 );
 
+// Billing
+const checkBillingCustomerExists = baseApi<
+  {
+    user_email?: string;
+  },
+  {
+    project_id?: number;
+  }
+>("POST", ({ project_id }) => `/api/projects/${project_id}/billing/customer`);
+
+const getHasBilling = baseApi<{}, { project_id: number }>(
+  "GET",
+  ({ project_id }) => `/api/projects/${project_id}/billing`
+);
+
+const listPaymentMethod = baseApi<
+  {},
+  {
+    project_id?: number;
+  }
+>(
+  "GET",
+  ({ project_id }) => `/api/projects/${project_id}/billing/payment_method`
+);
+
+const addPaymentMethod = baseApi<
+  {},
+  {
+    project_id?: number;
+  }
+>(
+  "POST",
+  ({ project_id }) => `/api/projects/${project_id}/billing/payment_method`
+);
+
+const setDefaultPaymentMethod = baseApi<
+  {},
+  {
+    project_id?: number;
+    payment_method_id: string;
+  }
+>(
+  "PUT",
+  ({ project_id, payment_method_id }) =>
+    `/api/projects/${project_id}/billing/payment_method/${payment_method_id}/default`
+);
+
+const deletePaymentMethod = baseApi<
+  {},
+  {
+    project_id?: number;
+    payment_method_id: string;
+  }
+>(
+  "DELETE",
+  ({ project_id, payment_method_id }) =>
+    `/api/projects/${project_id}/billing/payment_method/${payment_method_id}`
+);
+
 const getGithubStatus = baseApi<{}, {}>("GET", ({}) => `/api/status/github`);
 
 const createSecretAndOpenGitHubPullRequest = baseApi<
@@ -3292,6 +3521,38 @@ const createSecretAndOpenGitHubPullRequest = baseApi<
   "POST",
   ({ project_id, cluster_id, stack_name }) =>
     `/api/projects/${project_id}/clusters/${cluster_id}/applications/${stack_name}/pr`
+);
+
+const getCloudProviderPermissionsStatus = baseApi<
+  {
+    cloud_provider: string;
+    cloud_provider_credential_identifier: string;
+  },
+  { project_id: number }
+>(
+  "GET",
+  ({ project_id }) =>
+    `/api/projects/${project_id}/integrations/cloud-permissions`
+);
+
+const getCloudSqlSecret = baseApi<
+  {},
+  { project_id: number; deployment_target_id: string; app_name: string }
+>(
+  "GET",
+  ({ project_id, deployment_target_id, app_name }) =>
+    `/api/projects/${project_id}/targets/${deployment_target_id}/apps/${app_name}/cloudsql`
+);
+
+const createCloudSqlSecret = baseApi<
+  {
+    b64_service_account_json: string;
+  },
+  { project_id: number; deployment_target_id: string; app_name: string }
+>(
+  "POST",
+  ({ project_id, deployment_target_id, app_name }) =>
+    `/api/projects/${project_id}/targets/${deployment_target_id}/apps/${app_name}/cloudsql`
 );
 
 // Bundle export to allow default api import (api.<method> is more readable)
@@ -3331,6 +3592,7 @@ export default {
   createPasswordResetVerify,
   createPasswordResetFinalize,
   createProject,
+  connectProjectToCluster,
   // ------------ PORTER APP -----------
   getPorterApps,
   getPorterApp,
@@ -3342,6 +3604,7 @@ export default {
   getLogsWithinTimeRange,
   appLogs,
   appJobs,
+  cancelJob,
   appEvents,
   appServiceStatus,
   getFeedEvents,
@@ -3357,8 +3620,11 @@ export default {
   deleteProject,
   deleteRegistryIntegration,
   deleteSlackIntegration,
+  legacyUpdateNotificationConfig,
   updateNotificationConfig,
+  legacyGetNotificationConfig,
   getNotificationConfig,
+  getNotification,
   createSubdomain,
   deployTemplate,
   deployAddon,
@@ -3416,6 +3682,7 @@ export default {
   getMatchingPods,
   getAllReleasePods,
   getClusterState,
+  getComplianceChecks,
   getMetrics,
   appMetrics,
   appHelmValues,
@@ -3426,16 +3693,15 @@ export default {
   getProcfileContents,
   getPorterYamlContents,
   parsePorterYaml,
+  attachEnvGroup,
   getDefaultDeploymentTarget,
   deleteDeploymentTarget,
   getBranchHead,
-  validatePorterApp,
   createApp,
   createAppTemplate,
   updateApp,
   appRun,
   updateBuildSettings,
-  applyApp,
   revertApp,
   getAttachedEnvGroups,
   getLatestRevision,
@@ -3443,10 +3709,12 @@ export default {
   getRevision,
   listAppRevisions,
   getLatestAppRevisions,
+  getAppInstances,
   listDeploymentTargets,
   createDeploymentTarget,
   getDeploymentTarget,
   getAppTemplate,
+  listLatestAddons,
   getGitlabProcfileContents,
   getProjectClusters,
   getProjectRegistries,
@@ -3496,7 +3764,6 @@ export default {
   getPolicyDocument,
   createWebhookToken,
   getUsage,
-  getCustomerToken,
   getHasBilling,
   getOnboardingState,
   saveOnboardingState,
@@ -3523,9 +3790,16 @@ export default {
   addApplicationToEnvGroup,
   removeApplicationFromEnvGroup,
   provisionDatabase,
-  preflightCheck,
+  legacyPreflightCheck,
   requestQuotaIncrease,
+  getAwsCloudProviders,
   getDatabases,
+  getDatastores,
+  listDatastores,
+  getDatastore,
+  getDatastoreCredential,
+  updateDatastore,
+  deleteDatastore,
   getPreviousLogsForContainer,
   upgradePorterAgent,
   deletePRDeployment,
@@ -3552,6 +3826,7 @@ export default {
   getIncidentEvents,
   createContract,
   getContracts,
+  cloudContractPreflightCheck,
   deleteContract,
   // TRACKING
   updateOnboardingStep,
@@ -3569,7 +3844,17 @@ export default {
   addStackEnvGroup,
   removeStackEnvGroup,
 
+  // BILLING
+  checkBillingCustomerExists,
+  listPaymentMethod,
+  addPaymentMethod,
+  setDefaultPaymentMethod,
+  deletePaymentMethod,
+
   // STATUS
   getGithubStatus,
-  getDatabaseStatus,
+  getCloudProviderPermissionsStatus,
+
+  getCloudSqlSecret,
+  createCloudSqlSecret,
 };

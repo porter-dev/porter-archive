@@ -54,7 +54,7 @@ class NoClusterPlaceholder extends Component<PropsType, StateType> {
         <br />
         <br />
         <br />* Required. For more information{" "}
-        <A onClick={() => window.open("https://docs.getporter.dev/docs")}>
+        <A onClick={() => window.open("https://docs.porter.run/docs")}>
           refer to our docs
         </A>
       </StyledNoClusterPlaceholder>

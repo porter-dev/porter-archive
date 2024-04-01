@@ -1,16 +1,16 @@
-import React, { useState, useEffect, useRef, useContext } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
+import { withRouter, type RouteComponentProps } from "react-router";
 import styled from "styled-components";
-import gradient from "assets/gradient.png";
+
+import Spacer from "components/porter/Spacer";
+import Tooltip from "components/porter/Tooltip";
 
 import { Context } from "shared/Context";
-import { ProjectListType, ProjectType } from "shared/types";
 import { pushFiltered } from "shared/routing";
-import { RouteComponentProps, withRouter } from "react-router";
-import Icon from "components/porter/Icon";
-import swap from "assets/swap.svg";
-import Spacer from "components/porter/Spacer";
+import { type ProjectListType, type ProjectType } from "shared/types";
+import gradient from "assets/gradient.png";
+
 import ProjectSelectionModal from "./ProjectSelectionModal";
-import Tooltip from "components/porter/Tooltip";
 
 type PropsType = RouteComponentProps & {
   currentProject: ProjectType;
@@ -34,11 +34,7 @@ const ProjectButton: React.FC<PropsType> = (props) => {
   }, []);
 
   const handleClickOutside = (e: any) => {
-    if (
-      wrapperRef &&
-      wrapperRef.current &&
-      !wrapperRef.current.contains(e.target)
-    ) {
+    if (wrapperRef?.current && !wrapperRef.current.contains(e.target)) {
       setExpanded(false);
     }
   };
@@ -48,7 +44,7 @@ const ProjectButton: React.FC<PropsType> = (props) => {
   };
 
   // Render the component
-  let { currentProject } = props;
+  const { currentProject } = props;
   if (currentProject) {
     return (
       <StyledProjectSection ref={wrapperRef}>
@@ -56,19 +52,27 @@ const ProjectButton: React.FC<PropsType> = (props) => {
           <ProjectSelectionModal
             currentProject={props.currentProject}
             projects={props.projects}
-            closeModal={() => setShowModal(false)}
+            closeModal={() => {
+              setShowModal(false);
+            }}
           />
         )}
 
-        {(user.isPorterUser && currentProject.simplified_view_enabled) ?
+        {user.isPorterUser && currentProject.simplified_view_enabled ? (
           <Tooltip
-            content={`Porter Apps ${currentProject.validate_apply_v2 ? "V2" : "V1"}`}
+            content={`Porter Apps ${
+              currentProject.validate_apply_v2 ? "V2" : "V1"
+            }`}
             position="right"
           >
             <MainSelector
               projectsLength={props.projects.length}
               isPorterUser={user.isPorterUser}
-              onClick={() => (props.projects.length > 1 || user.isPorterUser) && setShowModal(true)} >
+              onClick={() => {
+                (props.projects.length > 1 || user.isPorterUser) &&
+                  setShowModal(true);
+              }}
+            >
               <ProjectIcon>
                 <ProjectImage src={gradient} />
                 <Letter>{currentProject.name[0].toUpperCase()}</Letter>
@@ -76,30 +80,34 @@ const ProjectButton: React.FC<PropsType> = (props) => {
               <ProjectName>{currentProject.name}</ProjectName>
             </MainSelector>
           </Tooltip>
-          :
+        ) : (
           <MainSelector
             projectsLength={props.projects.length}
             isPorterUser={user.isPorterUser}
-            onClick={() => (props.projects.length > 1 || user.isPorterUser) && setShowModal(true)} >
+            onClick={() => {
+              (props.projects.length > 1 || user.isPorterUser) &&
+                setShowModal(true);
+            }}
+          >
             <ProjectIcon>
               <ProjectImage src={gradient} />
               <Letter>{currentProject.name[0].toUpperCase()}</Letter>
             </ProjectIcon>
             <ProjectName>{currentProject.name}</ProjectName>
-            <Spacer inline x={.5} />
+            <Spacer inline x={0.5} />
           </MainSelector>
-        }
+        )}
         {/* {renderDropdown()} */}
-      </StyledProjectSection >
+      </StyledProjectSection>
     );
   }
   return (
     <InitializeButton
-      onClick={() =>
+      onClick={() => {
         pushFiltered(props, "/new-project", ["project_id"], {
           new_project: true,
-        })
-      }
+        });
+      }}
     >
       <Plus>+</Plus> Create a project
     </InitializeButton>
@@ -107,7 +115,6 @@ const ProjectButton: React.FC<PropsType> = (props) => {
 };
 
 export default withRouter(ProjectButton);
-
 
 const ProjectLabel = styled.div`
   overflow: hidden;
@@ -131,7 +138,7 @@ const InitializeButton = styled.div`
   font-size: 13px;
   font-weight: 500;
   border-radius: 3px;
-  color: ${props => props.theme.text.primary};
+  color: ${(props) => props.theme.text.primary};
   padding-bottom: 1px;
   cursor: pointer;
   background: #ffffff11;
@@ -146,7 +153,7 @@ const Option = styled.div`
   border-top: 1px solid #00000000;
   border-bottom: 1px solid
     ${(props: { selected: boolean; lastItem?: boolean }) =>
-    props.lastItem ? "#ffffff00" : "#ffffff15"};
+      props.lastItem ? "#ffffff00" : "#ffffff15"};
   height: 45px;
   display: flex;
   align-items: center;
@@ -159,7 +166,7 @@ const Option = styled.div`
     props.selected ? "#ffffff11" : ""};
   :hover {
     background: ${(props: { selected: boolean; lastItem?: boolean }) =>
-    props.selected ? "" : "#ffffff22"};
+      props.selected ? "" : "#ffffff22"};
   }
 
   > i {
@@ -221,7 +228,7 @@ const ProjectIconAlt = styled(ProjectIcon)`
 
 const StyledProjectSection = styled.div`
   position: relative;
-  color: ${props => props.theme.text.primary};
+  color: ${(props) => props.theme.text.primary};
   max-width: 200px;
 `;
 
@@ -231,7 +238,8 @@ const MainSelector = styled.div`
   justify-content: space-between;
   margin: 0;
   font-size: 14px;
-  cursor: ${props => (props.projectsLength > 1 || props.isPorterUser) ? "pointer" : "default"};
+  cursor: ${(props) =>
+    props.projectsLength > 1 || props.isPorterUser ? "pointer" : "default"};
   padding: 10px 22px;
   position: relative;
   :hover {
@@ -248,7 +256,7 @@ const MainSelector = styled.div`
     align-items: center;
     justify-content: center;
     border-radius: 20px;
-    background: "#ffffff22" 
+    background: "#ffffff22";
   }
 `;
 

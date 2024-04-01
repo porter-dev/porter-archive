@@ -18,26 +18,16 @@ type Props = {
       type: "web";
     };
   };
-  maxRAM: number;
-  maxCPU: number;
-  clusterContainsGPUNodes: boolean;
   internalNetworkingDetails: {
     namespace: string;
     appName: string;
   };
-  clusterIngressIp: string;
-  showDisableTls: boolean;
 };
 
 const WebTabs: React.FC<Props> = ({
   index,
   service,
-  maxRAM,
-  maxCPU,
-  clusterContainsGPUNodes,
   internalNetworkingDetails,
-  clusterIngressIp,
-  showDisableTls,
 }) => {
   const [currentTab, setCurrentTab] = React.useState<
     "main" | "resources" | "networking" | "advanced"
@@ -62,19 +52,9 @@ const WebTabs: React.FC<Props> = ({
             index={index}
             service={service}
             internalNetworkingDetails={internalNetworkingDetails}
-            clusterIngressIp={clusterIngressIp}
-            showDisableTls={showDisableTls}
           />
         ))
-        .with("resources", () => (
-          <Resources
-            index={index}
-            maxCPU={maxCPU}
-            maxRAM={maxRAM}
-            clusterContainsGPUNodes={clusterContainsGPUNodes}
-            service={service}
-          />
-        ))
+        .with("resources", () => <Resources index={index} service={service} />)
         .with("advanced", () => (
           <>
             <Health index={index} />

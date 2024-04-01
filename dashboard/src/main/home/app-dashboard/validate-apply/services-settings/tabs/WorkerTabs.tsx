@@ -6,6 +6,7 @@ import TabSelector from "components/TabSelector";
 import { type ClientService } from "lib/porter-apps/services";
 
 import Advanced from "./Advanced";
+import Health from "./Health";
 import MainTab from "./Main";
 import Resources from "./Resources";
 
@@ -16,18 +17,9 @@ type Props = {
       type: "worker";
     };
   };
-  maxRAM: number;
-  maxCPU: number;
-  clusterContainsGPUNodes: boolean;
 };
 
-const WorkerTabs: React.FC<Props> = ({
-  index,
-  service,
-  maxCPU,
-  maxRAM,
-  clusterContainsGPUNodes,
-}) => {
+const WorkerTabs: React.FC<Props> = ({ index, service }) => {
   const [currentTab, setCurrentTab] = React.useState<
     "main" | "resources" | "advanced"
   >("main");
@@ -45,17 +37,10 @@ const WorkerTabs: React.FC<Props> = ({
       />
       {match(currentTab)
         .with("main", () => <MainTab index={index} service={service} />)
-        .with("resources", () => (
-          <Resources
-            index={index}
-            maxCPU={maxCPU}
-            maxRAM={maxRAM}
-            service={service}
-            clusterContainsGPUNodes={clusterContainsGPUNodes}
-          />
-        ))
+        .with("resources", () => <Resources index={index} service={service} />)
         .with("advanced", () => (
           <>
+            <Health index={index} />
             <Spacer y={1} />
             <Advanced index={index} />
           </>

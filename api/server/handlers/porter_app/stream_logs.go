@@ -68,18 +68,32 @@ func (c *StreamLogsLokiHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	}
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "service-name", Value: request.ServiceName})
 
-	if request.DeploymentTargetID == "" {
-		err := telemetry.Error(ctx, span, nil, "must provide deployment target id")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-		return
+	deploymentTargetName := request.DeploymentTargetName
+	if request.DeploymentTargetName == "" && request.DeploymentTargetID == "" {
+		defaultDeploymentTarget, err := defaultDeploymentTarget(ctx, defaultDeploymentTargetInput{
+			ProjectID:                 project.ID,
+			ClusterID:                 cluster.ID,
+			ClusterControlPlaneClient: c.Config().ClusterControlPlaneClient,
+		})
+		if err != nil {
+			err := telemetry.Error(ctx, span, err, "error getting default deployment target")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+		deploymentTargetName = defaultDeploymentTarget.Name
 	}
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "deployment-target-id", Value: request.DeploymentTargetID})
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "deployment-target-name", Value: deploymentTargetName},
+		telemetry.AttributeKV{Key: "deployment-target-id", Value: request.DeploymentTargetID},
+	)
 
 	deploymentTarget, err := deployment_target.DeploymentTargetDetails(ctx, deployment_target.DeploymentTargetDetailsInput{
-		ProjectID:          int64(project.ID),
-		ClusterID:          int64(cluster.ID),
-		DeploymentTargetID: request.DeploymentTargetID,
-		CCPClient:          c.Config().ClusterControlPlaneClient,
+		ProjectID:            int64(project.ID),
+		ClusterID:            int64(cluster.ID),
+		DeploymentTargetID:   request.DeploymentTargetID,
+		DeploymentTargetName: deploymentTargetName,
+		CCPClient:            c.Config().ClusterControlPlaneClient,
 	})
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error getting deployment target details")
@@ -122,14 +136,16 @@ func (c *StreamLogsLokiHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	if request.ServiceName != "all" {
 		labels = append(labels, fmt.Sprintf("%s=%s", lokiLabel_PorterServiceName, request.ServiceName))
 	}
-
 	if request.AppRevisionID != "" {
 		labels = append(labels, fmt.Sprintf("%s=%s", lokiLabel_PorterAppRevisionID, request.AppRevisionID))
+	}
+	if request.JobRunName != "" {
+		labels = append(labels, fmt.Sprintf("%s=%s", lokiLabel_JobRunName, request.JobRunName))
 	}
 
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "labels", Value: strings.Join(labels, ",")})
 
-	err = agent.StreamPorterAgentLokiLog(labels, string(startTime), request.SearchParam, 0, safeRW)
+	err = agent.StreamPorterAgentLokiLog(ctx, labels, string(startTime), request.SearchParam, 0, safeRW)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error streaming logs")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))

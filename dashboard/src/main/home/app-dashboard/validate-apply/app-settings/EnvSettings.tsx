@@ -5,6 +5,7 @@ import { PopulatedEnvGroup } from "./types";
 import EnvVariables from "./EnvVariables";
 import EnvGroups from "./EnvGroups";
 import { AppRevision } from "lib/revisions/types";
+import Spacer from "components/porter/Spacer";
 
 type Props = {
   appName?: string;
@@ -17,7 +18,9 @@ type Props = {
 const EnvSettings: React.FC<Props> = (props) => {
   return (
     <>
-      <EnvVariables syncedEnvGroups={[]}/>
+      <Spacer y={1} />
+      <EnvVariables syncedEnvGroups={props.attachedEnvGroups}/>
+      <Spacer y={1} />
       <EnvGroups {...props} attachedEnvGroups={props.attachedEnvGroups} />
     </>
   );

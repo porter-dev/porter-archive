@@ -11,6 +11,7 @@ import (
 	"github.com/porter-dev/porter/internal/analytics"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
+	"github.com/porter-dev/porter/internal/telemetry"
 )
 
 type ProjectCreateHandler struct {
@@ -28,11 +29,14 @@ func NewProjectCreateHandler(
 }
 
 func (p *ProjectCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-create-project")
+	defer span.End()
+
 	request := &types.CreateProjectRequest{}
 
-	ok := p.DecodeAndValidate(w, r, request)
-
-	if !ok {
+	if ok := p.DecodeAndValidate(w, r, request); !ok {
+		err := telemetry.Error(ctx, span, nil, "error decoding create project request")
+		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
 
@@ -46,23 +50,42 @@ func (p *ProjectCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		HelmValuesEnabled:      false,
 		MultiCluster:           false,
 		EnableReprovision:      false,
+		EnableSandbox:          p.Config().ServerConf.EnableSandbox,
 	}
 
 	var err error
-	proj, _, err = CreateProjectWithUser(p.Repo().Project(), proj, user)
 
+	if p.Config().ServerConf.StripeSecretKey != "" && p.Config().ServerConf.StripePublishableKey != "" {
+		// Create billing customer for project and set the billing ID
+		billingID, err := p.Config().BillingManager.CreateCustomer(ctx, user.Email, proj)
+		if err != nil {
+			err = telemetry.Error(ctx, span, err, "error creating billing customer")
+			p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
+		proj.BillingID = billingID
+	}
+
+	proj, _, err = CreateProjectWithUser(p.Repo().Project(), proj, user)
 	if err != nil {
+		err = telemetry.Error(ctx, span, err, "error creating project with user")
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
-	// create onboarding flow set to the first step
+	step := types.StepConnectSource
+
+	if p.Config().ServerConf.EnableSandbox {
+		step = types.StepCleanUp
+	}
+
+	// create onboarding flow set to the first step. Read in env var
 	_, err = p.Repo().Onboarding().CreateProjectOnboarding(&models.Onboarding{
 		ProjectID:   proj.ID,
-		CurrentStep: types.StepConnectSource,
+		CurrentStep: step,
 	})
-
 	if err != nil {
+		err = telemetry.Error(ctx, span, err, "error creating project onboarding")
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
@@ -75,22 +98,13 @@ func (p *ProjectCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		Clusters:       types.BasicPlan.Clusters,
 		Users:          types.BasicPlan.Users,
 	})
-
 	if err != nil {
+		err = telemetry.Error(ctx, span, err, "error creating project usage")
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
 	p.WriteResult(w, r, proj.ToProjectType(p.Config().LaunchDarklyClient))
-
-	// add project to billing team
-	_, err = p.Config().BillingManager.CreateTeam(user, proj)
-
-	if err != nil {
-		// we do not write error response, since setting up billing error can be
-		// resolved later and may not be fatal
-		p.HandleAPIErrorNoWrite(w, r, apierrors.NewErrInternal(err))
-	}
 
 	p.Config().AnalyticsClient.Track(analytics.ProjectCreateTrack(&analytics.ProjectCreateDeleteTrackOpts{
 		ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(user.ID, proj.ID),
@@ -121,7 +135,6 @@ func CreateProjectWithUser(
 
 	// read the project again to get the model with the role attached
 	proj, err = projectRepo.ReadProject(proj.ID)
-
 	if err != nil {
 		return nil, nil, err
 	}

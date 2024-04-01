@@ -1,0 +1,19 @@
+on:
+  workflow_run:
+    workflows: ["Deploy Porter to Internal Tooling"]
+    branches: [master]
+    types:
+      - completed
+
+name: Run internal tools app tests
+jobs:
+  call-base-workflow:
+    uses: ./.github/workflows/app_tests_base.yml
+    with:
+      stage: internal-tools
+      project: "301"
+      cluster: "142"
+      host: https://dashboard.internal-tools.porter.run
+    secrets:
+      token: ${{ secrets.APP_INTEGRATION_PROJECT_TOKEN }}
+      slack_webhook_url: ${{ secrets.APP_INTEGRATION_SLACK_WEBHOOK }}

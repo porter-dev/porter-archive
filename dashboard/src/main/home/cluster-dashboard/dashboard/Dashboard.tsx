@@ -4,7 +4,12 @@ import styled from "styled-components";
 
 import AzureProvisionerSettings from "components/AzureProvisionerSettings";
 import GCPProvisionerSettings from "components/GCPProvisionerSettings";
+import Button from "components/porter/Button";
+import DashboardPlaceholder from "components/porter/DashboardPlaceholder";
+import Image from "components/porter/Image";
+import PorterLink from "components/porter/Link";
 import Spacer from "components/porter/Spacer";
+import Text from "components/porter/Text";
 import ProvisionerSettings from "components/ProvisionerSettings";
 import TabSelector from "components/TabSelector";
 
@@ -13,12 +18,12 @@ import useAuth from "shared/auth/useAuth";
 import { Context } from "shared/Context";
 import { getQueryParam } from "shared/routing";
 import editIcon from "assets/edit-button.svg";
+import infraGrad from "assets/infra-grad.svg";
 
 import DashboardHeader from "../DashboardHeader";
 import ClusterRevisionSelector from "./ClusterRevisionSelector";
 import ClusterSettings from "./ClusterSettings";
 import ClusterSettingsModal from "./ClusterSettingsModal";
-import Compliance from "./Compliance";
 import Metrics from "./Metrics";
 import { NamespaceList } from "./NamespaceList";
 import NodeList from "./NodeList";
@@ -30,27 +35,12 @@ type TabEnum =
   | "namespaces"
   | "metrics"
   | "incidents"
-  | "compliance"
   | "configuration";
 
-var tabOptions: {
+const tabOptions: Array<{
   label: string;
   value: TabEnum;
-}[] = [{ label: "Additional settings", value: "settings" }];
-
-const COMPLIANCE_SUPPORTED_PROVIDERS = ["AWS"];
-
-const showComplianceTab = (
-  capi_provisioner_enabled: boolean,
-  soc2_controls_enabled: boolean,
-  cloud_provider: string
-): boolean => {
-  return (
-    capi_provisioner_enabled &&
-    soc2_controls_enabled &&
-    COMPLIANCE_SUPPORTED_PROVIDERS.includes(cloud_provider)
-  );
-};
+}> = [{ label: "Additional settings", value: "settings" }];
 
 export const Dashboard: React.FunctionComponent = () => {
   const [currentTab, setCurrentTab] = useState<TabEnum>("settings");
@@ -80,16 +70,6 @@ export const Dashboard: React.FunctionComponent = () => {
         return <Metrics />;
       case "namespaces":
         return <NamespaceList />;
-      case "compliance":
-        return selectedClusterVersion ? (
-          <Compliance
-            provisionerError={provisionFailureReason}
-            selectedClusterVersion={selectedClusterVersion}
-            credentialId={
-              context.currentCluster.cloud_provider_credential_identifier
-            }
-          />
-        ) : null;
       case "configuration":
         return (
           <>
@@ -132,7 +112,6 @@ export const Dashboard: React.FunctionComponent = () => {
   };
 
   useEffect(() => {
-    ``;
     if (
       context.currentCluster.status !== "UPDATING_UNAVAILABLE" &&
       !tabOptions.find((tab) => tab.value === "nodes")
@@ -142,17 +121,6 @@ export const Dashboard: React.FunctionComponent = () => {
         tabOptions.unshift({ label: "Metrics", value: "metrics" });
         tabOptions.unshift({ label: "Nodes", value: "nodes" });
       }
-    }
-
-    if (
-      showComplianceTab(
-        context.currentProject?.capi_provisioner_enabled,
-        context.currentProject?.soc2_controls_enabled,
-        context.currentCluster.cloud_provider
-      ) &&
-      !tabOptions.find((tab) => tab.value === "compliance")
-    ) {
-      tabOptions.unshift({ value: "compliance", label: "Compliance" });
     }
 
     if (
@@ -218,7 +186,23 @@ export const Dashboard: React.FunctionComponent = () => {
   }, [context.currentCluster]);
 
   const renderContents = () => {
-    if (context.currentProject?.capi_provisioner_enabled) {
+    if (context.currentProject?.sandbox_enabled) {
+      return (
+        <DashboardPlaceholder>
+          <Text size={16}>Infrastructure settings are not enabled on the Porter Cloud.</Text>
+          <Spacer y={0.5} />
+          <Text color={"helper"}>
+            Eject to your own cloud account to enable managed infrastructure.
+          </Text>
+          <Spacer y={1} />
+          <PorterLink to="https://docs.porter.run/other/eject">
+            <Button alt height="35px">
+              Request ejection
+            </Button>
+          </PorterLink>
+        </DashboardPlaceholder>
+      );
+    } else if (context.currentProject?.capi_provisioner_enabled) {
       return (
         <>
           <ClusterRevisionSelector
@@ -240,7 +224,9 @@ export const Dashboard: React.FunctionComponent = () => {
           <TabSelector
             options={currentTabOptions}
             currentTab={currentTab}
-            setCurrentTab={(value: TabEnum) => setCurrentTab(value)}
+            setCurrentTab={(value: TabEnum) => {
+              setCurrentTab(value);
+            }}
           />
           {renderTab()}
         </>
@@ -251,7 +237,9 @@ export const Dashboard: React.FunctionComponent = () => {
           <TabSelector
             options={currentTabOptions}
             currentTab={currentTab}
-            setCurrentTab={(value: TabEnum) => setCurrentTab(value)}
+            setCurrentTab={(value: TabEnum) => {
+              setCurrentTab(value);
+            }}
           />
           {renderTab()}
         </>
@@ -265,60 +253,7 @@ export const Dashboard: React.FunctionComponent = () => {
         title={
           <Flex>
             <Flex>
-              <svg
-                width="23"
-                height="23"
-                viewBox="0 0 19 19"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M15.207 12.4403C16.8094 12.4403 18.1092 11.1414 18.1092 9.53907C18.1092 7.93673 16.8094 6.63782 15.207 6.63782"
-                  stroke="white"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d="M3.90217 12.4403C2.29983 12.4403 1 11.1414 1 9.53907C1 7.93673 2.29983 6.63782 3.90217 6.63782"
-                  stroke="white"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <path
-                  fillRule="evenodd"
-                  clipRule="evenodd"
-                  d="M9.54993 13.4133C7.4086 13.4133 5.69168 11.6964 5.69168 9.55417C5.69168 7.41284 7.4086 5.69592 9.54993 5.69592C11.6913 5.69592 13.4082 7.41284 13.4082 9.55417C13.4082 11.6964 11.6913 13.4133 9.54993 13.4133Z"
-                  stroke="white"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d="M6.66895 15.207C6.66895 16.8094 7.96787 18.1092 9.5702 18.1092C11.1725 18.1092 12.4715 16.8094 12.4715 15.207"
-                  stroke="white"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d="M6.66895 3.90217C6.66895 2.29983 7.96787 1 9.5702 1C11.1725 1 12.4715 2.29983 12.4715 3.90217"
-                  stroke="white"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <path
-                  fillRule="evenodd"
-                  clipRule="evenodd"
-                  d="M5.69591 9.54996C5.69591 7.40863 7.41283 5.69171 9.55508 5.69171C11.6964 5.69171 13.4133 7.40863 13.4133 9.54996C13.4133 11.6913 11.6964 13.4082 9.55508 13.4082C7.41283 13.4082 5.69591 11.6913 5.69591 9.54996Z"
-                  stroke="white"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
+              <Image size={25} src={infraGrad} />
               <Spacer inline />
               {context.currentCluster.vanity_name ||
                 context.currentCluster.name}

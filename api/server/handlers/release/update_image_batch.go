@@ -1,11 +1,12 @@
 package release
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"strings"
 	"sync"
+
+	"github.com/porter-dev/porter/internal/telemetry"
 
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -34,22 +35,33 @@ func NewUpdateImageBatchHandler(
 }
 
 func (c *UpdateImageBatchHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-update-image-batch")
+	defer span.End()
+
+	r = r.Clone(ctx)
+
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
-	helmAgent, err := c.GetHelmAgent(r.Context(), r, cluster, "")
+	// helmAgent has namespace set from the request
+	helmAgent, err := c.GetHelmAgent(ctx, r, cluster, "")
 	if err != nil {
+		err = telemetry.Error(ctx, span, err, "error getting helm agent")
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "namespace", Value: helmAgent.Namespace()})
+
 	request := &types.UpdateImageBatchRequest{}
 
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
+		_ = telemetry.Error(ctx, span, nil, "error decoding and validating request")
 		return
 	}
 
 	releases, err := c.Repo().Release().ListReleasesByImageRepoURI(cluster.ID, request.ImageRepoURI)
 	if err != nil {
+		_ = telemetry.Error(ctx, span, err, "error listing releases by image repo uri")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
 			fmt.Errorf("releases not found with given image repo uri"),
 			http.StatusBadRequest,
@@ -58,8 +70,28 @@ func (c *UpdateImageBatchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
+	printReleases := func(releases []*models.Release) string {
+		var names []string
+		for _, release := range releases {
+			names = append(names, fmt.Sprintf("%s-%s", release.Name, release.Namespace))
+		}
+		return strings.Join(names, ",")
+	}
+
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "releases", Value: printReleases(releases)})
+
+	var namespaceScopedReleases []*models.Release
+	for _, release := range releases {
+		if release.Namespace == helmAgent.Namespace() {
+			namespaceScopedReleases = append(namespaceScopedReleases, release)
+		}
+	}
+
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "releases-in-namespace", Value: printReleases(namespaceScopedReleases)})
+
 	registries, err := c.Repo().Registry().ListRegistriesByProjectID(cluster.ProjectID)
 	if err != nil {
+		err = telemetry.Error(ctx, span, err, "error listing registries by project id")
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
@@ -67,17 +99,26 @@ func (c *UpdateImageBatchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	// asynchronously update releases with that image repo uri
 	var wg sync.WaitGroup
 	mu := &sync.Mutex{}
-	errors := make([]string, 0)
+	errs := make([]string, 0)
 
-	for i := range releases {
-		index := i
+	for i, rel := range namespaceScopedReleases {
 		wg.Add(1)
 
-		go func() {
+		go func(release *models.Release, i int) {
 			defer wg.Done()
+
+			ctx, span := telemetry.NewSpan(ctx, "update-image-batch")
+			defer span.End()
+
+			telemetry.WithAttributes(span,
+				telemetry.AttributeKV{Key: "release-name", Value: release.Name},
+				telemetry.AttributeKV{Key: "release-index", Value: i},
+			)
+
 			// read release via agent
-			rel, err := helmAgent.GetRelease(context.Background(), releases[index].Name, 0, false)
+			rel, err := helmAgent.GetRelease(ctx, release.Name, 0, false)
 			if err != nil {
+				err = telemetry.Error(ctx, span, err, "error getting release")
 				// if this is a release not found error, just return - the release has likely been deleted from the underlying
 				// cluster but has not been deleted from the Porter database yet
 				if strings.Contains(err.Error(), "release: not found") {
@@ -85,29 +126,29 @@ func (c *UpdateImageBatchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 				}
 
 				mu.Lock()
-				errors = append(errors, fmt.Sprintf("Error for %s, index %d: %s", releases[index].Name, index, err.Error()))
+				errs = append(errs, fmt.Sprintf("Error for %s, index %d: %s", release.Name, i, err.Error()))
 				mu.Unlock()
 				return
 			}
 
 			if rel.Chart.Name() == "job" {
 				image := map[string]interface{}{}
-				image["repository"] = releases[index].ImageRepoURI
+				image["repository"] = release.ImageRepoURI
 				image["tag"] = request.Tag
 				rel.Config["image"] = image
 				rel.Config["paused"] = true
 
 				conf := &helm.UpgradeReleaseConfig{
-					Name:       releases[index].Name,
+					Name:       release.Name,
 					Cluster:    cluster,
 					Repo:       c.Repo(),
 					Registries: registries,
 					Values:     rel.Config,
 				}
 
-				_, err = helmAgent.UpgradeReleaseByValues(context.Background(), conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection, false)
-
+				_, err = helmAgent.UpgradeReleaseByValues(ctx, conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection, false)
 				if err != nil {
+					err = telemetry.Error(ctx, span, err, "error upgrading release by values")
 					// if this is a release not found error, just return - the release has likely been deleted from the underlying
 					// cluster in the time since we've read the release, but has not been deleted from the Porter database yet
 					if strings.Contains(err.Error(), "release: not found") {
@@ -115,21 +156,19 @@ func (c *UpdateImageBatchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 					}
 
 					mu.Lock()
-					errors = append(errors, fmt.Sprintf("Error for %s, index %d: %s", releases[index].Name, index, err.Error()))
+					errs = append(errs, fmt.Sprintf("Error for %s, index %d: %s", release.Name, i, err.Error()))
 					mu.Unlock()
 				}
 			}
-		}()
+		}(rel, i)
 	}
 
 	wg.Wait()
 
-	if len(errors) > 0 {
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
-			fmt.Errorf("errors while deploying: %s", strings.Join(errors, ",")),
-			http.StatusBadRequest,
-		))
-
+	if len(errs) > 0 {
+		err = fmt.Errorf("errors while deploying: %s", strings.Join(errs, ","))
+		err = telemetry.Error(ctx, span, err, "errors while deploying")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 }

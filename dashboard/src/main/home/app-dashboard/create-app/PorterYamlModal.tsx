@@ -35,7 +35,7 @@ const PorterYamlModal: React.FC<Props> = ({
     const [showFileSelector, setShowFileSelector] = useState<boolean>(false);
 
     return showModal ? (
-        <Modal closeModal={() => setShowModal(false)}>
+        <Modal closeModal={() => { setShowModal(false); }}>
             <div>
                 <Text size={16}>No <Code>porter.yaml</Code> detected at <Code>{porterYamlPath}</Code></Text>
                 <Spacer y={0.5} />
@@ -51,7 +51,7 @@ const PorterYamlModal: React.FC<Props> = ({
                     </Text>
                     <Spacer y={0.5} />
                     <Link
-                        to="https://docs.porter.run/standard/deploying-applications/writing-porter-yaml"
+                        to="https://docs.porter.run/deploy/configuration-as-code/overview"
                         target="_blank"
                         hasunderline
                     >
@@ -87,7 +87,7 @@ const PorterYamlModal: React.FC<Props> = ({
                         repoOwner={repoOwner} 
                         repoName={repoName} 
                         branch={branch}
-                        onFileSelect={(path: string) => setPossiblePorterYamlPath(`./${path}`)} 
+                        onFileSelect={(path: string) => { setPossiblePorterYamlPath(`./${path}`); }} 
                         isFileSelectable={(path: string) => path.endsWith(".yaml")}
                         headerText={"Select your porter.yaml:"}
                     />

@@ -1,54 +1,78 @@
-import React, { useEffect, useState } from "react";
-import styled from "styled-components";
+import React from "react";
+import styled, { css } from "styled-components";
+
+import arrow from "assets/arrow-down.svg";
+
+import Container from "./Container";
 
 type Props = {
-  width?: string;
-  options: { label: string; value: string }[];
+  options: Array<{
+    label: string;
+    value: string;
+    icon?: string;
+    disabled?: boolean;
+  }>;
   label?: string | React.ReactNode;
   labelColor?: string;
-  height?: string;
   error?: string;
-  children?: React.ReactNode;
   disabled?: boolean;
   value?: string;
   setValue?: (value: string) => void;
+  prefix?: React.ReactNode;
+  width?: string;
+  height?: string;
 };
 
 const Select: React.FC<Props> = ({
-  width,
   options,
   label,
   labelColor,
-  height,
   error,
-  children,
   disabled,
   value,
   setValue,
+  prefix,
+  width,
+  height,
 }) => {
   return (
-    <Block width={width}>
+    <Div width={width}>
       {label && <Label color={labelColor}>{label}</Label>}
-      <SelectWrapper>
-        <i className="material-icons">arrow_drop_down</i>
-        <StyledSelect
-          onChange={(e) => {
-            setValue(e.target.value);
-          }}
-          width={width}
-          height={height}
-          hasError={(error && true) || error === ""}
-          disabled={disabled ? disabled : false}
+      <SelectWrapper isDisabled={disabled ?? false} height={height}>
+        {prefix && (
+          <>
+            <Prefix>{prefix}</Prefix>
+            <Bar />
+          </>
+        )}
+        {options.map((option) => {
+          if (option.value === value) {
+            return (
+              <Container key={1} row>
+                {option.icon && <Img src={option?.icon} />}
+                {option.label}
+              </Container>
+            );
+          }
+          return null;
+        })}
+        <img src={arrow} />
+        <SelectLayer
           value={value}
+          onChange={(e) => {
+            setValue?.(e.target.value);
+          }}
+          hasError={(error && true) || error === ""}
+          disabled={disabled}
         >
           {options.map((option, i) => {
             return (
-              <option value={option.value} key={i}>
+              <option value={option.value} key={i} disabled={option.disabled}>
                 {option.label}
               </option>
             );
           })}
-        </StyledSelect>
+        </SelectLayer>
       </SelectWrapper>
       {error && (
         <Error>
@@ -56,24 +80,40 @@ const Select: React.FC<Props> = ({
           {error}
         </Error>
       )}
-      {children}
-    </Block>
+    </Div>
   );
 };
 
 export default Select;
 
-const Block = styled.div<{
-  width: string;
-}>`
-  display: block;
-  position: relative;
-  width: ${(props) => props.width || "200px"};
+const Div = styled.div<{ width?: string }>`
+  width: ${({ width }) => width || ""};
 `;
 
-const Label = styled.div<{color?: string}>`
+const Img = styled.img`
+  height: 16px;
+  margin-right: 10px;
+`;
+
+const Bar = styled.div`
+  width: 1px;
+  height: 15px;
+  background: #494b4f;
+  margin-left: 9px;
+  margin-right: 11px;
+`;
+
+const Prefix = styled.div`
   font-size: 13px;
-  color: ${({color = "#aaaabb"}) => color};
+  color: #aaaabb;
+  display: flex;
+  align-items: center;
+  z-index: -1;
+`;
+
+const Label = styled.div<{ color?: string }>`
+  font-size: 13px;
+  color: ${({ color = "#aaaabb" }) => color};
   margin-bottom: 10px;
 `;
 
@@ -90,40 +130,57 @@ const Error = styled.div`
   }
 `;
 
-const SelectWrapper = styled.div`
+const SelectWrapper = styled.div<{ isDisabled: boolean; height?: string }>`
   position: relative;
-  background: #26292e;
+  padding-left: 10px;
+  padding-right: 28px;
+  height: ${(props) => props.height || "30px"};
+  transition: all 0.2s;
+  background: ${(props) => props.theme.fg};
+  border: 1px solid #494b4f;
   z-index: 0;
+  display: flex;
+  align-items: center;
   border-radius: 5px;
+  font-size: 13px;
   overflow: hidden;
-  > i {
-    font-size: 18px;
+
+  > img {
+    width: 8px;
     position: absolute;
-    right: 7px;
-    top: calc(50% - 9px);
+    right: 10px;
+    top: calc(50% - 3px);
     z-index: -1;
   }
+
+  ${(props) =>
+    !props.isDisabled
+      ? css`
+          :hover {
+            border: 1px solid #7a7b80;
+          }
+        `
+      : css`
+          color: #ffffff55;
+          > img {
+            opacity: 0.5;
+          }
+        `}
 `;
 
-const StyledSelect = styled.select<{
-  width: string;
-  height: string;
+const SelectLayer = styled.select<{
   hasError: boolean;
+  disabled?: boolean;
 }>`
-  height: ${(props) => props.height || "35px"};
-  padding: 5px 10px;
-  width: ${(props) => props.width || "200px"};
-  color: #ffffff;
-  font-size: 13px;
   outline: none;
-  cursor: pointer;
-  border-radius: 5px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  cursor: ${(props) => (props.disabled ? "not-allowed" : "pointer")};
   background: none;
   appearance: none;
-  overflow: hidden;
+  opacity: 0;
   z-index: 1;
-  border: 1px solid ${(props) => (props.hasError ? "#ff3b62" : "#494b4f")};
-  :hover {
-    border: 1px solid ${(props) => (props.hasError ? "#ff3b62" : "#7a7b80")};
-  }
 `;

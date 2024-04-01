@@ -20,3 +20,13 @@ func NewAWSAssumeRoleChainer() repository.AWSAssumeRoleChainer {
 func (cr AWSAssumeRoleChain) List(ctx context.Context, projectID uint) ([]*models.AWSAssumeRoleChain, error) {
 	return nil, errors.New("not implemented")
 }
+
+// ListByAwsAccountId ...
+func (cr AWSAssumeRoleChain) ListByAwsAccountId(ctx context.Context, targetAwsAccountId string) ([]*models.AWSAssumeRoleChain, error) {
+	return nil, errors.New("not implemented")
+}
+
+// Delete ...
+func (cr AWSAssumeRoleChain) Delete(ctx context.Context, projectID uint) error {
+	return errors.New("not implemented")
+}

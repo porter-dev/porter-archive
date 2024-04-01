@@ -8,14 +8,19 @@ import { match } from "ts-pattern";
 import Spacer from "components/porter/Spacer";
 import { type ClientServiceStatus } from "lib/hooks/useAppStatus";
 import { type PorterAppFormData } from "lib/porter-apps";
-import { type ClientService } from "lib/porter-apps/services";
+import {
+  isClientJobService,
+  type ClientService,
+} from "lib/porter-apps/services";
 
 import chip from "assets/computer-chip.svg";
 import job from "assets/job.png";
+import moon from "assets/moon.svg";
 import web from "assets/web.png";
 import worker from "assets/worker.png";
 
-import ServiceStatusFooter from "./ServiceStatusFooter";
+import JobFooter from "./footers/JobFooter";
+import ServiceStatusFooter from "./footers/ServiceStatusFooter";
 import JobTabs from "./tabs/JobTabs";
 import WebTabs from "./tabs/WebTabs";
 import WorkerTabs from "./tabs/WorkerTabs";
@@ -29,15 +34,11 @@ type ServiceProps = {
   >;
   remove: (index: number) => void;
   status?: ClientServiceStatus[];
-  maxCPU: number;
-  maxRAM: number;
-  clusterContainsGPUNodes: boolean;
   internalNetworkingDetails: {
     namespace: string;
     appName: string;
   };
-  clusterIngressIp: string;
-  showDisableTls: boolean;
+  existingServiceNames: string[];
 };
 
 const ServiceContainer: React.FC<ServiceProps> = ({
@@ -46,12 +47,8 @@ const ServiceContainer: React.FC<ServiceProps> = ({
   update,
   remove,
   status,
-  maxCPU,
-  maxRAM,
-  clusterContainsGPUNodes,
   internalNetworkingDetails,
-  clusterIngressIp,
-  showDisableTls,
+  existingServiceNames,
 }) => {
   const renderTabs = (service: ClientService): JSX.Element => {
     return match(service)
@@ -59,41 +56,17 @@ const ServiceContainer: React.FC<ServiceProps> = ({
         <WebTabs
           index={index}
           service={svc}
-          maxCPU={maxCPU}
-          maxRAM={maxRAM}
-          clusterContainsGPUNodes={clusterContainsGPUNodes}
           internalNetworkingDetails={internalNetworkingDetails}
-          clusterIngressIp={clusterIngressIp}
-          showDisableTls={showDisableTls}
         />
       ))
       .with({ config: { type: "worker" } }, (svc) => (
-        <WorkerTabs
-          index={index}
-          service={svc}
-          maxCPU={maxCPU}
-          maxRAM={maxRAM}
-          clusterContainsGPUNodes={clusterContainsGPUNodes}
-        />
+        <WorkerTabs index={index} service={svc} />
       ))
       .with({ config: { type: "job" } }, (svc) => (
-        <JobTabs
-          index={index}
-          service={svc}
-          maxCPU={maxCPU}
-          maxRAM={maxRAM}
-          clusterContainsGPUNodes={clusterContainsGPUNodes}
-        />
+        <JobTabs index={index} service={svc} />
       ))
       .with({ config: { type: "predeploy" } }, (svc) => (
-        <JobTabs
-          index={index}
-          service={svc}
-          maxCPU={maxCPU}
-          maxRAM={maxRAM}
-          clusterContainsGPUNodes={clusterContainsGPUNodes}
-          isPredeploy
-        />
+        <JobTabs index={index} service={svc} isPredeploy />
       ))
       .exhaustive();
   };
@@ -137,6 +110,15 @@ const ServiceContainer: React.FC<ServiceProps> = ({
               <TagContainer>
                 <ChipIcon src={chip} alt="Chip Icon" />
                 <TagText>GPU Workload</TagText>
+              </TagContainer>
+            </>
+          )}
+          {service.sleep?.value && (
+            <>
+              <Spacer inline x={1.5} />
+              <TagContainer disableAnimation>
+                <ChipIcon src={moon} alt="Moon" />
+                <TagText>Sleeping</TagText>
               </TagContainer>
             </>
           )}
@@ -186,13 +168,14 @@ const ServiceContainer: React.FC<ServiceProps> = ({
           </StyledSourceBox>
         )}
       </AnimatePresence>
-      {status && (
-        <ServiceStatusFooter
-          serviceName={service.name.value}
-          isJob={service.config.type === "job"}
-          status={status}
-        />
+      {!isClientJobService(service) && status && (
+        <ServiceStatusFooter status={status} name={service.name.value} />
       )}
+      {isClientJobService(service) &&
+        // make sure that this service is in a created revision before showing the job footer - cannot view history / run jobs that are not deployed
+        existingServiceNames.includes(service.name.value) && (
+          <JobFooter jobName={service.name.value} />
+        )}
       <Spacer y={0.5} />
     </>
   );
@@ -252,6 +235,7 @@ const ServiceHeader = styled.div<{
   padding: 20px;
   color: ${(props) => props.theme.text.primary};
   position: relative;
+  transition: all 0.2s;
   border-radius: 5px;
   background: ${(props) => props.theme.clickable.bg};
   border: 1px solid #494b4f;
@@ -286,7 +270,9 @@ const reflectiveGleam = keyframes`
   }
 `;
 
-const TagContainer = styled.div`
+const TagContainer = styled.div<{
+  disableAnimation?: boolean;
+}>`
   box-sizing: border-box;
   display: flex;
   flex-direction: row;
@@ -303,7 +289,8 @@ const TagContainer = styled.div`
   );
   background-size: 200% 200%;
   border-radius: 10px;
-  animation: ${reflectiveGleam} 4s infinite linear;
+  animation: ${reflectiveGleam} ${(props) =>
+    props.disableAnimation ? "" : "4s infinite"}
   border: 1px solid rgba(255, 255, 255, 0.2);
 `;
 

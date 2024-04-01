@@ -9,7 +9,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { PorterApp } from "@porter-dev/api-contracts";
 import { useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
-import _ from "lodash";
 import AnimateHeight from "react-animate-height";
 import { FormProvider, useForm } from "react-hook-form";
 import { useHistory } from "react-router";
@@ -18,9 +17,7 @@ import { match } from "ts-pattern";
 import { z } from "zod";
 
 import Banner from "components/porter/Banner";
-import Button from "components/porter/Button";
 import { Error as ErrorComponent } from "components/porter/Error";
-import Icon from "components/porter/Icon";
 import Link from "components/porter/Link";
 import Spacer from "components/porter/Spacer";
 import Tag from "components/porter/Tag";
@@ -42,8 +39,8 @@ import {
 import api from "shared/api";
 import { Context } from "shared/Context";
 import alert from "assets/alert-warning.svg";
-import save from "assets/save-01.svg";
 
+import AppSaveButton from "./AppSaveButton";
 import ConfirmRedeployModal from "./ConfirmRedeployModal";
 import { GithubErrorBanner } from "./GithubErrorBanner";
 import { useLatestRevision } from "./LatestRevisionContext";
@@ -220,10 +217,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
 
   const onSubmit = handleSubmit(async (data) => {
     try {
-      const { variables, secrets, validatedAppProto } = await validateApp(
-        data,
-        currentProject?.beta_features_enabled
-      );
+      const { variables, secrets, validatedAppProto } = await validateApp(data);
 
       const needsRebuild =
         buildIsDirty ||
@@ -235,13 +229,18 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         return;
       }
 
-      if (currentProject?.beta_features_enabled && !buildIsDirty) {
+      if (!buildIsDirty) {
         const serviceDeletions = setServiceDeletions(data.app.services);
+
+        const withPredeploy =
+          needsRebuild && latestSource.type === "docker-registry";
 
         await api.updateApp(
           "<token>",
           {
-            b64_app_proto: btoa(validatedAppProto.toJsonString()),
+            b64_app_proto: btoa(
+              validatedAppProto.toJsonString({ emitDefaultValues: true })
+            ),
             deployment_target_id: deploymentTarget.id,
             variables,
             secrets,
@@ -254,26 +253,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
               ),
               service_deletions: serviceDeletions,
             },
-          },
-          {
-            project_id: projectId,
-            cluster_id: clusterId,
-          }
-        );
-      }
-
-      // force_build will create a new 0 revision that will not be deployed
-      // but will be used to hydrate values when the workflow is run
-      if (!currentProject?.beta_features_enabled) {
-        await api.applyApp(
-          "<token>",
-          {
-            b64_app_proto: btoa(validatedAppProto.toJsonString()),
-            deployment_target_id: deploymentTarget.id,
-            force_build: needsRebuild,
-            variables,
-            secrets,
-            hard_env_update: true,
+            with_predeploy: withPredeploy,
           },
           {
             project_id: projectId,
@@ -284,11 +264,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
 
       if (latestSource.type === "github" && needsRebuild) {
         // add a new revision with updated build settings only if they have changed
-        if (
-          currentProject?.beta_features_enabled &&
-          validatedAppProto.build &&
-          buildIsDirty
-        ) {
+        if (validatedAppProto.build && buildIsDirty) {
           await api.updateBuildSettings(
             "<token>",
             {
@@ -517,21 +493,21 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
 
     if (latestProto.build) {
       base.push({
-        label: "Build Settings",
+        label: "Build settings",
         value: "build-settings",
       });
     } else {
       base.push({
-        label: "Image Settings",
+        label: "Image settings",
         value: "image-settings",
       });
     }
 
     if ((currentProject?.helm_values_enabled ?? false) || user?.isPorterUser) {
-      base.push({ label: "Helm Overrides", value: "helm-overrides" });
+      base.push({ label: "Helm overrides", value: "helm-overrides" });
     }
     if ((currentProject?.helm_values_enabled ?? false) || user?.isPorterUser) {
-      base.push({ label: "Latest Helm Values", value: "helm-values" });
+      base.push({ label: "Latest Helm values", value: "helm-values" });
     }
 
     base.push({ label: "Settings", value: "settings" });
@@ -594,19 +570,13 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
             type="warning"
             suffix={
               <>
-                <Button
-                  type="submit"
-                  loadingText={"Updating..."}
+                <AppSaveButton
                   height={"10px"}
                   status={isSubmitting ? "loading" : ""}
-                  disabled={isSubmitting || latestRevision.status === "CREATED"}
+                  isDisabled={isSubmitting}
                   disabledTooltipMessage="Please wait for the deploy to complete before updating the app"
                   disabledTooltipPosition="bottom"
-                >
-                  <Icon src={save} height={"13px"} />
-                  <Spacer inline x={0.5} />
-                  Save as latest version
-                </Button>
+                />
               </>
             }
           >

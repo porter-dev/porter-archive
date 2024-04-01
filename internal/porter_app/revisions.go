@@ -41,6 +41,16 @@ type Revision struct {
 	AppInstanceID uuid.UUID `json:"app_instance_id"`
 }
 
+// AppInstance represents the data for an app instance
+type AppInstance struct {
+	// Id is the app instance id
+	Id string `json:"id"`
+	// DeploymentTargetID is the id of the deployment target the revision is associated with
+	DeploymentTarget DeploymentTarget `json:"deployment_target"`
+	// Name is the name of the app instance
+	Name string `json:"name"`
+}
+
 // RevisionProgress describes the progress of a revision in its lifecycle
 type RevisionProgress struct {
 	// PredeployStarted is true if the predeploy process has started
@@ -273,6 +283,8 @@ func appRevisionStatusFromProto(status string) (models.AppRevisionStatus, error)
 		appRevisionStatus = models.AppRevisionStatus_DeploymentSuccessful
 	case string(models.AppRevisionStatus_DeploymentFailed):
 		appRevisionStatus = models.AppRevisionStatus_DeploymentFailed
+	case string(models.AppRevisionStatus_DeploymentSuperseded):
+		appRevisionStatus = models.AppRevisionStatus_DeploymentSuperseded
 	case string(models.AppRevisionStatus_RollbackSuccessful):
 		appRevisionStatus = models.AppRevisionStatus_RollbackSuccessful
 	case string(models.AppRevisionStatus_RollbackFailed):

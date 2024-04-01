@@ -1,9 +1,6 @@
 import React from "react";
-type IconProps = {
-  className?: string;
-  styles?: React.CSSProperties;
-  fill?: string;
-};
+
+import { type IconProps } from "./types";
 
 const PullRequestIcon: React.FC<IconProps> = ({ className, styles, fill }) => {
   return (

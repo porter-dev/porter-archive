@@ -9,6 +9,7 @@ import Loading from "components/Loading";
 import Button from "components/porter/Button";
 import Container from "components/porter/Container";
 import Error from "components/porter/Error";
+import Fieldset from "components/porter/Fieldset";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import ToggleRow from "components/porter/ToggleRow";
@@ -16,7 +17,10 @@ import SOC2Checks from "components/SOC2Checks";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
+import { type Soc2Data } from "shared/types";
 import sparkle from "assets/sparkle.svg";
+
+import DonutChart from "./DonutChart";
 
 type Props = {
   credentialId: string;
@@ -36,7 +40,7 @@ type Props = {
 //   "disabledTooltip": "display if message is disabled",
 //  "hideToggle": true (if you want to hide the toggle
 // }
-const soc2DataDefault = {
+const soc2DataDefault: Soc2Data = {
   soc2_checks: {
     "Public SSH Access": {
       message:
@@ -64,7 +68,7 @@ const soc2DataDefault = {
     },
     "Enhanced Image Vulnerability Scanning": {
       message:
-        "AWS ECR scans for CVEs from the open-source Clair database on push image push. Enhanced scanning provides continuous, automated scans against images as new vulnerabilities appear.",
+        "AWS ECR scans for CVEs from the open-source Clair database on image push. Enhanced scanning provides continuous, automated scans against images as new vulnerabilities appear.",
       link: "https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-scanning-enhanced.html",
       enabled: false,
       info: "",
@@ -267,7 +271,7 @@ const Compliance: React.FC<Props> = (props) => {
   const determineStatus = (enabled: boolean): string => {
     if (enabled) {
       if (currentCluster?.status === "UPDATING") {
-        return "PENDING";
+        return "PENDING_ENABLED";
       } else return "ENABLED";
     }
     return "";
@@ -337,14 +341,18 @@ const Compliance: React.FC<Props> = (props) => {
   return (
     <StyledCompliance>
       <Spacer y={1} />
-      <Container row>
-        <Text size={16}>SOC 2 compliance</Text>
-        <Spacer inline x={1} />
-        <NewBadge>
-          <img src={sparkle} />
-          New
-        </NewBadge>
-      </Container>
+      <Fieldset>
+        <Container row>
+          <Text size={16}>SOC 2 Compliance Dashboard</Text>
+          <Spacer inline x={1} />
+          <NewBadge>
+            <img src={sparkle} />
+            New
+          </NewBadge>
+        </Container>
+        <Spacer y={1} />
+        <DonutChart data={soc2Data} />
+      </Fieldset>
 
       <SOC2Checks
         enableAll={soc2Enabled}

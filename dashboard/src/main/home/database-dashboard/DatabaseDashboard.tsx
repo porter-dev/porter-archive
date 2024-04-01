@@ -1,236 +1,170 @@
+import React, { useContext, useMemo, useState } from "react";
 import _ from "lodash";
-import React, {
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { Link } from "react-router-dom";
 import styled from "styled-components";
 
-import calendar from "assets/calendar-number.svg";
-import database from "assets/database.svg";
+import ClusterProvisioningPlaceholder from "components/ClusterProvisioningPlaceholder";
+import Loading from "components/Loading";
+import Button from "components/porter/Button";
+import Container from "components/porter/Container";
+import DashboardPlaceholder from "components/porter/DashboardPlaceholder";
+import Fieldset from "components/porter/Fieldset";
+import Image from "components/porter/Image";
+import PorterLink from "components/porter/Link";
+import SearchBar from "components/porter/SearchBar";
+import Select from "components/porter/Select";
+import ShowIntercomButton from "components/porter/ShowIntercomButton";
+import Spacer from "components/porter/Spacer";
+import StatusDot from "components/porter/StatusDot";
+import Text from "components/porter/Text";
+import Toggle from "components/porter/Toggle";
+import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
+import { isAWSCluster } from "lib/clusters/types";
+import { type ClientDatastore } from "lib/databases/types";
+import { useClusterList } from "lib/hooks/useCluster";
+import { useDatastoreList } from "lib/hooks/useDatabaseList";
+
+import { Context } from "shared/Context";
+import { search } from "shared/search";
+import { readableDate } from "shared/string_utils";
+import engine from "assets/computer-chip.svg";
+import databaseGrad from "assets/database-grad.svg";
 import grid from "assets/grid.png";
 import list from "assets/list.png";
 import notFound from "assets/not-found.png";
-import healthy from "assets/status-healthy.png";
 import time from "assets/time.png";
-import letter from "assets/vector.svg";
 
-import { Context } from "shared/Context";
-import api from "shared/api";
-import { hardcodedIcons } from "shared/hardcodedNameDict";
-import { search } from "shared/search";
+import { getDatastoreIcon, getEngineIcon } from "./icons";
+import EngineTag from "./tags/EngineTag";
 
-import Button from "components/porter/Button";
-import Container from "components/porter/Container";
-import Fieldset from "components/porter/Fieldset";
-import PorterLink from "components/porter/Link";
-import SearchBar from "components/porter/SearchBar";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import Toggle from "components/porter/Toggle";
-import { Link } from "react-router-dom";
-import { readableDate } from "shared/string_utils";
-
-import ClusterProvisioningPlaceholder from "components/ClusterProvisioningPlaceholder";
-import DashboardPlaceholder from "components/porter/DashboardPlaceholder";
-import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
-import loading from "assets/loading.gif";
-
-type Props = {};
-
-const templateWhitelist = [
-  "elasticache-redis",
-  "rds-postgresql",
-  "rds-postgresql-aurora",
-];
-
-const Apps: React.FC<Props> = ({
-}) => {
+const DatabaseDashboard: React.FC = () => {
   const { currentProject, currentCluster } = useContext(Context);
+  const { clusters, isLoading: isLoadingClusters } = useClusterList();
 
   const [searchValue, setSearchValue] = useState("");
   const [view, setView] = useState<"grid" | "list">("grid");
-  const [sort, setSort] = useState<"calendar" | "letter">("calendar");
+  const [typeFilter, setTypeFilter] = useState<"all" | "RDS" | "ELASTICACHE">(
+    "all"
+  );
+  const [engineFilter, setEngineFilter] = useState<
+    "all" | "POSTGRES" | "AURORA-POSTGRES" | "REDIS"
+  >("all");
 
-  // Placeholder (replace w useQuery)
-  const [databases, setDatabases] = useState([]);
-  const [status, setStatus] = useState("");
-  const [databaseStatuses, setDatabaseStatuses] = useState({});
+  const { datastores, isLoading } = useDatastoreList({
+    refetchIntervalMilliseconds: 5000,
+  });
 
-  const filteredDatabases = useMemo(() => {
-    const filteredBySearch = search(
-      databases ?? [],
-      searchValue,
-      {
-        keys: ["name", "chart.metadata.name"],
-        isCaseSensitive: false,
-      }
-    );
-
-    return _.sortBy(filteredBySearch);
-  }, [databases, searchValue]);
-
-  const updateDatabaseStatuses = async (): Promise<void> => {
-    const newStatuses = {};
-    for (const db of filteredDatabases) {
-      try {
-        if (databaseStatuses[db.name] !== "available") {
-          console.log(db)
-          const statusRes = await api.getDatabaseStatus("<token>", {
-            name: db.name,
-            type: db.chart.metadata.name
-          }, {
-            project_id: currentProject?.id ?? 0,
-            cluster_id: currentCluster?.id ?? 0,
-          });
-          if (statusRes.data.status === "available") {
-            newStatuses[db.name] = statusRes.data.status;
-          }
-          else {
-            newStatuses[db.name] = "updating";
-          }
-        }// Assuming status is returned in this field
-      } catch (err) {
-        console.error("Error fetching database status for", db.name, err);
-        newStatuses[db.name] = "error"; // Or some error state
-      }
-
-    }
-    setDatabaseStatuses(newStatuses);
-  };
-
-
-  const getExpandedChartLinkURL = useCallback((x: any) => {
-    const params = new Proxy(new URLSearchParams(window.location.search), {
-      get: (searchParams, prop: string) => searchParams.get(prop),
+  const filteredDatastores = useMemo(() => {
+    const filteredBySearch = search(datastores, searchValue, {
+      keys: ["name"],
+      isCaseSensitive: false,
     });
-    const cluster = currentCluster?.name;
-    const route = `/applications/${cluster}/${x.namespace}/${x.name}`;
-    const newParams = {
-      // @ts-ignore
-      project_id: params.project_id,
-      closeChartRedirectUrl: '/databases',
-    };
-    const newURLSearchParams = new URLSearchParams(
-      _.omitBy(newParams, _.isNil)
-    );
-    return `${route}?${newURLSearchParams.toString()}`;
-  }, [currentCluster]);
 
-  const getAddOns = async () => {
-    try {
-      setStatus("loading");
-      const res = await api.getCharts(
-        "<token>",
-        {
-          limit: 50,
-          skip: 0,
-          byDate: false,
-          statusFilter: [
-            "deployed",
-            "uninstalled",
-            "pending",
-            "pending-install",
-            "pending-upgrade",
-            "pending-rollback",
-            "failed",
-          ],
-        },
-        {
-          id: currentProject?.id || -1,
-          cluster_id: currentCluster?.id || -1,
-          namespace: "ack-system",
+    const sortedFilteredBySearch = _.sortBy(filteredBySearch, ["name"]);
+
+    const filteredByDatastoreType = sortedFilteredBySearch.filter(
+      (datastore: ClientDatastore) => {
+        if (typeFilter === "all") {
+          return true;
         }
+        return datastore.type === typeFilter;
+      }
+    );
+
+    const filteredByEngine = filteredByDatastoreType.filter(
+      (datastore: ClientDatastore) => {
+        if (engineFilter === "all") {
+          return true;
+        }
+        return datastore.template.engine.name === engineFilter;
+      }
+    );
+
+    return filteredByEngine;
+  }, [datastores, searchValue, typeFilter, engineFilter]);
+
+  const renderContents = (): JSX.Element => {
+    if (currentProject?.sandbox_enabled) {
+      return (
+        <DashboardPlaceholder>
+          <Text size={16}>Datastores are coming soon to the Porter Cloud</Text>
+          <Spacer y={0.5} />
+          <Text color={"helper"}>
+            You can also eject to your own cloud account to start using managed
+            datastores immediately.
+          </Text>
+          <Spacer y={1} />
+          <PorterLink to="https://docs.porter.run/other/eject">
+            <Button alt height="35px">
+             Eject to AWS, Azure, or GCP
+            </Button>
+          </PorterLink>
+        </DashboardPlaceholder>
       );
-      setStatus("complete");
-      const charts = res.data || [];
-      const filtered = charts.filter((app: any) => {
-        return (
-          templateWhitelist.includes(app.chart.metadata.name)
-        );
-      });
-      setDatabases(filtered);
-    } catch (err) {
-      setStatus("error");
-    };
-  };
-
-  useEffect(() => {
-    // Call once when the component mounts
-    void updateDatabaseStatuses();
-
-    // Set up the interval for polling every 5 minutes
-    const intervalId = setInterval(() => {
-      void updateDatabaseStatuses();
-    }, 60000); // 60000 milliseconds = 5 minutes
-
-    // Clear interval on component unmount
-    return () => clearInterval(intervalId);
-  }, [filteredDatabases]);
-
-  useEffect(() => {
-    // currentCluster sometimes returns as -1 and passes null check
-
-    if (currentProject?.id >= 0 && currentCluster?.id >= 0) {
-      getAddOns();
     }
-  }, [currentCluster, currentProject]);
 
-  const renderStatusIcon = (dbName: string): JSX.Element => {
-    const status: string = databaseStatuses[dbName];
-    switch (status) {
-      case "available":
-        return <StatusIcon src={healthy} />;
-      case "":
-        return <></>;
-      case "error":
-        return <StatusText>
-          <StatusWrapper success={false}>
-            <Loading src={loading} />
-            {"Creating database"}
-          </StatusWrapper>
-        </StatusText>
-      case "updating":
-        return <StatusText>
-          <StatusWrapper success={false}>
-            <Loading src={loading} />
-            {"Creating database"}
-          </StatusWrapper>
-        </StatusText>
-      default:
-        return <></>;
+    if (!currentProject?.db_enabled) {
+      return (
+        <DashboardPlaceholder>
+          <Text size={16}>Datastores are not enabled for this project</Text>
+          <Spacer y={0.5} />
+          <Text color={"helper"}>
+            Reach out to the Porter team to enable managed datastores on your
+            project.
+          </Text>
+          <Spacer y={1} />
+          <ShowIntercomButton
+            alt
+            message="I would like to enable managed datastores on my project"
+            height="35px"
+          >
+            Request to enable
+          </ShowIntercomButton>
+        </DashboardPlaceholder>
+      );
     }
-  };
 
+    if (datastores === undefined || isLoading || isLoadingClusters) {
+      return <Loading offset="-150px" />;
+    }
 
-  const renderContents = () => {
+    if (clusters.filter(isAWSCluster).length === 0) {
+      return (
+        <Fieldset>
+          <Text size={16}>Datastores are not supported for this project.</Text>
+          <Spacer y={0.5} />
+          <Text color="helper">
+            Datastores are only supported for projects with a provisioned AWS
+            cluster.
+          </Text>
+          <Spacer y={0.5} />
+          <Text color="helper">
+            To get started with datastores, you will need to create an AWS
+            cluster. Contact our team if you are interested in enabling
+            multi-cluster support.
+          </Text>
+          <Spacer y={0.5} />
+          <ShowIntercomButton
+            message={`I would like to enable multi-cluster support for my project.`}
+          />
+        </Fieldset>
+      );
+    }
     if (currentCluster?.status === "UPDATING_UNAVAILABLE") {
       return <ClusterProvisioningPlaceholder />;
     }
 
-    if (status === "loading") {
-      return <Loading offset="-150px" />;
-    }
-
-    if (databases.length === 0) {
+    if (datastores.length === 0) {
       return (
         <DashboardPlaceholder>
-          <Text size={16}>No databases have been created yet</Text>
+          <Text size={16}>No datastores have been created yet</Text>
           <Spacer y={0.5} />
 
-          <Text color={"helper"}>Get started by creating a database.</Text>
+          <Text color={"helper"}>Get started by creating a datastore.</Text>
           <Spacer y={1} />
-          <PorterLink to="/databases/new/database">
-            <Button
-              onClick={async () =>
-                console.log() // TODO: add analytics
-              }
-              height="35px"
-              alt
-            >
-              Create database <Spacer inline x={1} />{" "}
+          <PorterLink to="/datastores/new">
+            <Button onClick={() => ({})} height="35px" alt>
+              Create a new datastore <Spacer inline x={1} />{" "}
               <i className="material-icons" style={{ fontSize: "18px" }}>
                 east
               </i>
@@ -243,28 +177,86 @@ const Apps: React.FC<Props> = ({
     return (
       <>
         <Container row spaced>
+          <Select
+            options={[
+              { value: "all", label: "All" },
+              {
+                value: "RDS",
+                label: "RDS",
+                icon: getDatastoreIcon("RDS"),
+              },
+              {
+                value: "ELASTICACHE",
+                label: "Elasticache",
+                icon: getDatastoreIcon("ELASTICACHE"),
+              },
+            ]}
+            value={typeFilter}
+            setValue={(value) => {
+              if (
+                value === "all" ||
+                value === "RDS" ||
+                value === "ELASTICACHE"
+              ) {
+                setTypeFilter(value);
+                setEngineFilter("all");
+              }
+            }}
+            prefix={
+              <Container row>
+                <Image src={databaseGrad} size={15} opacity={0.6} />
+                <Spacer inline x={0.5} />
+                Type
+              </Container>
+            }
+          />
+          <Spacer inline x={1} />
+          <Select
+            options={[
+              { value: "all", label: "All" },
+              {
+                value: "POSTGRES",
+                label: "PostgreSQL",
+                icon: getEngineIcon("POSTGRES"),
+              },
+              {
+                value: "AURORA-POSTGRES",
+                label: "Aurora PostgreSQL",
+                icon: getEngineIcon("POSTGRES"),
+              },
+              {
+                value: "REDIS",
+                label: "Redis",
+                icon: getEngineIcon("REDIS"),
+              },
+            ]}
+            value={engineFilter}
+            setValue={(value) => {
+              if (
+                value === "all" ||
+                value === "POSTGRES" ||
+                value === "AURORA-POSTGRES" ||
+                value === "REDIS"
+              ) {
+                setEngineFilter(value);
+              }
+            }}
+            prefix={
+              <Container row>
+                <Image src={engine} size={15} opacity={0.6} />
+                <Spacer inline x={0.5} />
+                Engine
+              </Container>
+            }
+          />
+          <Spacer inline x={2} />
           <SearchBar
             value={searchValue}
             setValue={(x) => {
               setSearchValue(x);
             }}
-            placeholder="Search databases . . ."
+            placeholder="Search datastores . . ."
             width="100%"
-          />
-          <Spacer inline x={2} />
-          <Toggle
-            items={[
-              { label: <ToggleIcon src={calendar} />, value: "calendar" },
-              { label: <ToggleIcon src={letter} />, value: "letter" },
-            ]}
-            active={sort}
-            setActive={(x) => {
-              if (x === "calendar") {
-                setSort("calendar");
-              } else {
-                setSort("letter");
-              }
-            }}
           />
           <Spacer inline x={1} />
 
@@ -284,81 +276,95 @@ const Apps: React.FC<Props> = ({
           />
 
           <Spacer inline x={2} />
-          <PorterLink to="/databases/new/database">
-            <Button
-              onClick={async () =>
-                console.log() // TODO: add analytics
-              }
-              height="30px"
-              width="140px"
-            >
-              <I className="material-icons">add</I> New database
+          <PorterLink to="/datastores/new">
+            <Button onClick={() => ({})} height="30px" width="70px">
+              <I className="material-icons">add</I> New
             </Button>
           </PorterLink>
         </Container>
         <Spacer y={1} />
 
-        {filteredDatabases.length === 0 ? (
+        {filteredDatastores.length === 0 ? (
           <Fieldset>
             <Container row>
               <PlaceholderIcon src={notFound} />
-              <Text color="helper">No matching databases were found.</Text>
+              <Text color="helper">No matching datastores were found.</Text>
             </Container>
           </Fieldset>
-        ) : (status === "loading" ? <Loading offset="-150px" /> : view === "grid" ? (
+        ) : isLoading ? (
+          <Loading offset="-150px" />
+        ) : view === "grid" ? (
           <GridList>
-            {(filteredDatabases ?? []).map((app: any, i: number) => {
-              return (
-                <Block to={getExpandedChartLinkURL(app)} key={i}>
-                  <Container row>
-                    <Icon
-                      src={
-                        hardcodedIcons[app.chart.metadata.name] ||
-                        app.chart.metadata.icon
-                      }
-                    />
-                    <Text size={14}>{app.name}</Text>
-                    <Spacer inline x={2} />
-                  </Container>
-                  {renderStatusIcon(app.name)}
-                  <Container row>
-                    <SmallIcon opacity="0.4" src={time} />
-                    <Text size={13} color="#ffffff44">
-                      {readableDate(app.info.last_deployed)}
-                    </Text>
-                  </Container>
-                </Block>
-              );
-            })}
+            {(filteredDatastores ?? []).map(
+              (datastore: ClientDatastore, i: number) => {
+                return (
+                  <Link to={`/datastores/${datastore.name}`} key={i}>
+                    <Block>
+                      <Container row spaced>
+                        <Container row>
+                          <Icon src={datastore.template.icon} />
+                          <Text size={14}>{datastore.name}</Text>
+                        </Container>
+                        <StatusDot
+                          status={
+                            datastore.status === "AVAILABLE"
+                              ? "available"
+                              : "pending"
+                          }
+                          heightPixels={9}
+                        />
+                      </Container>
+                      <Container row>
+                        <EngineTag engine={datastore.template.engine} />
+                      </Container>
+                      <Container row>
+                        <SmallIcon opacity="0.4" src={time} />
+                        <Text size={13} color="#ffffff44">
+                          {readableDate(datastore.created_at)}
+                        </Text>
+                      </Container>
+                    </Block>
+                  </Link>
+                );
+              }
+            )}
           </GridList>
         ) : (
           <List>
-            {(filteredDatabases ?? []).map((app: any, i: number) => {
-              return (
-                <Row to={getExpandedChartLinkURL(app)} key={i}>
-                  <Container row>
-                    <MidIcon
-                      src={
-                        hardcodedIcons[app.chart.metadata.name] ||
-                        app.chart.metadata.icon
-                      }
-                    />
-                    <Text size={14}>{app.name}</Text>
-                    <Spacer inline x={1} />
-                    <MidIcon src={healthy} height="16px" />
-                  </Container>
-                  <Spacer height="15px" />
-                  <Container row>
-                    <SmallIcon opacity="0.4" src={time} />
-                    <Text size={13} color="#ffffff44">
-                      {readableDate(app.info.last_deployed)}
-                    </Text>
-                  </Container>
-                </Row>
-              );
-            })}
+            {(filteredDatastores ?? []).map(
+              (datastore: ClientDatastore, i: number) => {
+                return (
+                  <Row to={`/datastores/${datastore.name}`} key={i}>
+                    <Container row spaced>
+                      <Container row>
+                        <MidIcon src={datastore.template.icon} />
+                        <Text size={14}>{datastore.name}</Text>
+                      </Container>
+                      <StatusDot
+                        status={
+                          datastore.status === "AVAILABLE"
+                            ? "available"
+                            : "pending"
+                        }
+                        heightPixels={9}
+                      />
+                    </Container>
+                    <Spacer y={0.5} />
+                    <Container row>
+                      <EngineTag engine={datastore.template.engine} />
+                      <Spacer inline x={1} />
+                      <Container>
+                        <SmallIcon opacity="0.4" src={time} />
+                        <Text size={13} color="#ffffff44">
+                          {readableDate(datastore.created_at)}
+                        </Text>
+                      </Container>
+                    </Container>
+                  </Row>
+                );
+              }
+            )}
           </List>
-        )
         )}
       </>
     );
@@ -367,8 +373,8 @@ const Apps: React.FC<Props> = ({
   return (
     <StyledAppDashboard>
       <DashboardHeader
-        image={database}
-        title="Databases"
+        image={databaseGrad}
+        title="Datastores"
         description="Storage, caches, and stateful workloads for this project."
         disableLineBreak
       />
@@ -378,140 +384,100 @@ const Apps: React.FC<Props> = ({
   );
 };
 
-export default Apps;
+export default DatabaseDashboard;
 
 const MidIcon = styled.img<{ height?: string }>`
-          height: ${props => props.height || "18px"};
-          margin-right: 11px;
-          `;
+  height: ${(props) => props.height || "18px"};
+  margin-right: 11px;
+`;
 
-const Row = styled(Link) <{ isAtBottom?: boolean }>`
-            cursor: pointer;
-            display: block;
-            padding: 15px;
-            border-bottom: ${props => props.isAtBottom ? "none" : "1px solid #494b4f"};
-            background: ${props => props.theme.clickable.bg};
-            position: relative;
-            border: 1px solid #494b4f;
-            border-radius: 5px;
-            margin-bottom: 15px;
-            animation: fadeIn 0.3s 0s;
-            `;
+const Row = styled(Link)<{ isAtBottom?: boolean }>`
+  cursor: pointer;
+  display: block;
+  padding: 15px;
+  border-bottom: ${(props) =>
+    props.isAtBottom ? "none" : "1px solid #494b4f"};
+  background: ${(props) => props.theme.clickable.bg};
+  position: relative;
+  border: 1px solid #494b4f;
+  border-radius: 5px;
+  margin-bottom: 15px;
+  animation: fadeIn 0.3s 0s;
+`;
 
 const List = styled.div`
-            overflow: hidden;
-            `;
-
-const SmallIcon = styled.img<{ opacity?: string }>`
-              margin-left: 2px;
-              height: 14px;
-              opacity: ${props => props.opacity || 1};
-              margin-right: 10px;
-              `;
-
-const StatusIcon = styled.img`
-              position: absolute;
-              top: 20px;
-              right: 20px;
-              height: 18px;
-              `;
+  overflow: hidden;
+`;
 
 const Icon = styled.img`
-              height: 20px;
-              margin-right: 13px;
-              `;
+  height: 20px;
+  margin-right: 13px;
+`;
 
-const Block = styled(Link)`
-              height: 110px;
-              flex-direction: column;
-              display: flex;
-              justify-content: space-between;
-              cursor: pointer;
-              padding: 20px;
-              color: ${props => props.theme.text.primary};
-              position: relative;
-              border-radius: 5px;
-              background: ${props => props.theme.clickable.bg};
-              border: 1px solid #494b4f;
-              :hover {
-                border: 1px solid #7a7b80;
+const Block = styled.div`
+  height: 150px;
+  flex-direction: column;
+  display: flex;
+  justify-content: space-between;
+  cursor: pointer;
+  padding: 20px;
+  color: ${(props) => props.theme.text.primary};
+  position: relative;
+  border-radius: 5px;
+  background: ${(props) => props.theme.clickable.bg};
+  border: 1px solid #494b4f;
+  :hover {
+    border: 1px solid #7a7b80;
   }
 
-              animation: fadeIn 0.3s 0s;
-              @keyframes fadeIn {
-                from {
-                opacity: 0;
+  animation: fadeIn 0.3s 0s;
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
     }
-              to {
-                opacity: 1;
+    to {
+      opacity: 1;
     }
   }
-              `;
+`;
 
 const GridList = styled.div`
-              display: grid;
-              grid-column-gap: 25px;
-              grid-row-gap: 25px;
-              grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-              `;
+  display: grid;
+  grid-column-gap: 25px;
+  grid-row-gap: 25px;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+`;
 
 const PlaceholderIcon = styled.img`
-              height: 13px;
-              margin-right: 12px;
-              opacity: 0.65;
-              `;
+  height: 13px;
+  margin-right: 12px;
+  opacity: 0.65;
+`;
 
 const ToggleIcon = styled.img`
-              height: 12px;
-              margin: 0 5px;
-              min-width: 12px;
-              `;
+  height: 12px;
+  margin: 0 5px;
+  min-width: 12px;
+`;
 
 const I = styled.i`
-              color: white;
-              font-size: 14px;
-              display: flex;
-              align-items: center;
-              margin-right: 5px;
-              justify-content: center;
-              `;
-
-const StyledAppDashboard = styled.div`
-              width: 100%;
-              height: 100%;
-              `;
-
-const StatusText = styled.div`
-  position: absolute;
-  top: 20px;
-  right: 20px;
+  color: white;
+  font-size: 14px;
   display: flex;
   align-items: center;
+  margin-right: 5px;
   justify-content: center;
 `;
 
-const StatusWrapper = styled.div<{
-  success?: boolean;
-}>`
-  display: flex;
-  line-height: 1.5;
-  align-items: center;
-  font-family: "Work Sans", sans-serif;
-  font-size: 13px;
-  color: #ffffff55;
-  margin-left: 15px;
-  text-overflow: ellipsis;
-  animation-fill-mode: forwards;
-  > i {
-    font-size: 18px;
-    margin-right: 10px;
-    float: left;
-    color: ${(props) => (props.success ? "#4797ff" : "#fcba03")};
-  }
+const StyledAppDashboard = styled.div`
+  width: 100%;
+  height: 100%;
 `;
-const Loading = styled.img`
-  width: 15px;
-  height: 15px;
-  margin-right: 9px;
-  margin-bottom: 0px;
+
+const SmallIcon = styled.img<{ opacity?: string; height?: string }>`
+  margin-left: 2px;
+  height: ${(props) => props.height || "14px"};
+  opacity: ${(props) => props.opacity || 1};
+  filter: grayscale(100%);
+  margin-right: 10px;
 `;

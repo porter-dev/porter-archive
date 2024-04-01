@@ -36,7 +36,12 @@ func NewNotifyResolvedIncidentHandler(
 }
 
 func (c *NotifyResolvedIncidentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
+
+	if project.GetFeatureFlag(models.ValidateApplyV2, c.Config().LaunchDarklyClient) {
+		return
+	}
 
 	request := &types.Incident{}
 

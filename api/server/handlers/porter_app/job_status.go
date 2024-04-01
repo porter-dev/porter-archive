@@ -3,6 +3,8 @@ package porter_app
 import (
 	"net/http"
 
+	"connectrpc.com/connect"
+	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
@@ -10,9 +12,8 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
-	"github.com/porter-dev/porter/internal/deployment_target"
-	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/porter_app"
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
@@ -36,8 +37,14 @@ func NewJobStatusHandler(
 
 // JobStatusRequest is the expected format for a request body on GET /apps/jobs
 type JobStatusRequest struct {
-	DeploymentTargetID string `schema:"deployment_target_id"`
-	JobName            string `schema:"job_name"`
+	DeploymentTargetID   string `schema:"deployment_target_id,omitempty"`
+	DeploymentTargetName string `schema:"deployment_target_name,omitempty"`
+	JobName              string `schema:"job_name"`
+}
+
+// JobStatusResponse is the response format for GET /apps/jobs
+type JobStatusResponse struct {
+	JobRuns []porter_app.JobRun `json:"job_runs"`
 }
 
 func (c *JobStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -63,57 +70,64 @@ func (c *JobStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "app-name", Value: name})
 
-	if request.DeploymentTargetID == "" {
-		err := telemetry.Error(ctx, span, nil, "must provide deployment target id")
+	deploymentTargetName := request.DeploymentTargetName
+	if request.DeploymentTargetName == "" && request.DeploymentTargetID == "" {
+		defaultDeploymentTarget, err := defaultDeploymentTarget(ctx, defaultDeploymentTargetInput{
+			ProjectID:                 project.ID,
+			ClusterID:                 cluster.ID,
+			ClusterControlPlaneClient: c.Config().ClusterControlPlaneClient,
+		})
+		if err != nil {
+			err := telemetry.Error(ctx, span, err, "error getting default deployment target")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+		deploymentTargetName = defaultDeploymentTarget.Name
+	}
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "deployment-target-name", Value: deploymentTargetName},
+		telemetry.AttributeKV{Key: "deployment-target-id", Value: request.DeploymentTargetID},
+	)
+
+	jobRunsRequest := connect.NewRequest(&porterv1.JobRunsRequest{
+		ProjectId: int64(project.ID),
+		DeploymentTargetIdentifier: &porterv1.DeploymentTargetIdentifier{
+			Id:   request.DeploymentTargetID,
+			Name: deploymentTargetName,
+		},
+		AppName:        name,
+		JobServiceName: request.JobName,
+	})
+
+	jobRunsResp, err := c.Config().ClusterControlPlaneClient.JobRuns(ctx, jobRunsRequest)
+	if err != nil {
+		err := telemetry.Error(ctx, span, err, "error getting job runs from cluster control plane client")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "deployment-target-id", Value: request.DeploymentTargetID})
 
-	deploymentTarget, err := deployment_target.DeploymentTargetDetails(ctx, deployment_target.DeploymentTargetDetailsInput{
-		ProjectID:          int64(project.ID),
-		ClusterID:          int64(cluster.ID),
-		DeploymentTargetID: request.DeploymentTargetID,
-		CCPClient:          c.Config().ClusterControlPlaneClient,
-	})
-	if err != nil {
-		err := telemetry.Error(ctx, span, err, "error getting deployment target details")
+	if jobRunsResp == nil || jobRunsResp.Msg == nil {
+		err := telemetry.Error(ctx, span, nil, "job runs response is nil")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
-	namespace := deploymentTarget.Namespace
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "namespace", Value: namespace})
+	runs := []porter_app.JobRun{}
+	for _, jobRun := range jobRunsResp.Msg.JobRuns {
+		run, err := porter_app.JobRunFromProto(ctx, jobRun)
+		if err != nil {
+			err := telemetry.Error(ctx, span, err, "error converting job run from proto")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
 
-	agent, err := c.GetAgent(r, cluster, "")
-	if err != nil {
-		err = telemetry.Error(ctx, span, err, "unable to get agent")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-		return
-	}
-
-	labels := []kubernetes.Label{
-		{
-			Key: "porter.run/deployment-target-id",
-			Val: request.DeploymentTargetID,
-		},
-		{
-			Key: "porter.run/app-name",
-			Val: name,
-		},
-	}
-	if request.JobName != "" {
-		labels = append(labels, kubernetes.Label{
-			Key: "porter.run/service-name",
-			Val: request.JobName,
-		})
-	}
-	jobs, err := agent.ListJobsByLabel(namespace, labels...)
-	if err != nil {
-		err = telemetry.Error(ctx, span, err, "error listing jobs")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-		return
+		runs = append(runs, run)
 	}
 
-	c.WriteResult(w, r, jobs)
+	res := JobStatusResponse{
+		JobRuns: runs,
+	}
+
+	c.WriteResult(w, r, res)
 }

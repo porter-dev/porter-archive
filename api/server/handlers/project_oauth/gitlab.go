@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/porter-dev/porter/internal/telemetry"
+
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
@@ -32,6 +34,11 @@ func NewProjectOAuthGitlabHandler(
 }
 
 func (p *ProjectOAuthGitlabHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-project-gitlab")
+	defer span.End()
+
+	r = r.Clone(ctx)
+
 	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 
 	integrationIDStr := r.URL.Query().Get("integration_id")
@@ -62,7 +69,7 @@ func (p *ProjectOAuthGitlabHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 
 	state := oauth.CreateRandomState()
 
-	if err := p.PopulateOAuthSession(w, r, state, true, true, types.OAuthGitlab, uint(integrationID)); err != nil {
+	if err := p.PopulateOAuthSession(ctx, w, r, state, true, true, types.OAuthGitlab, uint(integrationID)); err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}

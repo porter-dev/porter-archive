@@ -2,6 +2,9 @@ import React from "react";
 import { Controller, useFormContext } from "react-hook-form";
 import styled from "styled-components";
 
+import warning from "assets/warning.svg";
+
+import Image from "components/porter/Image";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import Tooltip from "components/porter/Tooltip";
@@ -22,68 +25,46 @@ const EnvVarRow: React.FC<Props> = ({
 }) => {
   const { control: appControl, watch } = useFormContext<PorterAppFormData>();
   const hidden = watch(`app.env.${index}.hidden`);
-  const keys = watch(`app.env.${index}.key`);
-
-  const validKey = (key: string): boolean => /^[A-Za-z]/.test(key);
 
   return (
     <InputWrapper>
       {entry.locked ? (
-        <Tooltip
-          content={
-            "Secrets are immutable. To edit, delete and recreate the key with your new value."
-          }
-          position={"bottom"}
-        >
-          <Input
-            placeholder="ex: key"
-            width="270px"
-            value={entry.key}
-            disabled
-            spellCheck={false}
-            override={isKeyOverriding(entry.key)}
-          />
-        </Tooltip>
+        <Input
+          placeholder="ex: key"
+          width="270px"
+          value={entry.key}
+          disabled
+          spellCheck={false}
+        />
       ) : (
         <Controller
           name={`app.env.${index}.key`}
           control={appControl}
           render={({ field: { value, onChange }, fieldState: { error } }) => (
-            <>
-              <Input
-                placeholder="ex: key"
-                width="270px"
-                value={value}
-                onChange={(e) => {
-                  onChange(e.target.value);
-                }}
-                spellCheck={false}
-                override={isKeyOverriding(value)}
-                style={error ? { borderColor: "#fbc902" } : {}}
-              />
-            </>
+            <Input
+              placeholder="ex: key"
+              width="270px"
+              value={value}
+              onChange={(e) => {
+                onChange(e.target.value);
+              }}
+              spellCheck={false}
+              style={error ? { borderColor: "#fbc902" } : {}}
+            />
           )}
         />
       )}
-      <Spacer x={0.5} inline />
+      <Spacer inline width="10px" />
       {hidden ? (
         entry.locked ? (
-          <Tooltip
-            content={
-              "Secrets are immutable. To edit, delete and recreate the key with your new value."
-            }
-            position={"bottom"}
-          >
-            <Input
-              placeholder="ex: value"
-              width="270px"
-              value={entry.value}
-              disabled
-              type={"password"}
-              spellCheck={false}
-              override={isKeyOverriding(entry.key)}
-            />
-          </Tooltip>
+          <Input
+            placeholder="ex: value"
+            flex
+            value={entry.value}
+            disabled
+            type={"password"}
+            spellCheck={false}
+          />
         ) : (
           <Controller
             name={`app.env.${index}.value`}
@@ -91,14 +72,13 @@ const EnvVarRow: React.FC<Props> = ({
             render={({ field: { value, onChange } }) => (
               <Input
                 placeholder="ex: value"
-                width="270px"
+                flex
                 value={value}
                 onChange={(e) => {
                   onChange(e.target.value);
                 }}
                 type={"password"}
                 spellCheck={false}
-                override={isKeyOverriding(entry.key)}
               />
             )}
           />
@@ -110,14 +90,12 @@ const EnvVarRow: React.FC<Props> = ({
           render={({ field: { value, onChange } }) => (
             <MultiLineInputer
               placeholder="ex: value"
-              width="270px"
               value={value}
               onChange={(e) => {
                 onChange(e.target.value);
               }}
               rows={value?.split("\n").length}
               spellCheck={false}
-              override={isKeyOverriding(entry.key)}
             />
           )}
         />
@@ -138,25 +116,20 @@ const EnvVarRow: React.FC<Props> = ({
           )}
         />
       ) : (
-        <Tooltip
-          content={"Click to turn this variable into a secret"}
-          position={"bottom"}
-        >
-          <Controller
-            name={`app.env.${index}.hidden`}
-            control={appControl}
-            render={({ field: { value, onChange } }) => (
-              <HideButton
-                onClick={() => {
-                  onChange(!value);
-                }}
-                disabled={entry.locked}
-              >
-                <i className="material-icons">lock</i>
-              </HideButton>
-            )}
-          />
-        </Tooltip>
+        <Controller
+          name={`app.env.${index}.hidden`}
+          control={appControl}
+          render={({ field: { value, onChange } }) => (
+            <HideButton
+              onClick={() => {
+                onChange(!value);
+              }}
+              disabled={entry.locked}
+            >
+              <i className="material-icons">lock</i>
+            </HideButton>
+          )}
+        />
       )}
       <DeleteButton
         onClick={() => {
@@ -165,20 +138,20 @@ const EnvVarRow: React.FC<Props> = ({
       >
         <i className="material-icons">cancel</i>
       </DeleteButton>
-      {!validKey(keys) && (
-        <>
-          <Spacer x={1} inline />
-          <Text color={"#fbc902"}>Key must begin with a letter</Text>
-        </>
-      )}
       {isKeyOverriding(entry.key) && (
         <>
-          <Spacer x={1} inline />
-          <Text color={"#6b74d6"}>
-            Key is overriding value in an environment group
-          </Text>
+          <Spacer width="10px" inline />
+          <Tooltip
+            content="This key overrides a value in a synced environment group"
+            position="left"
+            width="220px"
+          >
+            <Image src={warning} size={14} />
+          </Tooltip>
+          <Spacer width="2px" inline />
         </>
       )}
+      {!isKeyOverriding(entry.key) && <Spacer width="27px" inline />}
     </InputWrapper>
   );
 };
@@ -187,7 +160,6 @@ export default EnvVarRow;
 const InputWrapper = styled.div`
   display: flex;
   align-items: center;
-  margin-top: 5px;
 `;
 
 type InputProps = {
@@ -196,99 +168,90 @@ type InputProps = {
   override?: boolean;
 };
 
-const Input = styled.input<InputProps>`
+const Input = styled.input<{ flex?: boolean; override?: boolean }>`
   outline: none;
+  display: ${(props) => (props.flex ? "flex" : "block")};
+  ${(props) => (props.flex && 'flex: 1;')}
   border: none;
-  margin-bottom: 5px;
   font-size: 13px;
-  background: #ffffff11;
-  border: ${(props) =>
-    props.override ? "2px solid #6b74d6" : " 1px solid #ffffff55"};
-  border-radius: 3px;
-  width: ${(props) => (props.width ? props.width : "270px")};
-  color: ${(props) => (props.disabled ? "#ffffff44" : "white")};
+  background: ${(props) => props.theme.fg};
+  border: ${(props) => (props.override ? '2px solid #f4cb42' : ' 1px solid #494b4f')};
+  border-radius: 5px;
+  width: ${(props) => props.width ? props.width : "270px"};
+  color: ${(props) => props.disabled ? "#ffffff44" : "#fefefe"};
   padding: 5px 10px;
   height: 35px;
 `;
 
-const MultiLineInputer = styled.textarea<InputProps>`
-                    outline: none;
-                    border: none;
-                    margin-bottom: 5px;
-                    font-size: 13px;
-                    background: #ffffff11;
-                    border: ${(props) =>
-                      props.override
-                        ? "2px solid #6b74d6"
-                        : " 1px solid #ffffff55"};
-                    border-radius: 3px;
-                    min-width: ${(props) =>
-                      props.width ? props.width : "270px"};
-                    max-width: ${(props) =>
-                      props.width ? props.width : "270px"};
-                    color: ${(props) =>
-                      props.disabled ? "#ffffff44" : "white"};
-                    padding: 8px 10px 5px 10px;
-                    min-height: 35px;
-                    max-height: 100px;
-                    white-space: nowrap;
+export const MultiLineInputer = styled.textarea<InputProps>`
+  outline: none;
+  border: none;
+  display: flex;
+  flex: 1;
+  font-size: 13px;
+  background: ${(props) => props.theme.fg};
+  border: ${(props) => (props.override ? '2px solid #f4cb42' : ' 1px solid #494b4f')};
+  border-radius: 5px;
+  color: ${(props) => (props.disabled ? "#ffffff44" : "#fefefe")};
+  padding: 8px 10px 5px 10px;
+  min-height: 35px;
+  max-height: 100px;
+  white-space: nowrap;
 
-                    ::-webkit-scrollbar {
-                        width: 8px;
-                    :horizontal {
-                        height: 8px;
+  ::-webkit-scrollbar {
+    width: 8px;
+    :horizontal {
+      height: 8px;
     }
   }
 
-                    ::-webkit-scrollbar-corner {
-                        width: 10px;
-                    background: #ffffff11;
-                    color: white;
+  ::-webkit-scrollbar-corner {
+    width: 10px;
+    background: #ffffff11;
+    color: white;
   }
 
-                    ::-webkit-scrollbar-track {
-                        width: 10px;
-                    -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
-                    box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+  ::-webkit-scrollbar-track {
+    width: 10px;
+    -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+    box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
   }
 
-                    ::-webkit-scrollbar-thumb {
-                        background - color: darkgrey;
-                    outline: 1px solid slategrey;
+  ::-webkit-scrollbar-thumb {
+    background-color: darkgrey;
+    outline: 1px solid slategrey;
   }
-                    `;
+`;
 
 const DeleteButton = styled.div`
-                    width: 15px;
-                    height: 15px;
-                    display: flex;
-                    align-items: center;
-                    margin-left: 8px;
-                    margin-top: -3px;
-                    justify-content: center;
+  width: 15px;
+  height: 15px;
+  display: flex;
+  align-items: center;
+  margin-left: 8px;
+  justify-content: center;
 
   > i {
-                        font - size: 17px;
-                    color: #ffffff44;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    cursor: pointer;
-                    :hover {
-                        color: #ffffff88;
+    font-size: 17px;
+    color: #ffffff44;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    :hover {
+      color: #ffffff88;
     }
   }
                     `;
 
 const HideButton = styled(DeleteButton)`
-                    margin-top: -5px;
   > i {
-                        font - size: 19px;
-                    cursor: ${(props: { disabled: boolean }) =>
-                      props.disabled ? "default" : "pointer"};
-                    :hover {
-                        color: ${(props: { disabled: boolean }) =>
-                          props.disabled ? "#ffffff44" : "#ffffff88"};
+    font-size: 19px;
+    cursor: ${(props: { disabled: boolean }) =>
+      props.disabled ? "default" : "pointer"};
+    :hover {
+      color: ${(props: { disabled: boolean }) =>
+        props.disabled ? "#ffffff44" : "#ffffff88"};
     }
   }
-                    `;
+`;

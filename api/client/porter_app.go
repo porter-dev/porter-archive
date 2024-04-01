@@ -2,11 +2,14 @@ package client
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 
 	"github.com/porter-dev/porter/api/server/handlers/porter_app"
 	"github.com/porter-dev/porter/internal/models"
 	appInternal "github.com/porter-dev/porter/internal/porter_app"
+	v2 "github.com/porter-dev/porter/internal/porter_app/v2"
 
 	"github.com/porter-dev/porter/api/types"
 )
@@ -157,12 +160,14 @@ func (c *Client) ParseYAML(
 	projectID, clusterID uint,
 	b64Yaml string,
 	appName string,
+	patchOperations []v2.PatchOperation,
 ) (*porter_app.ParsePorterYAMLToProtoResponse, error) {
 	resp := &porter_app.ParsePorterYAMLToProtoResponse{}
 
 	req := &porter_app.ParsePorterYAMLToProtoRequest{
-		B64Yaml: b64Yaml,
-		AppName: appName,
+		B64Yaml:         b64Yaml,
+		AppName:         appName,
+		PatchOperations: patchOperations,
 	}
 
 	err := c.postRequest(
@@ -177,86 +182,21 @@ func (c *Client) ParseYAML(
 	return resp, err
 }
 
-// ValidatePorterAppInput is the input struct to ValidatePorterApp
-type ValidatePorterAppInput struct {
-	ProjectID          uint
-	ClusterID          uint
-	AppName            string
-	Base64AppProto     string
-	Base64AppOverrides string
-	DeploymentTarget   string
-	CommitSHA          string
-}
-
-// ValidatePorterApp takes in a base64 encoded app definition that is potentially partial and returns a complete definition
-// using any previous app revisions and defaults
-func (c *Client) ValidatePorterApp(
+// GetAppManifests returns the manifests for a given app based on the latest successful app revision
+func (c *Client) GetAppManifests(
 	ctx context.Context,
-	inp ValidatePorterAppInput,
-) (*porter_app.ValidatePorterAppResponse, error) {
-	resp := &porter_app.ValidatePorterAppResponse{}
+	projectID, clusterID uint,
+	appName string,
+) (*porter_app.AppManifestsResponse, error) {
+	resp := &porter_app.AppManifestsResponse{}
 
-	req := &porter_app.ValidatePorterAppRequest{
-		AppName:            inp.AppName,
-		Base64AppProto:     inp.Base64AppProto,
-		Base64AppOverrides: inp.Base64AppOverrides,
-		DeploymentTargetId: inp.DeploymentTarget,
-		CommitSHA:          inp.CommitSHA,
-	}
-
-	err := c.postRequest(
+	err := c.getRequest(
 		fmt.Sprintf(
-			"/projects/%d/clusters/%d/apps/validate",
-			inp.ProjectID, inp.ClusterID,
+			"/projects/%d/clusters/%d/apps/%s/manifests",
+			projectID, clusterID, appName,
 		),
-		req,
+		nil,
 		resp,
-	)
-
-	return resp, err
-}
-
-// ApplyPorterAppInput is the input struct to ApplyPorterApp
-type ApplyPorterAppInput struct {
-	ProjectID        uint
-	ClusterID        uint
-	Base64AppProto   string
-	DeploymentTarget string
-	AppRevisionID    string
-	ForceBuild       bool
-	Variables        map[string]string
-	Secrets          map[string]string
-	HardEnvUpdate    bool
-}
-
-// ApplyPorterApp takes in a base64 encoded app definition and applies it to the cluster
-func (c *Client) ApplyPorterApp(
-	ctx context.Context,
-	inp ApplyPorterAppInput,
-) (*porter_app.ApplyPorterAppResponse, error) {
-	resp := &porter_app.ApplyPorterAppResponse{}
-
-	req := &porter_app.ApplyPorterAppRequest{
-		Base64AppProto:     inp.Base64AppProto,
-		DeploymentTargetId: inp.DeploymentTarget,
-		AppRevisionID:      inp.AppRevisionID,
-		ForceBuild:         inp.ForceBuild,
-		Variables:          inp.Variables,
-		Secrets:            inp.Secrets,
-		HardEnvUpdate:      inp.HardEnvUpdate,
-	}
-
-	err := c.postRequest(
-		fmt.Sprintf(
-			"/projects/%d/clusters/%d/apps/apply",
-			inp.ProjectID, inp.ClusterID,
-		),
-		req,
-		resp,
-		postRequestOpts{
-			retryCount:   3,
-			onlyRetry500: true,
-		},
 	)
 
 	return resp, err
@@ -264,16 +204,24 @@ func (c *Client) ApplyPorterApp(
 
 // UpdateAppInput is the input struct to UpdateApp
 type UpdateAppInput struct {
-	ProjectID          uint
-	ClusterID          uint
-	Name               string
-	GitSource          porter_app.GitSource
-	DeploymentTargetId string
-	CommitSHA          string
-	AppRevisionID      string
-	Base64AppProto     string
-	Base64PorterYAML   string
-	IsEnvOverride      bool
+	ProjectID            uint
+	ClusterID            uint
+	Name                 string
+	ImageTagOverride     string
+	GitSource            porter_app.GitSource
+	DeploymentTargetId   string
+	DeploymentTargetName string
+	CommitSHA            string
+	AppRevisionID        string
+	Base64AppProto       string
+	Base64PorterYAML     string
+	IsEnvOverride        bool
+	WithPredeploy        bool
+	Exact                bool
+	Variables            map[string]string
+	Secrets              map[string]string
+	Deletions            porter_app.Deletions
+	PatchOperations      []v2.PatchOperation
 }
 
 // UpdateApp updates a porter app
@@ -284,14 +232,22 @@ func (c *Client) UpdateApp(
 	resp := &porter_app.UpdateAppResponse{}
 
 	req := &porter_app.UpdateAppRequest{
-		Name:               inp.Name,
-		GitSource:          inp.GitSource,
-		DeploymentTargetId: inp.DeploymentTargetId,
-		CommitSHA:          inp.CommitSHA,
-		AppRevisionID:      inp.AppRevisionID,
-		Base64AppProto:     inp.Base64AppProto,
-		Base64PorterYAML:   inp.Base64PorterYAML,
-		IsEnvOverride:      inp.IsEnvOverride,
+		Name:                 inp.Name,
+		GitSource:            inp.GitSource,
+		DeploymentTargetId:   inp.DeploymentTargetId,
+		DeploymentTargetName: inp.DeploymentTargetName,
+		CommitSHA:            inp.CommitSHA,
+		ImageTagOverride:     inp.ImageTagOverride,
+		AppRevisionID:        inp.AppRevisionID,
+		Base64AppProto:       inp.Base64AppProto,
+		Base64PorterYAML:     inp.Base64PorterYAML,
+		IsEnvOverride:        inp.IsEnvOverride,
+		WithPredeploy:        inp.WithPredeploy,
+		Exact:                inp.Exact,
+		Variables:            inp.Variables,
+		Secrets:              inp.Secrets,
+		Deletions:            inp.Deletions,
+		PatchOperations:      inp.PatchOperations,
 	}
 
 	err := c.postRequest(
@@ -327,22 +283,33 @@ func (c *Client) DefaultDeploymentTarget(
 	return resp, err
 }
 
+// CurrentAppRevisionInput is the input struct to CurrentAppRevision
+type CurrentAppRevisionInput struct {
+	ProjectID uint
+	ClusterID uint
+	AppName   string
+	// DeploymentTargetName is the name of the deployment target to get the current app revision for. One of this or DeploymentTargetID must be set.
+	DeploymentTargetName string
+	// DeploymentTargetID is the id of the deployment target to get the current app revision for. One of this or DeploymentTargetName must be set.
+	DeploymentTargetID string
+}
+
 // CurrentAppRevision returns the currently deployed app revision for a given project, app name and deployment target
 func (c *Client) CurrentAppRevision(
 	ctx context.Context,
-	projectID uint, clusterID uint,
-	appName string, deploymentTarget string,
+	input CurrentAppRevisionInput,
 ) (*porter_app.LatestAppRevisionResponse, error) {
 	resp := &porter_app.LatestAppRevisionResponse{}
 
 	req := &porter_app.LatestAppRevisionRequest{
-		DeploymentTargetID: deploymentTarget,
+		DeploymentTargetName: input.DeploymentTargetName,
+		DeploymentTargetID:   input.DeploymentTargetID,
 	}
 
 	err := c.getRequest(
 		fmt.Sprintf(
 			"/projects/%d/clusters/%d/apps/%s/latest",
-			projectID, clusterID, appName,
+			input.ProjectID, input.ClusterID, input.AppName,
 		),
 		req,
 		resp,
@@ -548,10 +515,13 @@ func (c *Client) GetAppEnvVariables(
 	ctx context.Context,
 	projectID uint, clusterID uint,
 	appName string,
+	deploymentTargetName string,
 ) (*porter_app.AppEnvVariablesResponse, error) {
 	resp := &porter_app.AppEnvVariablesResponse{}
 
-	req := &porter_app.AppEnvVariablesRequest{}
+	req := &porter_app.AppEnvVariablesRequest{
+		DeploymentTargetName: deploymentTargetName,
+	}
 
 	err := c.getRequest(
 		fmt.Sprintf(
@@ -565,20 +535,39 @@ func (c *Client) GetAppEnvVariables(
 	return resp, err
 }
 
+// GetBuildFromRevisionInput is the input struct to GetBuildFromRevision
+type GetBuildFromRevisionInput struct {
+	ProjectID       uint
+	ClusterID       uint
+	AppName         string
+	AppRevisionID   string
+	PatchOperations []v2.PatchOperation
+}
+
 // GetBuildFromRevision returns the build environment for a given app proto
 func (c *Client) GetBuildFromRevision(
 	ctx context.Context,
-	projectID uint, clusterID uint,
-	appName string, appRevisionId string,
+	inp GetBuildFromRevisionInput,
 ) (*porter_app.GetBuildFromRevisionResponse, error) {
+	by, err := json.Marshal(inp.PatchOperations)
+	if err != nil {
+		return nil, fmt.Errorf("error marshalling patch operations: %w", err)
+	}
+
+	encoded := base64.StdEncoding.EncodeToString(by)
+
+	req := &porter_app.GetBuildFromRevisionRequest{
+		B64PatchOperations: encoded,
+	}
+
 	resp := &porter_app.GetBuildFromRevisionResponse{}
 
-	err := c.getRequest(
+	err = c.getRequest(
 		fmt.Sprintf(
 			"/projects/%d/clusters/%d/apps/%s/revisions/%s/build",
-			projectID, clusterID, appName, appRevisionId,
+			inp.ProjectID, inp.ClusterID, inp.AppName, inp.AppRevisionID,
 		),
-		nil,
+		req,
 		resp,
 	)
 
@@ -611,38 +600,6 @@ func (c *Client) ReportRevisionStatus(
 		fmt.Sprintf(
 			"/projects/%d/clusters/%d/apps/%s/revisions/%s/status",
 			inp.ProjectID, inp.ClusterID, inp.AppName, inp.AppRevisionID,
-		),
-		req,
-		resp,
-	)
-
-	return resp, err
-}
-
-// CreateOrUpdateAppEnvironment updates the app environment group and creates it if it doesn't exist
-func (c *Client) CreateOrUpdateAppEnvironment(
-	ctx context.Context,
-	projectID uint, clusterID uint,
-	appName string,
-	deploymentTargetID string,
-	variables map[string]string,
-	secrets map[string]string,
-	Base64AppProto string,
-) (*porter_app.UpdateAppEnvironmentResponse, error) {
-	resp := &porter_app.UpdateAppEnvironmentResponse{}
-
-	req := &porter_app.UpdateAppEnvironmentRequest{
-		DeploymentTargetID: deploymentTargetID,
-		Variables:          variables,
-		Secrets:            secrets,
-		HardUpdate:         false,
-		Base64AppProto:     Base64AppProto,
-	}
-
-	err := c.postRequest(
-		fmt.Sprintf(
-			"/projects/%d/clusters/%d/apps/%s/update-environment",
-			projectID, clusterID, appName,
 		),
 		req,
 		resp,
@@ -733,12 +690,12 @@ func (c *Client) RollbackRevision(
 	ctx context.Context,
 	projectID, clusterID uint,
 	appName string,
-	deploymentTargetID string,
+	deploymentTargetName string,
 ) (*porter_app.RollbackAppRevisionResponse, error) {
 	resp := &porter_app.RollbackAppRevisionResponse{}
 
 	req := &porter_app.RollbackAppRevisionRequest{
-		DeploymentTargetID: deploymentTargetID,
+		DeploymentTargetName: deploymentTargetName,
 	}
 
 	err := c.postRequest(
@@ -754,19 +711,25 @@ func (c *Client) RollbackRevision(
 	return resp, err
 }
 
-// UseNewApplyLogic checks whether the CLI should use the new apply logic
-func (c *Client) UseNewApplyLogic(
+// RunAppJob runs a job for an app
+func (c *Client) RunAppJob(
 	ctx context.Context,
 	projectID, clusterID uint,
-) (*porter_app.UseNewApplyLogicResponse, error) {
-	resp := &porter_app.UseNewApplyLogicResponse{}
+	appName string, jobName string,
+	deploymentTargetName string,
+) (*porter_app.RunAppJobResponse, error) {
+	resp := &porter_app.RunAppJobResponse{}
 
-	req := &porter_app.UseNewApplyLogicRequest{}
+	req := &porter_app.RunAppJobRequest{
+		ServiceName:          jobName,
+		DeploymentTargetName: deploymentTargetName,
+	}
 
-	err := c.getRequest(
+	err := c.postRequest(
 		fmt.Sprintf(
-			"/projects/%d/clusters/%d/apps/use-new-apply-logic",
+			"/projects/%d/clusters/%d/apps/%s/run",
 			projectID, clusterID,
+			appName,
 		),
 		req,
 		resp,
@@ -775,25 +738,78 @@ func (c *Client) UseNewApplyLogic(
 	return resp, err
 }
 
-// RunAppJob runs a job for an app
-func (c *Client) RunAppJob(
-	ctx context.Context,
-	projectID, clusterID uint,
-	appName string, jobName string,
-	deploymentTargetID string,
-) (*porter_app.AppRunResponse, error) {
-	resp := &porter_app.AppRunResponse{}
+// CancelAppJobInput contains all the information necessary to cancel a job
+type CancelAppJobInput struct {
+	ProjectID            uint
+	ClusterID            uint
+	AppName              string
+	JobName              string
+	DeploymentTargetName string
+}
 
-	req := &porter_app.AppRunRequest{
-		ServiceName:        jobName,
-		DeploymentTargetID: deploymentTargetID,
+// CancelAppJobRun cancels a in progress job run
+func (c *Client) CancelAppJobRun(
+	ctx context.Context,
+	inp CancelAppJobInput,
+) (*porter_app.CancelJobRunResponse, error) {
+	resp := &porter_app.CancelJobRunResponse{}
+
+	req := &porter_app.CancelJobRunRequest{
+		DeploymentTargetName: inp.DeploymentTargetName,
 	}
 
 	err := c.postRequest(
 		fmt.Sprintf(
-			"/projects/%d/clusters/%d/apps/%s/run",
-			projectID, clusterID,
-			appName,
+			"/projects/%d/clusters/%d/apps/%s/jobs/%s/cancel",
+			inp.ProjectID, inp.ClusterID,
+			inp.AppName, inp.JobName,
+		),
+		req,
+		resp,
+	)
+
+	return resp, err
+}
+
+// RunAppJobStatusInput contains all the information necessary to check the status of a job
+type RunAppJobStatusInput struct {
+	// AppName is the name of the app associated with the job
+	AppName string
+
+	// Cluster is the id of the cluster against which to retrieve a helm agent for
+	ClusterID uint
+
+	// DeploymentTargetName is the id of the deployment target the job was run against
+	DeploymentTargetName string
+
+	// ServiceName is the name of the app service that was triggered
+	ServiceName string
+
+	// JobRunID is the UID returned from the /apps/{porter_app_name}/run endpoint
+	JobRunID string
+
+	// ProjectID is the project in which the cluster exists
+	ProjectID uint
+}
+
+// RunAppJobStatus gets the status for a job app run
+func (c *Client) RunAppJobStatus(
+	ctx context.Context,
+	input RunAppJobStatusInput,
+) (*porter_app.AppJobRunStatusResponse, error) {
+	resp := &porter_app.AppJobRunStatusResponse{}
+
+	req := &porter_app.AppJobRunStatusRequest{
+		DeploymentTargetName: input.DeploymentTargetName,
+		JobRunID:             input.JobRunID,
+		ServiceName:          input.ServiceName,
+	}
+
+	err := c.getRequest(
+		fmt.Sprintf(
+			"/projects/%d/clusters/%d/apps/%s/run-status",
+			input.ProjectID, input.ClusterID,
+			input.AppName,
 		),
 		req,
 		resp,

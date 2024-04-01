@@ -29,8 +29,8 @@ type ServerConf struct {
 	IsTesting            bool          `env:"IS_TESTING,default=false"`
 	AppRootDomain        string        `env:"APP_ROOT_DOMAIN,default=porter.run"`
 
-	DefaultApplicationHelmRepoURL string `env:"HELM_APP_REPO_URL,default=https://charts.dev.getporter.dev"`
-	DefaultAddonHelmRepoURL       string `env:"HELM_ADD_ON_REPO_URL,default=https://chart-addons.dev.getporter.dev"`
+	DefaultApplicationHelmRepoURL string `env:"HELM_APP_REPO_URL,default=https://charts.getporter.dev"`
+	DefaultAddonHelmRepoURL       string `env:"HELM_ADD_ON_REPO_URL,default=https://chart-addons.getporter.dev"`
 
 	BasicLoginEnabled bool `env:"BASIC_LOGIN_ENABLED,default=true"`
 
@@ -69,8 +69,10 @@ type ServerConf struct {
 	SendgridDeleteProjectTemplateID    string `env:"SENDGRID_DELETE_PROJECT_TEMPLATE_ID"`
 	SendgridSenderEmail                string `env:"SENDGRID_SENDER_EMAIL"`
 
-	SlackClientID     string `env:"SLACK_CLIENT_ID"`
-	SlackClientSecret string `env:"SLACK_CLIENT_SECRET"`
+	StripeSecretKey      string `env:"STRIPE_SECRET_KEY"`
+	StripePublishableKey string `env:"STRIPE_PUBLISHABLE_KEY"`
+	SlackClientID        string `env:"SLACK_CLIENT_ID"`
+	SlackClientSecret    string `env:"SLACK_CLIENT_SECRET"`
 
 	BillingPrivateKey       string `env:"BILLING_PRIVATE_KEY"`
 	BillingPrivateServerURL string `env:"BILLING_PRIVATE_URL"`
@@ -141,6 +143,10 @@ type ServerConf struct {
 
 	// EnableCAPIProvisioner disables checks for ClusterControlPlaneClient and NATS, if set to true
 	EnableCAPIProvisioner bool `env:"ENABLE_CAPI_PROVISIONER"`
+
+	// EnableSandbox configures the API server to hit the endpoints designed for Porter's sandbox instance
+	EnableSandbox bool `env:"ENABLE_SANDBOX"`
+
 	// NATSUrl is the URL of the NATS cluster. This is required if ENABLE_CAPI_PROVISIONER is true
 	NATSUrl string `env:"NATS_URL"`
 

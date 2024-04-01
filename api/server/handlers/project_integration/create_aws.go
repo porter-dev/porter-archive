@@ -2,6 +2,7 @@ package project_integration
 
 import (
 	"net/http"
+	"strings"
 
 	"connectrpc.com/connect"
 	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
@@ -70,6 +71,46 @@ func (p *CreateAWSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
+			// if a user is changing the external ID, then we need to update the external ID for all projects that use that AWS account.
+			// This is required since the same AWS account can be used across multiple projects. In order to change the external ID for a project,
+			// the user must then have access to all projects that use that AWS account.
+			// If we ever do a higher abstraction about porter projects, then we can tie the ability to access a cloud provider account to that higher abstraction.
+			awsAccountIdPrefix := strings.TrimPrefix(request.TargetArn, "arn:aws:iam::")
+			awsAccountId := strings.TrimSuffix(awsAccountIdPrefix, ":role/porter-manager")
+			assumeRoles, err := p.Repo().AWSAssumeRoleChainer().ListByAwsAccountId(ctx, awsAccountId)
+			if err != nil {
+				err = telemetry.Error(ctx, span, err, "error listing assume role chains")
+				p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError, "error listing assume role chains"))
+				return
+			}
+
+			requiredProjects := make(map[int]bool)
+			for _, role := range assumeRoles {
+				requiredProjects[role.ProjectID] = false
+			}
+
+			usersProject, err := p.Repo().Project().ListProjectsByUserID(user.ID)
+			if err != nil {
+				err = telemetry.Error(ctx, span, err, "error listing projects by user id")
+				p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError, "error listing projects by user id"))
+				return
+			}
+
+			for _, project := range usersProject {
+				if _, ok := requiredProjects[int(project.ID)]; ok {
+					requiredProjects[int(project.ID)] = true
+				}
+			}
+
+			for proj, required := range requiredProjects {
+				if !required {
+					err = telemetry.Error(ctx, span, err, "user does not have access to all projects that use this AWS account")
+					telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "missing-project", Value: proj})
+					p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusForbidden, "user does not have access to all projects that use this AWS account"))
+					return
+				}
+			}
+
 			credReq := porterv1.UpdateCloudProviderCredentialsRequest{
 				ProjectId:     int64(project.ID),
 				CloudProvider: porterv1.EnumCloudProvider_ENUM_CLOUD_PROVIDER_AWS,
@@ -98,6 +139,7 @@ func (p *CreateAWSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			res.CloudProviderCredentialIdentifier = credResp.Msg.CredentialsIdentifier
+			res.PercentCompleted = credResp.Msg.PercentCompleted
 		} else {
 			credReq := porterv1.CreateAssumeRoleChainRequest{ //nolint:staticcheck // being deprecated by the above UpdateCloudProviderCredentials
 				ProjectId:       int64(project.ID),

@@ -15,6 +15,7 @@ type Props = {
   children?: React.ReactNode;
   autoFocus?: boolean;
   onEnter?: () => void;
+  style?: React.CSSProperties;
 };
 
 const SearchBar: React.FC<Props> = ({
@@ -29,15 +30,17 @@ const SearchBar: React.FC<Props> = ({
   children,
   autoFocus,
   onEnter,
+  style,
 }) => {
   return (
-    <Block width={width}>
+    <Block width={width} style={style}>
       {
         label && (
           <Label>{label}</Label>
         )
       }
       <StyledSearchBar
+        style={style}
         width={width}
         height={height}
         hasError={(error && true) || (error === "")}
@@ -122,6 +125,7 @@ const StyledSearchBar = styled.div<{
   font-size: 13px;
   border-radius: 5px;
   background: ${props => props.theme.fg};
+  transition: all 0.2s;
 
   border: 1px solid ${props => props.hasError ? "#ff3b62" : "#494b4f"};
   :hover {

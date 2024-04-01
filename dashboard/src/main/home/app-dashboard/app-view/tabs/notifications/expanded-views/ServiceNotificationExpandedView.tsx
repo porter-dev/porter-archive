@@ -61,7 +61,7 @@ const ServiceNotificationExpandedView: React.FC<Props> = ({
             <Text size={16} color={"#FFBF00"}>
               {notification.isDeployRelated
                 ? "failed to deploy"
-                : "is unhealthy"}
+                : "was unhealthy"}
             </Text>
           </Container>
           {notification.service.config.type === "job" && (

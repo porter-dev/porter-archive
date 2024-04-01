@@ -4,12 +4,15 @@ import { type UseFieldArrayUpdate } from "react-hook-form";
 import styled from "styled-components";
 import { match } from "ts-pattern";
 
+import Spacer from "components/porter/Spacer";
 import { type ClientAddon } from "lib/addons";
 
 import postgresql from "assets/postgresql.svg";
+import redis from "assets/redis.svg";
 
 import { type AppTemplateFormData } from "../cluster-dashboard/preview-environments/v2/setup-app/PreviewAppDataContainer";
 import { PostgresTabs } from "./tabs/PostgresTabs";
+import { RedisTabs } from "./tabs/RedisTabs";
 
 type AddonRowProps = {
   index: number;
@@ -24,7 +27,11 @@ export const AddonListRow: React.FC<AddonRowProps> = ({
   update,
   remove,
 }) => {
-  const renderIcon = (): JSX.Element => <Icon src={postgresql} />;
+  const renderIcon = (type: ClientAddon["config"]["type"]): JSX.Element =>
+    match(type)
+      .with("postgres", () => <Icon src={postgresql} />)
+      .with("redis", () => <Icon src={redis} />)
+      .exhaustive();
 
   return (
     <>
@@ -42,7 +49,7 @@ export const AddonListRow: React.FC<AddonRowProps> = ({
           <ActionButton>
             <span className="material-icons dropdown">arrow_drop_down</span>
           </ActionButton>
-          {renderIcon()}
+          {renderIcon(addon.config.type)}
           {addon.name.value.trim().length > 0 ? addon.name.value : "New Addon"}
         </AddonTitle>
 
@@ -84,15 +91,19 @@ export const AddonListRow: React.FC<AddonRowProps> = ({
                 border: "1px solid #494b4f",
               }}
             >
-              {match(addon.config.type)
-                .with("postgres", () => (
-                  <PostgresTabs index={index} addon={addon} />
+              {match(addon)
+                .with({ config: { type: "postgres" } }, (ao) => (
+                  <PostgresTabs index={index} addon={ao} />
+                ))
+                .with({ config: { type: "redis" } }, (ao) => (
+                  <RedisTabs index={index} addon={ao} />
                 ))
                 .exhaustive()}
             </div>
           </StyledSourceBox>
         )}
       </AnimatePresence>
+      <Spacer y={0.5} />
     </>
   );
 };

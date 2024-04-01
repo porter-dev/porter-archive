@@ -44,18 +44,28 @@ const TooltipContainer = styled.div`
 `;
 
 const TooltipContent = styled.div<{ position: string, width?: string }>`
-  background-color: #333;
   color: #fff;
-  padding: 8px;
-  border-radius: 4px;
-  font-size: 14px;
+  padding: 10px;
+  border-radius: 5px;
+  font-size: 13px;
   position: absolute;
   z-index: 10;
   max-width: ${({ width }) => width ?? "200px"};
   width: ${({ width }) => width ?? "200px"};
   text-align: center;
   white-space: pre-wrap;
-  word-wrap: break-word;
+  border: 1px solid #494b4f;
+  background: #42444933;
+  backdrop-filter: saturate(150%) blur(8px);
+  animation: fadeInModal 0.5s 0s;
+  @keyframes fadeInModal {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
 
   ${({ position }) => {
     switch (position) {

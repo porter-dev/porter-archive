@@ -129,6 +129,20 @@ type ProjectCreateDeleteTrackOpts struct {
 	CompanyName string
 }
 
+// ProjectConnectTrack returns a track for when a project is connected
+func ProjectConnectTrack(opts *ProjectCreateDeleteTrackOpts) segmentTrack {
+	additionalProps := make(map[string]interface{})
+
+	additionalProps["email"] = opts.Email
+	additionalProps["name"] = opts.FirstName + " " + opts.LastName
+	additionalProps["company"] = opts.CompanyName
+
+	return getSegmentProjectTrack(
+		opts.ProjectScopedTrackOpts,
+		getDefaultSegmentTrack(additionalProps, ProjectConnect),
+	)
+}
+
 // ProjectCreateTrack returns a track for when a project is created
 func ProjectCreateTrack(opts *ProjectCreateDeleteTrackOpts) segmentTrack {
 	additionalProps := make(map[string]interface{})
@@ -153,6 +167,44 @@ func ProjectDeleteTrack(opts *ProjectCreateDeleteTrackOpts) segmentTrack {
 	return getSegmentProjectTrack(
 		opts.ProjectScopedTrackOpts,
 		getDefaultSegmentTrack(additionalProps, ProjectDelete),
+	)
+}
+
+// PaymentMethodCreateDeleteTrackOpts are the options for creating a track when a payment method is attached/detached
+type PaymentMethodCreateDeleteTrackOpts struct {
+	*ProjectScopedTrackOpts
+
+	Email       string
+	FirstName   string
+	LastName    string
+	CompanyName string
+}
+
+// PaymentMethodAttachedTrack returns a track for when a payment method is attached
+func PaymentMethodAttachedTrack(opts *PaymentMethodCreateDeleteTrackOpts) segmentTrack {
+	additionalProps := make(map[string]interface{})
+
+	additionalProps["email"] = opts.Email
+	additionalProps["name"] = opts.FirstName + " " + opts.LastName
+	additionalProps["company"] = opts.CompanyName
+
+	return getSegmentProjectTrack(
+		opts.ProjectScopedTrackOpts,
+		getDefaultSegmentTrack(additionalProps, PaymentMethodAttached),
+	)
+}
+
+// PaymentMethodDettachedTrack returns a track for when a payment method is detached
+func PaymentMethodDettachedTrack(opts *PaymentMethodCreateDeleteTrackOpts) segmentTrack {
+	additionalProps := make(map[string]interface{})
+
+	additionalProps["email"] = opts.Email
+	additionalProps["name"] = opts.FirstName + " " + opts.LastName
+	additionalProps["company"] = opts.CompanyName
+
+	return getSegmentProjectTrack(
+		opts.ProjectScopedTrackOpts,
+		getDefaultSegmentTrack(additionalProps, PaymentMethodDettached),
 	)
 }
 
@@ -1020,5 +1072,90 @@ func PorterAppUpdateFailureTrack(opts *PorterAppUpdateOpts) segmentTrack {
 	return getSegmentProjectTrack(
 		opts.ProjectScopedTrackOpts,
 		getDefaultSegmentTrack(additionalProps, PorterAppUpdateFailure),
+	)
+}
+
+// CloudProviderPermissionsGrantedTrackOpts are the options for creating a track when a user grants permission to use porter
+type CloudProviderPermissionsGrantedTrackOpts struct {
+	*ProjectScopedTrackOpts
+
+	Email                             string
+	FirstName                         string
+	LastName                          string
+	CompanyName                       string
+	CloudProvider                     string
+	CloudProviderCredentialIdentifier string
+}
+
+// CloudProviderPermissionsGrantedTrack returns a track for when a user grants permission to use porter
+func CloudProviderPermissionsGrantedTrack(opts *CloudProviderPermissionsGrantedTrackOpts) segmentTrack {
+	additionalProps := make(map[string]interface{})
+	additionalProps["email"] = opts.Email
+	additionalProps["name"] = opts.FirstName + " " + opts.LastName
+	additionalProps["company"] = opts.CompanyName
+	additionalProps["cloud_provider"] = opts.CloudProvider
+	additionalProps["cloud_provider_credential_identifier"] = opts.CloudProviderCredentialIdentifier
+
+	return getSegmentProjectTrack(
+		opts.ProjectScopedTrackOpts,
+		getDefaultSegmentTrack(additionalProps, CloudProviderPermissionsGranted),
+	)
+}
+
+// ClusterPreflightChecksFailedTrackOpts are the options for creating a track when a user fails preflight checks
+type ClusterPreflightChecksFailedTrackOpts struct {
+	*ProjectScopedTrackOpts
+
+	Email         string
+	FirstName     string
+	LastName      string
+	CompanyName   string
+	ErrorMessage  string
+	ClusterName   string
+	CloudProvider string
+}
+
+// ClusterPreflightChecksFailedTrack returns a track for when a user fails preflight checks
+func ClusterPreflightChecksFailedTrack(opts *ClusterPreflightChecksFailedTrackOpts) segmentTrack {
+	additionalProps := make(map[string]interface{})
+	additionalProps["email"] = opts.Email
+	additionalProps["name"] = opts.FirstName + " " + opts.LastName
+	additionalProps["company"] = opts.CompanyName
+	additionalProps["error_message"] = opts.ErrorMessage
+	additionalProps["cluster_name"] = opts.ClusterName
+	additionalProps["cloud_provider"] = opts.CloudProvider
+
+	return getSegmentProjectTrack(
+		opts.ProjectScopedTrackOpts,
+		getDefaultSegmentTrack(additionalProps, ClusterPreflightChecksFailed),
+	)
+}
+
+// ClusterUpdateFailedTrackOpts are the options for creating a track when a user fails to update a cluster
+type ClusterUpdateFailedTrackOpts struct {
+	*ProjectScopedTrackOpts
+
+	ClusterName   string
+	Email         string
+	FirstName     string
+	LastName      string
+	CompanyName   string
+	ErrorMessage  string
+	CloudProvider string
+}
+
+// ClusterUpdateFailedTrack returns a track for when a user fails to update a cluster
+func ClusterUpdateFailedTrack(opts *ClusterUpdateFailedTrackOpts) segmentTrack {
+	additionalProps := make(map[string]interface{})
+	additionalProps["cluster_name"] = opts.ClusterName
+	additionalProps["email"] = opts.Email
+	additionalProps["name"] = opts.FirstName + " " + opts.LastName
+	additionalProps["company"] = opts.CompanyName
+	additionalProps["error_message"] = opts.ErrorMessage
+	additionalProps["cloud_provider"] = opts.CloudProvider
+
+	return getSegmentProjectTrack(
+		opts.ProjectScopedTrackOpts,
+		getDefaultSegmentTrack(additionalProps, ClusterUpdateFailed),
 	)
 }

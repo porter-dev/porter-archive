@@ -51,4 +51,6 @@ type Repository interface {
 	AppRevision() AppRevisionRepository
 	AppTemplate() AppTemplateRepository
 	GithubWebhook() GithubWebhookRepository
+	Datastore() DatastoreRepository
+	AppInstance() AppInstanceRepository
 }

@@ -50,7 +50,7 @@ export type MetricsNGINXStatusDataResponse = {
   }>;
 };
 
-export type MetricsHpaReplicasDataResponse = {
+export type MetricsReplicasDataResponse = {
   pod?: string;
   results: Array<{
     date: number;

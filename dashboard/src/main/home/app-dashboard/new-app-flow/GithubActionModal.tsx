@@ -1,18 +1,20 @@
-import { type RouteComponentProps, withRouter } from "react-router";
-import styled from "styled-components";
 import React, { useMemo } from "react";
+import { withRouter, type RouteComponentProps } from "react-router";
+import styled from "styled-components";
 
-import Modal from "components/porter/Modal";
-import Text from "components/porter/Text";
-import Spacer from "components/porter/Spacer";
-import ExpandableSection from "components/porter/ExpandableSection";
 import Button from "components/porter/Button";
-import Select from "components/porter/Select";
-import api from "shared/api";
-import { getGithubAction, getPreviewGithubAction } from "./utils";
-import YamlEditor from "components/YamlEditor";
-import Error from "components/porter/Error";
 import Checkbox from "components/porter/Checkbox";
+import Error from "components/porter/Error";
+import ExpandableSection from "components/porter/ExpandableSection";
+import Modal from "components/porter/Modal";
+import Select from "components/porter/Select";
+import Spacer from "components/porter/Spacer";
+import Text from "components/porter/Text";
+import YamlEditor from "components/YamlEditor";
+
+import api from "shared/api";
+
+import { getGithubAction } from "./utils";
 
 type Props = RouteComponentProps & {
   closeModal: () => void;
@@ -26,7 +28,6 @@ type Props = RouteComponentProps & {
   deployPorterApp?: () => Promise<boolean>;
   deploymentError?: string;
   porterYamlPath?: string;
-  type?: "create" | "preview";
   redirectPath: string;
 };
 
@@ -44,8 +45,7 @@ const GithubActionModal: React.FC<Props> = ({
   deployPorterApp,
   deploymentError,
   porterYamlPath,
-  type = "create",
-  redirectPath ,
+  redirectPath,
   ...props
 }) => {
   const [choice, setChoice] = React.useState<Choice>("open_pr");
@@ -56,15 +56,6 @@ const GithubActionModal: React.FC<Props> = ({
     if (!projectId || !clusterId || !stackName || !branch) {
       return "";
     }
-    if (type === "preview") {
-      return getPreviewGithubAction(
-        projectId,
-        clusterId,
-        stackName,
-        branch,
-        porterYamlPath
-      );
-    }
 
     return getGithubAction(
       projectId,
@@ -73,17 +64,9 @@ const GithubActionModal: React.FC<Props> = ({
       branch,
       porterYamlPath
     );
-  }, [type]);
+  }, [projectId, clusterId, stackName, branch, porterYamlPath]);
 
-  const headingText = useMemo(() => {
-    if (type === "preview") {
-      return `./github/workflows/porter_preview_${stackName}.yml`;
-    }
-
-    return `./github/workflows/porter_stack_${stackName}.yml`;
-  }, [type, stackName]);
-
-  const submit = async () => {
+  const submit = async (): Promise<void> => {
     if (
       githubAppInstallationID &&
       githubRepoOwner &&
@@ -112,9 +95,6 @@ const GithubActionModal: React.FC<Props> = ({
               branch,
               open_pr: choice === "open_pr" || isChecked,
               porter_yaml_path: porterYamlPath,
-              ...(type === "preview" && {
-                previews_workflow_filename: `.github/workflows/porter_preview_${stackName}.yml`,
-              }),
             },
             {
               project_id: projectId,
@@ -134,8 +114,6 @@ const GithubActionModal: React.FC<Props> = ({
       } finally {
         setLoading(false);
       }
-    } else {
-      console.log("missing information");
     }
   };
   return (
@@ -152,7 +130,9 @@ const GithubActionModal: React.FC<Props> = ({
         noWrapper
         expandText="[+] Show code"
         collapseText="[-] Hide code"
-        Header={<ModalHeader>{headingText}</ModalHeader>}
+        Header={
+          <ModalHeader>{`./github/workflows/porter_stack_${stackName}.yml`}</ModalHeader>
+        }
         isInitiallyExpanded
         spaced
         copy={actionYamlContents}
@@ -177,8 +157,7 @@ const GithubActionModal: React.FC<Props> = ({
           <Select
             options={[
               {
-                label:
-                  "I authorize Porter to open a PR on my behalf (recommended)",
+                label: "I authorize Porter to open a PR on my behalf (recommended)",
                 value: "open_pr",
               },
               {
@@ -186,8 +165,12 @@ const GithubActionModal: React.FC<Props> = ({
                 value: "copy",
               },
             ]}
-            setValue={(x: string) => { setChoice(x as Choice); }}
+            value={choice}
+            setValue={(x: string) => {
+              setChoice(x as Choice);
+            }}
             width="100%"
+            value={choice}
           />
           <Spacer y={1} />
           <Button
@@ -209,7 +192,9 @@ const GithubActionModal: React.FC<Props> = ({
         <>
           <Checkbox
             checked={isChecked}
-            toggleChecked={() => { setIsChecked(!isChecked); }}
+            toggleChecked={() => {
+              setIsChecked(!isChecked);
+            }}
           >
             <Text>I authorize Porter to open a PR on my behalf</Text>
           </Checkbox>

@@ -1,6 +1,6 @@
 > 🚧
 >
-> **Note:** these advanced configuration will only work if you've set up a [custom domain](https://docs.getporter.dev/docs/https-and-custom-domains). They will not work on `*.porter.run` domains. 
+> **Note:** these advanced configuration will only work if you've set up a [custom domain](https://docs.porter.run/docs/https-and-custom-domains). They will not work on `*.porter.run` domains. 
 
 Every cluster provisioned by Porter by default uses an NGINX [ingress controller](https://kubernetes.github.io/ingress-nginx) to connect your web applications to the internet. There are different options for customizing the NGINX configuration that a specific application uses. 
 

@@ -3,11 +3,14 @@ package router
 import (
 	"fmt"
 
+	"github.com/porter-dev/porter/api/server/handlers/deployment_target"
+
 	"github.com/go-chi/chi/v5"
 	apiContract "github.com/porter-dev/porter/api/server/handlers/api_contract"
 	"github.com/porter-dev/porter/api/server/handlers/api_token"
 	"github.com/porter-dev/porter/api/server/handlers/billing"
 	"github.com/porter-dev/porter/api/server/handlers/cluster"
+	"github.com/porter-dev/porter/api/server/handlers/datastore"
 	"github.com/porter-dev/porter/api/server/handlers/gitinstallation"
 	"github.com/porter-dev/porter/api/server/handlers/helmrepo"
 	"github.com/porter-dev/porter/api/server/handlers/infra"
@@ -284,35 +287,8 @@ func getProjectRoutes(
 		Router:   r,
 	})
 
-	// GET /api/project/{project_id}/billing/redirect -> billing.NewRedirectBillingHandler
-	redirectBillingEndpoint := factory.NewAPIEndpoint(
-		&types.APIRequestMetadata{
-			Verb:   types.APIVerbGet,
-			Method: types.HTTPVerbGet,
-			Path: &types.Path{
-				Parent:       basePath,
-				RelativePath: relPath + "/billing/redirect",
-			},
-			Scopes: []types.PermissionScope{
-				types.UserScope,
-				types.ProjectScope,
-			},
-		},
-	)
-
-	redirectBillingHandler := billing.NewRedirectBillingHandler(
-		config,
-		factory.GetResultWriter(),
-	)
-
-	routes = append(routes, &router.Route{
-		Endpoint: redirectBillingEndpoint,
-		Handler:  redirectBillingHandler,
-		Router:   r,
-	})
-
-	// GET /api/projects/{project_id}/billing -> project.NewProjectGetBillingHandler
-	getBillingEndpoint := factory.NewAPIEndpoint(
+	// GET /api/projects/{project_id}/billing -> project.NewCheckPaymentEnabledHandler
+	checkPaymentEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbGet,
 			Method: types.HTTPVerbGet,
@@ -327,38 +303,151 @@ func getProjectRoutes(
 		},
 	)
 
-	getBillingHandler := project.NewProjectGetBillingHandler(
+	checkPaymentHandler := billing.NewCheckPaymentEnabledHandler(
 		config,
 		factory.GetResultWriter(),
 	)
 
 	routes = append(routes, &router.Route{
-		Endpoint: getBillingEndpoint,
-		Handler:  getBillingHandler,
+		Endpoint: checkPaymentEndpoint,
+		Handler:  checkPaymentHandler,
 		Router:   r,
 	})
 
-	// GET /api/billing_webhook -> billing.NewBillingWebhookHandler
-	getBillingWebhookEndpoint := factory.NewAPIEndpoint(
+	// GET /api/projects/{project_id}/billing/payment_method -> project.NewListBillingHandler
+	listBillingEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/billing/payment_method",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	listBillingHandler := billing.NewListBillingHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: listBillingEndpoint,
+		Handler:  listBillingHandler,
+		Router:   r,
+	})
+
+	// POST /api/projects/{project_id}/billing/payment_method -> project.NewCreateBillingHandler
+	createBillingEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbCreate,
 			Method: types.HTTPVerbPost,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: "/billing_webhook",
+				RelativePath: relPath + "/billing/payment_method",
 			},
-			Scopes: []types.PermissionScope{},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
 		},
 	)
 
-	getBillingWebhookHandler := billing.NewBillingWebhookHandler(
+	createBillingHandler := billing.NewCreateBillingHandler(
 		config,
 		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
 	)
 
 	routes = append(routes, &router.Route{
-		Endpoint: getBillingWebhookEndpoint,
-		Handler:  getBillingWebhookHandler,
+		Endpoint: createBillingEndpoint,
+		Handler:  createBillingHandler,
+		Router:   r,
+	})
+
+	// PUT /api/projects/{project_id}/billing/payment_method/{payment_method_id}/default -> project.NewSetDefaultBillingHandler
+	setDefaultBillingEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbUpdate,
+			Method: types.HTTPVerbPut,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/billing/payment_method/{%s}/default", relPath, types.URLParamPaymentMethodID),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	setDefaultBillingHandler := billing.NewSetDefaultBillingHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: setDefaultBillingEndpoint,
+		Handler:  setDefaultBillingHandler,
+		Router:   r,
+	})
+
+	// DELETE /api/projects/{project_id}/billing/payment_method/{payment_method_id} -> project.NewDeleteBillingHandler
+	deleteBillingEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbDelete,
+			Method: types.HTTPVerbDelete,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/billing/payment_method/{%s}", relPath, types.URLParamPaymentMethodID),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	deleteBillingHandler := billing.NewDeleteBillingHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: deleteBillingEndpoint,
+		Handler:  deleteBillingHandler,
+		Router:   r,
+	})
+
+	// POST /api/projects/{project_id}/billing/customer/ -> project.NewGetOrCreateCustomerHandler
+	getOrCreateBillingCustomerEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/billing/customer",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	getOrCreateBillingCustomerHandler := billing.NewCreateBillingCustomerIfNotExists(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: getOrCreateBillingCustomerEndpoint,
+		Handler:  getOrCreateBillingCustomerHandler,
 		Router:   r,
 	})
 
@@ -467,6 +556,146 @@ func getProjectRoutes(
 	routes = append(routes, &router.Route{
 		Endpoint: listRolesEndpoint,
 		Handler:  listRolesHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/datastores -> datastore.NewListAllDatastoresForProjectHandler
+	listDatastoresEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbList,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/datastores",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	listDatastoresHandler := datastore.NewListDatastoresHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: listDatastoresEndpoint,
+		Handler:  listDatastoresHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/datastores -> datastore.NewGetDatastoreHandler
+	getDatastoreEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbList,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/datastores/{%s}", relPath, types.URLParamDatastoreName),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	getDatastoreHandler := datastore.NewGetDatastoreHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: getDatastoreEndpoint,
+		Handler:  getDatastoreHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/datastores -> datastore.NewGetDatastoreCredentialHandler
+	getDatastoreCredentialEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbList,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/datastores/{%s}/credential", relPath, types.URLParamDatastoreName),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	getDatastoreCredentialHandler := datastore.NewGetDatastoreCredentialHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: getDatastoreCredentialEndpoint,
+		Handler:  getDatastoreCredentialHandler,
+		Router:   r,
+	})
+
+	// POST /api/projects/{project_id}/datastores/{datastore_name}/create-proxy -> cluster.NewCreateDatastoreProxyHandler
+	createDatastoreProxyEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbUpdate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/datastores/{%s}/create-proxy", relPath, types.URLParamDatastoreName),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	createDatastoreProxyHandler := datastore.NewCreateDatastoreProxyHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: createDatastoreProxyEndpoint,
+		Handler:  createDatastoreProxyHandler,
+		Router:   r,
+	})
+
+	// DELETE /api/projects/{project_id}/datastores/{datastore_name} -> cloud_provider.NewDeleteDatastoreHandler
+	deleteDatastoreEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbDelete,
+			Method: types.HTTPVerbDelete,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/datastores/{%s}", relPath, types.URLParamDatastoreName),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	deleteDatastoreHandler := datastore.NewDeleteDatastoreHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: deleteDatastoreEndpoint,
+		Handler:  deleteDatastoreHandler,
 		Router:   r,
 	})
 
@@ -1005,6 +1234,35 @@ func getProjectRoutes(
 	// 	Router:   r,
 	// })
 
+	// POST /api/projects/{project_id}/connect -> project.NewProjectConnectHandler
+	connectEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/connect",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.SettingsScope,
+			},
+		},
+	)
+
+	connectHandler := project.NewConnectHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: connectEndpoint,
+		Handler:  connectHandler,
+		Router:   r,
+	})
+
 	//  POST /api/projects/{project_id}/policy -> policy.NewPolicyCreateHandler
 	policyCreateEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
@@ -1401,6 +1659,34 @@ func getProjectRoutes(
 		Router:   r,
 	})
 
+	// POST /api/projects/{project_id}/contract/preflight -> apiContract.NewPreflightCheckHandler
+	preflightCheckEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/contract/preflight", relPath),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	preflightCheckHandler := apiContract.NewPreflightCheckHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: preflightCheckEndpoint,
+		Handler:  preflightCheckHandler,
+		Router:   r,
+	})
+
 	// POST /api/projects/{project_id}/rename -> cluster.newRenamProject
 	renameProjectEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
@@ -1453,6 +1739,62 @@ func getProjectRoutes(
 	routes = append(routes, &router.Route{
 		Endpoint: imagesEndpoint,
 		Handler:  imagesHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/targets -> deployment_target.ListDeploymentTargetHandler
+	listDeploymentTargetEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/targets", relPath),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	listDeploymentTargetHandler := deployment_target.NewListDeploymentTargetsHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: listDeploymentTargetEndpoint,
+		Handler:  listDeploymentTargetHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/targets -> deployment_target.ListDeploymentTargetHandler
+	createDeploymentTargetEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/targets", relPath),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	createDeploymentTargetHandler := deployment_target.NewCreateDeploymentTargetHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: createDeploymentTargetEndpoint,
+		Handler:  createDeploymentTargetHandler,
 		Router:   r,
 	})
 

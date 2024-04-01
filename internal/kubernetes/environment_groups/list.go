@@ -23,6 +23,8 @@ const (
 	LabelKey_PorterManaged = "porter.run/managed"
 
 	LabelKey_DefaultAppEnvironment = "porter.run/default-app-environment"
+	// LabelKey_DefaultAddonEnvironment is the label key signifying the resource is the default addon environment
+	LabelKey_DefaultAddonEnvironment = "porter.run/default-addon-environment"
 
 	// Namespace_EnvironmentGroups is the base namespace for storing all environment groups.
 	// The configmaps and secrets here should be considered the source's of truth for a given version
@@ -51,10 +53,11 @@ type EnvironmentGroup struct {
 }
 
 type environmentGroupOptions struct {
-	namespace                          string
-	environmentGroupLabelName          string
-	environmentGroupLabelVersion       int
-	excludeDefaultAppEnvironmentGroups bool
+	namespace                            string
+	environmentGroupLabelName            string
+	environmentGroupLabelVersion         int
+	excludeDefaultAppEnvironmentGroups   bool
+	excludeDefaultAddonEnvironmentGroups bool
 }
 
 // EnvironmentGroupOption is a function that modifies ListEnvironmentGroups
@@ -85,6 +88,13 @@ func WithEnvironmentGroupVersion(version int) EnvironmentGroupOption {
 func WithoutDefaultAppEnvironmentGroups() EnvironmentGroupOption {
 	return func(opts *environmentGroupOptions) {
 		opts.excludeDefaultAppEnvironmentGroups = true
+	}
+}
+
+// WithoutDefaultAddonEnvironmentGroups includes default addon environment groups in the list
+func WithoutDefaultAddonEnvironmentGroups() EnvironmentGroupOption {
+	return func(opts *environmentGroupOptions) {
+		opts.excludeDefaultAddonEnvironmentGroups = true
 	}
 }
 
@@ -152,6 +162,13 @@ func listEnvironmentGroups(ctx context.Context, a *kubernetes.Agent, listOpts ..
 			}
 		}
 
+		if opts.excludeDefaultAddonEnvironmentGroups {
+			value := cm.Labels[LabelKey_DefaultAddonEnvironment]
+			if value == "true" {
+				continue // do not include default addon environment groups
+			}
+		}
+
 		if _, ok := envGroupSet[cm.Name]; !ok {
 			envGroupSet[cm.Name] = EnvironmentGroup{}
 		}
@@ -189,6 +206,13 @@ func listEnvironmentGroups(ctx context.Context, a *kubernetes.Agent, listOpts ..
 			value, ok := secret.Labels[LabelKey_DefaultAppEnvironment]
 			if ok && value == "true" {
 				continue // do not include default app environment groups
+			}
+		}
+
+		if opts.excludeDefaultAddonEnvironmentGroups {
+			value, ok := secret.Labels[LabelKey_DefaultAddonEnvironment]
+			if ok && value == "true" {
+				continue // do not include default addon environment groups
 			}
 		}
 

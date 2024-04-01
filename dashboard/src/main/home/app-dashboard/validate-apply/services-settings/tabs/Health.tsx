@@ -19,6 +19,8 @@ const Health: React.FC<HealthProps> = ({ index }) => {
     `app.services.${index}.config.healthCheck.enabled`
   );
 
+  const serviceType = watch(`app.services.${index}.config.type`);
+
   return (
     <>
       <Spacer y={1} />
@@ -60,14 +62,50 @@ const Health: React.FC<HealthProps> = ({ index }) => {
       />
       {healthCheckEnabled.value && (
         <>
+          <Spacer y={0.75} />
+          {serviceType === "web" ? (
+            <>
+              <Text color="helper">Endpoint</Text>
+              <Spacer y={0.25} />
+              <ControlledInput
+                type="text"
+                placeholder="ex: /healthz"
+                {...register(
+                  `app.services.${index}.config.healthCheck.httpPath.value`
+                )}
+              />
+            </>
+          ) : (
+            <>
+              <Text color="helper">Command</Text>
+              <Spacer y={0.25} />
+              <ControlledInput
+                type="text"
+                placeholder="ex: ./healthz.sh"
+                {...register(
+                  `app.services.${index}.config.healthCheck.command.value`
+                )}
+              />
+            </>
+          )}
           <Spacer y={0.5} />
-          <Text>Health check endpoint</Text>
-          <Spacer y={0.5} />
+          <Text color="helper">Timeout (seconds)</Text>
+          <Spacer y={0.25} />
           <ControlledInput
             type="text"
-            placeholder="ex: /healthz"
+            placeholder="ex: 1"
             {...register(
-              `app.services.${index}.config.healthCheck.httpPath.value`
+              `app.services.${index}.config.healthCheck.timeoutSeconds.value`
+            )}
+          />
+          <Spacer y={0.5} />
+          <Text color="helper">Initial delay (seconds)</Text>
+          <Spacer y={0.25} />
+          <ControlledInput
+            type="text"
+            placeholder="ex: 30"
+            {...register(
+              `app.services.${index}.config.healthCheck.initialDelaySeconds.value`
             )}
           />
         </>

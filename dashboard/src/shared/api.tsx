@@ -3450,6 +3450,16 @@ const checkBillingCustomerExists = baseApi<
   }
 >("POST", ({ project_id }) => `/api/projects/${project_id}/billing/customer`);
 
+const getPublishableKey = baseApi<
+  {},
+  {
+    project_id?: number;
+  }
+>(
+  "GET",
+  ({ project_id }) => `/api/projects/${project_id}/billing/publishable_key`
+);
+
 const getHasBilling = baseApi<{}, { project_id: number }>(
   "GET",
   ({ project_id }) => `/api/projects/${project_id}/billing`
@@ -3847,6 +3857,7 @@ export default {
 
   // BILLING
   checkBillingCustomerExists,
+  getPublishableKey,
   listPaymentMethod,
   addPaymentMethod,
   setDefaultPaymentMethod,

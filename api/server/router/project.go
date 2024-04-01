@@ -451,6 +451,31 @@ func getProjectRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/billing/publishable_key -> project.NewGetPublishableKeyHandler
+	publishableKeyEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/billing/publishable_key",
+			},
+			Scopes: []types.PermissionScope{},
+		},
+	)
+
+	publishableKeyHandler := billing.NewGetPublishableKeyHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: publishableKeyEndpoint,
+		Handler:  publishableKeyHandler,
+		Router:   r,
+	})
+
 	// GET /api/projects/{project_id}/clusters -> cluster.NewClusterListHandler
 	listClusterEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

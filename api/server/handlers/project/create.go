@@ -64,6 +64,12 @@ func (p *ProjectCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 			return
 		}
 		proj.BillingID = billingID
+
+		telemetry.WithAttributes(span,
+			telemetry.AttributeKV{Key: "project-id", Value: proj.ID},
+			telemetry.AttributeKV{Key: "customer-id", Value: proj.BillingID},
+			telemetry.AttributeKV{Key: "user-email", Value: user.Email},
+		)
 	}
 
 	proj, _, err = CreateProjectWithUser(p.Repo().Project(), proj, user)

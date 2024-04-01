@@ -10,7 +10,6 @@ import Image from "components/porter/Image";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import {
-  checkBillingCustomerExists,
   checkIfProjectHasPayment,
   usePaymentMethods,
   useSetDefaultPaymentMethod,
@@ -34,7 +33,6 @@ function BillingPage(): JSX.Element {
     deletingIds,
   } = usePaymentMethods();
   const { setDefaultPaymentMethod } = useSetDefaultPaymentMethod();
-  checkBillingCustomerExists();
 
   const { refetchPaymentEnabled } = checkIfProjectHasPayment();
 

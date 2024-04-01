@@ -151,15 +151,20 @@ export const checkIfProjectHasPayment = (): TCheckHasPaymentEnabled => {
 };
 
 export const checkBillingCustomerExists = () => {
-  const { user, currentProject } = useContext(Context);
+  const { currentProject } = useContext(Context);
 
   useQuery(["checkCustomerExists", currentProject?.id], async () => {
     if (!currentProject?.id || currentProject.id === -1) {
       return;
     }
+
+    if (!currentProject?.billing_enabled) {
+      return;
+    }
+
     const res = await api.checkBillingCustomerExists(
       "<token>",
-      { user_email: user?.email },
+      {},
       { project_id: currentProject?.id }
     );
     return res.data;

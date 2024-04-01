@@ -22,11 +22,10 @@ type CreateBillingCustomerHandler struct {
 // NewCreateBillingCustomerIfNotExists will create a new CreateBillingCustomerIfNotExists
 func NewCreateBillingCustomerIfNotExists(
 	config *config.Config,
-	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
 ) *CreateBillingCustomerHandler {
 	return &CreateBillingCustomerHandler{
-		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
+		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, nil, writer),
 	}
 }
 
@@ -35,11 +34,7 @@ func (c *CreateBillingCustomerHandler) ServeHTTP(w http.ResponseWriter, r *http.
 	defer span.End()
 
 	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
-
-	request := &types.CreateBillingCustomerRequest{}
-	if ok := c.DecodeAndValidate(w, r, request); !ok {
-		return
-	}
+	user, _ := r.Context().Value(types.UserScope).(*models.User)
 
 	if proj.BillingID != "" {
 		c.WriteResult(w, r, "")
@@ -47,7 +42,7 @@ func (c *CreateBillingCustomerHandler) ServeHTTP(w http.ResponseWriter, r *http.
 	}
 
 	// Create customer in Stripe
-	customerID, err := c.Config().BillingManager.CreateCustomer(ctx, request.UserEmail, proj)
+	customerID, err := c.Config().BillingManager.CreateCustomer(ctx, user.Email, proj)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error creating billing customer")
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error creating billing customer: %w", err)))
@@ -57,6 +52,7 @@ func (c *CreateBillingCustomerHandler) ServeHTTP(w http.ResponseWriter, r *http.
 	telemetry.WithAttributes(span,
 		telemetry.AttributeKV{Key: "project-id", Value: proj.ID},
 		telemetry.AttributeKV{Key: "customer-id", Value: proj.BillingID},
+		telemetry.AttributeKV{Key: "user-email", Value: user.Email},
 	)
 
 	// Update the project record with the customer ID

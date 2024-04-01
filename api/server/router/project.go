@@ -441,7 +441,6 @@ func getProjectRoutes(
 
 	getOrCreateBillingCustomerHandler := billing.NewCreateBillingCustomerIfNotExists(
 		config,
-		factory.GetDecoderValidator(),
 		factory.GetResultWriter(),
 	)
 

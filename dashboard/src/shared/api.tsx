@@ -3442,9 +3442,7 @@ const removeStackEnvGroup = baseApi<
 
 // Billing
 const checkBillingCustomerExists = baseApi<
-  {
-    user_email?: string;
-  },
+  {},
   {
     project_id?: number;
   }

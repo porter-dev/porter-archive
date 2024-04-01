@@ -41,12 +41,8 @@ func (c *CreateBillingCustomerHandler) ServeHTTP(w http.ResponseWriter, r *http.
 		return
 	}
 
-	// There is no easy way to pass environment variables to the frontend,
-	// so for now pass via the backend. This is acceptable because the key is
-	// meant to be public
-	publishableKey := c.Config().BillingManager.GetPublishableKey(ctx)
 	if proj.BillingID != "" {
-		c.WriteResult(w, r, publishableKey)
+		c.WriteResult(w, r, "")
 		return
 	}
 
@@ -95,9 +91,17 @@ func (c *GetPublishableKeyHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	ctx, span := telemetry.NewSpan(r.Context(), "get-publishable-key-endpoint")
 	defer span.End()
 
+	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
+
 	// There is no easy way to pass environment variables to the frontend,
 	// so for now pass via the backend. This is acceptable because the key is
 	// meant to be public
 	publishableKey := c.Config().BillingManager.GetPublishableKey(ctx)
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "project-id", Value: proj.ID},
+		telemetry.AttributeKV{Key: "customer-id", Value: proj.BillingID},
+	)
+
 	c.WriteResult(w, r, publishableKey)
 }

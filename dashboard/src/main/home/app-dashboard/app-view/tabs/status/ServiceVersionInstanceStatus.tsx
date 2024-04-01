@@ -20,15 +20,15 @@ const ServiceVersionInstanceStatus: React.FC<Props> = ({
     <Tooltip
       backgroundColor=""
       content={
-        <InstanceTooltip>
+        <div>
           {serviceVersionInstanceStatus.name}
           <Grey>
             Restart count: {serviceVersionInstanceStatus.restartCount}
           </Grey>
           <Grey>{`Created: ${dayjs(
             serviceVersionInstanceStatus.creationTimestamp
-          ).format("MMM D, YYYY HH:mm:ss")}`}</Grey>
-        </InstanceTooltip>
+          ).format("MMM D, YYYY HH:mm:ss Z")}`}</Grey>
+        </div>
       }
       containerWidth="100%"
       tooltipContentWidth="300px"
@@ -78,38 +78,6 @@ const TooltipContainer = styled.div`
   display: flex;
   width: 100%;
   height: 100%;
-`;
-
-const InstanceTooltip = styled.div`
-  position: absolute;
-  left: 35px;
-  word-wrap: break-word;
-  top: 38px;
-  min-height: 18px;
-  max-width: calc(100% - 75px);
-  padding: 5px 7px;
-  background: #272731;
-  z-index: 999;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  flex: 1;
-  color: white;
-  text-transform: none;
-  font-size: 12px;
-  font-family: "Work Sans", sans-serif;
-  outline: 1px solid #ffffff55;
-  opacity: 0;
-  animation: faded-in 0.2s 0.15s;
-  animation-fill-mode: forwards;
-  @keyframes faded-in {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
 `;
 
 const Tab = styled.div<{ selected: boolean; isLast: boolean }>`

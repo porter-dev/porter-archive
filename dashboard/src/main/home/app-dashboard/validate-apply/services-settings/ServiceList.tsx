@@ -16,7 +16,7 @@ import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import { useClusterContext } from "main/home/infrastructure-dashboard/ClusterContextProvider";
 import { type ClientCluster } from "lib/clusters/types";
-import { type ClientServiceStatus } from "lib/hooks/useAppStatus";
+import { type AppServiceStatus } from "lib/hooks/useAppStatus";
 import { type PorterAppFormData } from "lib/porter-apps";
 import {
   defaultSerialized,
@@ -50,7 +50,7 @@ type ServiceListProps = {
   isPredeploy?: boolean;
   existingServiceNames?: string[];
   fieldArrayName: "app.services" | "app.predeploy";
-  serviceVersionStatus?: Record<string, ClientServiceStatus[]>;
+  appServiceStatus?: AppServiceStatus;
   internalNetworkingDetails?: {
     namespace: string;
     appName: string;
@@ -64,7 +64,7 @@ const ServiceList: React.FC<ServiceListProps> = ({
   fieldArrayName,
   isPredeploy = false,
   existingServiceNames = [],
-  serviceVersionStatus,
+  appServiceStatus,
   internalNetworkingDetails = {
     namespace: "",
     appName: "",
@@ -238,7 +238,7 @@ const ServiceList: React.FC<ServiceListProps> = ({
                 service={svc}
                 update={update}
                 remove={onRemove}
-                status={serviceVersionStatus?.[svc.name.value]}
+                status={appServiceStatus?.[svc.name.value]}
                 internalNetworkingDetails={internalNetworkingDetails}
                 existingServiceNames={existingServiceNames}
               />

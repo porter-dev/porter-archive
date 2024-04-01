@@ -1,15 +1,17 @@
-import React, { useState } from "react";
+import React, { useMemo } from "react";
 import _ from "lodash";
-import AnimateHeight, { type Height } from "react-animate-height";
+import pluralize from "pluralize";
 import styled from "styled-components";
 import { match } from "ts-pattern";
 
-import Button from "components/porter/Button";
 import Container from "components/porter/Container";
 import Link from "components/porter/Link";
 import Tag from "components/porter/Tag";
 import Text from "components/porter/Text";
-import { type ClientServiceVersionInstanceStatus } from "lib/hooks/useAppStatus";
+import {
+  type ClientServiceStatus,
+  type ServiceStatusDescriptor,
+} from "lib/hooks/useAppStatus";
 import { isClientServiceNotification } from "lib/porter-apps/notification";
 
 import alert from "assets/alert-warning.svg";
@@ -17,78 +19,78 @@ import alert from "assets/alert-warning.svg";
 import { useLatestRevision } from "../../../app-view/LatestRevisionContext";
 
 type ServiceStatusFooterProps = {
-  status: ClientServiceVersionInstanceStatus[];
+  status: ClientServiceStatus;
   name: string;
 };
 const ServiceStatusFooter: React.FC<ServiceStatusFooterProps> = ({
   status,
   name,
 }) => {
-  const [expanded, setExpanded] = useState<boolean>(false);
   const { latestClientNotifications, tabUrlGenerator } = useLatestRevision();
-  const [height, setHeight] = useState<Height>(0);
+
+  // group instances by revision number and status
+  const instanceGroups: Array<{
+    revisionId: string;
+    revisionNumber: number;
+    status: ServiceStatusDescriptor;
+    numInstances: number;
+    restartCount: number;
+  }> = useMemo(() => {
+    return status.versionStatusList
+      .map((versionStatus) => {
+        const groupByStatus = _.groupBy(
+          versionStatus.instanceStatusList,
+          (instance) => instance.status
+        );
+        return Object.keys(groupByStatus).map((status) => {
+          return {
+            revisionId: versionStatus.revisionId,
+            revisionNumber: versionStatus.revisionNumber,
+            status: status as ServiceStatusDescriptor,
+            numInstances: groupByStatus[status].length,
+            restartCount: groupByStatus[status].reduce(
+              (acc, instance) => acc + instance.restartCount,
+              0
+            ),
+          };
+        });
+      })
+      .flat()
+      .filter((group) => group.status !== "unknown");
+  }, [status]);
 
   return (
-    <>
-      {status.map((versionStatus, i) => {
+    <div>
+      {instanceGroups.map((instanceGroup, i) => {
         const versionNotifications = latestClientNotifications
           .filter(isClientServiceNotification)
-          .filter((n) => n.appRevisionId === versionStatus.revisionId)
+          .filter((n) => n.appRevisionId === instanceGroup.revisionId)
           .filter((n) => n.service.name.value === name);
         return (
           <div key={i}>
-            <StyledStatusFooterTop expanded={expanded}>
+            <StyledStatusFooterTop>
               <StyledContainer row spaced>
-                {match(versionStatus)
-                  .with({ status: "failing" }, (vs) => {
-                    return (
-                      <>
-                        <Running>
-                          <StatusDot color="#ff0000" />
-                          <Text color="helper">{vs.message}</Text>
-                        </Running>
-                        {vs.crashLoopReason && (
-                          <Button
-                            onClick={() => {
-                              expanded ? setHeight(0) : setHeight(122);
-                              setExpanded(!expanded);
-                            }}
-                            height="20px"
-                            color="#ffffff11"
-                            withBorder
-                          >
-                            {expanded ? (
-                              <I className="material-icons">arrow_drop_up</I>
-                            ) : (
-                              <I className="material-icons">arrow_drop_down</I>
-                            )}
-                            <Text color="helper">See failure reason</Text>
-                          </Button>
-                        )}
-                      </>
-                    );
-                  })
-                  .with({ status: "pending" }, (vs) => {
-                    return (
-                      <Running>
-                        <StatusDot color="#FFA500" />
-                        <Text color="helper">{vs.message}</Text>
-                      </Running>
-                    );
-                  })
-                  .with({ status: "running" }, (vs) => {
-                    return (
-                      <Running>
-                        <StatusDot />
-                        <Text color="helper">{vs.message}</Text>
-                      </Running>
-                    );
-                  })
-                  .exhaustive()}
+                <Running>
+                  <StatusDot />
+                  <Text color="helper">{`${
+                    instanceGroup.numInstances
+                  } ${pluralize(
+                    "instance",
+                    instanceGroup.numInstances
+                  )} ${pluralize("is", instanceGroup.numInstances)} ${match(
+                    instanceGroup
+                  )
+                    .with({ status: "failing" }, () => "failing to run")
+                    .with({ status: "pending" }, () => "pending")
+                    .with({ status: "running" }, () => "running")
+                    .otherwise(() => "")} at Version ${
+                    instanceGroup.revisionNumber
+                  }`}</Text>
+                </Running>
                 <Container row style={{ gap: "10px" }}>
-                  {(versionStatus.restartCount ?? 0) > 0 && (
+                  {(instanceGroup.restartCount ?? 0) > 0 && (
                     <Text color="helper">
-                      Restarts: {versionStatus.restartCount}
+                      Restarts: {instanceGroup.restartCount}
                     </Text>
                   )}
                   {versionNotifications.length > 0 && (
@@ -107,17 +109,10 @@ const ServiceStatusFooter: React.FC<ServiceStatusFooterProps> = ({
                 </Container>
               </StyledContainer>
             </StyledStatusFooterTop>
-            {versionStatus.crashLoopReason && (
-              <AnimateHeight height={height}>
-                <StyledStatusFooter>
-                  <Message>{versionStatus.crashLoopReason}</Message>
-                </StyledStatusFooter>
-              </AnimateHeight>
-            )}
           </div>
         );
       })}
-    </>
+    </div>
   );
 };
 
@@ -152,11 +147,6 @@ const StatusDot = styled.div<{ color?: string }>`
   }
 `;
 
-const I = styled.i`
-  font-size: 14px;
-  margin-right: 5px;
-`;
-
 const Running = styled.div`
   display: flex;
   align-items: center;
@@ -185,32 +175,8 @@ const StyledStatusFooter = styled.div`
   }
 `;
 
-const StyledStatusFooterTop = styled(StyledStatusFooter)<{
-  expanded: boolean;
-}>`
+const StyledStatusFooterTop = styled(StyledStatusFooter)`
   height: 40px;
-  border-bottom: ${({ expanded }) => expanded && "0px"};
-  border-bottom-left-radius: ${({ expanded }) => expanded && "0px"};
-  border-bottom-right-radius: ${({ expanded }) => expanded && "0px"};
-`;
-
-const Message = styled.div`
-  padding: 20px;
-  background: #000000;
-  border-radius: 5px;
-  line-height: 1.5em;
-  border: 1px solid #aaaabb33;
-  font-family: monospace;
-  font-size: 13px;
-  display: flex;
-  align-items: center;
-  > img {
-    width: 13px;
-    margin-right: 20px;
-  }
-  width: 100%;
-  height: 101px;
-  overflow: hidden;
 `;
 
 const StyledContainer = styled.div<{

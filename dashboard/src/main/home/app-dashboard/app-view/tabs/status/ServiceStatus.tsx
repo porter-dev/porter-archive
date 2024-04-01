@@ -31,6 +31,8 @@ const ServiceStatus: React.FC<Props> = ({ serviceStatus, service }) => {
         return <Icon src={job} />;
       case "predeploy":
         return <Icon src={job} />;
+      case "initdeploy":
+        return <Icon src={job} />;
     }
   };
 

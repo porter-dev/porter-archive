@@ -36,7 +36,7 @@ const Overview: React.FC<Props> = ({ buttonStatus }) => {
     clusterId,
   });
 
-  const { serviceVersionStatus } = useAppStatus({
+  const { appServiceStatus } = useAppStatus({
     projectId,
     clusterId,
     services: latestClientServices.filter(
@@ -63,7 +63,7 @@ const Overview: React.FC<Props> = ({ buttonStatus }) => {
         addNewText={"Add a new service"}
         fieldArrayName={"app.services"}
         existingServiceNames={latestProto.serviceList.map((s) => s.name)}
-        serviceVersionStatus={serviceVersionStatus}
+        appServiceStatus={appServiceStatus}
         internalNetworkingDetails={{
           namespace: deploymentTarget.namespace,
           appName: porterApp.name,

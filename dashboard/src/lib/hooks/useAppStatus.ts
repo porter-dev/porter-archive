@@ -11,6 +11,8 @@ import {
   type NewWebsocketOptions,
 } from "shared/hooks/useWebsockets";
 
+export type AppServiceStatus = Record<string, ClientServiceStatus>;
+
 export type ServiceStatusDescriptor =
   | "running"
   | "pending"
@@ -32,7 +34,7 @@ export type ClientServiceVersionStatus = {
 
 export type ClientServiceVersionInstanceStatus = {
   status: ServiceStatusDescriptor;
-  message: string;
+  revisionId: string;
   crashLoopReason: string;
   restartCount: number;
   name: string;
@@ -73,7 +75,7 @@ export const useAppStatus = ({
   appName: string;
   kind?: string;
 }): {
-  appServiceStatus: Record<string, ClientServiceStatus>;
+  appServiceStatus: AppServiceStatus;
 } => {
   const [serviceStatusMap, setServiceStatusMap] = useState<
     Record<string, SerializedServiceStatus>
@@ -179,21 +181,13 @@ export const useAppStatus = ({
               .otherwise(() => "unknown" as const);
             const clientServiceVersionInstanceStatus: ClientServiceVersionInstanceStatus =
               {
+                revisionId: revisionStatus.revision_id,
                 status,
-                message: "",
                 crashLoopReason: "",
                 restartCount: instanceStatus.restart_count,
                 name: instanceStatus.name,
                 creationTimestamp: instanceStatus.creation_timestamp,
               };
-
-            if (instanceStatus.status === "PENDING") {
-              clientServiceVersionInstanceStatus.message = `Instance is pending at Version ${revisionStatus.revision_number}`;
-            } else if (instanceStatus.status === "RUNNING") {
-              clientServiceVersionInstanceStatus.message = `Instance is running at Version ${revisionStatus.revision_number}`;
-            } else if (instanceStatus.status === "FAILED") {
-              clientServiceVersionInstanceStatus.message = `Instance is failing at Version ${revisionStatus.revision_number}`;
-            }
 
             return clientServiceVersionInstanceStatus;
           });

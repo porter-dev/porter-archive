@@ -6,7 +6,7 @@ import styled, { keyframes } from "styled-components";
 import { match } from "ts-pattern";
 
 import Spacer from "components/porter/Spacer";
-import { type ClientServiceVersionInstanceStatus } from "lib/hooks/useAppStatus";
+import { type ClientServiceStatus } from "lib/hooks/useAppStatus";
 import { type PorterAppFormData } from "lib/porter-apps";
 import {
   isClientJobService,
@@ -33,7 +33,7 @@ type ServiceProps = {
     "app.services" | "app.predeploy"
   >;
   remove: (index: number) => void;
-  status?: ClientServiceStatus[];
+  status?: ClientServiceStatus;
   internalNetworkingDetails: {
     namespace: string;
     appName: string;
@@ -68,6 +68,7 @@ const ServiceContainer: React.FC<ServiceProps> = ({
       .with({ config: { type: "predeploy" } }, (svc) => (
         <JobTabs index={index} service={svc} isPredeploy />
       ))
+      .with({ config: { type: "initdeploy" } }, () => <></>)
       .exhaustive();
   };
 
@@ -80,6 +81,8 @@ const ServiceContainer: React.FC<ServiceProps> = ({
       case "job":
         return <Icon src={job} />;
       case "predeploy":
+        return <Icon src={job} />;
+      case "initdeploy":
         return <Icon src={job} />;
     }
   };

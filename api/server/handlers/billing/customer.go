@@ -72,7 +72,7 @@ type GetPublishableKeyHandler struct {
 	handlers.PorterHandlerReadWriter
 }
 
-// NewCreateBillingCustomerIfNotExists will create a new CreateBillingCustomerIfNotExists
+// NewGetPublishableKeyHandler will return the publishable key
 func NewGetPublishableKeyHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,

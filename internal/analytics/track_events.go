@@ -64,6 +64,7 @@ const (
 	PorterAppUpdateFailure SegmentEvent = "Porter App Update Failure"
 
 	// billing
+
 	PaymentMethodAttached  SegmentEvent = "Credit Card Linked"
 	PaymentMethodDettached SegmentEvent = "Credit Card Removed"
 

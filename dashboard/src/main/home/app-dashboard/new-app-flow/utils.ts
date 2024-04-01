@@ -23,8 +23,9 @@ export const getGithubAction = (
   clusterId: number,
   stackName: string,
   branchName: string,
-  porterYamlPath: string = "porter.yaml"
-) => {
+  porterYamlPath: string = "porter.yaml",
+  deploymentTargetId: string = "",
+): string => {
   return `on:
   push:
     branches:
@@ -50,7 +51,8 @@ jobs:
         PORTER_PROJECT: ${projectID}
         PORTER_STACK_NAME: ${stackName}
         PORTER_TAG: \${{ steps.vars.outputs.sha_short }}
-        PORTER_TOKEN: \${{ secrets.PORTER_STACK_${projectID}_${clusterId} }}`;
+        PORTER_TOKEN: \${{ secrets.PORTER_STACK_${projectID}_${clusterId} }}
+        ${deploymentTargetId ? `PORTER_DEPLOYMENT_TARGET: ${deploymentTargetId}` : ""}`;
 };
 
 export const getPreviewGithubAction = ({

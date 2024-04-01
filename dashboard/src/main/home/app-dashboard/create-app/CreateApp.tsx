@@ -742,6 +742,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
           stackName={name.value}
           projectId={currentProject.id}
           clusterId={currentCluster.id}
+          deploymentTargetId={deploymentTargetID}
           deployPorterApp={async () =>
             await update({
               app: validatedAppProto,

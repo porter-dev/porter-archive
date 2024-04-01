@@ -25,6 +25,7 @@ type Props = RouteComponentProps & {
   stackName?: string;
   projectId?: number;
   clusterId?: number;
+  deploymentTargetId?: string;
   deployPorterApp?: () => Promise<boolean>;
   deploymentError?: string;
   porterYamlPath?: string;
@@ -42,6 +43,7 @@ const GithubActionModal: React.FC<Props> = ({
   stackName,
   projectId,
   clusterId,
+  deploymentTargetId,
   deployPorterApp,
   deploymentError,
   porterYamlPath,
@@ -62,8 +64,9 @@ const GithubActionModal: React.FC<Props> = ({
       clusterId,
       stackName,
       branch,
-      porterYamlPath
-    );
+      porterYamlPath,
+      deploymentTargetId,
+  );
   }, [projectId, clusterId, stackName, branch, porterYamlPath]);
 
   const submit = async (): Promise<void> => {

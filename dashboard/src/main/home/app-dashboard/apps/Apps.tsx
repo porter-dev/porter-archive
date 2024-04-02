@@ -1,5 +1,5 @@
 import React, { useCallback, useContext, useMemo, useState } from "react";
-import { Addon } from "@porter-dev/api-contracts/src/porter/v1/addons_pb";
+import { AddonWithEnvVars } from "@porter-dev/api-contracts";
 import { useQueries } from "@tanstack/react-query";
 import { useHistory } from "react-router";
 import styled from "styled-components";
@@ -32,6 +32,7 @@ import { checkIfProjectHasPayment } from "lib/hooks/useStripe";
 import api from "shared/api";
 import { Context } from "shared/Context";
 import { useDeploymentTarget } from "shared/DeploymentTargetContext";
+import { valueExists } from "shared/util";
 import applicationGrad from "assets/application-grad.svg";
 import calendar from "assets/calendar-number.svg";
 import gift from "assets/gift.svg";
@@ -170,15 +171,19 @@ const Apps: React.FC = () => {
   });
 
   const clientAddons: ClientAddon[] = useMemo(() => {
-    return addons.map((a) => {
-      const proto = Addon.fromJsonString(atob(a), {
-        ignoreUnknownFields: true,
-      });
-
-      return clientAddonFromProto({
-        addon: proto,
-      });
-    });
+    return addons
+      .map((a: string) => {
+        const proto = AddonWithEnvVars.fromJsonString(atob(a), {
+          ignoreUnknownFields: true,
+        });
+        if (!proto.addon) {
+          return null;
+        }
+        return clientAddonFromProto({
+          addon: proto.addon,
+        });
+      })
+      .filter(valueExists);
   }, [addons]);
 
   const deletePreviewEnv = useCallback(async () => {

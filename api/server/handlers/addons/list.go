@@ -90,7 +90,7 @@ func (c *LatestAddonsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		Base64Addons: []string{},
 	}
 
-	for _, addon := range latestAddonsResp.Msg.Addons {
+	for _, addon := range latestAddonsResp.Msg.AddonsWithEnv {
 		by, err := helpers.MarshalContractObject(ctx, addon)
 		if err != nil {
 			err = telemetry.Error(ctx, span, err, "error marshaling addon")

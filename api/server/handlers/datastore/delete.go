@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"connectrpc.com/connect"
-	"github.com/google/uuid"
 	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -55,45 +54,13 @@ func (h *DeleteDatastoreHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	if !datastoreRecord.OnManagementCluster {
-		if datastoreRecord == nil || datastoreRecord.ID == uuid.Nil {
-			err = telemetry.Error(ctx, span, nil, "datastore record does not exist")
-			h.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusNotFound))
-			return
-		}
-
-		_, err = h.Repo().Datastore().UpdateStatus(ctx, datastoreRecord, models.DatastoreStatus_AwaitingDeletion)
-		if err != nil {
-			err = telemetry.Error(ctx, span, err, "error updating datastore status")
-			h.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-			return
-		}
-
-		updateReq := connect.NewRequest(&porterv1.UpdateDatastoreRequest{
-			ProjectId:   int64(project.ID),
-			DatastoreId: datastoreRecord.ID.String(),
-		})
-
-		_, err = h.Config().ClusterControlPlaneClient.UpdateDatastore(ctx, updateReq)
-		if err != nil {
-			err := telemetry.Error(ctx, span, err, "error calling ccp update datastore")
-			h.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-			return
-		}
-
-		w.WriteHeader(http.StatusAccepted)
-		return
-	}
-
-	req := connect.NewRequest(&porterv1.PatchCloudContractRequest{
-		ProjectId:    int64(project.ID),
-		Operation:    porterv1.EnumPatchCloudContractOperation_ENUM_PATCH_CLOUD_CONTRACT_OPERATION_DELETE,
-		ResourceType: porterv1.EnumPatchCloudContractType_ENUM_PATCH_CLOUD_CONTRACT_TYPE_DATASTORE,
-		ResourceId:   datastoreRecord.ID.String(),
+	req := connect.NewRequest(&porterv1.DeleteDatastoreRequest{
+		ProjectId:   int64(project.ID),
+		DatastoreId: datastoreRecord.ID.String(),
 	})
-	_, err = h.Config().ClusterControlPlaneClient.PatchCloudContract(ctx, req)
+	_, err = h.Config().ClusterControlPlaneClient.DeleteDatastore(ctx, req)
 	if err != nil {
-		err = telemetry.Error(ctx, span, err, "error patching cloud contract")
+		err = telemetry.Error(ctx, span, err, "error deleting datastore")
 		h.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}

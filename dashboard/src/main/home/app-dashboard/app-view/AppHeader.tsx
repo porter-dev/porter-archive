@@ -230,24 +230,38 @@ const AppHeader: React.FC = () => {
         <Spacer y={0.5} />
         <NoShrink>
           {match(latestSource)
-            .with({ type: "github" }, () => (
-              <ImageTagContainer>
-                <Link
-                  to={gitCommitUrl}
-                  target="_blank"
-                  showTargetBlankIcon={false}
-                >
-                  <CommitIcon src={pull_request_icon} />
-                  <Code>{displayCommitSha}</Code>
-                </Link>
-              </ImageTagContainer>
-            ))
-            .with({ type: "local" }, () => (
-              <ImageTagContainer>
-                <CommitIcon src={pull_request_icon} />
-                <Code>{displayCommitSha}</Code>
-              </ImageTagContainer>
-            ))
+            .with({ type: "github" }, () =>
+              displayCommitSha ? (
+                <ImageTagContainer>
+                  <Link
+                    to={gitCommitUrl}
+                    target="_blank"
+                    showTargetBlankIcon={false}
+                  >
+                    <CommitIcon src={pull_request_icon} />
+                    <Code>{displayCommitSha}</Code>
+                  </Link>
+                </ImageTagContainer>
+              ) : latestProto.image?.tag ? (
+                renderTagBadge(latestProto.image.tag)
+              ) : null
+            )
+            .with({ type: "local" }, () =>
+              displayCommitSha ? (
+                <ImageTagContainer>
+                  <Link
+                    to={gitCommitUrl}
+                    target="_blank"
+                    showTargetBlankIcon={false}
+                  >
+                    <CommitIcon src={pull_request_icon} />
+                    <Code>{displayCommitSha}</Code>
+                  </Link>
+                </ImageTagContainer>
+              ) : latestProto.image?.tag ? (
+                renderTagBadge(latestProto.image.tag)
+              ) : null
+            )
             .with({ type: "docker-registry" }, (s) =>
               renderTagBadge(s.image.tag)
             )
@@ -256,7 +270,7 @@ const AppHeader: React.FC = () => {
         <Spacer y={0.5} />
       </LatestDeployContainer>
       <Spacer y={0.5} />
-      <GHStatusBanner />
+      {latestSource.type === "github" && <GHStatusBanner />}
       <Spacer y={0.5} />
     </>
   );

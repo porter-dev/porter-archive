@@ -3,6 +3,7 @@ package porter_app
 import (
 	"context"
 	"encoding/base64"
+	"fmt"
 	"net/http"
 
 	"connectrpc.com/connect"
@@ -236,6 +237,9 @@ func (c *UpdateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		appProto = patchedProto
 	}
+
+	asJson, _ := helpers.MarshalContractObject(ctx, appProto)
+	fmt.Printf("appProto: %s\n", string(asJson))
 
 	if appProto.Name == "" {
 		if request.Name == "" {

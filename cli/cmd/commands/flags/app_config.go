@@ -7,6 +7,8 @@ import (
 )
 
 const (
+	// App_Name is the key for the app name flag
+	App_Name = "name"
 	// App_ConfigAttachEnvGroups is the key for the attach env groups flag
 	App_ConfigAttachEnvGroups = "attach-env-groups"
 )

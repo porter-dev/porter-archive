@@ -37,6 +37,7 @@ import (
 )
 
 var (
+	appDeployMethod      string
 	appContainerName     string
 	appCpuMilli          int
 	appExistingPod       bool
@@ -70,6 +71,45 @@ func registerCommand_App(cliConf config.CLIConfig) *cobra.Command {
 		"",
 		"the name of the deployment target for the app",
 	)
+
+	appCreateCommand := &cobra.Command{
+		Use:   "create",
+		Args:  cobra.NoArgs,
+		Short: "Creates and deploys a new app in your project.",
+		Long: fmt.Sprintf(`
+	%s
+Creates a new app in your project. You can specify the name of the app using the --name flag:
+	%s
+If no flags are specified, you will be directed to a series of required prompts to configure the app.
+`,
+			color.New(color.FgBlue, color.Bold).Sprintf("Help for \"porter app create\":"),
+			color.New(color.FgGreen, color.Bold).Sprintf("porter app create --name example-app"),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return checkLoginAndRunWithConfig(cmd, cliConf, args, appCreate)
+		},
+	}
+
+	appCreateCommand.PersistentFlags().StringP(
+		flags.App_Name,
+		"n",
+		"",
+		"the name of the app",
+	)
+	appCreateCommand.PersistentFlags().StringVarP(
+		&appDeployMethod,
+		"deploy-method",
+		"m",
+		"",
+		"the deployment method for the app (docker, repo)",
+	)
+	appCreateCommand.PersistentFlags().StringVarP(&porterYAML, "file", "f", "", "path to porter.yaml")
+
+	flags.UseAppConfigFlags(appCreateCommand)
+	flags.UseAppBuildFlags(appCreateCommand)
+	flags.UseAppImageFlags(appCreateCommand)
+
+	appCmd.AddCommand(appCreateCommand)
 
 	appBuildCommand := &cobra.Command{
 		Use:   "build [application]",
@@ -314,6 +354,49 @@ func appRunFlags(appRunCmd *cobra.Command) {
 		"",
 		"name of the job to run (will run the job as defined instead of the provided command, and returns the job run id without waiting for the job to complete or displaying logs)",
 	)
+}
+
+func appCreate(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ config.FeatureFlags, cmd *cobra.Command, args []string) error {
+	name, err := cmd.Flags().GetString(flags.App_Name)
+	if err != nil {
+		return fmt.Errorf("error getting app name: %w", err)
+	}
+
+	buildValues, err := flags.AppBuildValuesFromCmd(cmd)
+	if err != nil {
+		return err
+	}
+
+	imageValues, err := flags.AppImageValuesFromCmd(cmd)
+	if err != nil {
+		return err
+	}
+
+	configValues, err := flags.AppConfigValuesFromCmd(cmd)
+	if err != nil {
+		return err
+	}
+
+	err = v2.CreateApp(ctx, v2.CreateAppInput{
+		CLIConfig:            cliConfig,
+		Client:               client,
+		AppName:              name,
+		PorterYamlPath:       porterYAML,
+		DeploymentTargetName: deploymentTargetName,
+		BuildMethod:          buildValues.BuildMethod,
+		Dockerfile:           buildValues.Dockerfile,
+		Builder:              buildValues.Builder,
+		Buildpacks:           buildValues.Buildpacks,
+		BuildContext:         buildValues.BuildContext,
+		ImageTag:             imageValues.Tag,
+		ImageRepo:            imageValues.Repository,
+		EnvGroups:            configValues.AttachEnvGroups,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to create app: %w", err)
+	}
+
+	return nil
 }
 
 func appBuild(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ config.FeatureFlags, cmd *cobra.Command, args []string) error {

@@ -40,7 +40,7 @@ const HIDDEN_CHARTS = [
   "redis-managed",
 ];
 
-//For Charts that don't exist locally we need to add them in manually
+// For Charts that don't exist locally we need to add them in manually
 const TAG_MAPPING = {
   "DATA_STORE": ["mysql"],
   "DATA_BASE": ["mysql"]
@@ -99,7 +99,7 @@ const NewAddOnFlow: React.FC<Props> = ({
         }
       );
       setIsLoading(false);
-      var sortedVersionData = res.data.map((template: any) => {
+      let sortedVersionData = res.data.map((template: any) => {
         let versions = template.versions.reverse();
         versions = template.versions.sort(semver.rcompare);
         return {
@@ -114,9 +114,9 @@ const NewAddOnFlow: React.FC<Props> = ({
       );
 
       sortedVersionData = sortedVersionData.map((template: any) => {
-        let testTemplate: string[] = template?.tags || []
+        const testTemplate: string[] = template?.tags || []
         // Assign tags based on TAG_MAPPING
-        for (let tag in TAG_MAPPING) {
+        for (const tag in TAG_MAPPING) {
           if (TAG_MAPPING[tag].includes(template.name)) {
             testTemplate?.push(tag);
           }
@@ -142,7 +142,7 @@ const NewAddOnFlow: React.FC<Props> = ({
           <ConfigureTemplate
             currentTemplate={currentTemplate}
             currentForm={currentForm}
-            goBack={() => setCurrentForm(null)}
+            goBack={() => { setCurrentForm(null); }}
           />
         ) : (
           <>
@@ -159,8 +159,8 @@ const NewAddOnFlow: React.FC<Props> = ({
               currentTemplate ? (
                 <ExpandedTemplate
                   currentTemplate={currentTemplate}
-                  proceed={(form?: any) => setCurrentForm(form)}
-                  goBack={() => setCurrentTemplate(null)}
+                  proceed={(form?: any) => { setCurrentForm(form); }}
+                  goBack={() => { setCurrentTemplate(null); }}
                 />
               ) : (
                 <>
@@ -205,7 +205,7 @@ const NewAddOnFlow: React.FC<Props> = ({
                           </div>
                           <TemplateList
                             templates={appTemplates} // This is where you provide only APP templates
-                            setCurrentTemplate={(x) => setCurrentTemplate(x)}
+                            setCurrentTemplate={(x) => { setCurrentTemplate(x); }}
                           />
                         </>}
 
@@ -219,7 +219,7 @@ const NewAddOnFlow: React.FC<Props> = ({
                           </div>
                           <TemplateList
                             templates={dataStoreTemplates} // This is where you provide only DATA_STORE templates
-                            setCurrentTemplate={(x) => setCurrentTemplate(x)}
+                            setCurrentTemplate={(x) => { setCurrentTemplate(x); }}
                           />
                         </>}
 
@@ -235,7 +235,7 @@ const NewAddOnFlow: React.FC<Props> = ({
 
                           <TemplateList
                             templates={filteredTemplates} // This is where you provide only DATA_STORE templates
-                            setCurrentTemplate={(x) => setCurrentTemplate(x)}
+                            setCurrentTemplate={(x) => { setCurrentTemplate(x); }}
                           />
                         </>
                       }

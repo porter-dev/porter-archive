@@ -168,6 +168,7 @@ export type DatastoreTemplate = {
 
 const instanceTierValidator = z.enum([
   "unspecified",
+  "db.t4g.micro",
   "db.t4g.small",
   "db.t4g.medium",
   "db.t4g.large",

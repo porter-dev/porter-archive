@@ -1,6 +1,7 @@
 import React, { useMemo } from "react";
 import { type PorterApp } from "@porter-dev/api-contracts";
 import styled from "styled-components";
+import { match } from "ts-pattern";
 
 import Container from "components/porter/Container";
 import Icon from "components/porter/Icon";
@@ -37,8 +38,13 @@ const icons = [
 export const HELLO_PORTER_PLACEHOLDER_TAG = "porter-initial-image";
 
 const AppHeader: React.FC = () => {
-  const { latestProto, porterApp, latestRevision, deploymentTarget } =
-    useLatestRevision();
+  const {
+    latestProto,
+    porterApp,
+    latestRevision,
+    deploymentTarget,
+    latestSource,
+  } = useLatestRevision();
 
   const gitCommitUrl = useMemo(() => {
     if (!porterApp.repo_name) {
@@ -52,9 +58,6 @@ const AppHeader: React.FC = () => {
   }, [JSON.stringify(latestProto), porterApp]);
 
   const displayCommitSha = useMemo(() => {
-    if (!porterApp.repo_name) {
-      return "";
-    }
     if (
       !latestProto.build?.commitSha ||
       latestProto.build.commitSha.length < 7
@@ -64,22 +67,6 @@ const AppHeader: React.FC = () => {
 
     return latestProto.build.commitSha.slice(0, 7);
   }, [JSON.stringify(latestProto), porterApp]);
-
-  const gitData = useMemo(() => {
-    if (
-      !porterApp.git_branch ||
-      !porterApp.repo_name ||
-      !porterApp.git_repo_id
-    ) {
-      return null;
-    }
-
-    return {
-      id: porterApp.git_repo_id,
-      branch: porterApp.git_branch,
-      repo: porterApp.repo_name,
-    };
-  }, [porterApp]);
 
   const getIconSvg = (build: PorterApp["build"]): JSX.Element => {
     if (!build) {
@@ -161,48 +148,61 @@ const AppHeader: React.FC = () => {
         <Icon src={getIconSvg(latestProto.build)} height={"24px"} />
         <Spacer inline x={1} />
         <Text size={21}>{latestProto.name}</Text>
-        {gitData && (
-          <>
-            <Spacer inline x={1} />
-            <Container row>
-              <A target="_blank" href={`https://github.com/${gitData.repo}`}>
-                <SmallIcon src={github} />
-                <Text size={13}>{gitData.repo}</Text>
-              </A>
-            </Container>
-            <Spacer inline x={1} />
-            <TagWrapper preview={deploymentTarget.is_preview}>
-              {deploymentTarget.is_preview ? "Preview" : "Branch"}
-              <BranchTag preview={deploymentTarget.is_preview}>
-                <PullRequestIcon
-                  styles={{
-                    height: "14px",
-                    opacity: "0.65",
-                    marginRight: "5px",
-                    fill: deploymentTarget.is_preview ? "" : "#fff",
-                  }}
+        <Spacer inline x={1} />
+
+        <Container
+          row
+          style={{
+            display: "flex",
+            alignItems: "center",
+            height: "24px",
+          }}
+        >
+          {match(latestSource)
+            .with({ type: "github" }, (s) => (
+              <>
+                <Spacer inline x={1} />
+                <Container row>
+                  <A
+                    target="_blank"
+                    href={`https://github.com/${s.git_repo_name}`}
+                  >
+                    <SmallIcon src={github} />
+                    <Text size={13}>{s.git_repo_name}</Text>
+                  </A>
+                </Container>
+                <Spacer inline x={1} />
+                <TagWrapper preview={deploymentTarget.is_preview}>
+                  {deploymentTarget.is_preview ? "Preview" : "Branch"}
+                  <BranchTag preview={deploymentTarget.is_preview}>
+                    <PullRequestIcon
+                      styles={{
+                        height: "14px",
+                        opacity: "0.65",
+                        marginRight: "5px",
+                        fill: deploymentTarget.is_preview ? "" : "#fff",
+                      }}
+                    />
+                    {deploymentTarget.is_preview
+                      ? deploymentTarget.namespace
+                      : s.git_branch}
+                  </BranchTag>
+                </TagWrapper>
+              </>
+            ))
+            .with({ type: "docker-registry" }, (s) => (
+              <>
+                <SmallIcon
+                  height="19px"
+                  src="https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/97_Docker_logo_logos-512.png"
                 />
-                {deploymentTarget.is_preview
-                  ? deploymentTarget.namespace
-                  : gitData.branch}
-              </BranchTag>
-            </TagWrapper>
-          </>
-        )}
-        {!gitData && latestProto.image && (
-          <>
-            <Spacer inline x={1} />
-            <Container row>
-              <SmallIcon
-                height="19px"
-                src="https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/97_Docker_logo_logos-512.png"
-              />
-              <Text size={13} color="helper">
-                {`${latestProto.image.repository}`}
-              </Text>
-            </Container>
-          </>
-        )}
+                <Text size={13} color="helper">
+                  {s.image.repository}
+                </Text>
+              </>
+            ))
+            .otherwise(() => null)}
+        </Container>
       </Container>
       <Spacer y={0.5} />
       {displayDomain && (
@@ -229,20 +229,29 @@ const AppHeader: React.FC = () => {
         </div>
         <Spacer y={0.5} />
         <NoShrink>
-          {gitCommitUrl && displayCommitSha ? (
-            <ImageTagContainer>
-              <Link
-                to={gitCommitUrl}
-                target="_blank"
-                showTargetBlankIcon={false}
-              >
+          {match(latestSource)
+            .with({ type: "github" }, () => (
+              <ImageTagContainer>
+                <Link
+                  to={gitCommitUrl}
+                  target="_blank"
+                  showTargetBlankIcon={false}
+                >
+                  <CommitIcon src={pull_request_icon} />
+                  <Code>{displayCommitSha}</Code>
+                </Link>
+              </ImageTagContainer>
+            ))
+            .with({ type: "local" }, () => (
+              <ImageTagContainer>
                 <CommitIcon src={pull_request_icon} />
                 <Code>{displayCommitSha}</Code>
-              </Link>
-            </ImageTagContainer>
-          ) : latestProto.image?.tag ? (
-            renderTagBadge(latestProto.image.tag)
-          ) : null}
+              </ImageTagContainer>
+            ))
+            .with({ type: "docker-registry" }, (s) =>
+              renderTagBadge(s.image.tag)
+            )
+            .exhaustive()}
         </NoShrink>
         <Spacer y={0.5} />
       </LatestDeployContainer>

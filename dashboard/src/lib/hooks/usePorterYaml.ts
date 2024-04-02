@@ -89,10 +89,7 @@ export const usePorterYaml = ({
       return await z.string().parseAsync(res.data);
     },
     {
-      enabled:
-        source?.type === "github" &&
-        Boolean(source.git_repo_name) &&
-        Boolean(source.git_branch),
+      enabled: source?.type === "github",
       onError: () => {
         setPorterYamlFound(false);
       },

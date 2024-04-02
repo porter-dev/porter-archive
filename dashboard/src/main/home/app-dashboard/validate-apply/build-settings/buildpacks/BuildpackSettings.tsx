@@ -1,32 +1,35 @@
 import React, { useEffect, useMemo, useState } from "react";
-import styled, { keyframes } from "styled-components";
-import Error from "components/porter/Error";
 import { useQuery } from "@tanstack/react-query";
-import api from "shared/api";
+import { Controller, useFieldArray, useFormContext } from "react-hook-form";
+import styled, { keyframes } from "styled-components";
+import { z } from "zod";
+
+import Button from "components/porter/Button";
+import Error from "components/porter/Error";
+import Select from "components/porter/Select";
+import Spacer from "components/porter/Spacer";
+import Text from "components/porter/Text";
 import {
-  Buildpack,
   DEFAULT_BUILDER_NAME,
   DEFAULT_HEROKU_STACK,
-  DetectedBuildpack,
   detectedBuildpackSchema,
+  type Buildpack,
+  type DetectedBuildpack,
 } from "main/home/app-dashboard/types/buildpack";
-import { z } from "zod";
-import Spacer from "components/porter/Spacer";
-import Button from "components/porter/Button";
-import BuildpackList from "./BuildpackList";
+import { type PorterAppFormData, type SourceOptions } from "lib/porter-apps";
+import { type BuildOptions } from "lib/porter-apps/build";
+
+import api from "shared/api";
+
 import BuildpackConfigurationModal from "./BuildpackConfigurationModal";
-import { Controller, useFieldArray, useFormContext } from "react-hook-form";
-import { PorterAppFormData, SourceOptions } from "lib/porter-apps";
-import { BuildOptions } from "lib/porter-apps/build";
-import Select from "components/porter/Select";
-import Text from "components/porter/Text";
+import BuildpackList from "./BuildpackList";
 
 type Props = {
   projectId: number;
   build: BuildOptions & {
     method: "pack";
   };
-  source: SourceOptions & { type: "github" };
+  source: SourceOptions & { type: "github" | "local" };
   populateBuildValuesOnceAfterDetection?: boolean;
 };
 
@@ -37,7 +40,7 @@ export const DEFAULT_BUILDERS = [
   "heroku/builder:22",
   "heroku/builder-classic:22",
   "heroku/buildpacks:18",
-]
+];
 
 const BuildpackSettings: React.FC<Props> = ({
   projectId,
@@ -45,7 +48,9 @@ const BuildpackSettings: React.FC<Props> = ({
   source,
   populateBuildValuesOnceAfterDetection,
 }) => {
-  const [populateBuild, setPopulateBuild] = useState<boolean>(populateBuildValuesOnceAfterDetection ?? false);
+  const [populateBuild, setPopulateBuild] = useState<boolean>(
+    populateBuildValuesOnceAfterDetection ?? false
+  );
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [availableBuildpacks, setAvailableBuildpacks] = useState<Buildpack[]>(
     []
@@ -66,6 +71,10 @@ const BuildpackSettings: React.FC<Props> = ({
       isModalOpen,
     ],
     async () => {
+      if (source.type !== "github") {
+        return [];
+      }
+
       const detectBuildPackRes = await api.detectBuildpack<DetectedBuildpack[]>(
         "<token>",
         {
@@ -81,14 +90,14 @@ const BuildpackSettings: React.FC<Props> = ({
         }
       );
 
-      const detectedBuildpacks = z
+      const detectedBuildpacks = await z
         .array(detectedBuildpackSchema)
         .parseAsync(detectBuildPackRes.data);
 
       return detectedBuildpacks;
     },
     {
-      enabled: populateBuild || isModalOpen,
+      enabled: source.type === "github" && (populateBuild || isModalOpen),
       retry: 0,
       refetchOnWindowFocus: false,
     }
@@ -103,16 +112,17 @@ const BuildpackSettings: React.FC<Props> = ({
   );
 
   const builderOptions = useMemo(() => {
-    const allBuilderOptions = [
-      build.builder,
-      ...DEFAULT_BUILDERS
-    ].sort();
+    const allBuilderOptions = [build.builder, ...DEFAULT_BUILDERS].sort();
 
     return Array.from(new Set(allBuilderOptions)).map((builder) => ({
       label: builder,
       value: builder,
     }));
-  }, [build.builder])
+  }, [build.builder]);
+
+  const iseDetectingBuildpacks = useMemo(() => {
+    return status === "loading" && source.type === "github";
+  }, [status, source]);
 
   useEffect(() => {
     if (!data || data.length === 0) {
@@ -124,9 +134,7 @@ const BuildpackSettings: React.FC<Props> = ({
         (builder) => builder.name.toLowerCase() === DEFAULT_BUILDER_NAME
       ) ?? data[0];
 
-    const allBuildpacks = defaultBuilder.others.concat(
-      defaultBuilder.detected
-    );
+    const allBuildpacks = defaultBuilder.others.concat(defaultBuilder.detected);
 
     setAvailableBuildpacks(
       allBuildpacks.filter(
@@ -183,21 +191,22 @@ const BuildpackSettings: React.FC<Props> = ({
       {build.buildpacks.length > 0 && (
         <>
           <Spacer y={0.5} />
-          {populateBuildValuesOnceAfterDetection && 
+          {populateBuildValuesOnceAfterDetection && (
             <>
               <Text color="helper">
-                The following buildpacks were detected at your application's root path. You can also
-                manually add, remove, or re-order buildpacks here.
+                The following buildpacks were detected at your
+                application&apos;s root path. You can also manually add, remove,
+                or re-order buildpacks here.
               </Text>
               <Spacer y={0.5} />
             </>
-          }
+          )}
           <BuildpackList
             build={build}
             availableBuildpacks={availableBuildpacks}
             setAvailableBuildpacks={setAvailableBuildpacks}
             showAvailableBuildpacks={false}
-            isDetectingBuildpacks={status === "loading"}
+            isDetectingBuildpacks={iseDetectingBuildpacks}
             detectBuildpacksError={errorMessage}
             droppableId={"non-modal"}
           />
@@ -207,16 +216,15 @@ const BuildpackSettings: React.FC<Props> = ({
         <>
           <Spacer y={0.5} />
           <Text color="helper">
-            No buildpacks have been specified. Click the button below to add buildpacks detected at your application's root path.
+            No buildpacks have been specified. Click the button below to add
+            buildpacks detected at your application&apos;s root path.
           </Text>
         </>
       )}
       {errorMessage && (
         <>
           <Spacer y={1} />
-          <Error
-            message={errorMessage}
-          />
+          <Error message={errorMessage} />
         </>
       )}
       <Spacer y={1} />
@@ -235,7 +243,7 @@ const BuildpackSettings: React.FC<Props> = ({
           }}
           availableBuildpacks={availableBuildpacks}
           setAvailableBuildpacks={setAvailableBuildpacks}
-          isDetectingBuildpacks={status === "loading"}
+          isDetectingBuildpacks={iseDetectingBuildpacks}
           detectBuildpacksError={errorMessage}
         />
       )}

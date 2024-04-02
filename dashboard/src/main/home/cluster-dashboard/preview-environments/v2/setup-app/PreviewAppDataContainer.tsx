@@ -19,11 +19,7 @@ import {
   clientAddonValidator,
 } from "lib/addons";
 import { useAppWithPreviewOverrides } from "lib/hooks/useAppWithPreviewOverrides";
-import {
-  basePorterAppFormValidator,
-  clientAppToProto,
-  type SourceOptions,
-} from "lib/porter-apps";
+import { basePorterAppFormValidator, clientAppToProto } from "lib/porter-apps";
 
 import api from "shared/api";
 
@@ -85,28 +81,8 @@ export const PreviewAppDataContainer: React.FC<Props> = ({
     clusterId,
     projectId,
     deploymentTarget,
+    latestSource,
   } = useLatestRevision();
-
-  const latestSource: SourceOptions = useMemo(() => {
-    if (porterApp.image_repo_uri) {
-      const [repository, tag] = porterApp.image_repo_uri.split(":");
-      return {
-        type: "docker-registry",
-        image: {
-          repository,
-          tag,
-        },
-      };
-    }
-
-    return {
-      type: "github",
-      git_repo_id: porterApp.git_repo_id ?? 0,
-      git_repo_name: porterApp.repo_name ?? "",
-      git_branch: porterApp.git_branch ?? "",
-      porter_yaml_path: porterApp.porter_yaml_path ?? "./porter.yaml",
-    };
-  }, [porterApp]);
 
   const withPreviewOverrides = useAppWithPreviewOverrides({
     latestApp: latestProto,

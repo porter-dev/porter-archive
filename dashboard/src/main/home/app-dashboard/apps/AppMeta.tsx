@@ -6,6 +6,7 @@ import Icon from "components/porter/Icon";
 import Text from "components/porter/Text";
 
 import box from "assets/box.png";
+import git_scm from "assets/git-scm.svg";
 import github from "assets/github.png";
 import web from "assets/web.png";
 
@@ -31,14 +32,7 @@ type SourceProps = {
 export const AppSource: React.FC<SourceProps> = ({ source }) => {
   return (
     <>
-      {source.repo_name ? (
-        <Container row>
-          <SmallIcon opacity="0.6" src={github} />
-          <Text truncate={true} size={13} color="#ffffff44">
-            {source.repo_name}
-          </Text>
-        </Container>
-      ) : (
+      {source.image_repo_uri ? (
         <Container row>
           <SmallIcon
             opacity="0.7"
@@ -47,6 +41,20 @@ export const AppSource: React.FC<SourceProps> = ({ source }) => {
           />
           <Text truncate={true} size={13} color="#ffffff44">
             {source.image_repo_uri}
+          </Text>
+        </Container>
+      ) : source.repo_name ? (
+        <Container row>
+          <SmallIcon opacity="0.6" src={github} />
+          <Text truncate={true} size={13} color="#ffffff44">
+            {source.repo_name}
+          </Text>
+        </Container>
+      ) : (
+        <Container row>
+          <SmallIcon src={git_scm} />
+          <Text truncate={true} size={13} color="#ffffff44">
+            {source.name}
           </Text>
         </Container>
       )}

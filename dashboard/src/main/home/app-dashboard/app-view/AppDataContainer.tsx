@@ -563,11 +563,13 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
           </Banner>
           <Spacer y={1} />
         </AnimateHeight>
-        <GithubErrorBanner
-          appName={porterAppRecord.name}
-          workflowRerunError={workflowRerunError}
-          setWorkflowRerunError={setWorkflowRerunError}
-        />
+        {latestSource.type === "github" && (
+          <GithubErrorBanner
+            appName={porterAppRecord.name}
+            workflowRerunError={workflowRerunError}
+            setWorkflowRerunError={setWorkflowRerunError}
+          />
+        )}
         <TabSelector
           noBuffer
           options={tabs}

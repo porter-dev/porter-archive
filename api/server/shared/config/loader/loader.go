@@ -62,9 +62,11 @@ func sharedInit() {
 		panic(err)
 	}
 
-	InstanceBillingManager = &billing.StripeBillingManager{
-		StripeSecretKey:      InstanceEnvConf.ServerConf.StripeSecretKey,
-		StripePublishableKey: InstanceEnvConf.ServerConf.StripePublishableKey,
+	stripeClient := billing.NewStripeClient(InstanceEnvConf.ServerConf.StripeSecretKey, InstanceEnvConf.ServerConf.StripePublishableKey)
+	metronomeClient := billing.NewMetronomeClient(InstanceEnvConf.ServerConf.MetronomeAPIKey)
+	InstanceBillingManager = billing.BillingManager{
+		StripeClient:    stripeClient,
+		MetronomeClient: metronomeClient,
 	}
 }
 
@@ -254,6 +256,10 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 
 	if sc.StripeSecretKey == "" {
 		res.Logger.Info().Msg("STRIPE_SECRET_KEY not set, all Stripe functionality will be disabled")
+	}
+
+	if sc.MetronomeAPIKey == "" {
+		res.Logger.Info().Msg("METRONOME_API_KEY not set, all Metronome functionality will be disabled")
 	}
 
 	if sc.SlackClientID != "" && sc.SlackClientSecret != "" {

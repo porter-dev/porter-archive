@@ -1,5 +1,6 @@
 package billing
 
+<<<<<<< HEAD
 import (
 	"context"
 
@@ -75,4 +76,10 @@ func (s *NoopBillingManager) DeletePaymentMethod(ctx context.Context, paymentMet
 // GetPublishableKey is a no-op
 func (s *NoopBillingManager) GetPublishableKey(ctx context.Context) (key string) {
 	return ""
+=======
+// BillingManager contains methods for managing billing for a project
+type BillingManager struct {
+	StripeClient    *StripeClient
+	MetronomeClient *MetronomeClient
+>>>>>>> b8c4273a5 (Add Metronome business logic)
 }

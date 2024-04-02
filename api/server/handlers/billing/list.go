@@ -58,7 +58,7 @@ func (c *ListBillingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	paymentMethods, err := c.Config().BillingManager.ListPaymentMethod(ctx, proj.BillingID)
+	paymentMethods, err := c.Config().BillingManager.StripeClient.ListPaymentMethod(ctx, proj)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error listing payment method")
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error listing payment method: %w", err)))
@@ -84,7 +84,11 @@ func (c *CheckPaymentEnabledHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 
 	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
+<<<<<<< HEAD
 	paymentEnabled, err := c.Config().BillingManager.CheckPaymentEnabled(ctx, proj.BillingID)
+=======
+	paymentEnabled, err := c.Config().BillingManager.StripeClient.CheckPaymentEnabled(ctx, proj)
+>>>>>>> b8c4273a5 (Add Metronome business logic)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error checking if payment enabled")
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error checking if payment enabled: %w", err)))

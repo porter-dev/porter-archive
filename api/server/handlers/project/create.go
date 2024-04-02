@@ -3,6 +3,7 @@ package project
 import (
 	"net/http"
 
+	"github.com/google/uuid"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
@@ -79,9 +80,10 @@ func (p *ProjectCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	// Create Stripe Customer
 	if p.Config().ServerConf.StripeSecretKey != "" && p.Config().ServerConf.StripePublishableKey != "" {
 		// Create billing customer for project and set the billing ID
-		billingID, err := p.Config().BillingManager.CreateCustomer(ctx, user.Email, proj.ID, proj.Name)
+		billingID, err := p.Config().BillingManager.StripeClient.CreateCustomer(ctx, user.Email, proj)
 		if err != nil {
 			err = telemetry.Error(ctx, span, err, "error creating billing customer")
 			p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
@@ -89,12 +91,47 @@ func (p *ProjectCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		}
 		proj.BillingID = billingID
 
-		_, err = p.Repo().Project().UpdateProject(proj)
+		telemetry.WithAttributes(span,
+			telemetry.AttributeKV{Key: "project-id", Value: proj.ID},
+			telemetry.AttributeKV{Key: "customer-id", Value: proj.BillingID},
+			telemetry.AttributeKV{Key: "user-email", Value: user.Email},
+		)
+	}
+
+	// Create Metronome Customer
+	if p.Config().ServerConf.MetronomeAPIKey != "" {
+		usageID, err := p.Config().BillingManager.MetronomeClient.CreateCustomer(user.CompanyName, proj.Name, proj.ID, proj.BillingID)
 		if err != nil {
-			err := telemetry.Error(ctx, span, err, "error updating project")
+			err = telemetry.Error(ctx, span, err, "error creating billing customer")
 			p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 			return
 		}
+		proj.UsageID = usageID
+	}
+
+	// Add customer to starter plan
+	if p.Config().ServerConf.MetronomeAPIKey != "" && p.Config().ServerConf.PorterCloudPlanID != "" &&
+		p.Config().ServerConf.EnableSandbox {
+		porterCloudPlanID, err := uuid.Parse(p.Config().ServerConf.PorterCloudPlanID)
+		if err != nil {
+			err = telemetry.Error(ctx, span, err, "error parsing starter plan id")
+			p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
+		customerPlanID, err := p.Config().BillingManager.MetronomeClient.AddCustomerPlan(proj.UsageID, porterCloudPlanID)
+		if err != nil {
+			err = telemetry.Error(ctx, span, err, "error adding customer to starter plan")
+			p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
+		proj.UsagePlanID = customerPlanID
+	}
+
+	_, err = p.Repo().Project().UpdateProject(proj)
+	if err != nil {
+		err := telemetry.Error(ctx, span, err, "error updating project")
+		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
 	}
 
 	// create default project usage restriction

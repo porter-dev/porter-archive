@@ -5,6 +5,7 @@ import (
 
 	"gorm.io/gorm"
 
+	"github.com/google/uuid"
 	"github.com/launchdarkly/go-sdk-common/v3/ldcontext"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/features"
@@ -137,8 +138,11 @@ type Project struct {
 	BillingID      string
 	BillingEnabled bool
 
-	ProjectUsageID      uint
-	ProjectUsageCacheID uint
+	// UsageID is the id corresponding to the customer in Metronome
+	UsageID uuid.UUID
+	// UsagePlanID is the id of the customer-plan relationship. Do not confuse with the actual plan ID.
+	// This exists as long as a user is part of a plan.
+	UsagePlanID uuid.UUID
 
 	// linked repos
 	GitRepos []GitRepo `json:"git_repos,omitempty"`

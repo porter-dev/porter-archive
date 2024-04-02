@@ -237,14 +237,17 @@ export const useLogs = ({
         }
         const jsonData = evt.data.trim().split("\n");
         const newLogs = jsonData.map((data: string) => {
-          const parsedLogData = z
-            .record(z.unknown())
-            .safeParse(JSON.parse(data));
-          if (!parsedLogData.success) {
+          try {
+            const parsedLogData = z
+              .record(z.unknown())
+              .safeParse(JSON.parse(data));
+            if (!parsedLogData.success) {
+              return {};
+            }
+            return parsedLogData.data;
+          } catch (err) {
             return {};
           }
-
-          return parsedLogData.data;
         });
         const newLogsParsed = parseLogsFromAgent(newLogs);
 

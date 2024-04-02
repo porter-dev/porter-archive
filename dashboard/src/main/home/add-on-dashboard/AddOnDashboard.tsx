@@ -22,6 +22,7 @@ import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import Toggle from "components/porter/Toggle";
 import { useAuthState } from "main/auth/context";
+import { useDefaultDeploymentTarget } from "lib/hooks/useDeploymentTarget";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
@@ -51,16 +52,10 @@ export const RestrictedNamespaces = [
   "external-secrets",
 ];
 
-const templateBlacklist = [
-  "web",
-  "worker",
-  "job",
-  "umbrella",
-  "postgresql-managed",
-  "redis-managed",
-];
+const templateBlacklist = ["web", "worker", "job", "umbrella"];
 
 const AddOnDashboard: React.FC<Props> = ({}) => {
+  const { defaultDeploymentTarget } = useDefaultDeploymentTarget();
   const { currentProject, currentCluster } = useContext(Context);
   const [addOns, setAddOns] = useState([]);
   const [searchValue, setSearchValue] = useState("");
@@ -70,7 +65,7 @@ const AddOnDashboard: React.FC<Props> = ({}) => {
   const filteredAddOns = useMemo(() => {
     const filtered = addOns.filter((app) => {
       return (
-        !RestrictedNamespaces.includes(app.namespace) &&
+        app.namespace === defaultDeploymentTarget.namespace &&
         !templateBlacklist.includes(app.chart.metadata.name)
       );
     });

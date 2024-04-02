@@ -3442,13 +3442,21 @@ const removeStackEnvGroup = baseApi<
 
 // Billing
 const checkBillingCustomerExists = baseApi<
-  {
-    user_email?: string;
-  },
+  {},
   {
     project_id?: number;
   }
 >("POST", ({ project_id }) => `/api/projects/${project_id}/billing/customer`);
+
+const getPublishableKey = baseApi<
+  {},
+  {
+    project_id?: number;
+  }
+>(
+  "GET",
+  ({ project_id }) => `/api/projects/${project_id}/billing/publishable_key`
+);
 
 const getHasBilling = baseApi<{}, { project_id: number }>(
   "GET",
@@ -3511,6 +3519,7 @@ const createSecretAndOpenGitHubPullRequest = baseApi<
     porter_yaml_path?: string;
     delete_workflow_filename?: string;
     previews_workflow_filename?: string;
+    deployment_target_id?: string;
   },
   {
     project_id: number;
@@ -3846,6 +3855,7 @@ export default {
 
   // BILLING
   checkBillingCustomerExists,
+  getPublishableKey,
   listPaymentMethod,
   addPaymentMethod,
   setDefaultPaymentMethod,

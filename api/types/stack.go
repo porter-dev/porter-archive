@@ -20,6 +20,7 @@ type CreateSecretAndOpenGHPRRequest struct {
 	PorterYamlPath           string `json:"porter_yaml_path"`
 	DeleteWorkflowFilename   string `json:"delete_workflow_filename"`
 	PreviewsWorkflowFilename string `json:"previews_workflow_filename"`
+	DeploymentTargetId       string `json:"deployment_target_id"`
 }
 
 type CreateSecretAndOpenGHPRResponse struct {

@@ -10,6 +10,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/analytics"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/telemetry"
 )
@@ -41,12 +42,17 @@ func (c *CreateBillingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 
 	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
-	clientSecret, err := c.Config().BillingManager.CreatePaymentMethod(proj)
+	clientSecret, err := c.Config().BillingManager.CreatePaymentMethod(ctx, proj)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error creating payment method")
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error creating payment method: %w", err)))
 		return
 	}
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "project-id", Value: proj.ID},
+		telemetry.AttributeKV{Key: "customer-id", Value: proj.BillingID},
+	)
 
 	c.WriteResult(w, r, clientSecret)
 }
@@ -65,6 +71,7 @@ func (c *SetDefaultBillingHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	ctx, span := telemetry.NewSpan(r.Context(), "set-default-billing-endpoint")
 	defer span.End()
 
+	user, _ := r.Context().Value(types.UserScope).(*models.User)
 	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
 	paymentMethodID, reqErr := requestutils.GetURLParamString(r, types.URLParamPaymentMethodID)
@@ -74,12 +81,22 @@ func (c *SetDefaultBillingHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	err := c.Config().BillingManager.SetDefaultPaymentMethod(paymentMethodID, proj)
+	err := c.Config().BillingManager.SetDefaultPaymentMethod(ctx, paymentMethodID, proj)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error setting default payment method")
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error setting default payment method: %w", err)))
 		return
 	}
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "project-id", Value: proj.ID},
+		telemetry.AttributeKV{Key: "customer-id", Value: proj.BillingID},
+		telemetry.AttributeKV{Key: "payment-method-id", Value: paymentMethodID},
+	)
+
+	_ = c.Config().AnalyticsClient.Track(analytics.PaymentMethodAttachedTrack(&analytics.PaymentMethodCreateDeleteTrackOpts{
+		ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(user.ID, proj.ID),
+	}))
 
 	c.WriteResult(w, r, "")
 }

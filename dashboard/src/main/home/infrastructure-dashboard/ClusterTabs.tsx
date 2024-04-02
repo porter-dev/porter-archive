@@ -30,7 +30,6 @@ type Props = {
 };
 const ClusterTabs: React.FC<Props> = ({ tabParam }) => {
   const history = useHistory();
-
   const { cluster, isClusterUpdating } = useClusterContext();
 
   const {

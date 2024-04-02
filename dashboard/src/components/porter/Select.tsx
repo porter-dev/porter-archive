@@ -21,6 +21,7 @@ type Props = {
   prefix?: React.ReactNode;
   width?: string;
   height?: string;
+  noShrink?: boolean;
 };
 
 const Select: React.FC<Props> = ({
@@ -34,9 +35,10 @@ const Select: React.FC<Props> = ({
   prefix,
   width,
   height,
+  noShrink,
 }) => {
   return (
-    <Div width={width}>
+    <Div width={width} noShrink={noShrink}>
       {label && <Label color={labelColor}>{label}</Label>}
       <SelectWrapper isDisabled={disabled ?? false} height={height}>
         {prefix && (
@@ -86,8 +88,9 @@ const Select: React.FC<Props> = ({
 
 export default Select;
 
-const Div = styled.div<{ width?: string }>`
+const Div = styled.div<{ width?: string, noShrink?: boolean }>`
   width: ${({ width }) => width || ""};
+  ${({ noShrink }) => (noShrink ? "flex-shrink: 0;" : "")}
 `;
 
 const Img = styled.img`

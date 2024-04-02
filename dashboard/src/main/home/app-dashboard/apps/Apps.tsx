@@ -14,6 +14,7 @@ import DashboardPlaceholder from "components/porter/DashboardPlaceholder";
 import Image from "components/porter/Image";
 import PorterLink from "components/porter/Link";
 import SearchBar from "components/porter/SearchBar";
+import Select from "components/porter/Select";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import Toggle from "components/porter/Toggle";
@@ -22,6 +23,10 @@ import DeleteEnvModal from "main/home/cluster-dashboard/preview-environments/v2/
 import BillingModal from "main/home/modals/BillingModal";
 import { clientAddonFromProto, type ClientAddon } from "lib/addons";
 import { useAppAnalytics } from "lib/hooks/useAppAnalytics";
+import {
+  useDeploymentTargetList,
+  type DeploymentTarget,
+} from "lib/hooks/useDeploymentTarget";
 import { checkIfProjectHasPayment } from "lib/hooks/useStripe";
 
 import api from "shared/api";
@@ -33,6 +38,7 @@ import gift from "assets/gift.svg";
 import grid from "assets/grid.png";
 import list from "assets/list.png";
 import pull_request from "assets/pull_request_icon.svg";
+import target from "assets/target.svg";
 import letter from "assets/vector.svg";
 
 import AppGrid from "./AppGrid";
@@ -48,6 +54,10 @@ const Apps: React.FC = () => {
   const { currentProject, currentCluster } = useContext(Context);
   const { updateAppStep } = useAppAnalytics();
   const { currentDeploymentTarget } = useDeploymentTarget();
+  const { deploymentTargetList } = useDeploymentTargetList({ preview: false });
+  const [deploymentTargetIdFilter, setDeploymentTargetIdFilter] =
+    useState<string>("all");
+
   const { hasPaymentEnabled } = checkIfProjectHasPayment();
   const history = useHistory();
 
@@ -67,6 +77,7 @@ const Apps: React.FC = () => {
             cluster_id: currentCluster?.id,
             project_id: currentProject?.id,
             deployment_target_id: currentDeploymentTarget?.id,
+            deployment_target_id_filter: deploymentTargetIdFilter,
           },
         ],
         queryFn: async () => {
@@ -80,14 +91,20 @@ const Apps: React.FC = () => {
             return;
           }
 
+          let deploymentTargetId = currentDeploymentTarget.id;
+          if (currentProject.managed_deployment_targets_enabled) {
+            if (!currentDeploymentTarget.is_preview) {
+              deploymentTargetId =
+                deploymentTargetIdFilter !== "all"
+                  ? deploymentTargetIdFilter
+                  : "";
+            }
+          }
+
           const res = await api.getLatestAppRevisions(
             "<token>",
             {
-              deployment_target_id:
-                currentProject.managed_deployment_targets_enabled &&
-                !currentDeploymentTarget.is_preview
-                  ? undefined
-                  : currentDeploymentTarget.id,
+              deployment_target_id: deploymentTargetId,
               ignore_preview_apps: !currentDeploymentTarget.is_preview,
             },
             { cluster_id: currentCluster.id, project_id: currentProject.id }
@@ -208,7 +225,10 @@ const Apps: React.FC = () => {
       return <Loading offset="-150px" />;
     }
 
-    if (apps.length === 0) {
+    if (
+      apps.length === 0 &&
+      !currentProject?.managed_deployment_targets_enabled
+    ) {
       if (currentCluster?.status === "FAILED") {
         return <ClusterProvisioningPlaceholder />;
       }
@@ -310,6 +330,37 @@ const Apps: React.FC = () => {
             width="100%"
           />
           <Spacer inline x={2} />
+          {currentProject?.managed_deployment_targets_enabled &&
+            !currentDeploymentTarget?.is_preview && (
+              <>
+                <Select
+                  options={[{ value: "all", label: "All" }].concat(
+                    deploymentTargetList.map((target: DeploymentTarget) => {
+                      return {
+                        value: target.id,
+                        label: target.name,
+                        key: target.id,
+                      };
+                    })
+                  )}
+                  value={deploymentTargetIdFilter}
+                  setValue={(value) => {
+                    if (value !== deploymentTargetIdFilter) {
+                      setDeploymentTargetIdFilter(value);
+                    }
+                  }}
+                  prefix={
+                    <Container row>
+                      <Image src={target} size={15} opacity={0.6} />
+                      <Spacer inline x={0.5} />
+                      Target
+                    </Container>
+                  }
+                  noShrink={true}
+                />
+                <Spacer inline x={1} />
+              </>
+            )}
           <Toggle
             items={[
               { label: <ToggleIcon src={calendar} />, value: "calendar" },
@@ -339,7 +390,7 @@ const Apps: React.FC = () => {
               }
             }}
           />
-          <Spacer inline x={2} />
+          <Spacer inline x={1} />
           {currentDeploymentTarget?.is_preview ? (
             <Button
               onClick={async () => {

@@ -25,9 +25,21 @@ const TagList: React.FC<Props> = ({
   const renderTagList = (): JSX.Element => {
     if (loading) {
       return (
-        <LoadingWrapper>
-          <Loading message={"Loading all images linked to your project"} />
-        </LoadingWrapper>
+        <div>
+          {searchFilter !== "" && (
+            <TagItem
+              onClick={() => {
+                setSelectedTag(searchFilter);
+              }}
+            >
+              <img src={addCircle} />
+              {`Use tag "${searchFilter}"`}
+            </TagItem>
+          )}
+          <LoadingWrapper>
+            <Loading message={"Loading all images linked to your project"} />
+          </LoadingWrapper>
+        </div>
       );
     } else if (selectedImage == null) {
       if (searchFilter) {

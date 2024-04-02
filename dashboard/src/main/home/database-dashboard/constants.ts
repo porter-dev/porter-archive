@@ -37,6 +37,13 @@ export const SUPPORTED_DATASTORE_TEMPLATES: DatastoreTemplate[] = [
     disabled: false,
     instanceTiers: [
       {
+        tier: "db.t4g.micro" as const,
+        label: "Micro",
+        cpuCores: 2,
+        ramGigabytes: 1,
+        storageGigabytes: 20,
+      },
+      {
         tier: "db.t4g.small" as const,
         label: "Small",
         cpuCores: 2,

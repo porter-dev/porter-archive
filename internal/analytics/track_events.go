@@ -63,6 +63,11 @@ const (
 
 	PorterAppUpdateFailure SegmentEvent = "Porter App Update Failure"
 
+	// billing
+
+	PaymentMethodAttached  SegmentEvent = "Credit Card Linked"
+	PaymentMethodDettached SegmentEvent = "Credit Card Removed"
+
 	// new infra flow
 
 	// CloudProviderPermissionsGranted is a segment event that is triggered when a user grants cloud provider permissions

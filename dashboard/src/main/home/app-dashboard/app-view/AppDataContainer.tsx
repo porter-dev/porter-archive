@@ -33,7 +33,6 @@ import {
   clientAppFromProto,
   porterAppFormValidator,
   type PorterAppFormData,
-  type SourceOptions,
 } from "lib/porter-apps";
 
 import api from "shared/api";
@@ -111,6 +110,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
     setPreviewRevision,
     latestClientNotifications,
     tabUrlGenerator,
+    latestSource,
   } = useLatestRevision();
   const { validateApp, setServiceDeletions } = useAppValidation({
     deploymentTargetID: deploymentTarget.id,
@@ -123,28 +123,6 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
 
     return DEFAULT_TAB;
   }, [tabParam]);
-
-  const latestSource: SourceOptions = useMemo(() => {
-    // because we store the image info in the app proto, we can refer to that for repository/tag instead of the app record
-    if (porterAppRecord.image_repo_uri && latestProto.image) {
-      return {
-        type: "docker-registry",
-        image: {
-          repository: latestProto.image.repository,
-          tag: latestProto.image.tag,
-        },
-      };
-    }
-
-    // the app proto does not contain the fields below, so we must pull them from the app record
-    return {
-      type: "github",
-      git_repo_id: porterAppRecord.git_repo_id ?? 0,
-      git_repo_name: porterAppRecord.repo_name ?? "",
-      git_branch: porterAppRecord.git_branch ?? "",
-      porter_yaml_path: porterAppRecord.porter_yaml_path ?? "./porter.yaml",
-    };
-  }, [porterAppRecord, latestProto]);
 
   const porterAppFormMethods = useForm<PorterAppFormData>({
     reValidateMode: "onSubmit",

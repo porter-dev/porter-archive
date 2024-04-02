@@ -1,22 +1,25 @@
+import { type SourceOptions } from "lib/porter-apps";
 import React from "react";
 import styled from "styled-components";
 
-export type SourceType = "github" | "docker-registry";
+type SourceType = SourceOptions['type']
 
-interface SourceSelectorProps {
+type SourceSelectorProps = {
   selectedSourceType: SourceType | undefined;
   setSourceType: (sourceType: SourceType) => void;
-}
+};
 
 const SourceSelector: React.FC<SourceSelectorProps> = ({
   selectedSourceType,
-  setSourceType
+  setSourceType,
 }) => {
   return (
     <BlockList>
       <Block
-        selected={selectedSourceType === 'github'}
-        onClick={() => setSourceType('github')}
+        selected={selectedSourceType === "github"}
+        onClick={() => {
+          setSourceType("github");
+        }}
       >
         <BlockIcon src="https://git-scm.com/images/logos/downloads/Git-Icon-1788C.png" />
         <BlockTitle>Git repository</BlockTitle>
@@ -25,8 +28,10 @@ const SourceSelector: React.FC<SourceSelectorProps> = ({
         </BlockDescription>
       </Block>
       <Block
-        selected={selectedSourceType === 'docker-registry'}
-        onClick={() => setSourceType('docker-registry')}
+        selected={selectedSourceType === "docker-registry"}
+        onClick={() => {
+          setSourceType("docker-registry");
+        }}
       >
         <BlockIcon src="https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/97_Docker_logo_logos-512.png" />
         <BlockTitle>Docker registry</BlockTitle>
@@ -34,10 +39,9 @@ const SourceSelector: React.FC<SourceSelectorProps> = ({
           Deploy a container from an image registry.
         </BlockDescription>
       </Block>
-
     </BlockList>
   );
-}
+};
 
 export default SourceSelector;
 
@@ -58,10 +62,11 @@ const Block = styled.div<{ selected?: boolean }>`
   position: relative;
   transition: all 0.2s;
   border-radius: 5px;
-  background: ${props => props.theme.clickable.bg};
-  border: ${props => props.selected ? "2px solid #8590ff" : "1px solid #494b4f"};
+  background: ${(props) => props.theme.clickable.bg};
+  border: ${(props) =>
+    props.selected ? "2px solid #8590ff" : "1px solid #494b4f"};
   :hover {
-    border: ${({ selected }) => (!selected && "1px solid #7a7b80")};
+    border: ${({ selected }) => !selected && "1px solid #7a7b80"};
   }
 
   animation: fadeIn 0.3s 0s;

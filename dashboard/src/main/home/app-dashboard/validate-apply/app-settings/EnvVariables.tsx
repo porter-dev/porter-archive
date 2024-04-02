@@ -3,6 +3,8 @@ import { useFieldArray, useFormContext } from "react-hook-form";
 import styled from "styled-components";
 
 import { type NewPopulatedEnvGroup } from "components/porter-form/types";
+import Button from "components/porter/Button";
+import Image from "components/porter/Image";
 import Spacer from "components/porter/Spacer";
 import EnvEditorModal from "main/home/modals/EnvEditorModal";
 import Modal from "main/home/modals/Modal";
@@ -11,9 +13,7 @@ import { type PorterAppFormData } from "lib/porter-apps";
 import { dotenv_parse } from "shared/string_utils";
 import upload from "assets/upload.svg";
 
-import Image from "components/porter/Image";
 import EnvVarRow from "./EnvVarRow";
-import Button from "components/porter/Button";
 
 export type KeyValueType = {
   key: string;
@@ -46,7 +46,8 @@ const EnvVariables = ({ syncedEnvGroups }: PropsType) => {
     if (!syncedEnvGroups) return false;
     return syncedEnvGroups.some(
       (envGroup) =>
-        key in (envGroup.variables || []) || key in (envGroup.secret_variables || [])
+        key in (envGroup.variables || []) ||
+        key in (envGroup.secret_variables || [])
     );
   };
 
@@ -109,7 +110,7 @@ const EnvVariables = ({ syncedEnvGroups }: PropsType) => {
           }}
         >
           <Image src={upload} size={16} />
-          <Spacer inline x={.5} />
+          <Spacer inline x={0.5} />
           Copy from file
         </Button>
       </InputWrapper>

@@ -147,7 +147,7 @@ export const useAppValidation = ({
             source: src,
           });
         })
-        .with({ type: "docker-registry" }, () => {
+        .with({ type: "docker-registry" }, { type: "local" }, () => {
           return "";
         })
         .exhaustive();

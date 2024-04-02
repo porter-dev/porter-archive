@@ -35,6 +35,11 @@ export const sourceValidator = z.discriminatedUnion("type", [
     porter_yaml_path: z.string().default("./porter.yaml"),
   }),
   z.object({
+    type: z.literal("local"),
+    git_branch: z.undefined(),
+    git_repo_name: z.undefined(),
+  }),
+  z.object({
     type: z.literal("docker-registry"),
     // add branch and repo as undefined to allow for easy checks on changes to the source type
     // (i.e. we want to remove the services if any source fields change)
@@ -320,6 +325,7 @@ export function clientAppToProto(data: PorterAppFormData): PorterApp {
   const proto = match(source)
     .with(
       { type: "github" },
+      { type: "local" },
       () =>
         new PorterApp({
           name: app.name.value,

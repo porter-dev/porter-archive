@@ -121,7 +121,7 @@ const AppGrid: React.FC<AppGridProps> = ({
               <Link to={appLink} key={i}>
                 <Block
                   locked={false}
-                  appId={user.isPorterUser ? source.id : ""}
+                  appId={user.isPorterUser ? String(source.id) : ""}
                 >
                   <Container row>
                     <AppIcon
@@ -243,11 +243,11 @@ export const Block = styled.div<{ locked?: boolean; appId?: string }>`
 
     ::after {
       content: ${(props) =>
-    props.locked || !props.appId ? "''" : `"AppID: ${props.appId}"`};
+        props.locked || !props.appId ? "''" : `"AppID: ${props.appId}"`};
       position: absolute;
       top: 2px;
       right: 2px;
-      background:  ${(props) => props.appId && `#ffffff44`};
+      background: ${(props) => props.appId && `#ffffff44`};
       opacity: 0.3;
       padding: 5px;
       border-radius: 4px;

@@ -57,6 +57,10 @@ func (c *DeleteBillingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 
 	_ = c.Config().AnalyticsClient.Track(analytics.PaymentMethodDettachedTrack(&analytics.PaymentMethodCreateDeleteTrackOpts{
 		ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(user.ID, proj.ID),
+		Email:                  user.Email,
+		FirstName:              user.FirstName,
+		LastName:               user.LastName,
+		CompanyName:            user.CompanyName,
 	}))
 
 	c.WriteResult(w, r, "")

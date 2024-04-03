@@ -59,7 +59,6 @@ func (c *CreateBillingCustomerHandler) ServeHTTP(w http.ResponseWriter, r *http.
 	if proj.UsageID == uuid.Nil {
 		// Create Metronome customer and add to starter plan
 		if c.Config().ServerConf.MetronomeAPIKey != "" && c.Config().ServerConf.PorterCloudPlanID != "" && proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient) {
-
 			// Create Metronome Customer
 			if c.Config().ServerConf.MetronomeAPIKey != "" {
 				usageID, err := c.Config().BillingManager.MetronomeClient.CreateCustomer(user.CompanyName, proj.Name, proj.ID, proj.BillingID)

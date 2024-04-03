@@ -21,16 +21,19 @@ const (
 	defaultGrantExpiryMonths = 1
 )
 
+// MetronomeClient is the client used to call the Metronome API
 type MetronomeClient struct {
 	ApiKey string
 }
 
+// NewMetronomeClient returns a new Metronome client
 func NewMetronomeClient(metronomeApiKey string) *MetronomeClient {
 	return &MetronomeClient{
 		ApiKey: metronomeApiKey,
 	}
 }
 
+// CreateCustomer will create the customer in Metronome
 func (m *MetronomeClient) CreateCustomer(orgName string, projectName string, projectID uint, billingID string) (customerID uuid.UUID, err error) {
 	path := "customers"
 	projIDStr := strconv.FormatUint(uint64(projectID), 10)
@@ -51,13 +54,14 @@ func (m *MetronomeClient) CreateCustomer(orgName string, projectName string, pro
 		Data types.Customer `json:"data"`
 	}
 
-	err = post(path, http.MethodPost, m.ApiKey, customer, &result)
+	err = post(path, m.ApiKey, customer, &result)
 	if err != nil {
 		return customerID, err
 	}
 	return result.Data.ID, nil
 }
 
+// AddCustomerPlan will start the customer on the given plan
 func (m *MetronomeClient) AddCustomerPlan(customerID uuid.UUID, planID uuid.UUID) (customerPlanID uuid.UUID, err error) {
 	if customerID == uuid.Nil || planID == uuid.Nil {
 		return customerPlanID, fmt.Errorf("customer or plan id empty")
@@ -77,7 +81,7 @@ func (m *MetronomeClient) AddCustomerPlan(customerID uuid.UUID, planID uuid.UUID
 
 	var result types.AddCustomerPlanResponse
 
-	err = post(path, http.MethodPost, m.ApiKey, req, &result)
+	err = post(path, m.ApiKey, req, &result)
 	if err != nil {
 		return customerPlanID, err
 	}
@@ -85,6 +89,7 @@ func (m *MetronomeClient) AddCustomerPlan(customerID uuid.UUID, planID uuid.UUID
 	return result.Data.CustomerPlanID, nil
 }
 
+// EndCustomerPlan will immediately end the plan for the given customer
 func (m *MetronomeClient) EndCustomerPlan(customerID uuid.UUID, customerPlanID uuid.UUID) (err error) {
 	if customerID == uuid.Nil || customerPlanID == uuid.Nil {
 		return fmt.Errorf("customer or customer plan id empty")
@@ -101,7 +106,7 @@ func (m *MetronomeClient) EndCustomerPlan(customerID uuid.UUID, customerPlanID u
 		EndingBefore: endBefore,
 	}
 
-	err = post(path, http.MethodPost, m.ApiKey, req, nil)
+	err = post(path, m.ApiKey, req, nil)
 	if err != nil {
 		return err
 	}
@@ -109,6 +114,7 @@ func (m *MetronomeClient) EndCustomerPlan(customerID uuid.UUID, customerPlanID u
 	return nil
 }
 
+// GetCustomerCredits will return the first credit grant for the customer
 func (m *MetronomeClient) GetCustomerCredits(customerID uuid.UUID) (credits int64, err error) {
 	if customerID == uuid.Nil {
 		return credits, fmt.Errorf("customer id empty")
@@ -123,7 +129,7 @@ func (m *MetronomeClient) GetCustomerCredits(customerID uuid.UUID) (credits int6
 	}
 
 	var result types.ListCreditGrantsResponse
-	err = post(path, http.MethodPost, m.ApiKey, req, &result)
+	err = post(path, m.ApiKey, req, &result)
 	if err != nil {
 		return credits, err
 	}
@@ -131,7 +137,7 @@ func (m *MetronomeClient) GetCustomerCredits(customerID uuid.UUID) (credits int6
 	return result.Data[0].Balance.IncludingPending, nil
 }
 
-func post(path string, method string, apiKey string, body interface{}, data interface{}) (err error) {
+func post(path string, apiKey string, body interface{}, data interface{}) (err error) {
 	client := http.Client{}
 	endpoint, err := url.JoinPath(metronomeBaseUrl, path)
 	if err != nil {
@@ -146,7 +152,7 @@ func post(path string, method string, apiKey string, body interface{}, data inte
 		}
 	}
 
-	req, err := http.NewRequest(method, endpoint, bytes.NewBuffer(bodyJson))
+	req, err := http.NewRequest(http.MethodPost, endpoint, bytes.NewBuffer(bodyJson))
 	if err != nil {
 		return err
 	}
@@ -158,7 +164,6 @@ func post(path string, method string, apiKey string, body interface{}, data inte
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("non 200 status code returned: %d", resp.StatusCode)
@@ -170,6 +175,7 @@ func post(path string, method string, apiKey string, body interface{}, data inte
 			return err
 		}
 	}
+	_ = resp.Body.Close()
 
 	return nil
 }

@@ -62,6 +62,7 @@ type EndCustomerPlanRequest struct {
 	VoidStripeInvoices bool   `json:"void_stripe_invoices"`    // Will void Stripe invoices if VoidInvoices is set to true. Drafts will be deleted.
 }
 
+// ListCreditGrantsRequest is the request to list a user's credit grants
 type ListCreditGrantsRequest struct {
 	// An array of credit type IDs. This must not be specified if
 	// credit_grant_ids is specified.
@@ -79,15 +80,18 @@ type ListCreditGrantsRequest struct {
 	EffectiveBefore string `json:"effective_before,omitempty"`
 }
 
+// ListCreditGrantsResponse is the response returned by the list credit grants request
 type ListCreditGrantsResponse struct {
 	Data []CreditGrant `json:"data"`
 }
 
+// CreditType is the type of the credit used in the credit grant
 type CreditType struct {
 	Name string `json:"name"` // The name of the credit type
 	ID   string `json:"id"`   // The UUID of the credit type
 }
 
+// GrantAmount represents the amount of credits granted
 type GrantAmount struct {
 	Amount     int64      `json:"amount"`      // The amount of credits granted
 	CreditType CreditType `json:"credit_type"` // The credit type for the amount granted
@@ -101,6 +105,7 @@ type Balance struct {
 	EffectiveAt      string `json:"effective_at"`      // The end date of the customer's current billing period in RFC 3339 format.
 }
 
+// CreditGrant is a grant given to a specific user on a specific plan
 type CreditGrant struct {
 	ID          uuid.UUID `json:"id"`
 	Name        string

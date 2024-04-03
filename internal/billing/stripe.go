@@ -20,6 +20,7 @@ type StripeClient struct {
 	PublishableKey string
 }
 
+// NewStripeClient creates a new client to call the Stripe API
 func NewStripeClient(secretKey string, publishableKey string) *StripeClient {
 	return &StripeClient{
 		SecretKey:      secretKey,

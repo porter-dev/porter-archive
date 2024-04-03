@@ -27,7 +27,9 @@ const (
 	CapiProvisionerEnabled FeatureFlagLabel = "capi_provisioner_enabled"
 
 	// BillingEnabled enables the "Billing" tab and all Stripe integrations
-	BillingEnabled   FeatureFlagLabel = "billing_enabled"
+	BillingEnabled FeatureFlagLabel = "billing_enabled"
+
+	// MetronomeEnabled enables all Metronome business logic
 	MetronomeEnabled FeatureFlagLabel = "metronome_enabled"
 
 	// DBEnabled enables the "Databases" tab

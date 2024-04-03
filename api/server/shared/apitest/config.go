@@ -60,7 +60,7 @@ func (t *TestConfigLoader) LoadConfig() (*config.Config, error) {
 		UserNotifier:       notifier,
 		LaunchDarklyClient: &features.Client{},
 		AnalyticsClient:    analytics.InitializeAnalyticsSegmentClient("", l),
-		BillingManager:     &billing.NoopBillingManager{},
+		BillingManager:     billing.BillingManager{},
 		TelemetryConfig:    telemetry.TracerConfig{ServiceName: "fake", CollectorURL: "fake"},
 	}, nil
 }

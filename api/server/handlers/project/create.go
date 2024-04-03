@@ -3,6 +3,7 @@ package project
 import (
 	"net/http"
 
+	"github.com/google/uuid"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
@@ -110,11 +111,13 @@ func (p *ProjectCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		)
 	}
 
-	_, err = p.Repo().Project().UpdateProject(proj)
-	if err != nil {
-		err := telemetry.Error(ctx, span, err, "error updating project")
-		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
+	if proj.BillingID != "" || proj.UsageID != uuid.Nil {
+		_, err = p.Repo().Project().UpdateProject(proj)
+		if err != nil {
+			err := telemetry.Error(ctx, span, err, "error updating project")
+			p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
 	}
 
 	// create default project usage restriction

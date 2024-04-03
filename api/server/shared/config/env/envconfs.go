@@ -74,6 +74,10 @@ type ServerConf struct {
 	MetronomeAPIKey      string `env:"METRONOME_API_KEY"`
 	PorterCloudPlanID    string `env:"PORTER_CLOUD_PLAN_ID"`
 
+	// This endpoint will be passed to the porter-agent so that
+	// the billing manager can query Prometheus.
+	PrometheusUrl string `env:"PROMETHEUS_URL"`
+
 	SlackClientID     string `env:"SLACK_CLIENT_ID"`
 	SlackClientSecret string `env:"SLACK_CLIENT_SECRET"`
 

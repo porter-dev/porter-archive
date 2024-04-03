@@ -37,63 +37,68 @@ func (c *CreateBillingCustomerHandler) ServeHTTP(w http.ResponseWriter, r *http.
 	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
 	user, _ := r.Context().Value(types.UserScope).(*models.User)
 
-	if proj.BillingID != "" {
-		c.WriteResult(w, r, "")
-		return
+	var shouldUpdate bool
+	if proj.BillingID == "" {
+		// Create customer in Stripe
+		customerID, err := c.Config().BillingManager.StripeClient.CreateCustomer(ctx, user.Email, proj)
+		if err != nil {
+			err := telemetry.Error(ctx, span, err, "error creating billing customer")
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error creating billing customer: %w", err)))
+			return
+		}
+
+		telemetry.WithAttributes(span,
+			telemetry.AttributeKV{Key: "project-id", Value: proj.ID},
+			telemetry.AttributeKV{Key: "customer-id", Value: proj.BillingID},
+			telemetry.AttributeKV{Key: "user-email", Value: user.Email},
+		)
+		proj.BillingID = customerID
+		shouldUpdate = true
 	}
 
-	// Create customer in Stripe
-	customerID, err := c.Config().BillingManager.StripeClient.CreateCustomer(ctx, user.Email, proj)
-	if err != nil {
-		err := telemetry.Error(ctx, span, err, "error creating billing customer")
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error creating billing customer: %w", err)))
-		return
-	}
+	if proj.UsageID == uuid.Nil {
+		// Create Metronome customer and add to starter plan
+		if c.Config().ServerConf.MetronomeAPIKey != "" && c.Config().ServerConf.PorterCloudPlanID != "" &&
+			proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient) {
 
-	telemetry.WithAttributes(span,
-		telemetry.AttributeKV{Key: "project-id", Value: proj.ID},
-		telemetry.AttributeKV{Key: "customer-id", Value: proj.BillingID},
-		telemetry.AttributeKV{Key: "user-email", Value: user.Email},
-	)
+			// Create Metronome Customer
+			if c.Config().ServerConf.MetronomeAPIKey != "" {
+				usageID, err := c.Config().BillingManager.MetronomeClient.CreateCustomer(user.CompanyName, proj.Name, proj.ID, proj.BillingID)
+				if err != nil {
+					err = telemetry.Error(ctx, span, err, "error creating billing customer")
+					c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+					return
+				}
+				proj.UsageID = usageID
+			}
 
-	// Create Metronome customer and add to starter plan
-	if c.Config().ServerConf.MetronomeAPIKey != "" && c.Config().ServerConf.PorterCloudPlanID != "" &&
-		c.Config().ServerConf.EnableSandbox {
-		// Create Metronome Customer
-		if c.Config().ServerConf.MetronomeAPIKey != "" {
-			usageID, err := c.Config().BillingManager.MetronomeClient.CreateCustomer(user.CompanyName, proj.Name, proj.ID, proj.BillingID)
+			porterCloudPlanID, err := uuid.Parse(c.Config().ServerConf.PorterCloudPlanID)
 			if err != nil {
-				err = telemetry.Error(ctx, span, err, "error creating billing customer")
+				err = telemetry.Error(ctx, span, err, "error parsing starter plan id")
 				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 				return
 			}
-			proj.UsageID = usageID
-		}
 
-		porterCloudPlanID, err := uuid.Parse(c.Config().ServerConf.PorterCloudPlanID)
-		if err != nil {
-			err = telemetry.Error(ctx, span, err, "error parsing starter plan id")
-			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-			return
+			// Add to starter plan
+			customerPlanID, err := c.Config().BillingManager.MetronomeClient.AddCustomerPlan(proj.UsageID, porterCloudPlanID)
+			if err != nil {
+				err = telemetry.Error(ctx, span, err, "error adding customer to starter plan")
+				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+				return
+			}
+			proj.UsagePlanID = customerPlanID
+			shouldUpdate = true
 		}
-
-		// Add to starter plan
-		customerPlanID, err := c.Config().BillingManager.MetronomeClient.AddCustomerPlan(proj.UsageID, porterCloudPlanID)
-		if err != nil {
-			err = telemetry.Error(ctx, span, err, "error adding customer to starter plan")
-			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-			return
-		}
-		proj.UsagePlanID = customerPlanID
 	}
 
-	// Update the project record with the customer ID
-	proj.BillingID = customerID
-	_, err = c.Repo().Project().UpdateProject(proj)
-	if err != nil {
-		err := telemetry.Error(ctx, span, err, "error updating project")
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error updating project: %w", err)))
-		return
+	if shouldUpdate {
+		// Update the project record with the customer ID
+		_, err := c.Repo().Project().UpdateProject(proj)
+		if err != nil {
+			err := telemetry.Error(ctx, span, err, "error updating project")
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error updating project: %w", err)))
+			return
+		}
 	}
 
 	c.WriteResult(w, r, "")

@@ -27,7 +27,8 @@ const (
 	CapiProvisionerEnabled FeatureFlagLabel = "capi_provisioner_enabled"
 
 	// BillingEnabled enables the "Billing" tab and all Stripe integrations
-	BillingEnabled FeatureFlagLabel = "billing_enabled"
+	BillingEnabled   FeatureFlagLabel = "billing_enabled"
+	MetronomeEnabled FeatureFlagLabel = "metronome_enabled"
 
 	// DBEnabled enables the "Databases" tab
 	DBEnabled FeatureFlagLabel = "db_enabled"
@@ -98,6 +99,7 @@ var ProjectFeatureFlags = map[FeatureFlagLabel]bool{
 	BetaFeaturesEnabled:             false,
 	CapiProvisionerEnabled:          true,
 	BillingEnabled:                  false,
+	MetronomeEnabled:                false,
 	DBEnabled:                       false,
 	EFSEnabled:                      false,
 	EnableReprovision:               false,
@@ -303,6 +305,7 @@ func (p *Project) ToProjectType(launchDarklyClient *features.Client) types.Proje
 		BetaFeaturesEnabled:             p.GetFeatureFlag(BetaFeaturesEnabled, launchDarklyClient),
 		CapiProvisionerEnabled:          p.GetFeatureFlag(CapiProvisionerEnabled, launchDarklyClient),
 		BillingEnabled:                  p.GetFeatureFlag(BillingEnabled, launchDarklyClient),
+		MetronomeEnabled:                p.GetFeatureFlag(MetronomeEnabled, launchDarklyClient),
 		DBEnabled:                       p.GetFeatureFlag(DBEnabled, launchDarklyClient),
 		EFSEnabled:                      p.GetFeatureFlag(EFSEnabled, launchDarklyClient),
 		EnableReprovision:               p.GetFeatureFlag(EnableReprovision, launchDarklyClient),

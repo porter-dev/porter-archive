@@ -92,7 +92,8 @@ func (p *ProjectDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	if p.Config().ServerConf.MetronomeAPIKey != "" && p.Config().ServerConf.PorterCloudPlanID != "" {
+	if p.Config().ServerConf.MetronomeAPIKey != "" && p.Config().ServerConf.PorterCloudPlanID != "" &&
+		proj.GetFeatureFlag(models.MetronomeEnabled, p.Config().LaunchDarklyClient) {
 		err = p.Config().BillingManager.MetronomeClient.EndCustomerPlan(proj.UsageID, proj.UsagePlanID)
 		if err != nil {
 			e := "error ending billing plan"

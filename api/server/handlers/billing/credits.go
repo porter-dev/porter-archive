@@ -33,6 +33,10 @@ func (c *GetCreditsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
+	if !proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient) {
+		c.WriteResult(w, r, "")
+	}
+
 	credits, err := c.Config().BillingManager.MetronomeClient.GetCustomerCredits(proj.UsageID)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error getting credits")

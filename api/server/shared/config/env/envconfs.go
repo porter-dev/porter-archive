@@ -71,9 +71,9 @@ type ServerConf struct {
 	SendgridDeleteProjectTemplateID    string `env:"SENDGRID_DELETE_PROJECT_TEMPLATE_ID"`
 	SendgridSenderEmail                string `env:"SENDGRID_SENDER_EMAIL"`
 
-	StripeSecretKey      string    `env:"STRIPE_SECRET_KEY"`
-	StripePublishableKey string    `env:"STRIPE_PUBLISHABLE_KEY"`
-	MetronomeAPIKey      string    `env:"METRONOME_API_KEY"`
+	StripeSecretKey      string `env:"STRIPE_SECRET_KEY"`
+	StripePublishableKey string `env:"STRIPE_PUBLISHABLE_KEY"`
+	MetronomeAPIKey      string `env:"METRONOME_API_KEY"`
 	PorterCloudPlanID    string `env:"PORTER_CLOUD_PLAN_ID"`
 
 	SlackClientID     string `env:"SLACK_CLIENT_ID"`

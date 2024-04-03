@@ -40,7 +40,7 @@ import (
 )
 
 var (
-	InstanceBillingManager billing.BillingManager
+	InstanceBillingManager billing.Manager
 	InstanceEnvConf        *envloader.EnvConf
 	InstanceDB             *pgorm.DB
 )
@@ -64,7 +64,7 @@ func sharedInit() {
 
 	stripeClient := billing.NewStripeClient(InstanceEnvConf.ServerConf.StripeSecretKey, InstanceEnvConf.ServerConf.StripePublishableKey)
 	metronomeClient := billing.NewMetronomeClient(InstanceEnvConf.ServerConf.MetronomeAPIKey)
-	InstanceBillingManager = billing.BillingManager{
+	InstanceBillingManager = billing.Manager{
 		StripeClient:    stripeClient,
 		MetronomeClient: metronomeClient,
 	}

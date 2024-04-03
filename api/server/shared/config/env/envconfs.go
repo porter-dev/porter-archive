@@ -1,8 +1,6 @@
 package env
 
-import (
-	"time"
-)
+import "time"
 
 // ServerConf is the server configuration
 type ServerConf struct {

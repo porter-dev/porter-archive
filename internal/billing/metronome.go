@@ -33,8 +33,8 @@ func NewMetronomeClient(metronomeApiKey string) *MetronomeClient {
 	}
 }
 
-// CreateCustomer will create the customer in Metronome
-func (m *MetronomeClient) CreateCustomer(orgName string, projectName string, projectID uint, billingID string) (customerID uuid.UUID, err error) {
+// createCustomer will create the customer in Metronome
+func (m *MetronomeClient) createCustomer(orgName string, projectName string, projectID uint, billingID string) (customerID uuid.UUID, err error) {
 	path := "customers"
 	projIDStr := strconv.FormatUint(uint64(projectID), 10)
 
@@ -61,8 +61,8 @@ func (m *MetronomeClient) CreateCustomer(orgName string, projectName string, pro
 	return result.Data.ID, nil
 }
 
-// AddCustomerPlan will start the customer on the given plan
-func (m *MetronomeClient) AddCustomerPlan(customerID uuid.UUID, planID uuid.UUID) (customerPlanID uuid.UUID, err error) {
+// addCustomerPlan will start the customer on the given plan
+func (m *MetronomeClient) addCustomerPlan(customerID uuid.UUID, planID uuid.UUID) (customerPlanID uuid.UUID, err error) {
 	if customerID == uuid.Nil || planID == uuid.Nil {
 		return customerPlanID, fmt.Errorf("customer or plan id empty")
 	}
@@ -87,6 +87,21 @@ func (m *MetronomeClient) AddCustomerPlan(customerID uuid.UUID, planID uuid.UUID
 	}
 
 	return result.Data.CustomerPlanID, nil
+}
+
+// CreateCustomerWithPlan will create the customer in Metronome and immediately add it to the plan
+func (m *MetronomeClient) CreateCustomerWithPlan(orgName string, projectName string, projectID uint, billingID string, planID string) (customerPlanID uuid.UUID, err error) {
+	porterCloudPlanID, err := uuid.Parse(planID)
+	if err != nil {
+		return customerPlanID, fmt.Errorf("error parsing starter plan id: %w", err)
+	}
+
+	customerID, err := m.createCustomer(orgName, projectName, projectID, billingID)
+	if err != nil {
+		return customerPlanID, err
+	}
+
+	return m.addCustomerPlan(customerID, porterCloudPlanID)
 }
 
 // EndCustomerPlan will immediately end the plan for the given customer

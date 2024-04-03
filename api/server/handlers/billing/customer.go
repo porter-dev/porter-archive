@@ -59,33 +59,16 @@ func (c *CreateBillingCustomerHandler) ServeHTTP(w http.ResponseWriter, r *http.
 	if proj.UsageID == uuid.Nil {
 		// Create Metronome customer and add to starter plan
 		if c.Config().ServerConf.MetronomeAPIKey != "" && c.Config().ServerConf.PorterCloudPlanID != "" && proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient) {
-			// Create Metronome Customer
-			if c.Config().ServerConf.MetronomeAPIKey != "" {
-				usageID, err := c.Config().BillingManager.MetronomeClient.CreateCustomer(user.CompanyName, proj.Name, proj.ID, proj.BillingID)
-				if err != nil {
-					err = telemetry.Error(ctx, span, err, "error creating billing customer")
-					c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-					return
-				}
-				proj.UsageID = usageID
-			}
-
-			porterCloudPlanID, err := uuid.Parse(c.Config().ServerConf.PorterCloudPlanID)
+			customerPlanID, err := c.Config().BillingManager.MetronomeClient.CreateCustomerWithPlan(user.CompanyName, proj.Name, proj.ID, proj.BillingID, c.Config().ServerConf.PorterCloudPlanID)
 			if err != nil {
-				err = telemetry.Error(ctx, span, err, "error parsing starter plan id")
+				err = telemetry.Error(ctx, span, err, "error creating Metronome customer")
 				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-				return
-			}
-
-			// Add to starter plan
-			customerPlanID, err := c.Config().BillingManager.MetronomeClient.AddCustomerPlan(proj.UsageID, porterCloudPlanID)
-			if err != nil {
-				err = telemetry.Error(ctx, span, err, "error adding customer to starter plan")
-				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-				return
 			}
 			proj.UsagePlanID = customerPlanID
-			shouldUpdate = true
+			telemetry.WithAttributes(span,
+				telemetry.AttributeKV{Key: "usage-id", Value: proj.UsageID},
+				telemetry.AttributeKV{Key: "usage-plan-id", Value: proj.UsagePlanID},
+			)
 		}
 	}
 

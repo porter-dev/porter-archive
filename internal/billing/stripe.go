@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"github.com/porter-dev/porter/api/types"
-	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/telemetry"
 	"github.com/stripe/stripe-go/v76"
 	"github.com/stripe/stripe-go/v76/customer"
@@ -22,71 +21,81 @@ type StripeBillingManager struct {
 }
 
 // CreateCustomer will create a customer in Stripe only if the project doesn't have a BillingID
-func (s *StripeBillingManager) CreateCustomer(ctx context.Context, userEmail string, proj *models.Project) (customerID string, err error) {
+func (s *StripeBillingManager) CreateCustomer(ctx context.Context, userEmail string, projectID uint, projectName string) (customerID string, err error) {
 	ctx, span := telemetry.NewSpan(ctx, "create-stripe-customer")
 	defer span.End()
 
+	if projectID == 0 || projectName == "" {
+		return "", fmt.Errorf("invalid project id or name")
+	}
+
 	stripe.Key = s.StripeSecretKey
 
-	telemetry.WithAttributes(span,
-		telemetry.AttributeKV{Key: "billing-id", Value: proj.BillingID},
-	)
-
-	if proj.BillingID == "" {
-		// Create customer if not exists
-		customerName := fmt.Sprintf("project_%s", proj.Name)
-		projectIDStr := strconv.FormatUint(uint64(proj.ID), 10)
-		params := &stripe.CustomerParams{
-			Name:  stripe.String(customerName),
-			Email: stripe.String(userEmail),
-			Metadata: map[string]string{
-				"porter_project_id": projectIDStr,
-			},
-		}
-
-		// Create in Stripe
-		customer, err := customer.New(params)
-		if err != nil {
-			return "", telemetry.Error(ctx, span, err, "failed to create Stripe customer")
-		}
-
-		customerID = customer.ID
+	// Create customer if not exists
+	customerName := fmt.Sprintf("project_%s", projectName)
+	projectIDStr := strconv.FormatUint(uint64(projectID), 10)
+	params := &stripe.CustomerParams{
+		Name:  stripe.String(customerName),
+		Email: stripe.String(userEmail),
+		Metadata: map[string]string{
+			"porter_project_id": projectIDStr,
+		},
 	}
+
+	// Create in Stripe
+	customer, err := customer.New(params)
+	if err != nil {
+		return "", telemetry.Error(ctx, span, err, "failed to create Stripe customer")
+	}
+
+	customerID = customer.ID
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "project-id", Value: projectIDStr},
+		telemetry.AttributeKV{Key: "customer-id", Value: customerID},
+		telemetry.AttributeKV{Key: "user-email", Value: userEmail},
+	)
 
 	return customerID, nil
 }
 
 // DeleteCustomer will delete the customer from the billing provider
-func (s *StripeBillingManager) DeleteCustomer(ctx context.Context, proj *models.Project) (err error) {
+func (s *StripeBillingManager) DeleteCustomer(ctx context.Context, customerID string) (err error) {
 	ctx, span := telemetry.NewSpan(ctx, "delete-stripe-customer")
 	defer span.End()
+
+	if customerID == "" {
+		return nil
+	}
 
 	stripe.Key = s.StripeSecretKey
 
 	telemetry.WithAttributes(span,
-		telemetry.AttributeKV{Key: "billing-id", Value: proj.BillingID},
+		telemetry.AttributeKV{Key: "billing-id", Value: customerID},
 	)
 
-	if proj.BillingID != "" {
-		params := &stripe.CustomerParams{}
-		_, err := customer.Del(proj.BillingID, params)
-		if err != nil {
-			return telemetry.Error(ctx, span, err, "failed to delete Stripe customer")
-		}
+	params := &stripe.CustomerParams{}
+	_, err = customer.Del(customerID, params)
+	if err != nil {
+		return telemetry.Error(ctx, span, err, "failed to delete Stripe customer")
 	}
 
 	return nil
 }
 
 // CheckPaymentEnabled will return true if the project has a payment method added, false otherwise
-func (s *StripeBillingManager) CheckPaymentEnabled(ctx context.Context, proj *models.Project) (paymentEnabled bool, err error) {
+func (s *StripeBillingManager) CheckPaymentEnabled(ctx context.Context, customerID string) (paymentEnabled bool, err error) {
 	_, span := telemetry.NewSpan(ctx, "check-stripe-payment-enabled")
 	defer span.End()
+
+	if customerID == "" {
+		return false, fmt.Errorf("customer id cannot be empty")
+	}
 
 	stripe.Key = s.StripeSecretKey
 
 	params := &stripe.PaymentMethodListParams{
-		Customer: stripe.String(proj.BillingID),
+		Customer: stripe.String(customerID),
 		Type:     stripe.String(string(stripe.PaymentMethodTypeCard)),
 	}
 	result := paymentmethod.List(params)
@@ -95,20 +104,24 @@ func (s *StripeBillingManager) CheckPaymentEnabled(ctx context.Context, proj *mo
 }
 
 // ListPaymentMethod will return all payment methods for the project
-func (s *StripeBillingManager) ListPaymentMethod(ctx context.Context, proj *models.Project) (paymentMethods []types.PaymentMethod, err error) {
+func (s *StripeBillingManager) ListPaymentMethod(ctx context.Context, customerID string) (paymentMethods []types.PaymentMethod, err error) {
 	ctx, span := telemetry.NewSpan(ctx, "list-stripe-payment-method")
 	defer span.End()
+
+	if customerID == "" {
+		return paymentMethods, fmt.Errorf("customer id cannot be empty")
+	}
 
 	stripe.Key = s.StripeSecretKey
 
 	// Get configured payment methods
 	params := &stripe.PaymentMethodListParams{
-		Customer: stripe.String(proj.BillingID),
+		Customer: stripe.String(customerID),
 		Type:     stripe.String(string(stripe.PaymentMethodTypeCard)),
 	}
 	result := paymentmethod.List(params)
 
-	defaultPaymentExists, defaultPaymentID, err := s.checkDefaultPaymentMethod(proj.BillingID)
+	defaultPaymentExists, defaultPaymentID, err := s.checkDefaultPaymentMethod(customerID)
 	if err != nil {
 		return paymentMethods, telemetry.Error(ctx, span, err, "failed to list Stripe payment method")
 	}
@@ -134,7 +147,7 @@ func (s *StripeBillingManager) ListPaymentMethod(ctx context.Context, proj *mode
 	// Set default payment method when project has payment methods enabled but
 	// no default setup
 	if len(paymentMethods) > 0 && !defaultPaymentExists {
-		err = s.SetDefaultPaymentMethod(ctx, paymentMethods[len(paymentMethods)-1].ID, proj)
+		err = s.SetDefaultPaymentMethod(ctx, paymentMethods[len(paymentMethods)-1].ID, customerID)
 		if err != nil {
 			return paymentMethods, telemetry.Error(ctx, span, err, "failed to list Stripe payment method")
 		}
@@ -144,14 +157,18 @@ func (s *StripeBillingManager) ListPaymentMethod(ctx context.Context, proj *mode
 }
 
 // CreatePaymentMethod will add a new payment method to the project in Stripe
-func (s *StripeBillingManager) CreatePaymentMethod(ctx context.Context, proj *models.Project) (clientSecret string, err error) {
+func (s *StripeBillingManager) CreatePaymentMethod(ctx context.Context, customerID string) (clientSecret string, err error) {
 	ctx, span := telemetry.NewSpan(ctx, "create-stripe-payment-method")
 	defer span.End()
+
+	if customerID == "" {
+		return "", fmt.Errorf("customer id cannot be empty")
+	}
 
 	stripe.Key = s.StripeSecretKey
 
 	params := &stripe.SetupIntentParams{
-		Customer: stripe.String(proj.BillingID),
+		Customer: stripe.String(customerID),
 		AutomaticPaymentMethods: &stripe.SetupIntentAutomaticPaymentMethodsParams{
 			Enabled: stripe.Bool(false),
 		},
@@ -167,9 +184,13 @@ func (s *StripeBillingManager) CreatePaymentMethod(ctx context.Context, proj *mo
 }
 
 // SetDefaultPaymentMethod will add a new payment method to the project in Stripe
-func (s *StripeBillingManager) SetDefaultPaymentMethod(ctx context.Context, paymentMethodID string, proj *models.Project) (err error) {
+func (s *StripeBillingManager) SetDefaultPaymentMethod(ctx context.Context, paymentMethodID string, customerID string) (err error) {
 	ctx, span := telemetry.NewSpan(ctx, "set-default-stripe-payment-method")
 	defer span.End()
+
+	if customerID == "" || paymentMethodID == "" {
+		return fmt.Errorf("empty customer id or payment method id")
+	}
 
 	stripe.Key = s.StripeSecretKey
 
@@ -179,7 +200,7 @@ func (s *StripeBillingManager) SetDefaultPaymentMethod(ctx context.Context, paym
 		},
 	}
 
-	_, err = customer.Update(proj.BillingID, params)
+	_, err = customer.Update(customerID, params)
 	if err != nil {
 		return telemetry.Error(ctx, span, err, "failed to set default Stripe payment method")
 	}
@@ -191,6 +212,10 @@ func (s *StripeBillingManager) SetDefaultPaymentMethod(ctx context.Context, paym
 func (s *StripeBillingManager) DeletePaymentMethod(ctx context.Context, paymentMethodID string) (err error) {
 	ctx, span := telemetry.NewSpan(ctx, "delete-stripe-payment-method")
 	defer span.End()
+
+	if paymentMethodID == "" {
+		return fmt.Errorf("payment method id cannot be empty")
+	}
 
 	stripe.Key = s.StripeSecretKey
 

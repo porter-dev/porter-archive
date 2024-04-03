@@ -38,8 +38,27 @@ func (c *ListBillingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer span.End()
 
 	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
+	user, _ := ctx.Value(types.UserScope).(*models.User)
 
-	paymentMethods, err := c.Config().BillingManager.ListPaymentMethod(ctx, proj)
+	// Create billing customer for project and set the billing ID if it doesn't exist
+	if proj.BillingID == "" {
+		billingID, err := c.Config().BillingManager.CreateCustomer(ctx, user.Email, proj.ID, proj.Name)
+		if err != nil {
+			err = telemetry.Error(ctx, span, err, "error creating billing customer")
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
+		proj.BillingID = billingID
+
+		_, err = c.Repo().Project().UpdateProject(proj)
+		if err != nil {
+			err := telemetry.Error(ctx, span, err, "error updating project")
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
+	}
+
+	paymentMethods, err := c.Config().BillingManager.ListPaymentMethod(ctx, proj.BillingID)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error listing payment method")
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error listing payment method: %w", err)))
@@ -65,7 +84,7 @@ func (c *CheckPaymentEnabledHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 
 	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
-	paymentEnabled, err := c.Config().BillingManager.CheckPaymentEnabled(ctx, proj)
+	paymentEnabled, err := c.Config().BillingManager.CheckPaymentEnabled(ctx, proj.BillingID)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error checking if payment enabled")
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error checking if payment enabled: %w", err)))

@@ -55,23 +55,6 @@ func (p *ProjectCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 
 	var err error
 
-	if p.Config().ServerConf.StripeSecretKey != "" && p.Config().ServerConf.StripePublishableKey != "" {
-		// Create billing customer for project and set the billing ID
-		billingID, err := p.Config().BillingManager.CreateCustomer(ctx, user.Email, proj)
-		if err != nil {
-			err = telemetry.Error(ctx, span, err, "error creating billing customer")
-			p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-			return
-		}
-		proj.BillingID = billingID
-
-		telemetry.WithAttributes(span,
-			telemetry.AttributeKV{Key: "project-id", Value: proj.ID},
-			telemetry.AttributeKV{Key: "customer-id", Value: proj.BillingID},
-			telemetry.AttributeKV{Key: "user-email", Value: user.Email},
-		)
-	}
-
 	proj, _, err = CreateProjectWithUser(p.Repo().Project(), proj, user)
 	if err != nil {
 		err = telemetry.Error(ctx, span, err, "error creating project with user")
@@ -94,6 +77,24 @@ func (p *ProjectCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		err = telemetry.Error(ctx, span, err, "error creating project onboarding")
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
+	}
+
+	if p.Config().ServerConf.StripeSecretKey != "" && p.Config().ServerConf.StripePublishableKey != "" {
+		// Create billing customer for project and set the billing ID
+		billingID, err := p.Config().BillingManager.CreateCustomer(ctx, user.Email, proj.ID, proj.Name)
+		if err != nil {
+			err = telemetry.Error(ctx, span, err, "error creating billing customer")
+			p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
+		proj.BillingID = billingID
+
+		_, err = p.Repo().Project().UpdateProject(proj)
+		if err != nil {
+			err := telemetry.Error(ctx, span, err, "error updating project")
+			p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
 	}
 
 	// create default project usage restriction

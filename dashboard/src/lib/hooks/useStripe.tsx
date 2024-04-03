@@ -150,27 +150,6 @@ export const checkIfProjectHasPayment = (): TCheckHasPaymentEnabled => {
   };
 };
 
-export const checkBillingCustomerExists = () => {
-  const { currentProject } = useContext(Context);
-
-  useQuery(["checkCustomerExists", currentProject?.id], async () => {
-    if (!currentProject?.id || currentProject.id === -1) {
-      return;
-    }
-
-    if (!currentProject?.billing_enabled) {
-      return;
-    }
-
-    const res = await api.checkBillingCustomerExists(
-      "<token>",
-      {},
-      { project_id: currentProject?.id }
-    );
-    return res.data;
-  });
-};
-
 export const usePublishableKey = (): TGetPublishableKey => {
   const { user, currentProject } = useContext(Context);
 

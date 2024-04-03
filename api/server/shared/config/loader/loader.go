@@ -40,6 +40,7 @@ import (
 )
 
 var (
+	// InstanceBillingManager manages Stripe and Metronome clients
 	InstanceBillingManager billing.Manager
 	InstanceEnvConf        *envloader.EnvConf
 	InstanceDB             *pgorm.DB

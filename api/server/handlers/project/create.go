@@ -81,6 +81,7 @@ func (p *ProjectCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	}
 
 	// Create Stripe Customer
+	var shouldUpdate bool
 	if p.Config().ServerConf.StripeSecretKey != "" && p.Config().ServerConf.StripePublishableKey != "" {
 		// Create billing customer for project and set the billing ID
 		billingID, err := p.Config().BillingManager.StripeClient.CreateCustomer(ctx, user.Email, proj)
@@ -90,6 +91,7 @@ func (p *ProjectCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 			return
 		}
 		proj.BillingID = billingID
+		shouldUpdate = true
 
 		telemetry.WithAttributes(span,
 			telemetry.AttributeKV{Key: "project-id", Value: proj.ID},
@@ -99,8 +101,7 @@ func (p *ProjectCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	}
 
 	// Create Metronome customer and add to starter plan
-	if p.Config().ServerConf.MetronomeAPIKey != "" && p.Config().ServerConf.PorterCloudPlanID != "" &&
-		proj.GetFeatureFlag(models.MetronomeEnabled, p.Config().LaunchDarklyClient) {
+	if p.Config().ServerConf.MetronomeAPIKey != "" && p.Config().ServerConf.PorterCloudPlanID != "" && proj.GetFeatureFlag(models.MetronomeEnabled, p.Config().LaunchDarklyClient) {
 
 		// Create Metronome Customer
 		if p.Config().ServerConf.MetronomeAPIKey != "" {
@@ -111,6 +112,7 @@ func (p *ProjectCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 				return
 			}
 			proj.UsageID = usageID
+			shouldUpdate = true
 		}
 
 		porterCloudPlanID, err := uuid.Parse(p.Config().ServerConf.PorterCloudPlanID)
@@ -130,11 +132,13 @@ func (p *ProjectCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		proj.UsagePlanID = customerPlanID
 	}
 
-	_, err = p.Repo().Project().UpdateProject(proj)
-	if err != nil {
-		err := telemetry.Error(ctx, span, err, "error updating project")
-		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
+	if shouldUpdate {
+		_, err = p.Repo().Project().UpdateProject(proj)
+		if err != nil {
+			err := telemetry.Error(ctx, span, err, "error updating project")
+			p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
 	}
 
 	// create default project usage restriction

@@ -30,10 +30,24 @@ export type DatastoreConnectionInfo = z.infer<
   typeof datastoreCredentialValidator
 >;
 
+const datastoreTypeValidator = z.enum([
+  "UNKNOWN",
+  "RDS",
+  "ELASTICACHE",
+  "MANAGED_REDIS",
+  "MANAGED_POSTGRES",
+]);
+const datastoreEngineValidator = z.enum([
+  "UNKNOWN",
+  "POSTGRES",
+  "AURORA-POSTGRES",
+  "REDIS",
+  "MEMCACHED",
+]);
 export const datastoreValidator = z.object({
   name: z.string(),
-  type: z.enum(["RDS", "ELASTICACHE"]),
-  engine: z.enum(["POSTGRES", "AURORA-POSTGRES", "REDIS", "MEMCACHED"]),
+  type: z.string().pipe(datastoreTypeValidator.catch("UNKNOWN")),
+  engine: z.string().pipe(datastoreEngineValidator.catch("UNKNOWN")),
   created_at: z.string().default(""),
   metadata: datastoreMetadataValidator.array().default([]),
   env: datastoreEnvValidator.optional(),
@@ -101,6 +115,14 @@ export const DATASTORE_TYPE_RDS: DatastoreType = {
 export const DATASTORE_TYPE_ELASTICACHE: DatastoreType = {
   name: "ELASTICACHE" as const,
   displayName: "ElastiCache",
+};
+export const DATASTORE_TYPE_MANAGED_POSTGRES: DatastoreType = {
+  name: "MANAGED_POSTGRES" as const,
+  displayName: "Managed Postgres",
+};
+export const DATASTORE_TYPE_MANAGED_REDIS: DatastoreType = {
+  name: "MANAGED_REDIS" as const,
+  displayName: "Managed Redis",
 };
 
 export type DatastoreState = {

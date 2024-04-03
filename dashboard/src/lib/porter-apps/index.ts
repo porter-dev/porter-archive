@@ -138,18 +138,6 @@ export const basePorterAppFormValidator = z.object({
 // porterAppFormValidator is used to validate inputs when creating + updating an app
 export const porterAppFormValidator = basePorterAppFormValidator
   .refine(
-    ({ app }) => {
-      if (app.predeploy?.[0]?.run) {
-        return app.predeploy[0].run.value.length > 0;
-      }
-      return true;
-    },
-    {
-      message: "if using a pre-deploy job, its start command must be non-empty",
-      path: ["app", "services"],
-    }
-  )
-  .refine(
     ({ app, source }) => {
       if (source.type !== "docker-registry" && app.build.method === "pack") {
         return app.services.every((svc) => svc.run.value.length > 0);
@@ -320,7 +308,10 @@ export function clientAppToProto(data: PorterAppFormData): PorterApp {
     return acc;
   }, {});
 
-  const predeploy = app.predeploy?.[0];
+  // filter out predeploy if its start command is empty
+  const predeploy = app.predeploy?.[0]?.run.value
+    ? app.predeploy[0]
+    : undefined;
 
   const proto = match(source)
     .with(

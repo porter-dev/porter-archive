@@ -15,12 +15,15 @@ import {
   DATASTORE_STATE_DELETING_REPLICATION_GROUP,
   DATASTORE_STATE_MODIFYING,
   DATASTORE_TYPE_ELASTICACHE,
+  DATASTORE_TYPE_MANAGED_POSTGRES,
+  DATASTORE_TYPE_MANAGED_REDIS,
   DATASTORE_TYPE_RDS,
   type DatastoreTemplate,
 } from "lib/databases/types";
 
 import awsRDS from "assets/amazon-rds.png";
 import awsElastiCache from "assets/aws-elasticache.png";
+import database from "assets/database.svg";
 
 export const SUPPORTED_DATASTORE_TEMPLATES: DatastoreTemplate[] = [
   Object.freeze({
@@ -182,6 +185,20 @@ export const SUPPORTED_DATASTORE_TEMPLATES: DatastoreTemplate[] = [
     engine: DATASTORE_ENGINE_MEMCACHED,
     supportedEngineVersions: [],
     icon: awsElastiCache as string,
+    description:
+      "Currently unavailable. Please contact support@porter.run for more details.",
+    disabled: true,
+    instanceTiers: [],
+    formTitle: "Create an ElastiCache Memcached instance",
+    creationStateProgression: [],
+    deletionStateProgression: [],
+  }),
+  Object.freeze({
+    name: "Managed Redis",
+    type: DATASTORE_TYPE_MANAGED_REDIS,
+    engine: DATASTORE_ENGINE_REDIS,
+    supportedEngineVersions: [],
+    icon: database as string,
     description:
       "Currently unavailable. Please contact support@porter.run for more details.",
     disabled: true,

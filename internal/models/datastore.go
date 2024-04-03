@@ -38,7 +38,7 @@ type Datastore struct {
 	// For AWS EKS clusters, this will be an ARN for the final target role in the assume role chain.
 	CloudProviderCredentialIdentifier string `json:"cloud_provider_credential_identifier"`
 
-	// Type is the type of datastore. Accepted values: [RDS, ELASTICACHE]
+	// Type is the type of datastore. Accepted values: [RDS, ELASTICACHE, MANAGED_POSTGRES, MANAGED_REDIS]
 	Type string `json:"type"`
 
 	// Engine is the engine of the datastore. Accepted values: [POSTGRES, AURORA-POSTGRES, REDIS]

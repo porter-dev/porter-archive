@@ -80,7 +80,7 @@ func (c *GetDatastoreHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// TODO: delete this branch once all datastores are on the management cluster
-	if !datastoreRecord.OnManagementCluster {
+	if !datastoreRecord.OnManagementCluster && !(datastoreRecord.Type == "MANAGED_POSTGRES" || datastoreRecord.Type == "MANAGED_REDIS") {
 		awsArn, err := arn.Parse(datastoreRecord.CloudProviderCredentialIdentifier)
 		if err != nil {
 			err = telemetry.Error(ctx, span, err, "error parsing aws account id")

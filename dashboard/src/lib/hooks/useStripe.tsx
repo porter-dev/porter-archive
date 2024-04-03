@@ -35,6 +35,10 @@ type TGetPublishableKey = {
   publishableKey: string;
 };
 
+type TGetCredits = {
+  credits: number;
+};
+
 export const usePaymentMethods = (): TUsePaymentMethod => {
   const { currentProject } = useContext(Context);
 
@@ -176,12 +180,12 @@ export const usePublishableKey = (): TGetPublishableKey => {
   };
 };
 
-export const usePorterCredits = (): TGetPublishableKey => {
+export const usePorterCredits = (): TGetCredits => {
   const { currentProject } = useContext(Context);
 
-  // Fetch list of payment methods
-  const keyReq = useQuery(
-    ["getPublishableKey", currentProject?.id],
+  // Fetch available credits
+  const creditsReq = useQuery(
+    ["getPorterCredits", currentProject?.id],
     async () => {
       if (!currentProject?.id || currentProject.id === -1) {
         return;
@@ -198,7 +202,7 @@ export const usePorterCredits = (): TGetPublishableKey => {
   );
 
   return {
-    publishableKey: keyReq.data,
+    credits: creditsReq.data,
   };
 };
 

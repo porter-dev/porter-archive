@@ -99,8 +99,7 @@ func (p *ProjectCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	}
 
 	// Create Metronome customer and add to starter plan
-	if p.Config().ServerConf.MetronomeAPIKey != "" && p.Config().ServerConf.PorterCloudPlanID != "" &&
-		p.Config().ServerConf.EnableSandbox {
+	if p.Config().ServerConf.MetronomeAPIKey != "" && p.Config().ServerConf.PorterCloudPlanID != "" {
 		// Create Metronome Customer
 		if p.Config().ServerConf.MetronomeAPIKey != "" {
 			usageID, err := p.Config().BillingManager.MetronomeClient.CreateCustomer(user.CompanyName, proj.Name, proj.ID, proj.BillingID)

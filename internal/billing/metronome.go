@@ -77,7 +77,7 @@ func (m *MetronomeClient) AddCustomerPlan(customerID uuid.UUID, planID uuid.UUID
 
 	var result types.AddCustomerPlanResponse
 
-	err = post(path, http.MethodPost, m.ApiKey, req, result)
+	err = post(path, http.MethodPost, m.ApiKey, req, &result)
 	if err != nil {
 		return customerPlanID, err
 	}
@@ -114,7 +114,7 @@ func (m *MetronomeClient) GetCustomerCredits(customerID uuid.UUID) (credits int6
 		return credits, fmt.Errorf("customer id empty")
 	}
 
-	path := fmt.Sprintf("credits/listGrants")
+	path := "credits/listGrants"
 
 	req := types.ListCreditGrantsRequest{
 		CustomerIDs: []uuid.UUID{
@@ -122,13 +122,13 @@ func (m *MetronomeClient) GetCustomerCredits(customerID uuid.UUID) (credits int6
 		},
 	}
 
-	var result types.CreditGrant
-	err = post(path, http.MethodPost, m.ApiKey, req, result)
+	var result types.ListCreditGrantsResponse
+	err = post(path, http.MethodPost, m.ApiKey, req, &result)
 	if err != nil {
 		return credits, err
 	}
 
-	return result.Balance.ExcludingPending, nil
+	return result.Data[0].Balance.IncludingPending, nil
 }
 
 func post(path string, method string, apiKey string, body interface{}, data interface{}) (err error) {

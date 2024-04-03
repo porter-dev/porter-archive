@@ -65,18 +65,22 @@ type EndCustomerPlanRequest struct {
 type ListCreditGrantsRequest struct {
 	// An array of credit type IDs. This must not be specified if
 	// credit_grant_ids is specified.
-	CreditTypeIDs []uuid.UUID `json:"credit_type_ids"`
+	CreditTypeIDs []uuid.UUID `json:"credit_type_ids,omitempty"`
 	// An array of Metronome customer IDs. This must not be specified if
 	// credit_grant_ids is specified.
-	CustomerIDs []uuid.UUID `json:"customer_ids"`
+	CustomerIDs []uuid.UUID `json:"customer_ids,omitempty"`
 	// An array of credit grant IDs. If this is specified, neither
 	// credit_type_ids nor customer_ids may be specified.
-	CreditGrantIDs []uuid.UUID `json:"credit_grant_ids"`
+	CreditGrantIDs []uuid.UUID `json:"credit_grant_ids,omitempty"`
 	// Only return credit grants that expire at or after this RFC 3339 timestamp.
-	NotExpiringBefore string `json:"not_expiring_before"`
+	NotExpiringBefore string `json:"not_expiring_before,omitempty"`
 	// Only return credit grants that are effective before this RFC 3339 timestamp
 	// (exclusive).
-	EffectiveBefore string `json:"effective_before"`
+	EffectiveBefore string `json:"effective_before,omitempty"`
+}
+
+type ListCreditGrantsResponse struct {
+	Data []CreditGrant `json:"data"`
 }
 
 type CreditType struct {

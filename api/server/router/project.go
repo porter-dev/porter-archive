@@ -341,6 +341,33 @@ func getProjectRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/billing/credits -> project.NewGetCreditsHandler
+	getCreditsEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/billing/credits",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	getCreditsHandler := billing.NewGetCreditsHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: getCreditsEndpoint,
+		Handler:  getCreditsHandler,
+		Router:   r,
+	})
+
 	// POST /api/projects/{project_id}/billing/payment_method -> project.NewCreateBillingHandler
 	createBillingEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

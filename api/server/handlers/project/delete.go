@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"connectrpc.com/connect"
-	"github.com/google/uuid"
 	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
@@ -94,16 +93,9 @@ func (p *ProjectDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	}
 
 	if p.Config().ServerConf.MetronomeAPIKey != "" && p.Config().ServerConf.PorterCloudPlanID != "" {
-		porterCloudPlanID, err := uuid.Parse(p.Config().ServerConf.PorterCloudPlanID)
+		err = p.Config().BillingManager.MetronomeClient.EndCustomerPlan(proj.UsageID, proj.UsagePlanID)
 		if err != nil {
-			err = telemetry.Error(ctx, span, err, "error parsing starter plan id")
-			p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-			return
-		}
-
-		err = p.Config().BillingManager.MetronomeClient.EndCustomerPlan(proj.UsageID, porterCloudPlanID)
-		if err != nil {
-			e := "error deleting project in usage provider"
+			e := "error ending billing plan"
 			err = telemetry.Error(ctx, span, err, e)
 			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 			return

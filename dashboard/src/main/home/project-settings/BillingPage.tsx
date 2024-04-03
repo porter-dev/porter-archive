@@ -12,6 +12,7 @@ import Text from "components/porter/Text";
 import {
   checkIfProjectHasPayment,
   usePaymentMethods,
+  usePorterCredits,
   useSetDefaultPaymentMethod,
 } from "lib/hooks/useStripe";
 
@@ -35,6 +36,12 @@ function BillingPage(): JSX.Element {
   const { setDefaultPaymentMethod } = useSetDefaultPaymentMethod();
 
   const { refetchPaymentEnabled } = checkIfProjectHasPayment();
+
+  const { credits } = usePorterCredits();
+
+  const formatCredits = (credits: number): string => {
+    return (credits / 100).toFixed(2);
+  };
 
   const onCreate = async () => {
     await refetchPaymentMethods();
@@ -66,7 +73,7 @@ function BillingPage(): JSX.Element {
         <Image src={gift} style={{ marginTop: "-2px" }} />
         <Spacer inline x={1} />
         <Text size={20}>
-          {paymentMethodList?.length > 0 ? "$ 5.00" : "$ 0.00"}
+          {credits > 0 ? `$${formatCredits(credits)}` : "$ 0.00"}
         </Text>
       </Container>
       <Spacer y={2} />

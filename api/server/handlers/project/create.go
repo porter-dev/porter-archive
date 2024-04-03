@@ -98,26 +98,28 @@ func (p *ProjectCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		)
 	}
 
-	// Create Metronome Customer
-	if p.Config().ServerConf.MetronomeAPIKey != "" {
-		usageID, err := p.Config().BillingManager.MetronomeClient.CreateCustomer(user.CompanyName, proj.Name, proj.ID, proj.BillingID)
-		if err != nil {
-			err = telemetry.Error(ctx, span, err, "error creating billing customer")
-			p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-			return
-		}
-		proj.UsageID = usageID
-	}
-
-	// Add customer to starter plan
+	// Create Metronome customer and add to starter plan
 	if p.Config().ServerConf.MetronomeAPIKey != "" && p.Config().ServerConf.PorterCloudPlanID != "" &&
 		p.Config().ServerConf.EnableSandbox {
+		// Create Metronome Customer
+		if p.Config().ServerConf.MetronomeAPIKey != "" {
+			usageID, err := p.Config().BillingManager.MetronomeClient.CreateCustomer(user.CompanyName, proj.Name, proj.ID, proj.BillingID)
+			if err != nil {
+				err = telemetry.Error(ctx, span, err, "error creating billing customer")
+				p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+				return
+			}
+			proj.UsageID = usageID
+		}
+
 		porterCloudPlanID, err := uuid.Parse(p.Config().ServerConf.PorterCloudPlanID)
 		if err != nil {
 			err = telemetry.Error(ctx, span, err, "error parsing starter plan id")
 			p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 			return
 		}
+
+		// Add to starter plan
 		customerPlanID, err := p.Config().BillingManager.MetronomeClient.AddCustomerPlan(proj.UsageID, porterCloudPlanID)
 		if err != nil {
 			err = telemetry.Error(ctx, span, err, "error adding customer to starter plan")

@@ -61,3 +61,46 @@ type EndCustomerPlanRequest struct {
 	VoidInvoices       bool   `json:"void_invoices"`           // If true, plan end date can be before the last finalized invoice date. Any invoices generated after the plan end date will be voided.
 	VoidStripeInvoices bool   `json:"void_stripe_invoices"`    // Will void Stripe invoices if VoidInvoices is set to true. Drafts will be deleted.
 }
+
+type ListCreditGrantsRequest struct {
+	// An array of credit type IDs. This must not be specified if
+	// credit_grant_ids is specified.
+	CreditTypeIDs []uuid.UUID `json:"credit_type_ids"`
+	// An array of Metronome customer IDs. This must not be specified if
+	// credit_grant_ids is specified.
+	CustomerIDs []uuid.UUID `json:"customer_ids"`
+	// An array of credit grant IDs. If this is specified, neither
+	// credit_type_ids nor customer_ids may be specified.
+	CreditGrantIDs []uuid.UUID `json:"credit_grant_ids"`
+	// Only return credit grants that expire at or after this RFC 3339 timestamp.
+	NotExpiringBefore string `json:"not_expiring_before"`
+	// Only return credit grants that are effective before this RFC 3339 timestamp
+	// (exclusive).
+	EffectiveBefore string `json:"effective_before"`
+}
+
+type CreditType struct {
+	Name string `json:"name"` // The name of the credit type
+	ID   string `json:"id"`   // The UUID of the credit type
+}
+
+type GrantAmount struct {
+	Amount     int64      `json:"amount"`      // The amount of credits granted
+	CreditType CreditType `json:"credit_type"` // The credit type for the amount granted
+}
+
+// Balance represents the effective balance of the grant as of the end of the customer's
+// current billing period.
+type Balance struct {
+	ExcludingPending int64  `json:"excluding_pending"` // The grant's current balance excluding all pending deductions.
+	IncludingPending int64  `json:"including_pending"` // The grant's current balance including all posted and pending deductions.
+	EffectiveAt      string `json:"effective_at"`      // The end date of the customer's current billing period in RFC 3339 format.
+}
+
+type CreditGrant struct {
+	ID          uuid.UUID `json:"id"`
+	Name        string
+	CustomerID  uuid.UUID
+	GrantAmount GrantAmount
+	Balance     Balance
+}

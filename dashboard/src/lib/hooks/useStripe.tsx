@@ -176,6 +176,32 @@ export const usePublishableKey = (): TGetPublishableKey => {
   };
 };
 
+export const usePorterCredits = (): TGetPublishableKey => {
+  const { currentProject } = useContext(Context);
+
+  // Fetch list of payment methods
+  const keyReq = useQuery(
+    ["getPublishableKey", currentProject?.id],
+    async () => {
+      if (!currentProject?.id || currentProject.id === -1) {
+        return;
+      }
+      const res = await api.getPorterCredits(
+        "<token>",
+        {},
+        {
+          project_id: currentProject?.id,
+        }
+      );
+      return res.data;
+    }
+  );
+
+  return {
+    publishableKey: keyReq.data,
+  };
+};
+
 export const useSetDefaultPaymentMethod = (): TSetDefaultPaymentMethod => {
   const { currentProject } = useContext(Context);
 

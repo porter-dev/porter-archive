@@ -58,24 +58,6 @@ func (m *MetronomeClient) CreateCustomer(orgName string, projectName string, pro
 	return result.Data.ID, nil
 }
 
-func (m *MetronomeClient) DeleteCustomer(customerID uuid.UUID) (err error) {
-	if customerID == uuid.Nil {
-		return fmt.Errorf("customer id cannot be empty")
-	}
-	path := "/customers/archive"
-
-	req := types.CustomerArchiveRequest{
-		CustomerID: customerID,
-	}
-
-	err = post(path, http.MethodPost, m.ApiKey, req, nil)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (m *MetronomeClient) AddCustomerPlan(customerID uuid.UUID, planID uuid.UUID) (customerPlanID uuid.UUID, err error) {
 	if customerID == uuid.Nil || planID == uuid.Nil {
 		return customerPlanID, fmt.Errorf("customer or plan id empty")
@@ -125,6 +107,28 @@ func (m *MetronomeClient) EndCustomerPlan(customerID uuid.UUID, customerPlanID u
 	}
 
 	return nil
+}
+
+func (m *MetronomeClient) GetCustomerCredits(customerID uuid.UUID) (credits int64, err error) {
+	if customerID == uuid.Nil {
+		return credits, fmt.Errorf("customer id empty")
+	}
+
+	path := fmt.Sprintf("credits/listGrants")
+
+	req := types.ListCreditGrantsRequest{
+		CustomerIDs: []uuid.UUID{
+			customerID,
+		},
+	}
+
+	var result types.CreditGrant
+	err = post(path, http.MethodPost, m.ApiKey, req, result)
+	if err != nil {
+		return credits, err
+	}
+
+	return result.Balance.ExcludingPending, nil
 }
 
 func post(path string, method string, apiKey string, body interface{}, data interface{}) (err error) {

@@ -108,22 +108,6 @@ func (p *ProjectDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 			return
 		}
-
-		err = p.Config().BillingManager.MetronomeClient.DeleteCustomer(proj.UsageID)
-		if err != nil {
-			e := "error deleting project in usage provider"
-			err = telemetry.Error(ctx, span, err, e)
-			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-			return
-		}
-	}
-
-	err = p.Config().BillingManager.StripeClient.DeleteCustomer(ctx, proj)
-	if err != nil {
-		e := "error deleting project in billing provider"
-		err = telemetry.Error(ctx, span, err, e)
-		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-		return
 	}
 
 	deletedProject, err := p.Repo().Project().DeleteProject(proj)

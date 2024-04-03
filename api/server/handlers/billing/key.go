@@ -37,7 +37,7 @@ func (c *GetPublishableKeyHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 
 	// Create billing customer for project and set the billing ID if it doesn't exist
 	if proj.BillingID == "" {
-		billingID, err := c.Config().BillingManager.CreateCustomer(ctx, user.Email, proj.ID, proj.Name)
+		billingID, err := c.Config().BillingManager.StripeClient.CreateCustomer(ctx, user.Email, proj.ID, proj.Name)
 		if err != nil {
 			err = telemetry.Error(ctx, span, err, "error creating billing customer")
 			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
@@ -56,7 +56,7 @@ func (c *GetPublishableKeyHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	// There is no easy way to pass environment variables to the frontend,
 	// so for now pass via the backend. This is acceptable because the key is
 	// meant to be public
-	publishableKey := c.Config().BillingManager.GetPublishableKey(ctx)
+	publishableKey := c.Config().BillingManager.StripeClient.GetPublishableKey(ctx)
 
 	telemetry.WithAttributes(span,
 		telemetry.AttributeKV{Key: "project-id", Value: proj.ID},

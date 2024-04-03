@@ -42,7 +42,7 @@ func (c *ListBillingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Create billing customer for project and set the billing ID if it doesn't exist
 	if proj.BillingID == "" {
-		billingID, err := c.Config().BillingManager.CreateCustomer(ctx, user.Email, proj.ID, proj.Name)
+		billingID, err := c.Config().BillingManager.StripeClient.CreateCustomer(ctx, user.Email, proj.ID, proj.Name)
 		if err != nil {
 			err = telemetry.Error(ctx, span, err, "error creating billing customer")
 			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
@@ -58,7 +58,7 @@ func (c *ListBillingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	paymentMethods, err := c.Config().BillingManager.StripeClient.ListPaymentMethod(ctx, proj)
+	paymentMethods, err := c.Config().BillingManager.StripeClient.ListPaymentMethod(ctx, proj.BillingID)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error listing payment method")
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error listing payment method: %w", err)))
@@ -84,11 +84,7 @@ func (c *CheckPaymentEnabledHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 
 	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
-<<<<<<< HEAD
-	paymentEnabled, err := c.Config().BillingManager.CheckPaymentEnabled(ctx, proj.BillingID)
-=======
-	paymentEnabled, err := c.Config().BillingManager.StripeClient.CheckPaymentEnabled(ctx, proj)
->>>>>>> b8c4273a5 (Add Metronome business logic)
+	paymentEnabled, err := c.Config().BillingManager.StripeClient.CheckPaymentEnabled(ctx, proj.BillingID)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error checking if payment enabled")
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error checking if payment enabled: %w", err)))

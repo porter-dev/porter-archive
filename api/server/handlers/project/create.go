@@ -82,7 +82,7 @@ func (p *ProjectCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	// Create Stripe Customer
 	if p.Config().ServerConf.StripeSecretKey != "" && p.Config().ServerConf.StripePublishableKey != "" {
 		// Create billing customer for project and set the billing ID
-		billingID, err := p.Config().BillingManager.StripeClient.CreateCustomer(ctx, user.Email, proj)
+		billingID, err := p.Config().BillingManager.StripeClient.CreateCustomer(ctx, user.Email, proj.ID, proj.Name)
 		if err != nil {
 			err = telemetry.Error(ctx, span, err, "error creating billing customer")
 			p.HandleAPIError(w, r, apierrors.NewErrInternal(err))

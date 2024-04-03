@@ -423,33 +423,6 @@ func getProjectRoutes(
 		Router:   r,
 	})
 
-	// POST /api/projects/{project_id}/billing/customer/ -> project.NewGetOrCreateCustomerHandler
-	getOrCreateBillingCustomerEndpoint := factory.NewAPIEndpoint(
-		&types.APIRequestMetadata{
-			Verb:   types.APIVerbCreate,
-			Method: types.HTTPVerbPost,
-			Path: &types.Path{
-				Parent:       basePath,
-				RelativePath: relPath + "/billing/customer",
-			},
-			Scopes: []types.PermissionScope{
-				types.UserScope,
-				types.ProjectScope,
-			},
-		},
-	)
-
-	getOrCreateBillingCustomerHandler := billing.NewCreateBillingCustomerIfNotExists(
-		config,
-		factory.GetResultWriter(),
-	)
-
-	routes = append(routes, &router.Route{
-		Endpoint: getOrCreateBillingCustomerEndpoint,
-		Handler:  getOrCreateBillingCustomerHandler,
-		Router:   r,
-	})
-
 	// GET /api/projects/{project_id}/billing/publishable_key -> project.NewGetPublishableKeyHandler
 	publishableKeyEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

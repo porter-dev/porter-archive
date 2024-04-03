@@ -445,7 +445,7 @@ func reportBuildFailure(ctx context.Context, inp reportBuildFailureInput) error 
 }
 
 // checkDeployTimeout is the timeout for checking if an app has been deployed
-const checkDeployTimeout = 15 * time.Minute
+const checkDeployTimeout = 60 * time.Minute
 
 // checkDeployFrequency is the frequency for checking if an app has been deployed
 const checkDeployFrequency = 10 * time.Second

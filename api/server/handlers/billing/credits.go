@@ -35,6 +35,7 @@ func (c *GetCreditsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if !proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient) {
 		c.WriteResult(w, r, "")
+		return
 	}
 
 	credits, err := c.Config().BillingManager.MetronomeClient.GetCustomerCredits(proj.UsageID)

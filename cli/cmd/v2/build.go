@@ -71,7 +71,16 @@ func build(ctx context.Context, client api.Client, inp buildInput) buildOutput {
 		output.Error = errors.New("must specify a registry url")
 		return output
 	}
+
 	repositoryURL := strings.TrimPrefix(inp.RepositoryURL, "https://")
+
+	// this should catch the following v1 GCP repo format:
+	// us-central1-docker.pkg.dev/GCP_PROJECT/porter-PORTER_PROJECT/APP_NAME-porter-stack-APP_NAME/APP_NAME-porter-stack-APP_NAME
+	// and convert it to:
+	// us-central1-docker.pkg.dev/GCP_PROJECT/porter-PORTER_PROJECT/APP_NAME
+	if splits := strings.Split(repositoryURL, "porter-stack"); len(splits) == 3 {
+		repositoryURL = strings.TrimSuffix(splits[0], "-")
+	}
 
 	err := createImageRepositoryIfNotExists(ctx, client, projectID, repositoryURL)
 	if err != nil {

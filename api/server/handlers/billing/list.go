@@ -39,7 +39,6 @@ func (c *ListBillingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer span.End()
 
 	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
-	user, _ := ctx.Value(types.UserScope).(*models.User)
 
 	paymentMethods, err := c.Config().BillingManager.StripeClient.ListPaymentMethod(ctx, proj.BillingID)
 	if err != nil {

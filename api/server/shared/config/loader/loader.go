@@ -40,6 +40,7 @@ import (
 )
 
 var (
+	// InstanceEnvConf holds the environment configuration
 	InstanceEnvConf *envloader.EnvConf
 	InstanceDB      *pgorm.DB
 )

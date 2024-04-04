@@ -197,6 +197,9 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
     try {
       const { variables, secrets, validatedAppProto } = await validateApp(data);
 
+      const porterUserOnBuildTab =
+        currentTab === "build-settings" && user?.isPorterUser;
+
       const needsRebuild =
         buildIsDirty ||
         latestRevision.status === "BUILD_FAILED" ||
@@ -240,7 +243,10 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         );
       }
 
-      if (latestSource.type === "github" && needsRebuild) {
+      if (
+        latestSource.type === "github" &&
+        (needsRebuild || porterUserOnBuildTab)
+      ) {
         // add a new revision with updated build settings only if they have changed
         if (validatedAppProto.build && buildIsDirty) {
           await api.updateBuildSettings(

@@ -78,7 +78,7 @@ func build(ctx context.Context, client api.Client, inp buildInput) buildOutput {
 	// us-central1-docker.pkg.dev/GCP_PROJECT/porter-PORTER_PROJECT/APP_NAME-porter-stack-APP_NAME/APP_NAME-porter-stack-APP_NAME
 	// and convert it to:
 	// us-central1-docker.pkg.dev/GCP_PROJECT/porter-PORTER_PROJECT/APP_NAME
-	if splits := strings.Split(inp.RepositoryURL, "porter-stack"); len(splits) == 3 {
+	if splits := strings.Split(repositoryURL, "porter-stack"); len(splits) == 3 {
 		repositoryURL = strings.TrimSuffix(splits[0], "-")
 	}
 

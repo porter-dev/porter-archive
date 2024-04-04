@@ -42,7 +42,7 @@ func (c *GetCreditsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	credits, err := c.Config().BillingManager.MetronomeClient.GetCustomerCredits(proj.UsageID)
+	credits, err := c.Config().BillingManager.MetronomeClient.GetCustomerCredits(ctx, proj.UsageID)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error getting credits")
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))

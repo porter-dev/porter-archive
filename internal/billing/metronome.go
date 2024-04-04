@@ -2,6 +2,7 @@ package billing
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/telemetry"
 )
 
 const (
@@ -34,7 +36,10 @@ func NewMetronomeClient(metronomeApiKey string) MetronomeClient {
 }
 
 // createCustomer will create the customer in Metronome
-func (m MetronomeClient) createCustomer(orgName string, projectName string, projectID uint, billingID string) (customerID uuid.UUID, err error) {
+func (m MetronomeClient) createCustomer(ctx context.Context, orgName string, projectName string, projectID uint, billingID string) (customerID uuid.UUID, err error) {
+	ctx, span := telemetry.NewSpan(ctx, "create-metronome-customer")
+	defer span.End()
+
 	path := "customers"
 	projIDStr := strconv.FormatUint(uint64(projectID), 10)
 
@@ -56,15 +61,18 @@ func (m MetronomeClient) createCustomer(orgName string, projectName string, proj
 
 	err = post(path, m.ApiKey, customer, &result)
 	if err != nil {
-		return customerID, err
+		return customerID, telemetry.Error(ctx, span, err, "error creating customer")
 	}
 	return result.Data.ID, nil
 }
 
 // addCustomerPlan will start the customer on the given plan
-func (m MetronomeClient) addCustomerPlan(customerID uuid.UUID, planID uuid.UUID) (customerPlanID uuid.UUID, err error) {
+func (m MetronomeClient) addCustomerPlan(ctx context.Context, customerID uuid.UUID, planID uuid.UUID) (customerPlanID uuid.UUID, err error) {
+	ctx, span := telemetry.NewSpan(ctx, "add-metronome-customer-plan")
+	defer span.End()
+
 	if customerID == uuid.Nil || planID == uuid.Nil {
-		return customerPlanID, fmt.Errorf("customer or plan id empty")
+		return customerPlanID, telemetry.Error(ctx, span, err, "customer or plan id empty")
 	}
 
 	path := fmt.Sprintf("/customers/%s/plans/add", customerID)
@@ -87,33 +95,39 @@ func (m MetronomeClient) addCustomerPlan(customerID uuid.UUID, planID uuid.UUID)
 
 	err = post(path, m.ApiKey, req, &result)
 	if err != nil {
-		return customerPlanID, err
+		return customerPlanID, telemetry.Error(ctx, span, err, "failed to add customer to plan")
 	}
 
 	return result.Data.CustomerPlanID, nil
 }
 
 // CreateCustomerWithPlan will create the customer in Metronome and immediately add it to the plan
-func (m MetronomeClient) CreateCustomerWithPlan(orgName string, projectName string, projectID uint, billingID string, planID string) (customerID uuid.UUID, customerPlanID uuid.UUID, err error) {
+func (m MetronomeClient) CreateCustomerWithPlan(ctx context.Context, orgName string, projectName string, projectID uint, billingID string, planID string) (customerID uuid.UUID, customerPlanID uuid.UUID, err error) {
+	ctx, span := telemetry.NewSpan(ctx, "add-metronome-customer-plan")
+	defer span.End()
+
 	porterCloudPlanID, err := uuid.Parse(planID)
 	if err != nil {
-		return customerID, customerPlanID, fmt.Errorf("error parsing starter plan id: %w", err)
+		return customerID, customerPlanID, telemetry.Error(ctx, span, err, "error parsing starter plan id")
 	}
 
-	customerID, err = m.createCustomer(orgName, projectName, projectID, billingID)
+	customerID, err = m.createCustomer(ctx, orgName, projectName, projectID, billingID)
 	if err != nil {
-		return customerID, customerPlanID, err
+		return customerID, customerPlanID, telemetry.Error(ctx, span, err, "error while creatinc customer with plan")
 	}
 
-	customerPlanID, err = m.addCustomerPlan(customerID, porterCloudPlanID)
+	customerPlanID, err = m.addCustomerPlan(ctx, customerID, porterCloudPlanID)
 
 	return customerID, customerPlanID, err
 }
 
 // EndCustomerPlan will immediately end the plan for the given customer
-func (m MetronomeClient) EndCustomerPlan(customerID uuid.UUID, customerPlanID uuid.UUID) (err error) {
+func (m MetronomeClient) EndCustomerPlan(ctx context.Context, customerID uuid.UUID, customerPlanID uuid.UUID) (err error) {
+	ctx, span := telemetry.NewSpan(ctx, "end-metronome-customer-plan")
+	defer span.End()
+
 	if customerID == uuid.Nil || customerPlanID == uuid.Nil {
-		return fmt.Errorf("customer or customer plan id empty")
+		return telemetry.Error(ctx, span, err, "customer or customer plan id empty")
 	}
 
 	path := fmt.Sprintf("/customers/%s/plans/%s/end", customerID, customerPlanID)
@@ -129,16 +143,19 @@ func (m MetronomeClient) EndCustomerPlan(customerID uuid.UUID, customerPlanID uu
 
 	err = post(path, m.ApiKey, req, nil)
 	if err != nil {
-		return err
+		return telemetry.Error(ctx, span, err, "failed to end customer plan")
 	}
 
 	return nil
 }
 
 // GetCustomerCredits will return the first credit grant for the customer
-func (m MetronomeClient) GetCustomerCredits(customerID uuid.UUID) (credits int64, err error) {
+func (m MetronomeClient) GetCustomerCredits(ctx context.Context, customerID uuid.UUID) (credits int64, err error) {
+	ctx, span := telemetry.NewSpan(ctx, "get-customer-credits")
+	defer span.End()
+
 	if customerID == uuid.Nil {
-		return credits, fmt.Errorf("customer id empty")
+		return credits, telemetry.Error(ctx, span, err, "customer id empty")
 	}
 
 	path := "credits/listGrants"
@@ -155,7 +172,7 @@ func (m MetronomeClient) GetCustomerCredits(customerID uuid.UUID) (credits int64
 
 	err = post(path, m.ApiKey, req, &result)
 	if err != nil {
-		return credits, err
+		return credits, telemetry.Error(ctx, span, err, "failed to get customer credits")
 	}
 
 	return result.Data[0].Balance.IncludingPending, nil

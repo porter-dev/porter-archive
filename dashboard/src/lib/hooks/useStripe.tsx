@@ -35,6 +35,10 @@ type TGetPublishableKey = {
   publishableKey: string;
 };
 
+type TGetCredits = {
+  credits: number;
+};
+
 export const usePaymentMethods = (): TUsePaymentMethod => {
   const { currentProject } = useContext(Context);
 
@@ -150,27 +154,6 @@ export const checkIfProjectHasPayment = (): TCheckHasPaymentEnabled => {
   };
 };
 
-export const checkBillingCustomerExists = () => {
-  const { currentProject } = useContext(Context);
-
-  useQuery(["checkCustomerExists", currentProject?.id], async () => {
-    if (!currentProject?.id || currentProject.id === -1) {
-      return;
-    }
-
-    if (!currentProject?.billing_enabled) {
-      return;
-    }
-
-    const res = await api.checkBillingCustomerExists(
-      "<token>",
-      {},
-      { project_id: currentProject?.id }
-    );
-    return res.data;
-  });
-};
-
 export const usePublishableKey = (): TGetPublishableKey => {
   const { user, currentProject } = useContext(Context);
 
@@ -194,6 +177,32 @@ export const usePublishableKey = (): TGetPublishableKey => {
 
   return {
     publishableKey: keyReq.data,
+  };
+};
+
+export const usePorterCredits = (): TGetCredits => {
+  const { currentProject } = useContext(Context);
+
+  // Fetch available credits
+  const creditsReq = useQuery(
+    ["getPorterCredits", currentProject?.id],
+    async () => {
+      if (!currentProject?.id || currentProject.id === -1) {
+        return;
+      }
+      const res = await api.getPorterCredits(
+        "<token>",
+        {},
+        {
+          project_id: currentProject?.id,
+        }
+      );
+      return res.data;
+    }
+  );
+
+  return {
+    credits: creditsReq.data,
   };
 };
 

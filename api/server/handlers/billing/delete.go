@@ -44,7 +44,7 @@ func (c *DeleteBillingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	err := c.Config().BillingManager.DeletePaymentMethod(ctx, paymentMethodID)
+	err := c.Config().BillingManager.StripeClient.DeletePaymentMethod(ctx, paymentMethodID)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error deleting payment method")
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error deleting payment method: %w", err)))

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/google/uuid"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
@@ -39,7 +40,7 @@ func (c *ListBillingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
-	paymentMethods, err := c.Config().BillingManager.ListPaymentMethod(ctx, proj)
+	paymentMethods, err := c.Config().BillingManager.StripeClient.ListPaymentMethod(ctx, proj.BillingID)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error listing payment method")
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error listing payment method: %w", err)))
@@ -64,8 +65,51 @@ func (c *CheckPaymentEnabledHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 	defer span.End()
 
 	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
+	user, _ := ctx.Value(types.UserScope).(*models.User)
 
-	paymentEnabled, err := c.Config().BillingManager.CheckPaymentEnabled(ctx, proj)
+	// Create billing customer for project and set the billing ID if it doesn't exist
+	var shouldUpdate bool
+	if proj.BillingID == "" {
+		billingID, err := c.Config().BillingManager.StripeClient.CreateCustomer(ctx, user.Email, proj.ID, proj.Name)
+		if err != nil {
+			err = telemetry.Error(ctx, span, err, "error creating billing customer")
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
+		proj.BillingID = billingID
+		shouldUpdate = true
+
+		telemetry.WithAttributes(span,
+			telemetry.AttributeKV{Key: "billing-id", Value: proj.BillingID},
+		)
+	}
+
+	if proj.UsageID == uuid.Nil {
+		customerID, customerPlanID, err := c.Config().BillingManager.MetronomeClient.CreateCustomerWithPlan(user.CompanyName, proj.Name, proj.ID, proj.BillingID, c.Config().ServerConf.PorterCloudPlanID)
+		if err != nil {
+			err = telemetry.Error(ctx, span, err, "error creating Metronome customer")
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		}
+		proj.UsageID = customerID
+		proj.UsagePlanID = customerPlanID
+		shouldUpdate = true
+
+		telemetry.WithAttributes(span,
+			telemetry.AttributeKV{Key: "usage-id", Value: proj.UsageID},
+			telemetry.AttributeKV{Key: "usage-plan-id", Value: proj.UsagePlanID},
+		)
+	}
+
+	if shouldUpdate {
+		_, err := c.Repo().Project().UpdateProject(proj)
+		if err != nil {
+			err := telemetry.Error(ctx, span, err, "error updating project")
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
+	}
+
+	paymentEnabled, err := c.Config().BillingManager.StripeClient.CheckPaymentEnabled(ctx, proj.BillingID)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error checking if payment enabled")
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error checking if payment enabled: %w", err)))

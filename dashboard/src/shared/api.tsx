@@ -3441,13 +3441,6 @@ const removeStackEnvGroup = baseApi<
 );
 
 // Billing
-const checkBillingCustomerExists = baseApi<
-  {},
-  {
-    project_id?: number;
-  }
->("POST", ({ project_id }) => `/api/projects/${project_id}/billing/customer`);
-
 const getPublishableKey = baseApi<
   {},
   {
@@ -3457,6 +3450,13 @@ const getPublishableKey = baseApi<
   "GET",
   ({ project_id }) => `/api/projects/${project_id}/billing/publishable_key`
 );
+
+const getPorterCredits = baseApi<
+  {},
+  {
+    project_id?: number;
+  }
+>("GET", ({ project_id }) => `/api/projects/${project_id}/billing/credits`);
 
 const getHasBilling = baseApi<{}, { project_id: number }>(
   "GET",
@@ -3854,8 +3854,8 @@ export default {
   removeStackEnvGroup,
 
   // BILLING
-  checkBillingCustomerExists,
   getPublishableKey,
+  getPorterCredits,
   listPaymentMethod,
   addPaymentMethod,
   setDefaultPaymentMethod,

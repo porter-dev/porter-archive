@@ -12,6 +12,7 @@ import Text from "components/porter/Text";
 import {
   checkIfProjectHasPayment,
   usePaymentMethods,
+  usePorterCredits,
   useSetDefaultPaymentMethod,
 } from "lib/hooks/useStripe";
 
@@ -25,6 +26,9 @@ import BillingModal from "../modals/BillingModal";
 function BillingPage(): JSX.Element {
   const { setCurrentOverlay } = useContext(Context);
   const [shouldCreate, setShouldCreate] = useState(false);
+  const { currentProject } = useContext(Context);
+
+  const { credits } = usePorterCredits();
 
   const {
     paymentMethodList,
@@ -35,6 +39,10 @@ function BillingPage(): JSX.Element {
   const { setDefaultPaymentMethod } = useSetDefaultPaymentMethod();
 
   const { refetchPaymentEnabled } = checkIfProjectHasPayment();
+
+  const formatCredits = (credits: number): string => {
+    return (credits / 100).toFixed(2);
+  };
 
   const onCreate = async () => {
     await refetchPaymentMethods();
@@ -55,21 +63,27 @@ function BillingPage(): JSX.Element {
 
   return (
     <>
-      <Text size={16}>Porter credit balance</Text>
-      <Spacer y={1} />
-      <Text color="helper">
-        View the amount of Porter credits you have available to spend on
-        resources within this project.
-      </Text>
-      <Spacer y={1} />
-      <Container row>
-        <Image src={gift} style={{ marginTop: "-2px" }} />
-        <Spacer inline x={1} />
-        <Text size={20}>
-          {paymentMethodList?.length > 0 ? "$ 5.00" : "$ 0.00"}
-        </Text>
-      </Container>
-      <Spacer y={2} />
+      {currentProject?.metronome_enabled ? (
+        <div>
+          <Text size={16}>Porter credit balance</Text>
+          <Spacer y={1} />
+          <Text color="helper">
+            View the amount of Porter credits you have available to spend on
+            resources within this project.
+          </Text>
+          <Spacer y={1} />
+          <Container row>
+            <Image src={gift} style={{ marginTop: "-2px" }} />
+            <Spacer inline x={1} />
+            <Text size={20}>
+              {credits > 0 ? `$${formatCredits(credits)}` : "$ 0.00"}
+            </Text>
+          </Container>
+          <Spacer y={2} />
+        </div>
+      ) : (
+        <div></div>
+      )}
       <Text size={16}>Payment methods</Text>
       <Spacer y={1} />
       <Text color="helper">

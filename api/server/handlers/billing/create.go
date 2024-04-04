@@ -42,7 +42,7 @@ func (c *CreateBillingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 
 	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
-	clientSecret, err := c.Config().BillingManager.CreatePaymentMethod(ctx, proj.BillingID)
+	clientSecret, err := c.Config().BillingManager.StripeClient.CreatePaymentMethod(ctx, proj.BillingID)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error creating payment method")
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error creating payment method: %w", err)))
@@ -81,7 +81,7 @@ func (c *SetDefaultBillingHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	err := c.Config().BillingManager.SetDefaultPaymentMethod(ctx, paymentMethodID, proj.BillingID)
+	err := c.Config().BillingManager.StripeClient.SetDefaultPaymentMethod(ctx, paymentMethodID, proj.BillingID)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error setting default payment method")
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error setting default payment method: %w", err)))

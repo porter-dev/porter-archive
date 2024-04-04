@@ -71,8 +71,15 @@ type ServerConf struct {
 
 	StripeSecretKey      string `env:"STRIPE_SECRET_KEY"`
 	StripePublishableKey string `env:"STRIPE_PUBLISHABLE_KEY"`
-	SlackClientID        string `env:"SLACK_CLIENT_ID"`
-	SlackClientSecret    string `env:"SLACK_CLIENT_SECRET"`
+	MetronomeAPIKey      string `env:"METRONOME_API_KEY"`
+	PorterCloudPlanID    string `env:"PORTER_CLOUD_PLAN_ID"`
+
+	// This endpoint will be passed to the porter-agent so that
+	// the billing manager can query Prometheus.
+	PrometheusUrl string `env:"PROMETHEUS_URL"`
+
+	SlackClientID     string `env:"SLACK_CLIENT_ID"`
+	SlackClientSecret string `env:"SLACK_CLIENT_SECRET"`
 
 	BillingPrivateKey       string `env:"BILLING_PRIVATE_KEY"`
 	BillingPrivateServerURL string `env:"BILLING_PRIVATE_URL"`

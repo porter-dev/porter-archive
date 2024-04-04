@@ -106,11 +106,13 @@ func (c *InstallAgentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 
 	porterAgentValues := map[string]interface{}{
 		"agent": map[string]interface{}{
-			"porterHost":  c.Config().ServerConf.ServerURL,
-			"porterPort":  "443",
-			"porterToken": encoded,
-			"clusterID":   fmt.Sprintf("%d", cluster.ID),
-			"projectID":   fmt.Sprintf("%d", proj.ID),
+			"porterHost":    c.Config().ServerConf.ServerURL,
+			"porterPort":    "443",
+			"porterToken":   encoded,
+			"clusterID":     fmt.Sprintf("%d", cluster.ID),
+			"projectID":     fmt.Sprintf("%d", proj.ID),
+			"prometheusURL": c.Config().ServerConf.PrometheusUrl,
+			"metronomeKey":  c.Config().ServerConf.MetronomeAPIKey,
 		},
 		"loki": map[string]interface{}{},
 	}
@@ -185,7 +187,6 @@ func checkAndDeleteOlderAgent(k8sAgent *kubernetes.Agent, helmAgent *helm.Agent)
 	}
 
 	_, err = helmAgent.UninstallChart(context.Background(), "porter-agent")
-
 	if err != nil {
 		return err
 	}

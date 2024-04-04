@@ -42,7 +42,8 @@ import (
 var (
 	// InstanceEnvConf holds the environment configuration
 	InstanceEnvConf *envloader.EnvConf
-	InstanceDB      *pgorm.DB
+	// InstanceDB holds the config for connecting to the database
+	InstanceDB *pgorm.DB
 )
 
 type EnvConfigLoader struct {

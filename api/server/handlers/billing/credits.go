@@ -35,6 +35,11 @@ func (c *GetCreditsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if !proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient) {
 		c.WriteResult(w, r, "")
+
+		telemetry.WithAttributes(span,
+			telemetry.AttributeKV{Key: "metronome-enabled", Value: false},
+		)
+		return
 	}
 
 	credits, err := c.Config().BillingManager.MetronomeClient.GetCustomerCredits(proj.UsageID)
@@ -43,6 +48,12 @@ func (c *GetCreditsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "metronome-enabled", Value: true},
+		telemetry.AttributeKV{Key: "project-id", Value: proj.ID},
+		telemetry.AttributeKV{Key: "usage-id", Value: proj.UsageID},
+	)
 
 	c.WriteResult(w, r, credits)
 }

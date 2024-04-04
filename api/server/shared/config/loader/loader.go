@@ -40,10 +40,8 @@ import (
 )
 
 var (
-	// InstanceBillingManager manages Stripe and Metronome clients
-	InstanceBillingManager billing.Manager
-	InstanceEnvConf        *envloader.EnvConf
-	InstanceDB             *pgorm.DB
+	InstanceEnvConf *envloader.EnvConf
+	InstanceDB      *pgorm.DB
 )
 
 type EnvConfigLoader struct {
@@ -92,7 +90,6 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 		ServerConf:        sc,
 		DBConf:            envConf.DBConf,
 		RedisConf:         envConf.RedisConf,
-		BillingManager:    InstanceBillingManager,
 		CredentialBackend: instanceCredentialBackend,
 	}
 	res.Logger.Info().Msg("Loading MetadataFromConf")
@@ -248,14 +245,6 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 	}
 	res.LaunchDarklyClient = launchDarklyClient
 
-	if sc.StripeSecretKey == "" {
-		res.Logger.Info().Msg("STRIPE_SECRET_KEY not set, all Stripe functionality will be disabled")
-	}
-
-	if sc.MetronomeAPIKey == "" {
-		res.Logger.Info().Msg("METRONOME_API_KEY not set, all Metronome functionality will be disabled")
-	}
-
 	if sc.SlackClientID != "" && sc.SlackClientSecret != "" {
 		res.Logger.Info().Msg("Creating Slack client")
 		res.SlackConf = oauth.NewSlackClient(&oauth.Config{
@@ -342,10 +331,24 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 		CollectorURL: sc.TelemetryCollectorURL,
 	}
 
+	var (
+		stripeClient    billing.StripeClient
+		metronomeClient billing.MetronomeClient
+	)
+	if sc.StripeSecretKey != "" {
+		stripeClient = billing.NewStripeClient(InstanceEnvConf.ServerConf.StripeSecretKey, InstanceEnvConf.ServerConf.StripePublishableKey)
+	} else {
+		res.Logger.Info().Msg("STRIPE_SECRET_KEY not set, all Stripe functionality will be disabled")
+	}
+
+	if sc.MetronomeAPIKey != "" {
+		metronomeClient = billing.NewMetronomeClient(InstanceEnvConf.ServerConf.MetronomeAPIKey)
+	} else {
+		res.Logger.Info().Msg("METRONOME_API_KEY not set, all Metronome functionality will be disabled")
+	}
+
 	res.Logger.Info().Msg("Creating billing manager")
-	stripeClient := billing.NewStripeClient(InstanceEnvConf.ServerConf.StripeSecretKey, InstanceEnvConf.ServerConf.StripePublishableKey)
-	metronomeClient := billing.NewMetronomeClient(InstanceEnvConf.ServerConf.MetronomeAPIKey)
-	InstanceBillingManager = billing.Manager{
+	res.BillingManager = billing.Manager{
 		StripeClient:    stripeClient,
 		MetronomeClient: metronomeClient,
 	}

@@ -29,7 +29,7 @@ func NewStripeClient(secretKey string, publishableKey string) StripeClient {
 }
 
 // CreateCustomer will create a customer in Stripe only if the project doesn't have a BillingID
-func (s *StripeClient) CreateCustomer(ctx context.Context, userEmail string, projectID uint, projectName string) (customerID string, err error) {
+func (s StripeClient) CreateCustomer(ctx context.Context, userEmail string, projectID uint, projectName string) (customerID string, err error) {
 	ctx, span := telemetry.NewSpan(ctx, "create-stripe-customer")
 	defer span.End()
 
@@ -68,7 +68,7 @@ func (s *StripeClient) CreateCustomer(ctx context.Context, userEmail string, pro
 }
 
 // DeleteCustomer will delete the customer from the billing provider
-func (s *StripeClient) DeleteCustomer(ctx context.Context, customerID string) (err error) {
+func (s StripeClient) DeleteCustomer(ctx context.Context, customerID string) (err error) {
 	ctx, span := telemetry.NewSpan(ctx, "delete-stripe-customer")
 	defer span.End()
 
@@ -92,7 +92,7 @@ func (s *StripeClient) DeleteCustomer(ctx context.Context, customerID string) (e
 }
 
 // CheckPaymentEnabled will return true if the project has a payment method added, false otherwise
-func (s *StripeClient) CheckPaymentEnabled(ctx context.Context, customerID string) (paymentEnabled bool, err error) {
+func (s StripeClient) CheckPaymentEnabled(ctx context.Context, customerID string) (paymentEnabled bool, err error) {
 	_, span := telemetry.NewSpan(ctx, "check-stripe-payment-enabled")
 	defer span.End()
 
@@ -112,7 +112,7 @@ func (s *StripeClient) CheckPaymentEnabled(ctx context.Context, customerID strin
 }
 
 // ListPaymentMethod will return all payment methods for the project
-func (s *StripeClient) ListPaymentMethod(ctx context.Context, customerID string) (paymentMethods []types.PaymentMethod, err error) {
+func (s StripeClient) ListPaymentMethod(ctx context.Context, customerID string) (paymentMethods []types.PaymentMethod, err error) {
 	ctx, span := telemetry.NewSpan(ctx, "list-stripe-payment-method")
 	defer span.End()
 
@@ -165,7 +165,7 @@ func (s *StripeClient) ListPaymentMethod(ctx context.Context, customerID string)
 }
 
 // CreatePaymentMethod will add a new payment method to the project in Stripe
-func (s *StripeClient) CreatePaymentMethod(ctx context.Context, customerID string) (clientSecret string, err error) {
+func (s StripeClient) CreatePaymentMethod(ctx context.Context, customerID string) (clientSecret string, err error) {
 	ctx, span := telemetry.NewSpan(ctx, "create-stripe-payment-method")
 	defer span.End()
 
@@ -192,7 +192,7 @@ func (s *StripeClient) CreatePaymentMethod(ctx context.Context, customerID strin
 }
 
 // SetDefaultPaymentMethod will add a new payment method to the project in Stripe
-func (s *StripeClient) SetDefaultPaymentMethod(ctx context.Context, paymentMethodID string, customerID string) (err error) {
+func (s StripeClient) SetDefaultPaymentMethod(ctx context.Context, paymentMethodID string, customerID string) (err error) {
 	ctx, span := telemetry.NewSpan(ctx, "set-default-stripe-payment-method")
 	defer span.End()
 
@@ -217,7 +217,7 @@ func (s *StripeClient) SetDefaultPaymentMethod(ctx context.Context, paymentMetho
 }
 
 // DeletePaymentMethod will remove a payment method for the project in Stripe
-func (s *StripeClient) DeletePaymentMethod(ctx context.Context, paymentMethodID string) (err error) {
+func (s StripeClient) DeletePaymentMethod(ctx context.Context, paymentMethodID string) (err error) {
 	ctx, span := telemetry.NewSpan(ctx, "delete-stripe-payment-method")
 	defer span.End()
 
@@ -236,14 +236,14 @@ func (s *StripeClient) DeletePaymentMethod(ctx context.Context, paymentMethodID 
 }
 
 // GetPublishableKey returns the Stripe publishable key
-func (s *StripeClient) GetPublishableKey(ctx context.Context) (key string) {
+func (s StripeClient) GetPublishableKey(ctx context.Context) (key string) {
 	_, span := telemetry.NewSpan(ctx, "get-stripe-publishable-key")
 	defer span.End()
 
 	return s.PublishableKey
 }
 
-func (s *StripeClient) checkDefaultPaymentMethod(customerID string) (defaultPaymentExists bool, defaultPaymentID string, err error) {
+func (s StripeClient) checkDefaultPaymentMethod(customerID string) (defaultPaymentExists bool, defaultPaymentID string, err error) {
 	// Get customer to check default payment method
 	customer, err := customer.Get(customerID, nil)
 	if err != nil {

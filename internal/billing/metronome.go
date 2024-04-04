@@ -34,7 +34,7 @@ func NewMetronomeClient(metronomeApiKey string) MetronomeClient {
 }
 
 // createCustomer will create the customer in Metronome
-func (m *MetronomeClient) createCustomer(orgName string, projectName string, projectID uint, billingID string) (customerID uuid.UUID, err error) {
+func (m MetronomeClient) createCustomer(orgName string, projectName string, projectID uint, billingID string) (customerID uuid.UUID, err error) {
 	path := "customers"
 	projIDStr := strconv.FormatUint(uint64(projectID), 10)
 
@@ -62,7 +62,7 @@ func (m *MetronomeClient) createCustomer(orgName string, projectName string, pro
 }
 
 // addCustomerPlan will start the customer on the given plan
-func (m *MetronomeClient) addCustomerPlan(customerID uuid.UUID, planID uuid.UUID) (customerPlanID uuid.UUID, err error) {
+func (m MetronomeClient) addCustomerPlan(customerID uuid.UUID, planID uuid.UUID) (customerPlanID uuid.UUID, err error) {
 	if customerID == uuid.Nil || planID == uuid.Nil {
 		return customerPlanID, fmt.Errorf("customer or plan id empty")
 	}
@@ -94,22 +94,24 @@ func (m *MetronomeClient) addCustomerPlan(customerID uuid.UUID, planID uuid.UUID
 }
 
 // CreateCustomerWithPlan will create the customer in Metronome and immediately add it to the plan
-func (m *MetronomeClient) CreateCustomerWithPlan(orgName string, projectName string, projectID uint, billingID string, planID string) (customerPlanID uuid.UUID, err error) {
+func (m MetronomeClient) CreateCustomerWithPlan(orgName string, projectName string, projectID uint, billingID string, planID string) (customerID uuid.UUID, customerPlanID uuid.UUID, err error) {
 	porterCloudPlanID, err := uuid.Parse(planID)
 	if err != nil {
-		return customerPlanID, fmt.Errorf("error parsing starter plan id: %w", err)
+		return customerID, customerPlanID, fmt.Errorf("error parsing starter plan id: %w", err)
 	}
 
-	customerID, err := m.createCustomer(orgName, projectName, projectID, billingID)
+	customerID, err = m.createCustomer(orgName, projectName, projectID, billingID)
 	if err != nil {
-		return customerPlanID, err
+		return customerID, customerPlanID, err
 	}
 
-	return m.addCustomerPlan(customerID, porterCloudPlanID)
+	customerPlanID, err = m.addCustomerPlan(customerID, porterCloudPlanID)
+
+	return customerID, customerPlanID, err
 }
 
 // EndCustomerPlan will immediately end the plan for the given customer
-func (m *MetronomeClient) EndCustomerPlan(customerID uuid.UUID, customerPlanID uuid.UUID) (err error) {
+func (m MetronomeClient) EndCustomerPlan(customerID uuid.UUID, customerPlanID uuid.UUID) (err error) {
 	if customerID == uuid.Nil || customerPlanID == uuid.Nil {
 		return fmt.Errorf("customer or customer plan id empty")
 	}
@@ -134,7 +136,7 @@ func (m *MetronomeClient) EndCustomerPlan(customerID uuid.UUID, customerPlanID u
 }
 
 // GetCustomerCredits will return the first credit grant for the customer
-func (m *MetronomeClient) GetCustomerCredits(customerID uuid.UUID) (credits int64, err error) {
+func (m MetronomeClient) GetCustomerCredits(customerID uuid.UUID) (credits int64, err error) {
 	if customerID == uuid.Nil {
 		return credits, fmt.Errorf("customer id empty")
 	}

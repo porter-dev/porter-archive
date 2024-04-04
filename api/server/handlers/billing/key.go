@@ -5,7 +5,6 @@ import (
 
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
-	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
@@ -33,25 +32,6 @@ func (c *GetPublishableKeyHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	defer span.End()
 
 	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
-	user, _ := ctx.Value(types.UserScope).(*models.User)
-
-	// Create billing customer for project and set the billing ID if it doesn't exist
-	if proj.BillingID == "" {
-		billingID, err := c.Config().BillingManager.StripeClient.CreateCustomer(ctx, user.Email, proj.ID, proj.Name)
-		if err != nil {
-			err = telemetry.Error(ctx, span, err, "error creating billing customer")
-			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-			return
-		}
-		proj.BillingID = billingID
-
-		_, err = c.Repo().Project().UpdateProject(proj)
-		if err != nil {
-			err := telemetry.Error(ctx, span, err, "error updating project")
-			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-			return
-		}
-	}
 
 	// There is no easy way to pass environment variables to the frontend,
 	// so for now pass via the backend. This is acceptable because the key is

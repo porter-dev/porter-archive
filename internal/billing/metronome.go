@@ -27,8 +27,8 @@ type MetronomeClient struct {
 }
 
 // NewMetronomeClient returns a new Metronome client
-func NewMetronomeClient(metronomeApiKey string) *MetronomeClient {
-	return &MetronomeClient{
+func NewMetronomeClient(metronomeApiKey string) MetronomeClient {
+	return MetronomeClient{
 		ApiKey: metronomeApiKey,
 	}
 }
@@ -75,11 +75,15 @@ func (m *MetronomeClient) addCustomerPlan(customerID uuid.UUID, planID uuid.UUID
 	startOn := midnightUTC.Format(time.RFC3339)
 
 	req := types.AddCustomerPlanRequest{
-		PlanID:     planID,
-		StartingOn: startOn,
+		PlanID:        planID,
+		StartingOnUTC: startOn,
 	}
 
-	var result types.AddCustomerPlanResponse
+	var result struct {
+		Data struct {
+			CustomerPlanID uuid.UUID `json:"id"`
+		} `json:"data"`
+	}
 
 	err = post(path, m.ApiKey, req, &result)
 	if err != nil {
@@ -118,7 +122,7 @@ func (m *MetronomeClient) EndCustomerPlan(customerID uuid.UUID, customerPlanID u
 	endBefore := midnightUTC.Format(time.RFC3339)
 
 	req := types.EndCustomerPlanRequest{
-		EndingBefore: endBefore,
+		EndingBeforeUTC: endBefore,
 	}
 
 	err = post(path, m.ApiKey, req, nil)
@@ -143,7 +147,10 @@ func (m *MetronomeClient) GetCustomerCredits(customerID uuid.UUID) (credits int6
 		},
 	}
 
-	var result types.ListCreditGrantsResponse
+	var result struct {
+		Data []types.CreditGrant `json:"data"`
+	}
+
 	err = post(path, m.ApiKey, req, &result)
 	if err != nil {
 		return credits, err

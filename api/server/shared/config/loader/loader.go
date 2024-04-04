@@ -62,13 +62,6 @@ func sharedInit() {
 	if err != nil {
 		panic(err)
 	}
-
-	stripeClient := billing.NewStripeClient(InstanceEnvConf.ServerConf.StripeSecretKey, InstanceEnvConf.ServerConf.StripePublishableKey)
-	metronomeClient := billing.NewMetronomeClient(InstanceEnvConf.ServerConf.MetronomeAPIKey)
-	InstanceBillingManager = billing.Manager{
-		StripeClient:    stripeClient,
-		MetronomeClient: metronomeClient,
-	}
 }
 
 func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
@@ -348,6 +341,15 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 		ServiceName:  sc.TelemetryName,
 		CollectorURL: sc.TelemetryCollectorURL,
 	}
+
+	res.Logger.Info().Msg("Creating billing manager")
+	stripeClient := billing.NewStripeClient(InstanceEnvConf.ServerConf.StripeSecretKey, InstanceEnvConf.ServerConf.StripePublishableKey)
+	metronomeClient := billing.NewMetronomeClient(InstanceEnvConf.ServerConf.MetronomeAPIKey)
+	InstanceBillingManager = billing.Manager{
+		StripeClient:    stripeClient,
+		MetronomeClient: metronomeClient,
+	}
+	res.Logger.Info().Msg("Created billing manager")
 
 	return res, nil
 }

@@ -243,7 +243,8 @@ const Apps: React.FC = () => {
           {currentProject?.sandbox_enabled && (
             <>
               <Banner icon={<Image src={gift} />}>
-                Link a payment method to receive $5 of free Porter credits.
+                Link a payment method to receive $5 of Porter credits for your
+                first month.
               </Banner>
               <Spacer y={1} />
             </>

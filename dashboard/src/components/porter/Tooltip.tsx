@@ -2,34 +2,47 @@
 import React, { useState } from "react";
 import styled from "styled-components";
 
-interface TooltipProps {
+type TooltipProps = {
   children: React.ReactNode;
   content: React.ReactNode;
   position?: "top" | "right" | "bottom" | "left";
   hidden?: boolean;
-  width?: string;
-}
+  tooltipContentWidth?: string;
+  backgroundColor?: string;
+  containerWidth?: string;
+};
 
 const Tooltip: React.FC<TooltipProps> = ({
   children,
   content,
   position = "top",
   hidden = false,
-  width,
+  tooltipContentWidth,
+  containerWidth,
 }) => {
   const [isVisible, setIsVisible] = useState(false);
 
-  const showTooltip = () => setIsVisible(true);
-  const hideTooltip = () => setIsVisible(false);
+  const showTooltip = (): void => {
+    setIsVisible(true);
+  };
+  const hideTooltip = (): void => {
+    setIsVisible(false);
+  };
 
   if (hidden) {
     return <>{children}</>;
   }
 
   return (
-    <TooltipContainer onMouseEnter={showTooltip} onMouseLeave={hideTooltip}>
+    <TooltipContainer
+      onMouseEnter={showTooltip}
+      onMouseLeave={hideTooltip}
+      width={containerWidth}
+    >
       {isVisible && (
-        <TooltipContent position={position} width={width}>{content}</TooltipContent>
+        <TooltipContent position={position} width={tooltipContentWidth}>
+          {content}
+        </TooltipContent>
       )}
       {children}
     </TooltipContainer>
@@ -38,12 +51,14 @@ const Tooltip: React.FC<TooltipProps> = ({
 
 export default Tooltip;
 
-const TooltipContainer = styled.div`
+const TooltipContainer = styled.div<{ width?: string }>`
   position: relative;
   display: inline-flex;
+  ${({ width }) => width && `width: ${width};`}
+  height: 100%;
 `;
 
-const TooltipContent = styled.div<{ position: string, width?: string }>`
+const TooltipContent = styled.div<{ position: string; width?: string }>`
   color: #fff;
   padding: 10px;
   border-radius: 5px;

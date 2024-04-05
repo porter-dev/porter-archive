@@ -56,6 +56,7 @@ import MetricsTab from "./tabs/MetricsTab";
 import Notifications from "./tabs/Notifications";
 import Overview from "./tabs/Overview";
 import Settings from "./tabs/Settings";
+import StatusTab from "./tabs/StatusTab";
 
 // commented out tabs are not yet implemented
 // will be included as support is available based on data from app revisions rather than helm releases
@@ -74,6 +75,7 @@ const validTabs = [
   "helm-values",
   "job-history",
   "notifications",
+  "status",
 ] as const;
 const DEFAULT_TAB = "activity";
 type ValidTab = (typeof validTabs)[number];
@@ -437,39 +439,74 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
   const tabs = useMemo(() => {
     const numNotifications = latestClientNotifications.length;
 
-    const base = [
-      {
-        label: `Notifications`,
-        value: "notifications",
-        sibling:
-          numNotifications > 0 ? (
-            <Tag borderColor={"#FFBF00"}>
-              <Link
-                to={tabUrlGenerator({
-                  tab: "notifications",
-                })}
-                color={"#FFBF00"}
-              >
-                <TagIcon src={alert} />
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    fontSize: "13px",
-                  }}
-                >
-                  {numNotifications}
-                </div>
-              </Link>
-            </Tag>
-          ) : undefined,
-      },
-      { label: "Activity", value: "activity" },
-      { label: "Overview", value: "overview" },
-      { label: "Logs", value: "logs" },
-      { label: "Metrics", value: "metrics" },
-      { label: "Environment", value: "environment" },
-    ];
+    const base = currentProject?.beta_features_enabled
+      ? [
+          {
+            label: `Notifications`,
+            value: "notifications",
+            sibling:
+              numNotifications > 0 ? (
+                <Tag borderColor={"#FFBF00"}>
+                  <Link
+                    to={tabUrlGenerator({
+                      tab: "notifications",
+                    })}
+                    color={"#FFBF00"}
+                  >
+                    <TagIcon src={alert} />
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        fontSize: "13px",
+                      }}
+                    >
+                      {numNotifications}
+                    </div>
+                  </Link>
+                </Tag>
+              ) : undefined,
+          },
+          { label: "Activity", value: "activity" },
+          { label: "Status", value: "status" },
+          { label: "Logs", value: "logs" },
+          { label: "Metrics", value: "metrics" },
+          { label: "Services", value: "overview" },
+          { label: "Environment", value: "environment" },
+        ]
+      : [
+          {
+            label: `Notifications`,
+            value: "notifications",
+            sibling:
+              numNotifications > 0 ? (
+                <Tag borderColor={"#FFBF00"}>
+                  <Link
+                    to={tabUrlGenerator({
+                      tab: "notifications",
+                    })}
+                    color={"#FFBF00"}
+                  >
+                    <TagIcon src={alert} />
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        fontSize: "13px",
+                      }}
+                    >
+                      {numNotifications}
+                    </div>
+                  </Link>
+                </Tag>
+              ) : undefined,
+          },
+          { label: "Activity", value: "activity" },
+          { label: "Overview", value: "overview" },
+          { label: "Logs", value: "logs" },
+          { label: "Metrics", value: "metrics" },
+          { label: "Environment", value: "environment" },
+        ];
 
     if (deploymentTarget.is_preview) {
       return base;
@@ -621,6 +658,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
             />
           ))
           .with("notifications", () => <Notifications />)
+          .with("status", () => <StatusTab />)
           .otherwise(() => null)}
         <Spacer y={2} />
       </form>

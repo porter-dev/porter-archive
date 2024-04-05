@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import _ from "lodash";
-import pluralize from "pluralize";
+import { match } from "ts-pattern";
 import z from "zod";
 
 import { type ClientService } from "lib/porter-apps/services";
@@ -10,14 +10,35 @@ import {
   useWebsockets,
   type NewWebsocketOptions,
 } from "shared/hooks/useWebsockets";
-import { valueExists } from "shared/util";
+
+export type AppServiceStatus = Record<string, ClientServiceStatus>;
+
+export type ServiceStatusDescriptor =
+  | "running"
+  | "pending"
+  | "failing"
+  | "unknown";
 
 export type ClientServiceStatus = {
-  status: "running" | "spinningDown" | "failing";
-  message: string;
-  crashLoopReason: string;
-  restartCount?: number;
+  status: ServiceStatusDescriptor;
+  serviceName: string;
+  versionStatusList: ClientServiceVersionStatus[];
+};
+
+export type ClientServiceVersionStatus = {
+  status: ServiceStatusDescriptor;
   revisionId: string;
+  revisionNumber: number;
+  instanceStatusList: ClientServiceVersionInstanceStatus[];
+};
+
+export type ClientServiceVersionInstanceStatus = {
+  status: ServiceStatusDescriptor;
+  revisionId: string;
+  crashLoopReason: string;
+  restartCount: number;
+  name: string;
+  creationTimestamp: string;
 };
 
 const serviceStatusValidator = z.object({
@@ -28,13 +49,10 @@ const serviceStatusValidator = z.object({
       revision_number: z.number(),
       instance_status_list: z.array(
         z.object({
-          status: z.union([
-            z.literal("PENDING"),
-            z.literal("RUNNING"),
-            z.literal("FAILED"),
-          ]),
+          status: z.enum(["PENDING", "RUNNING", "FAILED"]),
           restart_count: z.number(),
           creation_timestamp: z.string(),
+          name: z.string(),
         })
       ),
     })
@@ -56,7 +74,9 @@ export const useAppStatus = ({
   deploymentTargetId: string;
   appName: string;
   kind?: string;
-}): { serviceVersionStatus: Record<string, ClientServiceStatus[]> } => {
+}): {
+  appServiceStatus: AppServiceStatus;
+} => {
   const [serviceStatusMap, setServiceStatusMap] = useState<
     Record<string, SerializedServiceStatus>
   >({});
@@ -130,75 +150,100 @@ export const useAppStatus = ({
 
   const deserializeServiceStatus = (
     serviceStatus: SerializedServiceStatus
-  ): ClientServiceStatus[] => {
-    return serviceStatus.revision_status_list
-      .sort((a, b) => b.revision_number - a.revision_number)
-      .flatMap((revisionStatus) => {
-        const instancesByStatus = _.groupBy(
-          revisionStatus.instance_status_list,
-          (instance) => instance.status
-        );
-        const runningInstances = instancesByStatus.RUNNING || [];
-        const pendingInstances = instancesByStatus.PENDING || [];
-        const failedInstances = instancesByStatus.FAILED || [];
-        const versionStatuses: ClientServiceStatus[] = [];
+  ): ClientServiceStatus => {
+    const clientServiceStatus: ClientServiceStatus = {
+      status: "unknown",
+      serviceName: serviceStatus.service_name,
+      versionStatusList: [],
+    };
 
-        if (runningInstances.length > 0) {
-          versionStatuses.push({
-            status: "running",
-            message: `${runningInstances.length} ${pluralize(
-              "instance",
-              runningInstances.length
-            )} ${pluralize("is", runningInstances.length)} running at Version ${
-              revisionStatus.revision_number
-            }`,
-            crashLoopReason: "",
-            restartCount: _.maxBy(runningInstances, "restart_count")
-              ?.restart_count,
-            revisionId: revisionStatus.revision_id,
+    const versionStatusList = serviceStatus.revision_status_list
+      .sort((a, b) => b.revision_number - a.revision_number)
+      .map((revisionStatus) => {
+        const clientServiceVersionStatus: ClientServiceVersionStatus = {
+          status: "unknown",
+          revisionId: revisionStatus.revision_id,
+          revisionNumber: revisionStatus.revision_number,
+          instanceStatusList: [],
+        };
+
+        const instanceStatusList = revisionStatus.instance_status_list
+          .sort((a, b) => {
+            const aDate = new Date(a.creation_timestamp);
+            const bDate = new Date(b.creation_timestamp);
+            return bDate.getTime() - aDate.getTime();
+          })
+          .map((instanceStatus) => {
+            const status: ServiceStatusDescriptor = match(instanceStatus.status)
+              .with("PENDING", () => "pending" as const)
+              .with("RUNNING", () => "running" as const)
+              .with("FAILED", () => "failing" as const)
+              .otherwise(() => "unknown" as const);
+            const clientServiceVersionInstanceStatus: ClientServiceVersionInstanceStatus =
+              {
+                revisionId: revisionStatus.revision_id,
+                status,
+                crashLoopReason: "",
+                restartCount: instanceStatus.restart_count,
+                name: instanceStatus.name,
+                creationTimestamp: instanceStatus.creation_timestamp,
+              };
+
+            return clientServiceVersionInstanceStatus;
           });
+
+        clientServiceVersionStatus.instanceStatusList = instanceStatusList;
+        if (
+          instanceStatusList.every((instance) => instance.status === "running")
+        ) {
+          clientServiceVersionStatus.status = "running";
         }
-        if (pendingInstances.length > 0) {
-          versionStatuses.push({
-            status: "spinningDown",
-            message: `${pendingInstances.length} ${pluralize(
-              "instance",
-              pendingInstances.length
-            )} ${pluralize(
-              "is",
-              pendingInstances.length
-            )} in a pending state at Version ${revisionStatus.revision_number}`,
-            crashLoopReason: "",
-            restartCount: _.maxBy(pendingInstances, "restart_count")
-              ?.restart_count,
-            revisionId: revisionStatus.revision_id,
-          });
+        if (
+          instanceStatusList.every((instance) => instance.status === "pending")
+        ) {
+          clientServiceVersionStatus.status = "pending";
         }
-        if (failedInstances.length > 0) {
-          versionStatuses.push({
-            status: "failing",
-            message: `${failedInstances.length} ${pluralize(
-              "instance",
-              failedInstances.length
-            )} ${pluralize(
-              "is",
-              failedInstances.length
-            )} failing to run Version ${revisionStatus.revision_number}`,
-            crashLoopReason: "",
-            restartCount: _.maxBy(failedInstances, "restart_count")
-              ?.restart_count,
-            revisionId: revisionStatus.revision_id,
-          });
+        if (
+          instanceStatusList.every((instance) => instance.status === "failing")
+        ) {
+          clientServiceVersionStatus.status = "failing";
         }
-        return versionStatuses;
-      })
-      .filter(valueExists);
+
+        return clientServiceVersionStatus;
+      });
+
+    clientServiceStatus.versionStatusList = versionStatusList;
+    if (versionStatusList.every((version) => version.status === "running")) {
+      clientServiceStatus.status = "running";
+    }
+    if (versionStatusList.every((version) => version.status === "pending")) {
+      clientServiceStatus.status = "pending";
+    }
+    if (versionStatusList.every((version) => version.status === "failing")) {
+      clientServiceStatus.status = "failing";
+    }
+    return clientServiceStatus;
   };
 
   return {
-    serviceVersionStatus: _.mapValues(
-      serviceStatusMap,
-      deserializeServiceStatus
-    ),
+    appServiceStatus: _.mapValues(serviceStatusMap, deserializeServiceStatus),
   };
+};
+
+export const statusColor = (status: ServiceStatusDescriptor): string => {
+  return match(status)
+    .with("running", () => "#38a88a")
+    .with("failing", () => "#ff0000")
+    .with("pending", () => "#FFA500")
+    .with("unknown", () => "#4797ff")
+    .exhaustive();
+};
+
+export const statusColorLight = (status: ServiceStatusDescriptor): string => {
+  return match(status)
+    .with("running", () => "#4b6850")
+    .with("failing", () => "#FF7F7F")
+    .with("pending", () => "#FFC04C")
+    .with("unknown", () => "#e6f2ff")
+    .exhaustive();
 };

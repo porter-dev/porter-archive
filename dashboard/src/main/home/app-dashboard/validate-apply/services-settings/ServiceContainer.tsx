@@ -33,7 +33,7 @@ type ServiceProps = {
     "app.services" | "app.predeploy"
   >;
   remove: (index: number) => void;
-  status?: ClientServiceStatus[];
+  status?: ClientServiceStatus;
   internalNetworkingDetails: {
     namespace: string;
     appName: string;
@@ -68,6 +68,7 @@ const ServiceContainer: React.FC<ServiceProps> = ({
       .with({ config: { type: "predeploy" } }, (svc) => (
         <JobTabs index={index} service={svc} isPredeploy />
       ))
+      .with({ config: { type: "initdeploy" } }, () => <></>)
       .exhaustive();
   };
 
@@ -80,6 +81,8 @@ const ServiceContainer: React.FC<ServiceProps> = ({
       case "job":
         return <Icon src={job} />;
       case "predeploy":
+        return <Icon src={job} />;
+      case "initdeploy":
         return <Icon src={job} />;
     }
   };
@@ -213,9 +216,6 @@ const ActionButton = styled.button`
   border-radius: 50%;
   cursor: pointer;
   color: #aaaabb;
-  :hover {
-    color: white;
-  }
 
   > span {
     font-size: 20px;
@@ -241,6 +241,9 @@ const ServiceHeader = styled.div<{
   border: 1px solid #494b4f;
   :hover {
     border: 1px solid #7a7b80;
+    ${ActionButton} {
+      color: white;
+    }
   }
 
   border-bottom-left-radius: ${(props) => (props.bordersRounded ? "" : "0")};

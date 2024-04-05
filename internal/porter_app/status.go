@@ -60,6 +60,7 @@ type InstanceStatus struct {
 	Status            InstanceStatusDescriptor `json:"status"`
 	RestartCount      int                      `json:"restart_count"`
 	CreationTimestamp time.Time                `json:"creation_timestamp"`
+	Name              string                   `json:"name"`
 }
 
 // GetServiceStatusInput is the input type for GetServiceStatus
@@ -205,7 +206,9 @@ func InstanceStatusFromPod(ctx context.Context, inp InstanceStatusFromPodInput) 
 
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "pod-name", Value: inp.Pod.Name})
 
-	instanceStatus := InstanceStatus{}
+	instanceStatus := InstanceStatus{
+		Name: inp.Pod.Name,
+	}
 
 	// find the container running the app code. Note that this is conditioned on the fact that
 	// in our worker/web/job charts, there is one container created with this name during the deployment

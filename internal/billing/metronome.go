@@ -43,8 +43,13 @@ func (m MetronomeClient) createCustomer(ctx context.Context, orgName string, pro
 	path := "customers"
 	projIDStr := strconv.FormatUint(uint64(projectID), 10)
 
+	prefix := "Project"
+	if orgName != "" {
+		prefix = orgName
+	}
+
 	customer := types.Customer{
-		Name: fmt.Sprintf("%s - %s", orgName, projectName),
+		Name: fmt.Sprintf("%s - %s", prefix, projectName),
 		Aliases: []string{
 			projIDStr,
 		},

@@ -92,7 +92,7 @@ type Config struct {
 	AnalyticsClient analytics.AnalyticsSegmentClient
 
 	// BillingManager manages billing for Porter instances with billing enabled
-	BillingManager billing.BillingManager
+	BillingManager billing.Manager
 
 	// WhitelistedUsers do not count toward usage limits
 	WhitelistedUsers map[uint]uint

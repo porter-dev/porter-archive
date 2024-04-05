@@ -5,6 +5,7 @@ import (
 
 	"gorm.io/gorm"
 
+	"github.com/google/uuid"
 	"github.com/launchdarkly/go-sdk-common/v3/ldcontext"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/features"
@@ -27,6 +28,9 @@ const (
 
 	// BillingEnabled enables the "Billing" tab and all Stripe integrations
 	BillingEnabled FeatureFlagLabel = "billing_enabled"
+
+	// MetronomeEnabled enables all Metronome business logic
+	MetronomeEnabled FeatureFlagLabel = "metronome_enabled"
 
 	// DBEnabled enables the "Databases" tab
 	DBEnabled FeatureFlagLabel = "db_enabled"
@@ -97,6 +101,7 @@ var ProjectFeatureFlags = map[FeatureFlagLabel]bool{
 	BetaFeaturesEnabled:             false,
 	CapiProvisionerEnabled:          true,
 	BillingEnabled:                  false,
+	MetronomeEnabled:                false,
 	DBEnabled:                       false,
 	EFSEnabled:                      false,
 	EnableReprovision:               false,
@@ -137,8 +142,11 @@ type Project struct {
 	BillingID      string
 	BillingEnabled bool
 
-	ProjectUsageID      uint
-	ProjectUsageCacheID uint
+	// UsageID is the id corresponding to the customer in Metronome
+	UsageID uuid.UUID
+	// UsagePlanID is the id of the customer-plan relationship. Do not confuse with the actual plan ID.
+	// This exists as long as a user is part of a plan.
+	UsagePlanID uuid.UUID
 
 	// linked repos
 	GitRepos []GitRepo `json:"git_repos,omitempty"`
@@ -299,6 +307,7 @@ func (p *Project) ToProjectType(launchDarklyClient *features.Client) types.Proje
 		BetaFeaturesEnabled:             p.GetFeatureFlag(BetaFeaturesEnabled, launchDarklyClient),
 		CapiProvisionerEnabled:          p.GetFeatureFlag(CapiProvisionerEnabled, launchDarklyClient),
 		BillingEnabled:                  p.GetFeatureFlag(BillingEnabled, launchDarklyClient),
+		MetronomeEnabled:                p.GetFeatureFlag(MetronomeEnabled, launchDarklyClient),
 		DBEnabled:                       p.GetFeatureFlag(DBEnabled, launchDarklyClient),
 		EFSEnabled:                      p.GetFeatureFlag(EFSEnabled, launchDarklyClient),
 		EnableReprovision:               p.GetFeatureFlag(EnableReprovision, launchDarklyClient),

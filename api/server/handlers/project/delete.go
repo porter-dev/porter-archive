@@ -92,12 +92,20 @@ func (p *ProjectDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	err = p.Config().BillingManager.DeleteCustomer(ctx, proj)
-	if err != nil {
-		e := "error deleting project in billing provider"
-		err = telemetry.Error(ctx, span, err, e)
-		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-		return
+	if p.Config().ServerConf.MetronomeAPIKey != "" && p.Config().ServerConf.PorterCloudPlanID != "" &&
+		proj.GetFeatureFlag(models.MetronomeEnabled, p.Config().LaunchDarklyClient) {
+		err = p.Config().BillingManager.MetronomeClient.EndCustomerPlan(ctx, proj.UsageID, proj.UsagePlanID)
+		if err != nil {
+			e := "error ending billing plan"
+			err = telemetry.Error(ctx, span, err, e)
+			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+		telemetry.WithAttributes(span,
+			telemetry.AttributeKV{Key: "project-id", Value: proj.ID},
+			telemetry.AttributeKV{Key: "usage-id", Value: proj.UsageID},
+			telemetry.AttributeKV{Key: "usage-plan-id", Value: proj.UsagePlanID},
+		)
 	}
 
 	deletedProject, err := p.Repo().Project().DeleteProject(proj)

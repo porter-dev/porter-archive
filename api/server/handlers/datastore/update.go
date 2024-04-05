@@ -184,17 +184,13 @@ func (h *UpdateDatastoreHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	req := connect.NewRequest(&porterv1.PatchCloudContractRequest{
-		ProjectId:    int64(project.ID),
-		Operation:    porterv1.EnumPatchCloudContractOperation_ENUM_PATCH_CLOUD_CONTRACT_OPERATION_UPDATE,
-		ResourceType: porterv1.EnumPatchCloudContractType_ENUM_PATCH_CLOUD_CONTRACT_TYPE_DATASTORE,
-		ResourceValues: &porterv1.PatchCloudContractRequest_Datastore{
-			Datastore: datastoreProto,
-		},
+	req := connect.NewRequest(&porterv1.UpdateDatastoreRequest{
+		ProjectId: int64(project.ID),
+		Datastore: datastoreProto,
 	})
-	_, err = h.Config().ClusterControlPlaneClient.PatchCloudContract(ctx, req)
+	_, err = h.Config().ClusterControlPlaneClient.UpdateDatastore(ctx, req)
 	if err != nil {
-		err = telemetry.Error(ctx, span, err, "error patching cloud contract")
+		err = telemetry.Error(ctx, span, err, "error updating datastore")
 		h.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}

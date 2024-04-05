@@ -36,20 +36,15 @@ func NewMetronomeClient(metronomeApiKey string) MetronomeClient {
 }
 
 // createCustomer will create the customer in Metronome
-func (m MetronomeClient) createCustomer(ctx context.Context, orgName string, projectName string, projectID uint, billingID string) (customerID uuid.UUID, err error) {
+func (m MetronomeClient) createCustomer(ctx context.Context, userEmail string, projectName string, projectID uint, billingID string) (customerID uuid.UUID, err error) {
 	ctx, span := telemetry.NewSpan(ctx, "create-metronome-customer")
 	defer span.End()
 
 	path := "customers"
 	projIDStr := strconv.FormatUint(uint64(projectID), 10)
 
-	prefix := "Project"
-	if orgName != "" {
-		prefix = orgName
-	}
-
 	customer := types.Customer{
-		Name: fmt.Sprintf("%s - %s", prefix, projectName),
+		Name: projectName,
 		Aliases: []string{
 			projIDStr,
 		},
@@ -57,6 +52,10 @@ func (m MetronomeClient) createCustomer(ctx context.Context, orgName string, pro
 			BillingProviderType:       "stripe",
 			BillingProviderCustomerID: billingID,
 			StripeCollectionMethod:    defaultCollectionMethod,
+		},
+		CustomFields: map[string]string{
+			"project_id": projIDStr,
+			"user_email": userEmail,
 		},
 	}
 
@@ -107,7 +106,7 @@ func (m MetronomeClient) addCustomerPlan(ctx context.Context, customerID uuid.UU
 }
 
 // CreateCustomerWithPlan will create the customer in Metronome and immediately add it to the plan
-func (m MetronomeClient) CreateCustomerWithPlan(ctx context.Context, orgName string, projectName string, projectID uint, billingID string, planID string) (customerID uuid.UUID, customerPlanID uuid.UUID, err error) {
+func (m MetronomeClient) CreateCustomerWithPlan(ctx context.Context, userEmail string, projectName string, projectID uint, billingID string, planID string) (customerID uuid.UUID, customerPlanID uuid.UUID, err error) {
 	ctx, span := telemetry.NewSpan(ctx, "add-metronome-customer-plan")
 	defer span.End()
 
@@ -116,7 +115,7 @@ func (m MetronomeClient) CreateCustomerWithPlan(ctx context.Context, orgName str
 		return customerID, customerPlanID, telemetry.Error(ctx, span, err, "error parsing starter plan id")
 	}
 
-	customerID, err = m.createCustomer(ctx, orgName, projectName, projectID, billingID)
+	customerID, err = m.createCustomer(ctx, userEmail, projectName, projectID, billingID)
 	if err != nil {
 		return customerID, customerPlanID, telemetry.Error(ctx, span, err, "error while creatinc customer with plan")
 	}

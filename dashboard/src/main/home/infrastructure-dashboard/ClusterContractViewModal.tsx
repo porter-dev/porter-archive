@@ -22,21 +22,6 @@ const ClusterContractViewModal: React.FC<Props> = ({ onClose }) => {
               <StyledCell>{cluster.contract?.created_at}</StyledCell>
             </tr>
             <tr>
-              <StyledCell width={"100px"}>decoded contract</StyledCell>
-              <StyledCell>
-                <ClickToCopy>
-                  {JSON.stringify(
-                    Contract.fromJsonString(
-                      atob(cluster.contract?.base64_contract ?? ""),
-                      {
-                        ignoreUnknownFields: true,
-                      }
-                    )
-                  )}
-                </ClickToCopy>
-              </StyledCell>
-            </tr>
-            <tr>
               <StyledCell width={"100px"}>condition</StyledCell>
               <StyledCell>{cluster.contract?.condition}</StyledCell>
             </tr>
@@ -44,6 +29,25 @@ const ClusterContractViewModal: React.FC<Props> = ({ onClose }) => {
               <StyledCell width={"100px"}>condition metadata</StyledCell>
               <StyledCell>
                 {JSON.stringify(cluster.contract?.condition_metadata)}
+              </StyledCell>
+            </tr>
+            <tr>
+              <StyledCell width={"100px"}>decoded contract</StyledCell>
+              <StyledCell>
+                <pre>
+                  <ClickToCopy>
+                    {JSON.stringify(
+                      Contract.fromJsonString(
+                        atob(cluster.contract?.base64_contract ?? ""),
+                        {
+                          ignoreUnknownFields: true,
+                        }
+                      ),
+                      null,
+                      2
+                    )}
+                  </ClickToCopy>
+                </pre>
               </StyledCell>
             </tr>
           </tbody>

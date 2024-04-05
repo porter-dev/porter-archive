@@ -3,7 +3,7 @@ name: 'build-npm'
 description: builds the static dashboard files for the app
 
 runs:
-  using: "composite"
+  using: 'composite'
   steps:
     - name: Setup Node
       uses: actions/setup-node@v3
@@ -14,6 +14,9 @@ runs:
       run: |
         cd dashboard
         npm i --legacy-peer-deps
+    - name: Set Environment Variables
+      run: |
+        echo '${{ secrets.DASHBOARD_FULL_ENV }}' > dashboard/.env
     - name: Run NPM Build
       shell: bash
       run: |

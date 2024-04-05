@@ -123,11 +123,18 @@ export const ProjectComplianceProvider: React.FC<
         return;
       }
 
+      const cidrAllowList = process.env.PORTER_CIDRS
+        ? process.env.PORTER_CIDRS.split(",")
+        : [];
+
       const updatedKindValues = match(latestContractProto.cluster.kindValues)
         .with({ case: "eksKind" }, ({ value }) => ({
           case: "eksKind" as const,
           value: new EKS({
             ...value,
+            ...(cidrAllowList.length > 0 && {
+              controlPlaneCidrAllowlist: cidrAllowList,
+            }),
             enableKmsEncryption: true,
             enableEcrScanning: true,
             logging: new EKSLogging({

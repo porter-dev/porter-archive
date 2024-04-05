@@ -17,9 +17,9 @@ const MetricsTab: React.FC = () => {
       projectId={projectId}
       clusterId={clusterId}
       appName={appName}
-      // we do not yet support metrics for jobs
       services={latestClientServices.filter(
-        (svc) => svc.config.type !== "predeploy" && svc.config.type !== "job"
+        (svc) =>
+          svc.config.type !== "predeploy" && svc.config.type !== "initdeploy"
       )}
       deploymentTargetId={deploymentTarget.id}
     />

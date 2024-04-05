@@ -207,4 +207,18 @@ export const SUPPORTED_DATASTORE_TEMPLATES: DatastoreTemplate[] = [
     creationStateProgression: [],
     deletionStateProgression: [],
   }),
+  Object.freeze({
+    name: "Managed PostgreSQL",
+    type: DATASTORE_TYPE_MANAGED_POSTGRES,
+    engine: DATASTORE_ENGINE_POSTGRES,
+    supportedEngineVersions: [],
+    icon: database as string,
+    description:
+      "Currently unavailable. Please contact support for more details.",
+    disabled: true,
+    instanceTiers: [],
+    formTitle: "Create a managed PostgreSQL instance",
+    creationStateProgression: [],
+    deletionStateProgression: [],
+  }),
 ];

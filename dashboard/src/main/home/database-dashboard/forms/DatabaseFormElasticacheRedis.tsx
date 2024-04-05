@@ -119,7 +119,7 @@ const DatabaseFormElasticacheRedis: React.FC<Props> = ({
                     username: "",
                     database_name: "",
                   }}
-                  type={template.type}
+                  engine={template.engine}
                 />
               </>,
             ]}

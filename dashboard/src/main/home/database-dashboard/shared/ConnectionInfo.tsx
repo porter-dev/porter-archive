@@ -6,18 +6,18 @@ import Fieldset from "components/porter/Fieldset";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import {
-  DATASTORE_TYPE_ELASTICACHE,
+  DATASTORE_ENGINE_REDIS,
   type DatastoreConnectionInfo,
-  type DatastoreType,
+  type DatastoreEngine,
 } from "lib/databases/types";
 
 import { Blur, RevealButton } from "../forms/DatabaseForm";
 
 type Props = {
   connectionInfo: DatastoreConnectionInfo;
-  type: DatastoreType;
+  engine: DatastoreEngine;
 };
-const ConnectionInfo: React.FC<Props> = ({ connectionInfo, type }) => {
+const ConnectionInfo: React.FC<Props> = ({ connectionInfo, engine }) => {
   const [isPasswordHidden, setIsPasswordHidden] = React.useState<boolean>(true);
 
   return (
@@ -42,7 +42,7 @@ const ConnectionInfo: React.FC<Props> = ({ connectionInfo, type }) => {
               </ClickToCopy>
             </td>
           </tr>
-          {type === DATASTORE_TYPE_ELASTICACHE ? (
+          {engine === DATASTORE_ENGINE_REDIS ? (
             <tr>
               <td>
                 <Text>Auth token</Text>

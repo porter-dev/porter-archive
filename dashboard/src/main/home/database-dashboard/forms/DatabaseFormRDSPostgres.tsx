@@ -138,7 +138,7 @@ const DatabaseFormRDSPostgres: React.FC<Props> = ({ history, template }) => {
                     username: watchDbUsername,
                     database_name: watchDbName,
                   }}
-                  type={template.type}
+                  engine={template.engine}
                 />
               </>,
             ]}

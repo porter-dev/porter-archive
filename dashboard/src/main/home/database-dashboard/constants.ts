@@ -204,8 +204,15 @@ export const SUPPORTED_DATASTORE_TEMPLATES: DatastoreTemplate[] = [
     disabled: true,
     instanceTiers: [],
     formTitle: "Create an ElastiCache Memcached instance",
-    creationStateProgression: [],
-    deletionStateProgression: [],
+    creationStateProgression: [
+      DATASTORE_STATE_CREATING,
+      DATASTORE_STATE_AVAILABLE,
+    ],
+    deletionStateProgression: [
+      DATASTORE_STATE_AWAITING_DELETION,
+      DATASTORE_STATE_DELETING_RECORD,
+      DATASTORE_STATE_DELETED,
+    ],
   }),
   Object.freeze({
     name: "Managed PostgreSQL",
@@ -218,7 +225,14 @@ export const SUPPORTED_DATASTORE_TEMPLATES: DatastoreTemplate[] = [
     disabled: true,
     instanceTiers: [],
     formTitle: "Create a managed PostgreSQL instance",
-    creationStateProgression: [],
-    deletionStateProgression: [],
+    creationStateProgression: [
+      DATASTORE_STATE_CREATING,
+      DATASTORE_STATE_AVAILABLE,
+    ],
+    deletionStateProgression: [
+      DATASTORE_STATE_AWAITING_DELETION,
+      DATASTORE_STATE_DELETING_RECORD,
+      DATASTORE_STATE_DELETED,
+    ],
   }),
 ];

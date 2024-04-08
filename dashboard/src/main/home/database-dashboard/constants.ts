@@ -209,7 +209,7 @@ export const DATASTORE_TEMPLATE_MANAGED_REDIS: DatastoreTemplate =
   Object.freeze({
     name: "Managed Redis",
     displayName: "Cluster-managed Redis",
-    highLevelType: DATASTORE_ENGINE_POSTGRES,
+    highLevelType: DATASTORE_ENGINE_REDIS,
     type: DATASTORE_TYPE_MANAGED_REDIS,
     engine: DATASTORE_ENGINE_REDIS,
     supportedEngineVersions: [],
@@ -247,7 +247,7 @@ export const DATASTORE_TEMPLATE_MANAGED_POSTGRES: DatastoreTemplate =
   Object.freeze({
     name: "Managed PostgreSQL",
     displayName: "Cluster-managed PostgreSQL",
-    highLevelType: DATASTORE_ENGINE_REDIS,
+    highLevelType: DATASTORE_ENGINE_POSTGRES,
     type: DATASTORE_TYPE_MANAGED_POSTGRES,
     engine: DATASTORE_ENGINE_POSTGRES,
     supportedEngineVersions: [],

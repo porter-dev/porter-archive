@@ -37,6 +37,8 @@ type AppBuildInput struct {
 	ImageTag string
 	// PatchOperations is the set of patch operations to apply to the app build
 	PatchOperations []v2.PatchOperation
+	// PullBeforeBuild is a flag to pull the base image before building
+	PullBeforeBuild bool
 }
 
 // AppBuild builds an app using a combination of the provided flag values and build settings from the latest app revision
@@ -95,12 +97,13 @@ func AppBuild(ctx context.Context, inp AppBuildInput) error {
 	}
 
 	buildInput, err := buildInputFromBuildSettings(buildInputFromBuildSettingsInput{
-		projectID: cliConf.Project,
-		appName:   inp.AppName,
-		commitSHA: tagForBuild,
-		image:     buildSettings.Image,
-		build:     buildSettings.Build,
-		buildEnv:  buildEnvVariables,
+		projectID:            cliConf.Project,
+		appName:              inp.AppName,
+		commitSHA:            tagForBuild,
+		image:                buildSettings.Image,
+		build:                buildSettings.Build,
+		buildEnv:             buildEnvVariables,
+		pullImageBeforeBuild: inp.PullBeforeBuild,
 	})
 	if err != nil {
 		return fmt.Errorf("error creating build input from build settings: %w", err)

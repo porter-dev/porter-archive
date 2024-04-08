@@ -151,6 +151,7 @@ buildpacks using the --builder and --attach-buildpacks flags:
 		"",
 		"set the image tag to use for the build",
 	)
+	appBuildCommand.PersistentFlags().BoolVar(&pullImageBeforeBuild, "pull-before-build", false, "attempt to pull image from registry before building")
 	appCmd.AddCommand(appBuildCommand)
 
 	appPushCommand := &cobra.Command{

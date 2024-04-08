@@ -14,9 +14,9 @@ type SystemServiceStatusRepository struct {
 }
 
 func NewSystemServiceStatusRepository(canQuery bool, failingMethods ...string) repository.SystemServiceStatusRepository {
-	return &SystemServiceStatusRepistory{canQuery: false}
+	return &SystemServiceStatusRepository{canQuery: false}
 }
 
-func (repo *SystemServiceStatusRepistory) ReadSystemServiceStatus(ctx context.Context, id uuid.UUID) (models.SystemServiceStatus, error) {
+func (repo *SystemServiceStatusRepository) ReadSystemServiceStatus(ctx context.Context, id uuid.UUID) (models.SystemServiceStatus, error) {
 	return models.SystemServiceStatus{}, errors.New("cannot read database")
 }

@@ -48,6 +48,7 @@ export const DATASTORE_ENGINE_MEMCACHED: DatastoreEngine = {
 export const DATASTORE_TEMPLATE_AWS_RDS: DatastoreTemplate = Object.freeze({
   name: "Amazon RDS",
   displayName: "Amazon RDS",
+  highLevelType: DATASTORE_ENGINE_POSTGRES,
   type: DATASTORE_TYPE_RDS,
   engine: DATASTORE_ENGINE_POSTGRES,
   supportedEngineVersions: [
@@ -113,8 +114,9 @@ export const DATASTORE_TEMPLATE_AWS_RDS: DatastoreTemplate = Object.freeze({
 export const DATASTORE_TEMPLATE_AWS_AURORA: DatastoreTemplate = Object.freeze({
   name: "Amazon Aurora",
   displayName: "Amazon Aurora PostgreSQL",
+  highLevelType: DATASTORE_ENGINE_POSTGRES,
   type: DATASTORE_TYPE_RDS,
-  engine: DATASTORE_ENGINE_POSTGRES,
+  engine: DATASTORE_ENGINE_AURORA_POSTGRES,
   supportedEngineVersions: [],
   icon: awsRDS as string,
   description:
@@ -151,6 +153,7 @@ export const DATASTORE_TEMPLATE_AWS_ELASTICACHE: DatastoreTemplate =
   Object.freeze({
     name: "Amazon ElastiCache",
     displayName: "Amazon ElastiCache Redis",
+    highLevelType: DATASTORE_ENGINE_REDIS,
     type: DATASTORE_TYPE_ELASTICACHE,
     engine: DATASTORE_ENGINE_REDIS,
     supportedEngineVersions: [],
@@ -206,6 +209,7 @@ export const DATASTORE_TEMPLATE_MANAGED_REDIS: DatastoreTemplate =
   Object.freeze({
     name: "Managed Redis",
     displayName: "Cluster-managed Redis",
+    highLevelType: DATASTORE_ENGINE_POSTGRES,
     type: DATASTORE_TYPE_MANAGED_REDIS,
     engine: DATASTORE_ENGINE_REDIS,
     supportedEngineVersions: [],
@@ -243,6 +247,7 @@ export const DATASTORE_TEMPLATE_MANAGED_POSTGRES: DatastoreTemplate =
   Object.freeze({
     name: "Managed PostgreSQL",
     displayName: "Cluster-managed PostgreSQL",
+    highLevelType: DATASTORE_ENGINE_REDIS,
     type: DATASTORE_TYPE_MANAGED_POSTGRES,
     engine: DATASTORE_ENGINE_POSTGRES,
     supportedEngineVersions: [],
@@ -283,19 +288,4 @@ export const SUPPORTED_DATASTORE_TEMPLATES: DatastoreTemplate[] = [
   DATASTORE_TEMPLATE_AWS_ELASTICACHE,
   DATASTORE_TEMPLATE_MANAGED_POSTGRES,
   DATASTORE_TEMPLATE_MANAGED_REDIS,
-  // Object.freeze({
-  //   name: "Amazon ElastiCache",
-  //   displayName: "Amazon ElastiCache Memcached",
-  //   type: DATASTORE_TYPE_ELASTICACHE,
-  //   engine: DATASTORE_ENGINE_MEMCACHED,
-  //   supportedEngineVersions: [],
-  //   icon: awsElastiCache as string,
-  //   description:
-  //     "Currently unavailable. Please contact support@porter.run for more details.",
-  //   disabled: true,
-  //   instanceTiers: [],
-  //   formTitle: "Create an ElastiCache Memcached instance",
-  //   creationStateProgression: [],
-  //   deletionStateProgression: [],
-  // }),
 ];

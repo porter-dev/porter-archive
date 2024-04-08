@@ -1,4 +1,5 @@
 import React from "react";
+import styled from "styled-components";
 
 import ClickToCopy from "components/porter/ClickToCopy";
 import Container from "components/porter/Container";
@@ -11,7 +12,6 @@ import {
 } from "lib/databases/types";
 
 import { DATASTORE_ENGINE_REDIS } from "../constants";
-import { Blur, RevealButton } from "../forms/DatabaseForm";
 
 type Props = {
   connectionInfo: DatastoreConnectionInfo;
@@ -142,3 +142,26 @@ const ConnectionInfo: React.FC<Props> = ({ connectionInfo, engine }) => {
 };
 
 export default ConnectionInfo;
+
+const RevealButton = styled.div`
+  background: ${(props) => props.theme.fg};
+  padding: 5px 10px;
+  border-radius: 5px;
+  border: 1px solid #494b4f;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  :hover {
+    filter: brightness(120%);
+  }
+`;
+
+const Blur = styled.div`
+  filter: blur(5px);
+  -webkit-filter: blur(5px);
+  position: relative;
+  margin-left: -5px;
+  font-family: monospace;
+`;

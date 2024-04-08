@@ -160,6 +160,7 @@ export const DATASTORE_STATE_DELETED: DatastoreState = {
 };
 
 export type DatastoreTemplate = {
+  highLevelType: DatastoreEngine; // this was created so that rds aurora postgres and rds postgres can be grouped together
   type: DatastoreType;
   engine: DatastoreEngine;
   icon: string;

@@ -15,10 +15,6 @@ import VerticalSteps from "components/porter/VerticalSteps";
 import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
 import { isAWSCluster } from "lib/clusters/types";
 import {
-  DATASTORE_TYPE_ELASTICACHE,
-  DATASTORE_TYPE_MANAGED_POSTGRES,
-  DATASTORE_TYPE_MANAGED_REDIS,
-  DATASTORE_TYPE_RDS,
   type DatastoreTemplate,
   type DbFormData,
   type ResourceOption,
@@ -27,6 +23,9 @@ import { useClusterList } from "lib/hooks/useCluster";
 
 import database from "assets/database.svg";
 
+import BlockSelect, {
+  type BlockSelectOption,
+} from "../../../../components/porter/BlockSelect";
 import {
   DATASTORE_ENGINE_POSTGRES,
   DATASTORE_ENGINE_REDIS,
@@ -40,7 +39,6 @@ import {
 import { useDatastoreFormContext } from "../DatastoreFormContextProvider";
 import ConnectionInfo from "../shared/ConnectionInfo";
 import Resources from "../shared/Resources";
-import BlockSelect, { type BlockSelectOption } from "./BlockSelect";
 
 const DatastoreForm: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -110,7 +108,7 @@ const DatastoreForm: React.FC = () => {
             DATASTORE_TEMPLATE_MANAGED_POSTGRES,
             DATASTORE_TEMPLATE_MANAGED_REDIS,
           ]
-    ).filter((t) => t.engine.name === watchEngine);
+    ).filter((t) => t.highLevelType.name === watchEngine);
     return options;
   }, [watchWorkloadType, watchEngine]);
 
@@ -234,8 +232,7 @@ const DatastoreForm: React.FC = () => {
                       match(templateMatch)
                         .with(
                           {
-                            engine: DATASTORE_ENGINE_REDIS,
-                            type: DATASTORE_TYPE_ELASTICACHE,
+                            name: DATASTORE_TEMPLATE_AWS_ELASTICACHE.name,
                           },
                           () => {
                             setValue("config.type", "elasticache-redis");
@@ -243,8 +240,7 @@ const DatastoreForm: React.FC = () => {
                         )
                         .with(
                           {
-                            engine: DATASTORE_ENGINE_REDIS,
-                            type: DATASTORE_TYPE_MANAGED_REDIS,
+                            name: DATASTORE_TEMPLATE_MANAGED_REDIS.name,
                           },
                           () => {
                             setValue("config.type", "managed-redis");
@@ -252,8 +248,7 @@ const DatastoreForm: React.FC = () => {
                         )
                         .with(
                           {
-                            engine: DATASTORE_ENGINE_POSTGRES,
-                            type: DATASTORE_TYPE_MANAGED_POSTGRES,
+                            name: DATASTORE_TEMPLATE_MANAGED_POSTGRES.name,
                           },
                           () => {
                             setValue("config.type", "managed-postgres");
@@ -263,11 +258,21 @@ const DatastoreForm: React.FC = () => {
                         )
                         .with(
                           {
-                            engine: DATASTORE_ENGINE_POSTGRES,
-                            type: DATASTORE_TYPE_RDS,
+                            name: DATASTORE_TEMPLATE_AWS_RDS.name,
                           },
                           () => {
                             setValue("config.type", "rds-postgres");
+                            setValue("config.databaseName", "postgres");
+                            setValue("config.masterUsername", "postgres");
+                            setValue("config.engineVersion", "15.4");
+                          }
+                        )
+                        .with(
+                          {
+                            name: DATASTORE_TEMPLATE_AWS_AURORA.name,
+                          },
+                          () => {
+                            setValue("config.type", "rds-postgresql-aurora");
                             setValue("config.databaseName", "postgres");
                             setValue("config.masterUsername", "postgres");
                             setValue("config.engineVersion", "15.4");

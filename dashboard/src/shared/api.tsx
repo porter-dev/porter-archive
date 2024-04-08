@@ -2819,8 +2819,9 @@ const getDatastoreCredential = baseApi<
 const updateDatastore = baseApi<
   {
     name: string;
-    type: "RDS" | "ELASTICACHE";
+    type: "RDS" | "ELASTICACHE" | "MANAGED-POSTGRES" | "MANAGED-REDIS";
     engine: "POSTGRES" | "AURORA-POSTGRES" | "REDIS";
+
     values: any;
   },
   { project_id: number; cluster_id: number }

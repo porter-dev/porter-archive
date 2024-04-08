@@ -50,3 +50,8 @@ type Datastore struct {
 	// OnManagementCluster is a flag that indicates whether the datastore is hosted on the management cluster or on the customer's cluster
 	OnManagementCluster bool `json:"on_management_cluster" gorm:"not null;default:false"`
 }
+
+// IsLegacy returns true if the datastore is a legacy datastore
+func (d *Datastore) IsLegacy() bool {
+	return !d.OnManagementCluster && !(d.Type == "MANAGED_POSTGRES" || d.Type == "MANAGED_REDIS")
+}

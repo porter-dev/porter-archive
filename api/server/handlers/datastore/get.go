@@ -80,7 +80,7 @@ func (c *GetDatastoreHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// TODO: delete this branch once all datastores are on the management cluster
-	if !datastoreRecord.OnManagementCluster && !(datastoreRecord.Type == "MANAGED_POSTGRES" || datastoreRecord.Type == "MANAGED_REDIS") {
+	if datastoreRecord.IsLegacy() {
 		awsArn, err := arn.Parse(datastoreRecord.CloudProviderCredentialIdentifier)
 		if err != nil {
 			err = telemetry.Error(ctx, span, err, "error parsing aws account id")
@@ -107,7 +107,7 @@ func (c *GetDatastoreHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		Status:                            string(datastoreRecord.Status),
 		CloudProvider:                     SupportedDatastoreCloudProvider_AWS,
 		CloudProviderCredentialIdentifier: datastoreRecord.CloudProviderCredentialIdentifier,
-		OnManagementCluster:               true,
+		OnManagementCluster:               datastoreRecord.OnManagementCluster,
 	}
 
 	// this is done for backwards compatibility; eventually we will just return proto

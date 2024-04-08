@@ -20,7 +20,7 @@ import {
 
 import awsRDS from "assets/amazon-rds.png";
 import awsElastiCache from "assets/aws-elasticache.png";
-import database from "assets/database.svg";
+import infra from "assets/cluster.svg";
 import postgresql from "assets/postgresql.svg";
 import redis from "assets/redis.svg";
 
@@ -147,43 +147,6 @@ export const DATASTORE_TEMPLATE_AWS_AURORA: DatastoreTemplate = Object.freeze({
     DATASTORE_STATE_DELETED,
   ],
 });
-export const DATASTORE_TEMPLATE_MANAGED_POSTGRES: DatastoreTemplate =
-  Object.freeze({
-    name: "Managed PostgreSQL",
-    displayName: "Cluster-managed PostgreSQL",
-    type: DATASTORE_TYPE_MANAGED_POSTGRES,
-    engine: DATASTORE_ENGINE_POSTGRES,
-    supportedEngineVersions: [],
-    icon: database as string,
-    description: "A postgresql instance hosted on your Porter cluster.",
-    disabled: true,
-    instanceTiers: [
-      {
-        tier: "db.t4g.micro" as const,
-        label: "Micro",
-        cpuCores: 1,
-        ramGigabytes: 1,
-        storageGigabytes: 1,
-      },
-      {
-        tier: "db.t4g.small" as const,
-        label: "Small",
-        cpuCores: 2,
-        ramGigabytes: 2,
-        storageGigabytes: 2,
-      },
-    ],
-    formTitle: "Create a managed PostgreSQL instance",
-    creationStateProgression: [
-      DATASTORE_STATE_CREATING,
-      DATASTORE_STATE_AVAILABLE,
-    ],
-    deletionStateProgression: [
-      DATASTORE_STATE_AWAITING_DELETION,
-      DATASTORE_STATE_DELETING_RECORD,
-      DATASTORE_STATE_DELETED,
-    ],
-  });
 export const DATASTORE_TEMPLATE_AWS_ELASTICACHE: DatastoreTemplate =
   Object.freeze({
     name: "Amazon ElastiCache",
@@ -246,7 +209,7 @@ export const DATASTORE_TEMPLATE_MANAGED_REDIS: DatastoreTemplate =
     type: DATASTORE_TYPE_MANAGED_REDIS,
     engine: DATASTORE_ENGINE_REDIS,
     supportedEngineVersions: [],
-    icon: database as string,
+    icon: infra as string,
     description: "A redis cluster hosted on your Porter cluster.",
     disabled: true,
     instanceTiers: [
@@ -266,6 +229,43 @@ export const DATASTORE_TEMPLATE_MANAGED_REDIS: DatastoreTemplate =
       },
     ],
     formTitle: "Create an ElastiCache Memcached instance",
+    creationStateProgression: [
+      DATASTORE_STATE_CREATING,
+      DATASTORE_STATE_AVAILABLE,
+    ],
+    deletionStateProgression: [
+      DATASTORE_STATE_AWAITING_DELETION,
+      DATASTORE_STATE_DELETING_RECORD,
+      DATASTORE_STATE_DELETED,
+    ],
+  });
+export const DATASTORE_TEMPLATE_MANAGED_POSTGRES: DatastoreTemplate =
+  Object.freeze({
+    name: "Managed PostgreSQL",
+    displayName: "Cluster-managed PostgreSQL",
+    type: DATASTORE_TYPE_MANAGED_POSTGRES,
+    engine: DATASTORE_ENGINE_POSTGRES,
+    supportedEngineVersions: [],
+    icon: infra as string,
+    description: "A postgresql instance hosted on your Porter cluster.",
+    disabled: true,
+    instanceTiers: [
+      {
+        tier: "db.t4g.micro" as const,
+        label: "Micro",
+        cpuCores: 1,
+        ramGigabytes: 1,
+        storageGigabytes: 1,
+      },
+      {
+        tier: "db.t4g.small" as const,
+        label: "Small",
+        cpuCores: 2,
+        ramGigabytes: 2,
+        storageGigabytes: 2,
+      },
+    ],
+    formTitle: "Create a managed PostgreSQL instance",
     creationStateProgression: [
       DATASTORE_STATE_CREATING,
       DATASTORE_STATE_AVAILABLE,

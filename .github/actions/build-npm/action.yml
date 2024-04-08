@@ -2,6 +2,10 @@
 name: 'build-npm'
 description: builds the static dashboard files for the app
 
+inputs:
+  env_vars:
+    description: 'frontend env vars from Github action variables'
+
 runs:
   using: 'composite'
   steps:
@@ -16,7 +20,8 @@ runs:
         npm i --legacy-peer-deps
     - name: Set Environment Variables
       run: |
-        echo '${{ secrets.DASHBOARD_FULL_ENV }}' > dashboard/.env
+        touch dashboard/.env
+        echo '${{ inputs.env_vars }}' > dashboard/.env
     - name: Run NPM Build
       shell: bash
       run: |

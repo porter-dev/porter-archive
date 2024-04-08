@@ -6,7 +6,10 @@ import { match } from "ts-pattern";
 
 import CheckboxRow from "components/CheckboxRow";
 import Loading from "components/Loading";
+import Container from "components/porter/Container";
+import Fieldset from "components/porter/Fieldset";
 import Filter from "components/porter/Filter";
+import Text from "components/porter/Text";
 import TabSelector from "components/TabSelector";
 import {
   type AvailableMetrics,
@@ -109,12 +112,10 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
 
     const serviceName = `${appName}-${service.name.value}`;
 
-    let serviceKind = "";
     const metricTypes: MetricType[] = ["cpu", "memory"];
     let isHpaEnabled = false;
 
     if (service.config.type === "web" || service.config.type === "worker") {
-      serviceKind = service.config.type === "web" ? "web" : "worker";
       if (service.config.autoscaling?.enabled.value) {
         isHpaEnabled = true;
       }
@@ -128,7 +129,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
 
     metricTypes.push("replicas");
 
-    return [serviceName, serviceKind, metricTypes, isHpaEnabled];
+    return [serviceName, service.config.type, metricTypes, isHpaEnabled];
   }, [selectedFilterValues.service_name]);
 
   const {
@@ -148,6 +149,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
       if (
         serviceName === "" ||
         serviceKind === "" ||
+        serviceKind === "job" ||
         metricTypes.length === 0
       ) {
         return;
@@ -245,7 +247,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
             hpaData.push(...autoscalingMetrics.getParsedData());
           }
 
-          const metric: Metric = match(metricType)
+          const metric: Metric | undefined = match(metricType)
             .with("cpu", () => ({
               type: metricType,
               label: "CPU Utilization (vCPUs)",
@@ -281,8 +283,10 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
               aggregatedData: allPodsAggregatedData,
               hpaData,
             }))
-            .exhaustive();
-          metrics.push(metric);
+            .otherwise(() => undefined);
+          if (metric) {
+            metrics.push(metric);
+          }
         }
       }
       return metrics;
@@ -363,7 +367,17 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
           />
         </RangeWrapper>
       </MetricsHeader>
-      {renderMetrics()}
+      {serviceKind === "job" ? (
+        <Fieldset>
+          <Container row>
+            <Text color="helper">
+              Metrics are not currently supported for jobs.
+            </Text>
+          </Container>
+        </Fieldset>
+      ) : (
+        renderMetrics()
+      )}
     </StyledMetricsSection>
   );
 };

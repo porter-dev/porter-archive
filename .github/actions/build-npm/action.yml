@@ -19,6 +19,7 @@ runs:
         cd dashboard
         npm i --legacy-peer-deps
     - name: Set Environment Variables
+      shell: bash
       run: |
         touch dashboard/.env
         echo '${{ inputs.env_vars }}' > dashboard/.env

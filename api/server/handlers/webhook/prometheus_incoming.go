@@ -25,6 +25,7 @@ type PrometheusAlertWebhookHandler struct {
 	authz.KubernetesAgentGetter
 }
 
+// NewPrometheusAlertWebhookHandler returns an instance of PrometheusAlertWebhookHandler
 func NewPrometheusAlertWebhookHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
@@ -65,7 +66,6 @@ func (p *PrometheusAlertWebhookHandler) ServeHTTP(w http.ResponseWriter, r *http
 		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusInternalServerError))
 		return
 	}
-	return
 }
 
 func (p *PrometheusAlertWebhookHandler) handlePrometheusAlert(ctx context.Context, projectId, clusterId int64, prometheusAlert *types.PrometheusAlert) error {
@@ -83,15 +83,15 @@ func (p *PrometheusAlertWebhookHandler) handlePrometheusAlert(ctx context.Contex
 		if alert.Labels["alertname"] == "NoopAlert" {
 			continue
 		}
-		desiredReplicas, err := strconv.Atoi(alert.Labels["desiredReplicas"])
+		desiredReplicas, err := strconv.ParseInt(alert.Labels["desiredReplicas"], 10, 32)
 		if err != nil {
 			return telemetry.Error(ctx, span, err, "error getting desired replicas")
 		}
-		availableReplicas, err := strconv.Atoi(alert.Labels["availableReplicas"])
+		availableReplicas, err := strconv.ParseInt(alert.Labels["availableReplicas"], 10, 32)
 		if err != nil {
 			return telemetry.Error(ctx, span, err, "error getting available replicas")
 		}
-		maxUnavailable, err := strconv.Atoi(alert.Labels["maxUnavailable"])
+		maxUnavailable, err := strconv.ParseInt(alert.Labels["maxUnavailable"], 10, 32)
 		if err != nil {
 			return telemetry.Error(ctx, span, err, "error getting max unavailable")
 		}

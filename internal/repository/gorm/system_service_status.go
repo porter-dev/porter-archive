@@ -21,18 +21,15 @@ func NewSystemServiceStatusRepository(db *gorm.DB) repository.SystemServiceStatu
 	return &SystemServiceStatusRepository{db}
 }
 
+// ReadSystemServiceStatus is currently a noop method
 func (repo *SystemServiceStatusRepository) ReadSystemServiceStatus(ctx context.Context, id uuid.UUID) (models.SystemServiceStatus, error) {
 	status := models.SystemServiceStatus{}
-
 	if id == uuid.Nil {
 		return status, errors.New("invalid porter app event id supplied")
 	}
-
 	strID := id.String()
-
 	if err := repo.db.Where("id = ?", strID).First(&status).Error; err != nil {
 		return status, err
 	}
-
 	return status, nil
 }

@@ -247,6 +247,7 @@ func (t *GormRepository) PorterAppEvent() repository.PorterAppEventRepository {
 	return t.porterAppEvent
 }
 
+// SystemServiceStatus returns a SystemServiceStatusRepository
 func (t *GormRepository) SystemServiceStatus() repository.SystemServiceStatusRepository {
 	return t.systemServiceStatus
 }

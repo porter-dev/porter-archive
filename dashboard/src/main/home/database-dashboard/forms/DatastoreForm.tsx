@@ -79,7 +79,7 @@ const DatastoreForm: React.FC = () => {
         displayName: "Production",
         icon: database,
         description:
-          "Hosted by a cloud provider. High availability, high performance, and durability.",
+          "Managed by a cloud provider. High availability, high performance, and durability.",
         disabledOpts: !awsClusters.find((c) => c.id === watchClusterId)
           ? {
               tooltipText: "Currently only available for AWS clusters",
@@ -88,10 +88,10 @@ const DatastoreForm: React.FC = () => {
       },
       {
         name: "Test",
-        displayName: "Test",
+        displayName: "Development",
         icon: database,
         description:
-          "Hosted on a cluster. Availability is not guaranteed. Only use this for small, test workloads for which you can afford to lose data.",
+          "Hosted on a cluster. Availability is not guaranteed. Only use this for small, ephemeral workloads.",
         descriptionColor: "warner",
       },
     ];

@@ -7,7 +7,7 @@ import Container from "components/porter/Container";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import SelectableAppList from "main/home/app-dashboard/apps/SelectableAppList";
-import { useDatastoreMethods } from "lib/hooks/useDatabaseMethods";
+import { useDatastore } from "lib/hooks/useDatastore";
 import { useLatestAppRevisions } from "lib/hooks/useLatestAppRevisions";
 
 import { Context } from "shared/Context";
@@ -26,7 +26,7 @@ const ConnectedAppsTab: React.FC = () => {
     projectId,
     clusterId,
   });
-  const { attachDatastoreToAppInstances } = useDatastoreMethods();
+  const { attachDatastoreToAppInstances } = useDatastore();
   const history = useHistory();
 
   const { connectedApps, remainingApps } = useMemo(() => {

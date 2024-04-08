@@ -1,7 +1,4 @@
 import {
-  DATASTORE_ENGINE_AURORA_POSTGRES,
-  DATASTORE_ENGINE_POSTGRES,
-  DATASTORE_ENGINE_REDIS,
   DATASTORE_TYPE_ELASTICACHE,
   DATASTORE_TYPE_RDS,
 } from "lib/databases/types";
@@ -12,6 +9,12 @@ import engine from "assets/computer-chip.svg";
 import database from "assets/database.svg";
 import postgresql from "assets/postgresql.svg";
 import redis from "assets/redis.svg";
+
+import {
+  DATASTORE_ENGINE_AURORA_POSTGRES,
+  DATASTORE_ENGINE_POSTGRES,
+  DATASTORE_ENGINE_REDIS,
+} from "./constants";
 
 const datastoreIcons: Record<string, string> = {
   [DATASTORE_TYPE_ELASTICACHE.name]: awsElasticache,

@@ -1,5 +1,4 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
-import axios from "axios";
 import _ from "lodash";
 import { FormProvider, type UseFormReturn } from "react-hook-form";
 import { withRouter, type RouteComponentProps } from "react-router";
@@ -14,9 +13,12 @@ import Text from "components/porter/Text";
 import VerticalSteps from "components/porter/VerticalSteps";
 import { isAWSCluster } from "lib/clusters/types";
 import { type DbFormData } from "lib/databases/types";
-import { useClusterList } from "lib/hooks/useCluster";
+import {
+  getErrorMessageFromNetworkCall,
+  useClusterList,
+} from "lib/hooks/useCluster";
 import { useDatastoreList } from "lib/hooks/useDatabaseList";
-import { useDatastoreMethods } from "lib/hooks/useDatabaseMethods";
+import { useDatastore } from "lib/hooks/useDatastore";
 import { useIntercom } from "lib/hooks/useIntercom";
 
 import { Context } from "shared/Context";
@@ -34,7 +36,7 @@ const DatabaseForm: React.FC<Props> = ({
   history,
 }) => {
   const [submitErrorMessage, setSubmitErrorMessage] = useState<string>("");
-  const { create: createDatastore } = useDatastoreMethods();
+  const { create: createDatastore } = useDatastore();
   const { showIntercomWithMessage } = useIntercom();
   const { clusters } = useClusterList();
   const { currentProject } = useContext(Context);
@@ -68,10 +70,10 @@ const DatabaseForm: React.FC<Props> = ({
       await createDatastore(data);
       history.push(`/datastores/${data.name}`);
     } catch (err) {
-      const errorMessage =
-        axios.isAxiosError(err) && err.response?.data?.error
-          ? err.response.data.error
-          : "An error occurred while creating your datastore. Please try again.";
+      const errorMessage = getErrorMessageFromNetworkCall(
+        err,
+        "Datastore creation"
+      );
       setSubmitErrorMessage(errorMessage);
       showIntercomWithMessage({
         message: "I am having trouble creating a datastore.",

@@ -17,7 +17,7 @@ import {
   type AppRevisionWithSource,
 } from "main/home/app-dashboard/apps/types";
 import EnvGroupRow from "main/home/app-dashboard/validate-apply/app-settings/EnvGroupRow";
-import { useDatastoreMethods } from "lib/hooks/useDatabaseMethods";
+import { useDatastore } from "lib/hooks/useDatastore";
 import { useEnvGroupList } from "lib/hooks/useEnvGroups";
 import { useIntercom } from "lib/hooks/useIntercom";
 
@@ -32,7 +32,7 @@ type Props = {
 
 const ConnectAppsModal: React.FC<Props> = ({ closeModal }) => {
   const { datastore, projectId } = useDatastoreContext();
-  const { attachDatastoreToAppInstances } = useDatastoreMethods();
+  const { attachDatastoreToAppInstances } = useDatastore();
   const { envGroups, isLoading } = useEnvGroupList({
     clusterId: datastore.connected_cluster_ids.length
       ? datastore.connected_cluster_ids[0]

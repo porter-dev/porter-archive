@@ -2,6 +2,7 @@ import { useCallback, useContext } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { match } from "ts-pattern";
 
+import { DATASTORE_TEMPLATE_MANAGED_POSTGRES } from "main/home/database-dashboard/constants";
 import { type DbFormData } from "lib/databases/types";
 
 import api from "shared/api";
@@ -20,7 +21,7 @@ type DatastoreHook = {
 };
 type CreateDatastoreInput = {
   name: string;
-  type: "RDS" | "ELASTICACHE";
+  type: "RDS" | "ELASTICACHE" | "MANAGED-POSTGRES" | "MANAGED-REDIS";
   engine: "POSTGRES" | "AURORA-POSTGRES" | "REDIS";
   values: object;
 };
@@ -64,14 +65,39 @@ const clientDbToCreateInput = (values: DbFormData): CreateDatastoreInput => {
       })
     )
     .with(
+      { config: { type: "managed-postgres" } },
+      (values): CreateDatastoreInput => {
+        const instanceTypeMatch =
+          DATASTORE_TEMPLATE_MANAGED_POSTGRES.instanceTiers.find(
+            (t) => t.tier === values.config.instanceClass
+          );
+        return {
+          name: values.name,
+          values: {
+            config: {
+              name: values.name,
+              databaseName: values.config.databaseName,
+              masterUsername: values.config.masterUsername,
+              masterUserPassword: values.config.masterUserPassword,
+              allocatedStorage: values.config.allocatedStorageGigabytes,
+              cpuCores: instanceTypeMatch?.cpuCores ?? 1,
+              ramMegabytes: instanceTypeMatch?.ramGigabytes
+                ? instanceTypeMatch.ramGigabytes * 1024
+                : 1024,
+            },
+          },
+          type: "MANAGED-POSTGRES",
+          engine: "POSTGRES",
+        };
+      }
+    )
+    .with(
       { config: { type: "elasticache-redis" } },
       (values): CreateDatastoreInput => ({
         name: values.name,
         values: {
           config: {
             name: values.name,
-            databaseName: values.config.databaseName,
-            masterUsername: values.config.masterUsername,
             masterUserPassword: values.config.masterUserPassword,
             instanceClass: values.config.instanceClass,
             engineVersion: values.config.engineVersion,
@@ -81,10 +107,36 @@ const clientDbToCreateInput = (values: DbFormData): CreateDatastoreInput => {
         engine: "REDIS",
       })
     )
+    .with(
+      { config: { type: "managed-redis" } },
+      (values): CreateDatastoreInput => {
+        const instanceTypeMatch =
+          DATASTORE_TEMPLATE_MANAGED_POSTGRES.instanceTiers.find(
+            (t) => t.tier === values.config.instanceClass
+          );
+
+        return {
+          name: values.name,
+          values: {
+            config: {
+              name: values.name,
+              masterUserPassword: values.config.masterUserPassword,
+              engineVersion: values.config.engineVersion,
+              cpuCores: instanceTypeMatch?.cpuCores ?? 1,
+              ramMegabytes: instanceTypeMatch?.ramGigabytes
+                ? instanceTypeMatch.ramGigabytes * 1024
+                : 1024,
+            },
+          },
+          type: "MANAGED-REDIS",
+          engine: "REDIS",
+        };
+      }
+    )
     .exhaustive();
 };
 
-export const useDatastoreMethods = (): DatastoreHook => {
+export const useDatastore = (): DatastoreHook => {
   const { currentProject, currentCluster } = useContext(Context);
 
   const queryClient = useQueryClient();

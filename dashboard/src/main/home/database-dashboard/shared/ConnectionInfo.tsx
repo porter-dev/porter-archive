@@ -6,11 +6,11 @@ import Fieldset from "components/porter/Fieldset";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import {
-  DATASTORE_ENGINE_REDIS,
   type DatastoreConnectionInfo,
   type DatastoreEngine,
 } from "lib/databases/types";
 
+import { DATASTORE_ENGINE_REDIS } from "../constants";
 import { Blur, RevealButton } from "../forms/DatabaseForm";
 
 type Props = {

@@ -19,6 +19,7 @@ import (
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
+// PrometheusAlertWebhookHandler handles incoming prometheus alerts
 type PrometheusAlertWebhookHandler struct {
 	handlers.PorterHandlerReadWriter
 	authz.KubernetesAgentGetter

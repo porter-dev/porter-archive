@@ -9,7 +9,7 @@ import (
 	"github.com/porter-dev/porter/internal/repository"
 )
 
-type SystemServiceStatusRepistory struct {
+type SystemServiceStatusRepository struct {
 	canQuery bool
 }
 

@@ -1,31 +1,72 @@
 package systemstatus
 
 import (
+	"fmt"
 	"net/http"
 
+	"connectrpc.com/connect"
+	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
+	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/telemetry"
 )
 
-type SystemServicesListHandler struct {
+type SystemServiceStatusListHandler struct {
 	handlers.PorterHandlerWriter
 }
 
-func NewSystemServiceListHandler(
+func NewSystemServiceStatusListHandler(
 	config *config.Config,
 	writer shared.ResultWriter,
-) *SystemServicesListHandler {
-	return &SystemServicesListHandler{
+) *SystemServiceStatusListHandler {
+	return &SystemServiceStatusListHandler{
 		PorterHandlerWriter: handlers.NewDefaultPorterHandler(config, nil, writer),
 	}
 }
 
-func (p *SystemServicesListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (p *SystemServiceStatusListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-system-service-status-handler")
+	defer span.End()
+
 	// read the project and cluster from context
-	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
-	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
-	p.Config().ClusterControlPlaneClient.
+	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
+	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
+	cloudProvider, err := p.getCloudProviderEnum(cluster.CloudProvider)
+	if err != nil {
+		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+	request := connect.NewRequest(&porterv1.ListSystemServiceStatusRequest{
+		ProjectId:     int64(project.ID),
+		ClusterId:     int64(cluster.ID),
+		CloudProvider: cloudProvider,
+	})
+	resp, err := p.Config().ClusterControlPlaneClient.ListSystemServiceStatus(ctx, request)
+	if err != nil {
+		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+	statuses, err := types.ToSystemServicesStatus(resp.Msg)
+	if err != nil {
+		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+	p.WriteResult(w, r, statuses)
+}
+
+func (p *SystemServiceStatusListHandler) getCloudProviderEnum(cloudProvider string) (porterv1.EnumCloudProvider, error) {
+	switch cloudProvider {
+	case "AWS":
+		return porterv1.EnumCloudProvider_ENUM_CLOUD_PROVIDER_AWS, nil
+	case "AZURE":
+		return porterv1.EnumCloudProvider_ENUM_CLOUD_PROVIDER_AZURE, nil
+	case "GCP":
+		return porterv1.EnumCloudProvider_ENUM_CLOUD_PROVIDER_GCP, nil
+	default:
+		return porterv1.EnumCloudProvider_ENUM_CLOUD_PROVIDER_UNSPECIFIED, fmt.Errorf("unknown could provider")
+	}
 }

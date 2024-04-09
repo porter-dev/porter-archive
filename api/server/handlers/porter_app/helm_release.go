@@ -151,7 +151,7 @@ func (c *PorterAppHelmReleaseGetHandler) ServeHTTP(w http.ResponseWriter, r *htt
 		}
 
 		if deployments == nil || len(deployments.Items) == 0 {
-			err = telemetry.Error(ctx, span, err, "deployment is nil")
+			err = telemetry.Error(ctx, span, nil, "no deployments found for revision")
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 			return
 		}
@@ -159,7 +159,7 @@ func (c *PorterAppHelmReleaseGetHandler) ServeHTTP(w http.ResponseWriter, r *htt
 		firstDeployment := deployments.Items[0]
 
 		if len(firstDeployment.Spec.Template.Annotations) == 0 || firstDeployment.Spec.Template.Annotations["helm.sh/revision"] == "" {
-			err = telemetry.Error(ctx, span, err, "helm revision annotation not found")
+			err = telemetry.Error(ctx, span, nil, "helm revision annotation not found")
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 			return
 		}

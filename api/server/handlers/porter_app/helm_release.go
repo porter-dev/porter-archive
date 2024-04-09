@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/porter-dev/api-contracts/generated/go/porter/v1/porterv1connect"
@@ -134,6 +135,43 @@ func (c *PorterAppHelmReleaseGetHandler) ServeHTTP(w http.ResponseWriter, r *htt
 			return
 		}
 
+		namespace := fmt.Sprintf("app-%s", appName)
+		k8sAgent, err := c.GetAgent(r, cluster, namespace)
+		if err != nil {
+			err = telemetry.Error(ctx, span, err, "error getting helm agent")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+
+		deployments, err := k8sAgent.GetDeploymentsBySelector(ctx, namespace, fmt.Sprintf("porter.run/app-revision-id=%s", revision.ID.String()))
+		if err != nil {
+			err = telemetry.Error(ctx, span, err, "error getting helm release history")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+
+		if deployments == nil || len(deployments.Items) == 0 {
+			err = telemetry.Error(ctx, span, err, "deployment is nil")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+
+		firstDeployment := deployments.Items[0]
+
+		if len(firstDeployment.Spec.Template.Annotations) == 0 || firstDeployment.Spec.Template.Annotations["helm.sh/revision"] == "" {
+			err = telemetry.Error(ctx, span, err, "helm revision annotation not found")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+
+		helmRevisionNumberString := firstDeployment.Spec.Template.Annotations["helm.sh/revision"]
+		helmRevisionNumber, err := strconv.Atoi(helmRevisionNumberString)
+		if err != nil {
+			err = telemetry.Error(ctx, span, err, "error converting helm revision number to int")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+
 		res := &types.Release{
 			Release: &release.Release{
 				Name:  "",
@@ -148,10 +186,11 @@ func (c *PorterAppHelmReleaseGetHandler) ServeHTTP(w http.ResponseWriter, r *htt
 				},
 				Manifest:  "",
 				Hooks:     nil,
-				Version:   int(appRevision.RevisionNumber),
+				Version:   helmRevisionNumber,
 				Namespace: "",
 				Labels:    nil,
 			},
+			PorterVersion: uint(appRevision.RevisionNumber),
 			PorterRelease: nil,
 			Form:          nil,
 		}

@@ -47,6 +47,7 @@ type Repository interface {
 	AWSAssumeRoleChainer() AWSAssumeRoleChainer
 	PorterApp() PorterAppRepository
 	PorterAppEvent() PorterAppEventRepository
+	SystemServiceStatus() SystemServiceStatusRepository
 	DeploymentTarget() DeploymentTargetRepository
 	AppRevision() AppRevisionRepository
 	AppTemplate() AppTemplateRepository

@@ -51,6 +51,7 @@ type TestRepository struct {
 	awsAssumeRoleChainer      repository.AWSAssumeRoleChainer
 	porterApp                 repository.PorterAppRepository
 	porterAppEvent            repository.PorterAppEventRepository
+	systemServiceStatus       repository.SystemServiceStatusRepository
 	deploymentTarget          repository.DeploymentTargetRepository
 	appRevision               repository.AppRevisionRepository
 	appTemplate               repository.AppTemplateRepository
@@ -243,6 +244,10 @@ func (t *TestRepository) PorterAppEvent() repository.PorterAppEventRepository {
 	return t.porterAppEvent
 }
 
+func (t *TestRepository) SystemServiceStatus() repository.SystemServiceStatusRepository {
+	return t.systemServiceStatus
+}
+
 // DeploymentTarget returns a test DeploymentTargetRepository
 func (t *TestRepository) DeploymentTarget() repository.DeploymentTargetRepository {
 	return t.deploymentTarget
@@ -323,6 +328,7 @@ func NewRepository(canQuery bool, failingMethods ...string) repository.Repositor
 		awsAssumeRoleChainer:      NewAWSAssumeRoleChainer(),
 		porterApp:                 NewPorterAppRepository(canQuery, failingMethods...),
 		porterAppEvent:            NewPorterAppEventRepository(canQuery),
+		systemServiceStatus:       NewSystemServiceStatusRepository(canQuery),
 		deploymentTarget:          NewDeploymentTargetRepository(),
 		appRevision:               NewAppRevisionRepository(),
 		appTemplate:               NewAppTemplateRepository(),

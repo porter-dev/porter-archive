@@ -567,5 +567,30 @@ func GetBaseRoutes(
 		})
 	}
 
+	// POST /api/webhooks/prometheusalerts/{project_id}/{cluster_id} -> webhook.NewPrometheusAlertsHandler
+	prometheusAlertWebhookEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("/webhooks/prometheusalerts/{%s}/{%s}", types.URLParamProjectID, types.URLParamClusterID),
+			},
+			Scopes: []types.PermissionScope{},
+		},
+	)
+
+	prometheusAlertWebhookHandler := webhook.NewPrometheusAlertWebhookHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: prometheusAlertWebhookEndpoint,
+		Handler:  prometheusAlertWebhookHandler,
+		Router:   r,
+	})
+
 	return routes
 }

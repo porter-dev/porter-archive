@@ -53,6 +53,7 @@ type GormRepository struct {
 	awsAssumeRoleChainer      repository.AWSAssumeRoleChainer
 	porterApp                 repository.PorterAppRepository
 	porterAppEvent            repository.PorterAppEventRepository
+	systemServiceStatus       repository.SystemServiceStatusRepository
 	deploymentTarget          repository.DeploymentTargetRepository
 	appRevision               repository.AppRevisionRepository
 	appTemplate               repository.AppTemplateRepository
@@ -246,6 +247,11 @@ func (t *GormRepository) PorterAppEvent() repository.PorterAppEventRepository {
 	return t.porterAppEvent
 }
 
+// SystemServiceStatus returns a SystemServiceStatusRepository
+func (t *GormRepository) SystemServiceStatus() repository.SystemServiceStatusRepository {
+	return t.systemServiceStatus
+}
+
 // DeploymentTarget returns the DeploymentTargetRepository interface implemented by gorm
 func (t *GormRepository) DeploymentTarget() repository.DeploymentTargetRepository {
 	return t.deploymentTarget
@@ -331,6 +337,7 @@ func NewRepository(db *gorm.DB, key *[32]byte, storageBackend credentials.Creden
 		awsAssumeRoleChainer:      NewAWSAssumeRoleChainer(db),
 		porterApp:                 NewPorterAppRepository(db),
 		porterAppEvent:            NewPorterAppEventRepository(db),
+		systemServiceStatus:       NewSystemServiceStatusRepository(db),
 		deploymentTarget:          NewDeploymentTargetRepository(db),
 		appRevision:               NewAppRevisionRepository(db),
 		appTemplate:               NewAppTemplateRepository(db),

@@ -85,7 +85,9 @@ const PreDeployEventFocusView: React.FC<Props> = ({ event }) => {
         logFilterNames={["service_name"]}
         appId={porterApp.id}
         timeRange={
+          // make sure time isn't undefined
           event?.metadata?.end_time &&
+          // make sure this isn't a nil time
           new Date(event?.metadata?.end_time) > new Date(event.created_at)
             ? {
                 startTime: dayjs(event.created_at).subtract(30, "second"),

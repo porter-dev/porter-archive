@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"connectrpc.com/connect"
 
@@ -75,36 +74,21 @@ func (p *PrometheusAlertWebhookHandler) handlePrometheusAlert(ctx context.Contex
 		ProjectId: projectId,
 		ClusterId: clusterId,
 	})
-	label_key_values := ""
+	labelKeyValues := ""
 	for _, alert := range prometheusAlert.Alerts {
 		for k, v := range alert.Labels {
-			label_key_values += fmt.Sprintf("%s %s", k, v)
+			labelKeyValues += fmt.Sprintf("%s %s", k, v)
 		}
 		if alert.Labels["alertname"] == "NoopAlert" {
 			continue
 		}
-		desiredReplicas, err := strconv.ParseInt(alert.Labels["desiredReplicas"], 10, 32)
-		if err != nil {
-			return telemetry.Error(ctx, span, err, "error getting desired replicas")
-		}
-		availableReplicas, err := strconv.ParseInt(alert.Labels["availableReplicas"], 10, 32)
-		if err != nil {
-			return telemetry.Error(ctx, span, err, "error getting available replicas")
-		}
-		maxUnavailable, err := strconv.ParseInt(alert.Labels["maxUnavailable"], 10, 32)
-		if err != nil {
-			return telemetry.Error(ctx, span, err, "error getting max unavailable")
-		}
 		recordPrometheusAlertRequest.Msg.Alerts = append(recordPrometheusAlertRequest.Msg.Alerts, &porterv1.Alert{
-			Name:              alert.Labels["name"],
-			Namespace:         alert.Labels["namespace"],
-			Type:              p.getType(alert),
-			DesiredReplicas:   int32(desiredReplicas),
-			AvailableReplicas: int32(availableReplicas),
-			MaxUnavailable:    int32(maxUnavailable),
+			Name:      alert.Labels["name"],
+			Namespace: alert.Labels["namespace"],
+			Type:      p.getType(alert),
 		})
 	}
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "porter-app-alert-labels", Value: label_key_values})
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "porter-app-alert-labels", Value: labelKeyValues})
 	_, err := p.Config().ClusterControlPlaneClient.RecordPrometheusAlert(ctx, recordPrometheusAlertRequest)
 	if err != nil {
 		return telemetry.Error(ctx, span, err, "error recording prometheus alert")

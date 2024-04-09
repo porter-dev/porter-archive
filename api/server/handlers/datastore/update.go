@@ -73,18 +73,8 @@ func (h *UpdateDatastoreHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		telemetry.AttributeKV{Key: "engine", Value: request.Engine},
 	)
 
-	region, err := h.getClusterRegion(ctx, project.ID, cluster.ID)
-	if err != nil {
-		err = telemetry.Error(ctx, span, err, "error getting cluster region")
-		h.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-		return
-	}
-
 	// assume we are creating for now; will add update support later
 	datastoreProto := &porterv1.ManagedDatastore{
-		CloudProvider:                     porterv1.EnumCloudProvider_ENUM_CLOUD_PROVIDER_AWS,
-		CloudProviderCredentialIdentifier: cluster.CloudProviderCredentialIdentifier,
-		Region:                            region,
 		ConnectedClusters: &porterv1.ConnectedClusters{
 			ConnectedClusterIds: []int64{int64(cluster.ID)},
 		},
@@ -98,13 +88,15 @@ func (h *UpdateDatastoreHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 
 	var datastoreValues struct {
 		Config struct {
-			Name               string `json:"name"`
-			DatabaseName       string `json:"databaseName"`
-			MasterUsername     string `json:"masterUsername"`
-			MasterUserPassword string `json:"masterUserPassword"`
-			AllocatedStorage   int64  `json:"allocatedStorage"`
-			InstanceClass      string `json:"instanceClass"`
-			EngineVersion      string `json:"engineVersion"`
+			Name               string  `json:"name"`
+			DatabaseName       string  `json:"databaseName"`
+			MasterUsername     string  `json:"masterUsername"`
+			MasterUserPassword string  `json:"masterUserPassword"`
+			AllocatedStorage   int64   `json:"allocatedStorage"`
+			InstanceClass      string  `json:"instanceClass"`
+			EngineVersion      string  `json:"engineVersion"`
+			CpuCores           float32 `json:"cpuCores"`
+			RamMegabytes       int     `json:"ramMegabytes"`
 		} `json:"config"`
 	}
 	err = json.Unmarshal(marshaledValues, &datastoreValues)
@@ -134,6 +126,15 @@ func (h *UpdateDatastoreHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			h.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 			return
 		}
+		region, err := h.getClusterRegion(ctx, project.ID, cluster.ID)
+		if err != nil {
+			err = telemetry.Error(ctx, span, err, "error getting cluster region")
+			h.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+		datastoreProto.Region = region
+		datastoreProto.CloudProvider = porterv1.EnumCloudProvider_ENUM_CLOUD_PROVIDER_AWS
+		datastoreProto.CloudProviderCredentialIdentifier = cluster.CloudProviderCredentialIdentifier
 		datastoreProto.Kind = porterv1.EnumDatastoreKind_ENUM_DATASTORE_KIND_AWS_RDS
 		datastoreProto.KindValues = &porterv1.ManagedDatastore_AwsRdsKind{
 			AwsRdsKind: &porterv1.AwsRds{
@@ -147,6 +148,15 @@ func (h *UpdateDatastoreHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			},
 		}
 	case "ELASTICACHE":
+		region, err := h.getClusterRegion(ctx, project.ID, cluster.ID)
+		if err != nil {
+			err = telemetry.Error(ctx, span, err, "error getting cluster region")
+			h.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+		datastoreProto.Region = region
+		datastoreProto.CloudProvider = porterv1.EnumCloudProvider_ENUM_CLOUD_PROVIDER_AWS
+		datastoreProto.CloudProviderCredentialIdentifier = cluster.CloudProviderCredentialIdentifier
 		datastoreProto.Kind = porterv1.EnumDatastoreKind_ENUM_DATASTORE_KIND_AWS_ELASTICACHE
 		datastoreProto.KindValues = &porterv1.ManagedDatastore_AwsElasticacheKind{
 			AwsElasticacheKind: &porterv1.AwsElasticache{
@@ -154,6 +164,27 @@ func (h *UpdateDatastoreHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 				InstanceClass:             pointer.String(datastoreValues.Config.InstanceClass),
 				MasterUserPasswordLiteral: pointer.String(datastoreValues.Config.MasterUserPassword),
 				EngineVersion:             pointer.String(datastoreValues.Config.EngineVersion),
+			},
+		}
+	case "MANAGED-POSTGRES":
+		datastoreProto.Kind = porterv1.EnumDatastoreKind_ENUM_DATASTORE_KIND_MANAGED_POSTGRES
+		datastoreProto.KindValues = &porterv1.ManagedDatastore_ManagedPostgresKind{
+			ManagedPostgresKind: &porterv1.Postgres{
+				CpuCores:                  datastoreValues.Config.CpuCores,
+				RamMegabytes:              int32(datastoreValues.Config.RamMegabytes),
+				StorageGigabytes:          int32(datastoreValues.Config.AllocatedStorage),
+				MasterUsername:            pointer.String(datastoreValues.Config.MasterUsername),
+				MasterUserPasswordLiteral: pointer.String(datastoreValues.Config.MasterUserPassword),
+			},
+		}
+	case "MANAGED-REDIS":
+		datastoreProto.Kind = porterv1.EnumDatastoreKind_ENUM_DATASTORE_KIND_MANAGED_REDIS
+		datastoreProto.KindValues = &porterv1.ManagedDatastore_ManagedRedisKind{
+			ManagedRedisKind: &porterv1.Redis{
+				CpuCores:                  datastoreValues.Config.CpuCores,
+				RamMegabytes:              int32(datastoreValues.Config.RamMegabytes),
+				StorageGigabytes:          int32(datastoreValues.Config.AllocatedStorage),
+				MasterUserPasswordLiteral: pointer.String(datastoreValues.Config.MasterUserPassword),
 			},
 		}
 	default:

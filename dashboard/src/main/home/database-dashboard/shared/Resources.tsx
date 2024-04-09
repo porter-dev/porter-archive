@@ -80,6 +80,15 @@ const StyledResourceOption = styled.div<{ selected?: boolean }>`
   :hover {
     border: 1px solid #ffffff;
   }
+  animation: fadeIn 0.3s 0s;
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
 `;
 
 const StorageTag = styled.div`

@@ -30,10 +30,24 @@ export type DatastoreConnectionInfo = z.infer<
   typeof datastoreCredentialValidator
 >;
 
+const datastoreTypeValidator = z.enum([
+  "UNKNOWN",
+  "RDS",
+  "ELASTICACHE",
+  "MANAGED_REDIS",
+  "MANAGED_POSTGRES",
+]);
+const datastoreEngineValidator = z.enum([
+  "UNKNOWN",
+  "POSTGRES",
+  "AURORA-POSTGRES",
+  "REDIS",
+  "MEMCACHED",
+]);
 export const datastoreValidator = z.object({
   name: z.string(),
-  type: z.enum(["RDS", "ELASTICACHE"]),
-  engine: z.enum(["POSTGRES", "AURORA-POSTGRES", "REDIS", "MEMCACHED"]),
+  type: z.string().pipe(datastoreTypeValidator.catch("UNKNOWN")),
+  engine: z.string().pipe(datastoreEngineValidator.catch("UNKNOWN")),
   created_at: z.string().default(""),
   metadata: datastoreMetadataValidator.array().default([]),
   env: datastoreEnvValidator.optional(),
@@ -72,22 +86,7 @@ export const datastoreListResponseValidator = z.object({
 export type DatastoreEngine = {
   name: z.infer<typeof datastoreValidator>["engine"];
   displayName: string;
-};
-export const DATASTORE_ENGINE_POSTGRES = {
-  name: "POSTGRES" as const,
-  displayName: "PostgreSQL",
-};
-export const DATASTORE_ENGINE_AURORA_POSTGRES = {
-  name: "AURORA-POSTGRES" as const,
-  displayName: "Aurora PostgreSQL",
-};
-export const DATASTORE_ENGINE_REDIS = {
-  name: "REDIS" as const,
-  displayName: "Redis",
-};
-export const DATASTORE_ENGINE_MEMCACHED = {
-  name: "MEMCACHED" as const,
-  displayName: "Memcached",
+  icon: string;
 };
 
 export type DatastoreType = {
@@ -101,6 +100,14 @@ export const DATASTORE_TYPE_RDS: DatastoreType = {
 export const DATASTORE_TYPE_ELASTICACHE: DatastoreType = {
   name: "ELASTICACHE" as const,
   displayName: "ElastiCache",
+};
+export const DATASTORE_TYPE_MANAGED_POSTGRES: DatastoreType = {
+  name: "MANAGED_POSTGRES" as const,
+  displayName: "Managed Postgres",
+};
+export const DATASTORE_TYPE_MANAGED_REDIS: DatastoreType = {
+  name: "MANAGED_REDIS" as const,
+  displayName: "Managed Redis",
 };
 
 export type DatastoreState = {
@@ -153,10 +160,12 @@ export const DATASTORE_STATE_DELETED: DatastoreState = {
 };
 
 export type DatastoreTemplate = {
+  highLevelType: DatastoreEngine; // this was created so that rds aurora postgres and rds postgres can be grouped together
   type: DatastoreType;
   engine: DatastoreEngine;
   icon: string;
   name: string;
+  displayName: string;
   description: string;
   disabled: boolean;
   instanceTiers: ResourceOption[];
@@ -214,6 +223,33 @@ const rdsPostgresConfigValidator = z.object({
     .default(""),
 });
 
+const managedPostgresConfigValidator = z.object({
+  type: z.literal("managed-postgres"),
+  instanceClass: instanceTierValidator
+    .default("unspecified")
+    .refine((val) => val !== "unspecified", {
+      message: "Instance tier is required",
+    }),
+  allocatedStorageGigabytes: z
+    .number()
+    .int()
+    .positive("Allocated storage must be a positive integer")
+    .default(1),
+  // the following three are not yet specified by the user during creation - only parsed from the backend after the form is submitted
+  databaseName: z
+    .string()
+    .nonempty("Database name is required")
+    .default("postgres"),
+  masterUsername: z
+    .string()
+    .nonempty("Master username is required")
+    .default("postgres"),
+  masterUserPassword: z
+    .string()
+    .nonempty("Master password is required")
+    .default(""),
+});
+
 const auroraPostgresConfigValidator = z.object({
   type: z.literal("rds-postgresql-aurora"),
   instanceClass: instanceTierValidator
@@ -227,11 +263,14 @@ const auroraPostgresConfigValidator = z.object({
     .positive("Allocated storage must be a positive integer")
     .default(30),
   // the following three are not yet specified by the user during creation - only parsed from the backend after the form is submitted
-  databaseName: z.string().nonempty("Database name is required").default(""),
+  databaseName: z
+    .string()
+    .nonempty("Database name is required")
+    .default("postgres"),
   masterUsername: z
     .string()
     .nonempty("Master username is required")
-    .default(""),
+    .default("postgres"),
   masterUserPassword: z
     .string()
     .nonempty("Master password is required")
@@ -245,12 +284,20 @@ const elasticacheRedisConfigValidator = z.object({
     .refine((val) => val !== "unspecified", {
       message: "Instance tier is required",
     }),
-  // the following three are not yet specified by the user during creation - only parsed from the backend after the form is submitted
-  databaseName: z.string().nonempty("Database name is required").default(""),
-  masterUsername: z
+  masterUserPassword: z
     .string()
-    .nonempty("Master username is required")
+    .nonempty("Master password is required")
     .default(""),
+  engineVersion: z.string().default("7.1"),
+});
+
+const managedRedisConfigValidator = z.object({
+  type: z.literal("managed-redis"),
+  instanceClass: instanceTierValidator
+    .default("unspecified")
+    .refine((val) => val !== "unspecified", {
+      message: "Instance tier is required",
+    }),
   masterUserPassword: z
     .string()
     .nonempty("Master password is required")
@@ -265,10 +312,19 @@ export const dbFormValidator = z.object({
     .regex(/^[a-z0-9-]+$/, {
       message: "Lowercase letters, numbers, and “-” only.",
     }),
+  workloadType: z
+    .enum(["Production", "Test", "unspecified"])
+    .default("unspecified"),
+  engine: z
+    .string()
+    .pipe(datastoreEngineValidator.catch("UNKNOWN"))
+    .default("UNKNOWN"),
   config: z.discriminatedUnion("type", [
     rdsPostgresConfigValidator,
     auroraPostgresConfigValidator,
     elasticacheRedisConfigValidator,
+    managedRedisConfigValidator,
+    managedPostgresConfigValidator,
   ]),
   clusterId: z.number(),
 });

@@ -1,5 +1,4 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
-import { useStripe } from "@stripe/react-stripe-js";
 import { createPortal } from "react-dom";
 import {
   Route,
@@ -14,7 +13,6 @@ import Loading from "components/Loading";
 import NoClusterPlaceHolder from "components/NoClusterPlaceHolder";
 import Button from "components/porter/Button";
 import Modal from "components/porter/Modal";
-import ShowIntercomButton from "components/porter/ShowIntercomButton";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 
@@ -31,10 +29,7 @@ import {
   type ProjectListType,
   type ProjectType,
 } from "shared/types";
-import { overrideInfraTabEnabled } from "utils/infrastructure";
 
-import discordLogo from "../../assets/discord.svg";
-import warning from "../../assets/warning.svg";
 import AddOnDashboard from "./add-on-dashboard/AddOnDashboard";
 import NewAddOnFlow from "./add-on-dashboard/NewAddOnFlow";
 import AppView from "./app-dashboard/app-view/AppView";
@@ -48,9 +43,9 @@ import PreviewEnvs from "./cluster-dashboard/preview-environments/v2/PreviewEnvs
 import SetupApp from "./cluster-dashboard/preview-environments/v2/setup-app/SetupApp";
 import ComplianceDashboard from "./compliance-dashboard/ComplianceDashboard";
 import Dashboard from "./dashboard/Dashboard";
-import CreateDatabase from "./database-dashboard/CreateDatabase";
 import DatabaseDashboard from "./database-dashboard/DatabaseDashboard";
 import DatabaseView from "./database-dashboard/DatabaseView";
+import CreateDatastore from "./database-dashboard/forms/CreateDatastore";
 import CreateEnvGroup from "./env-dashboard/CreateEnvGroup";
 import EnvDashboard from "./env-dashboard/EnvDashboard";
 import ExpandedEnv from "./env-dashboard/ExpandedEnv";
@@ -450,12 +445,8 @@ const Home: React.FC<Props> = (props) => {
               <Route path="/environment-groups">
                 <EnvDashboard />
               </Route>
-
-              <Route path="/datastores/new/:type/:engine">
-                <CreateDatabase />
-              </Route>
               <Route path="/datastores/new">
-                <CreateDatabase />
+                <CreateDatastore />
               </Route>
               <Route path="/datastores/:datastoreName/:tab">
                 <DatabaseView />

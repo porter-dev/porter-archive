@@ -1,4 +1,5 @@
 import React from "react";
+import styled from "styled-components";
 
 import ClickToCopy from "components/porter/ClickToCopy";
 import Container from "components/porter/Container";
@@ -6,18 +7,17 @@ import Fieldset from "components/porter/Fieldset";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import {
-  DATASTORE_TYPE_ELASTICACHE,
   type DatastoreConnectionInfo,
-  type DatastoreType,
+  type DatastoreEngine,
 } from "lib/databases/types";
 
-import { Blur, RevealButton } from "../forms/DatabaseForm";
+import { DATASTORE_ENGINE_REDIS } from "../constants";
 
 type Props = {
   connectionInfo: DatastoreConnectionInfo;
-  type: DatastoreType;
+  engine: DatastoreEngine;
 };
-const ConnectionInfo: React.FC<Props> = ({ connectionInfo, type }) => {
+const ConnectionInfo: React.FC<Props> = ({ connectionInfo, engine }) => {
   const [isPasswordHidden, setIsPasswordHidden] = React.useState<boolean>(true);
 
   return (
@@ -42,7 +42,7 @@ const ConnectionInfo: React.FC<Props> = ({ connectionInfo, type }) => {
               </ClickToCopy>
             </td>
           </tr>
-          {type === DATASTORE_TYPE_ELASTICACHE ? (
+          {engine === DATASTORE_ENGINE_REDIS ? (
             <tr>
               <td>
                 <Text>Auth token</Text>
@@ -142,3 +142,26 @@ const ConnectionInfo: React.FC<Props> = ({ connectionInfo, type }) => {
 };
 
 export default ConnectionInfo;
+
+const RevealButton = styled.div`
+  background: ${(props) => props.theme.fg};
+  padding: 5px 10px;
+  border-radius: 5px;
+  border: 1px solid #494b4f;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  :hover {
+    filter: brightness(120%);
+  }
+`;
+
+const Blur = styled.div`
+  filter: blur(5px);
+  -webkit-filter: blur(5px);
+  position: relative;
+  margin-left: -5px;
+  font-family: monospace;
+`;

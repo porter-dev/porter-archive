@@ -11,7 +11,7 @@ import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import { type UpdateClusterButtonProps } from "main/home/infrastructure-dashboard/ClusterFormContextProvider";
 import { getErrorMessageFromNetworkCall } from "lib/hooks/useCluster";
-import { useDatastoreMethods } from "lib/hooks/useDatabaseMethods";
+import { useDatastore } from "lib/hooks/useDatastore";
 
 import trash from "assets/trash.png";
 
@@ -22,7 +22,7 @@ const SettingsTab: React.FC = () => {
     useState(false);
 
   const { datastore } = useDatastoreContext();
-  const { deleteDatastore } = useDatastoreMethods();
+  const { deleteDatastore } = useDatastore();
 
   return (
     <div>

@@ -59,7 +59,7 @@ const ConnectTab: React.FC = () => {
         <Spacer y={0.5} />
         <ConnectionInfo
           connectionInfo={datastore.credential}
-          type={datastore.template.type}
+          engine={datastore.template.engine}
         />
         <Spacer y={0.5} />
         <Text color="warner">

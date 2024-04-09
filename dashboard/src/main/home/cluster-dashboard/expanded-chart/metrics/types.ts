@@ -101,4 +101,5 @@ export type AvailableMetrics =
   | "nginx:status"
   | "cpu_hpa_threshold"
   | "memory_hpa_threshold"
-  | "hpa_replicas";
+  | "hpa_replicas"
+  | "replicas";

@@ -376,28 +376,21 @@ const DatastoreForm: React.FC = () => {
 
 export default DatastoreForm;
 
-export const CenterWrapper = styled.div`
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-`;
-
-export const Div = styled.div`
+const Div = styled.div`
   width: 100%;
   max-width: 900px;
 `;
 
-export const StyledConfigureTemplate = styled.div`
+const StyledConfigureTemplate = styled.div`
   height: 100%;
 `;
 
-export const DarkMatter = styled.div`
+const DarkMatter = styled.div`
   width: 100%;
   margin-top: -5px;
 `;
 
-export const Icon = styled.img`
+const Icon = styled.img`
   margin-right: 15px;
   height: 30px;
   animation: floatIn 0.5s;
@@ -415,7 +408,7 @@ export const Icon = styled.img`
   }
 `;
 
-export const floatIn = keyframes`
+const floatIn = keyframes`
   0% {
     opacity: 0;
     transform: translateY(10px);
@@ -426,7 +419,7 @@ export const floatIn = keyframes`
   }
 `;
 
-export const AppearingErrorContainer = styled.div`
+const AppearingErrorContainer = styled.div`
   animation: ${floatIn} 0.5s;
   animation-fill-mode: forwards;
 `;

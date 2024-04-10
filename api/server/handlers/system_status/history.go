@@ -15,20 +15,22 @@ import (
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
-type SystemServiceStatusListHandler struct {
+// SystemStatusHistoryHandler handles requests to fetch history of system status
+type SystemStatusHistoryHandler struct {
 	handlers.PorterHandlerWriter
 }
 
-func NewSystemServiceStatusListHandler(
+// NewSystemStatusHistoryHandler returns a SystemStatusHistoryHandler
+func NewSystemStatusHistoryHandler(
 	config *config.Config,
 	writer shared.ResultWriter,
-) *SystemServiceStatusListHandler {
-	return &SystemServiceStatusListHandler{
+) *SystemStatusHistoryHandler {
+	return &SystemStatusHistoryHandler{
 		PorterHandlerWriter: handlers.NewDefaultPorterHandler(config, nil, writer),
 	}
 }
 
-func (p *SystemServiceStatusListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (p *SystemStatusHistoryHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, span := telemetry.NewSpan(r.Context(), "serve-system-service-status-handler")
 	defer span.End()
 
@@ -58,7 +60,7 @@ func (p *SystemServiceStatusListHandler) ServeHTTP(w http.ResponseWriter, r *htt
 	p.WriteResult(w, r, systemStatusHistory)
 }
 
-func (p *SystemServiceStatusListHandler) getCloudProviderEnum(cloudProvider string) (porterv1.EnumCloudProvider, error) {
+func (p *SystemStatusHistoryHandler) getCloudProviderEnum(cloudProvider string) (porterv1.EnumCloudProvider, error) {
 	switch cloudProvider {
 	case "AWS":
 		return porterv1.EnumCloudProvider_ENUM_CLOUD_PROVIDER_AWS, nil

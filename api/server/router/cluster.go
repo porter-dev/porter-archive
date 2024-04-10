@@ -9,6 +9,7 @@ import (
 	"github.com/porter-dev/porter/api/server/handlers/datastore"
 	"github.com/porter-dev/porter/api/server/handlers/environment"
 	"github.com/porter-dev/porter/api/server/handlers/environment_groups"
+	systemstatus "github.com/porter-dev/porter/api/server/handlers/system_status"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/server/shared/router"
@@ -1864,6 +1865,34 @@ func getClusterRoutes(
 	routes = append(routes, &router.Route{
 		Endpoint: updateDatastoreEndpoint,
 		Handler:  updateDatastoreHandler,
+		Router:   r,
+	})
+
+	// POST /api/projects/{project_id}/clusters/{cluster_id}/system-status-history -> systemstatus.NewSystemStatusHistoryHandler
+	systemStatusHistoryEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbUpdate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/system-status-history", relPath),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	systemStatusHistoryHandler := systemstatus.NewSystemStatusHistoryHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: systemStatusHistoryEndpoint,
+		Handler:  systemStatusHistoryHandler,
 		Router:   r,
 	})
 

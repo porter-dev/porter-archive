@@ -87,6 +87,12 @@ func (c *PorterAppHelmReleaseGetHandler) ServeHTTP(w http.ResponseWriter, r *htt
 			return
 		}
 
+		if rel == nil {
+			err = telemetry.Error(ctx, span, nil, "release is nil")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+
 		config := rel.Config
 
 		tag, err := imageTagFromConfig(config)

@@ -54,6 +54,5 @@ func getAddonRoutes(
 
 	var routes []*router.Route
 
-
 	return routes, newPath
 }

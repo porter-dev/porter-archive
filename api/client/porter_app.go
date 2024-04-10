@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -304,7 +303,6 @@ func (c *Client) AppLogs(
 func (c *Client) AppLogsStream(
 	ctx context.Context,
 	inp AppLogsInput,
-	dst io.Writer,
 ) (*websocket.Conn, error) {
 	req := &porter_app.AppLogsRequest{
 		ServiceName:          inp.ServiceName,

@@ -47,7 +47,7 @@ func AppLogs(ctx context.Context, inp AppLogsInput) error {
 		AppName:              inp.AppName,
 		DeploymentTargetName: inp.DeploymentTargetName,
 		ServiceName:          inp.ServiceName,
-	}, os.Stdout)
+	})
 	if err != nil {
 		return fmt.Errorf("error connecting to app logs stream: %w", err)
 	}

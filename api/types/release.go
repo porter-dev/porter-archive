@@ -10,7 +10,8 @@ import (
 type Release struct {
 	*release.Release
 	*PorterRelease
-	PorterVersion uint `json:"porter_version,omitempty"`
+	PorterVersion uint   `json:"porter_version,omitempty"`
+	AppRevisionId string `json:"app_revision_id,omitempty"`
 
 	Form *FormYAML `json:"form,omitempty"`
 }

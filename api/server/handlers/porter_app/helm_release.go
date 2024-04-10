@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strconv"
 	"strings"
 
 	"github.com/porter-dev/api-contracts/generated/go/porter/v1/porterv1connect"
@@ -72,102 +71,47 @@ func (c *PorterAppHelmReleaseGetHandler) ServeHTTP(w http.ResponseWriter, r *htt
 
 	// TODO (POR-2170): Deprecate this entire endpoint in favor of v2 endpoints
 	if project.GetFeatureFlag(models.ValidateApplyV2, c.Config().LaunchDarklyClient) {
-		appInstance, err := appInstanceFromAppName(ctx, appInstanceFromAppNameInput{
-			ProjectID: project.ID,
-			ClusterID: cluster.ID,
-			AppName:   appName,
-			CCPClient: c.Config().ClusterControlPlaneClient,
-		})
-		if err != nil {
-			err := telemetry.Error(ctx, span, err, "error getting deployment target id from app name")
-			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-			return
-		}
-
-		// TODO (POR-2170): delete these database calls once endpoint is deprecated
-		var revision *models.AppRevision
-		// treat version 0 as latest like helm
-		if version == 0 {
-			revision, err = c.Repo().AppRevision().LatestNumberedAppRevision(project.ID, appInstance.Id)
-			if err != nil {
-				err := telemetry.Error(ctx, span, err, "error getting latest numbered app revision")
-				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-				return
-			}
-		} else {
-			revision, err = c.Repo().AppRevision().AppRevisionByInstanceIDAndRevisionNumber(project.ID, appInstance.Id, version)
-			if err != nil {
-				err := telemetry.Error(ctx, span, err, "error getting app revision by instance id and revision number")
-				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-				return
-			}
-		}
-
-		if revision == nil {
-			err := telemetry.Error(ctx, span, err, "app revision is nil")
-			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-			return
-		}
-
-		appRevisionRequest := connect.NewRequest(&porterv1.GetAppRevisionRequest{
-			ProjectId:     int64(project.ID),
-			AppRevisionId: revision.ID.String(),
-		})
-
-		getAppRevisionResp, err := c.Config().ClusterControlPlaneClient.GetAppRevision(ctx, appRevisionRequest)
-		if err != nil {
-			err := telemetry.Error(ctx, span, err, "error getting current app revision from cluster control plane client")
-			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-			return
-		}
-
-		if getAppRevisionResp.Msg == nil || getAppRevisionResp.Msg.AppRevision == nil {
-			err := telemetry.Error(ctx, span, err, "app revision is nil")
-			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-			return
-		}
-
-		appRevision := getAppRevisionResp.Msg.AppRevision
-
-		if appRevision.App == nil || appRevision.App.Image == nil {
-			err := telemetry.Error(ctx, span, err, "app revision app or image is nil")
-			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-			return
-		}
 
 		namespace := fmt.Sprintf("app-%s", appName)
-		k8sAgent, err := c.GetAgent(r, cluster, namespace)
+		helmAgent, err := c.GetHelmAgent(ctx, r, cluster, namespace)
 		if err != nil {
 			err = telemetry.Error(ctx, span, err, "error getting helm agent")
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 			return
 		}
 
-		deployments, err := k8sAgent.GetDeploymentsBySelector(ctx, namespace, fmt.Sprintf("porter.run/app-revision-id=%s", revision.ID.String()))
+		rel, err := helmAgent.GetRelease(ctx, appName, int(version), false)
 		if err != nil {
-			err = telemetry.Error(ctx, span, err, "error getting helm release history")
+			err = telemetry.Error(ctx, span, err, "error getting helm release")
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 			return
 		}
 
-		if deployments == nil || len(deployments.Items) == 0 {
-			err = telemetry.Error(ctx, span, nil, "no deployments found for revision")
-			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-			return
-		}
+		config := rel.Config
 
-		firstDeployment := deployments.Items[0]
-
-		if len(firstDeployment.Spec.Template.Annotations) == 0 || firstDeployment.Spec.Template.Annotations["helm.sh/revision"] == "" {
-			err = telemetry.Error(ctx, span, nil, "helm revision annotation not found")
-			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-			return
-		}
-
-		helmRevisionNumberString := firstDeployment.Spec.Template.Annotations["helm.sh/revision"]
-		helmRevisionNumber, err := strconv.Atoi(helmRevisionNumberString)
+		tag, err := imageTagFromConfig(config)
 		if err != nil {
-			err = telemetry.Error(ctx, span, err, "error converting helm revision number to int")
+			err := telemetry.Error(ctx, span, err, "error getting image tag from config")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+
+		revisionId, err := appRevisionIdFromConfig(config)
+		if err != nil {
+			err := telemetry.Error(ctx, span, err, "error getting app revision id from config")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+
+		revision, err := c.Repo().AppRevision().AppRevisionById(project.ID, revisionId)
+		if err != nil {
+			err := telemetry.Error(ctx, span, err, "error getting app revision by instance id and revision number")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+
+		if revision == nil {
+			err := telemetry.Error(ctx, span, err, "app revision is nil")
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 			return
 		}
@@ -180,17 +124,18 @@ func (c *PorterAppHelmReleaseGetHandler) ServeHTTP(w http.ResponseWriter, r *htt
 				Config: map[string]interface{}{
 					"global": map[string]interface{}{
 						"image": map[string]interface{}{
-							"tag": appRevision.App.Image.Tag,
+							"tag": tag,
 						},
 					},
 				},
 				Manifest:  "",
 				Hooks:     nil,
-				Version:   helmRevisionNumber,
+				Version:   rel.Version,
 				Namespace: "",
 				Labels:    nil,
 			},
-			PorterVersion: uint(appRevision.RevisionNumber),
+			PorterVersion: uint(revision.RevisionNumber),
+			AppRevisionId: revisionId,
 			PorterRelease: nil,
 			Form:          nil,
 		}
@@ -314,4 +259,56 @@ func appInstanceFromAppName(ctx context.Context, input appInstanceFromAppNameInp
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "matching-deployment-target", Value: matchingDeploymentTarget.String()})
 
 	return matchingAppInstances[0], nil
+}
+
+func imageTagFromConfig(config map[string]interface{}) (string, error) {
+	globalConfig, ok := config["global"].(map[string]interface{})
+	if !ok || globalConfig == nil {
+		return "", fmt.Errorf("error converting global config to map")
+	}
+
+	imageConfig, ok := globalConfig["image"].(map[string]interface{})
+	if !ok || imageConfig == nil {
+		return "", fmt.Errorf("error converting image config to map")
+	}
+
+	tag, ok := imageConfig["tag"].(string)
+	if !ok || tag == "" {
+		return "", fmt.Errorf("error converting tag to string")
+	}
+
+	return tag, nil
+}
+
+func appRevisionIdFromConfig(config map[string]interface{}) (string, error) {
+	var appRevisionId string
+	for _, val := range config {
+		if val == nil {
+			continue
+		}
+
+		m, ok := val.(map[string]interface{})
+		if !ok || m == nil {
+			continue
+		}
+
+		labels, ok := m["labels"].(map[string]interface{})
+		if !ok || labels == nil {
+			continue
+		}
+
+		id, ok := labels["porter.run/app-revision-id"].(string)
+		if !ok || id == "" {
+			continue
+		}
+
+		appRevisionId = id
+		break
+	}
+
+	if appRevisionId == "" {
+		return "", fmt.Errorf("app revision id not found in config")
+	}
+
+	return appRevisionId, nil
 }

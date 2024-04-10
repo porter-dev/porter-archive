@@ -60,6 +60,29 @@ type ListCreditGrantsRequest struct {
 	EffectiveBefore string `json:"effective_before,omitempty"`
 }
 
+type EmbeddableDashboardRequest struct {
+	// CustomerID is the id of the customer
+	CustomerID uuid.UUID `json:"customer_id,omitempty"`
+	// DashboardType is the type of dashboard to retrieve
+	DashboardType string `json:"dashboard"`
+	// Options are optional dashboard specific options
+	Options []DashboardOptions `json:"dashboard_options,omitempty"`
+	//  ColorOverrides is an optional list of colors to override
+	ColorOverrides []ColorOverrides `json:"color_overrides,omitempty"`
+}
+
+// DashboardOptions are optional dashboard specific options
+type DashboardOptions struct {
+	Key   string
+	Value string
+}
+
+// ColorOverrides is an optional list of colors to override
+type ColorOverrides struct {
+	Name  string
+	Value string
+}
+
 // CreditType is the type of the credit used in the credit grant
 type CreditType struct {
 	Name string `json:"name"`

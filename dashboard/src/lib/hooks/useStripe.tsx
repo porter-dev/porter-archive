@@ -35,6 +35,10 @@ type TGetPublishableKey = {
   publishableKey: string;
 };
 
+type TGetUsageDashboard = {
+  url: string;
+};
+
 type TGetCredits = {
   credits: number;
 };
@@ -151,6 +155,38 @@ export const checkIfProjectHasPayment = (): TCheckHasPaymentEnabled => {
   return {
     hasPaymentEnabled: paymentEnabledReq.data ?? false,
     refetchPaymentEnabled: paymentEnabledReq.refetch,
+  };
+};
+
+export const useCustomerDashboard = (dashboard: string): TGetUsageDashboard => {
+  const { currentProject } = useContext(Context);
+
+  // Return an embeddable dashboard for the customer
+  const dashboardReq = useQuery(
+    ["getUsageDashboard", currentProject?.id, dashboard],
+    async () => {
+      if (!currentProject?.id || currentProject.id === -1) {
+        return;
+      }
+      const res = await api.getUsageDashboard(
+        "<token>",
+        {
+          dashboard,
+        },
+        {
+          project_id: currentProject?.id,
+        }
+      );
+      console.log(res);
+      return res.data;
+    },
+    {
+      staleTime: Infinity,
+    }
+  );
+
+  return {
+    url: dashboardReq.data,
   };
 };
 

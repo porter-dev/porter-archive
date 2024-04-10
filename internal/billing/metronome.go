@@ -182,6 +182,33 @@ func (m MetronomeClient) GetCustomerCredits(ctx context.Context, customerID uuid
 	return result.Data[0].Balance.IncludingPending, nil
 }
 
+func (m MetronomeClient) GetCustomerDashboard(ctx context.Context, customerID uuid.UUID, dashboardType string) (url string, err error) {
+	ctx, span := telemetry.NewSpan(ctx, "get-customer-usage-dashboard")
+	defer span.End()
+
+	if customerID == uuid.Nil {
+		return url, telemetry.Error(ctx, span, err, "customer id empty")
+	}
+
+	path := "dashboards/getEmbeddableUrl"
+
+	req := types.EmbeddableDashboardRequest{
+		CustomerID:    customerID,
+		DashboardType: dashboardType,
+	}
+
+	var result struct {
+		Data map[string]string `json:"data"`
+	}
+
+	err = post(path, m.ApiKey, req, &result)
+	if err != nil {
+		return url, telemetry.Error(ctx, span, err, "failed to get embeddable dashboard")
+	}
+
+	return result.Data["url"], nil
+}
+
 func post(path string, apiKey string, body interface{}, data interface{}) (err error) {
 	client := http.Client{}
 	endpoint, err := url.JoinPath(metronomeBaseUrl, path)
@@ -211,7 +238,15 @@ func post(path string, apiKey string, body interface{}, data interface{}) (err e
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("non 200 status code returned: %d", resp.StatusCode)
+		// If there is an error, try to decode the message
+		var message map[string]string
+		err = json.NewDecoder(resp.Body).Decode(&message)
+		if err != nil {
+			return fmt.Errorf("status code %d received, couldn't process response message", resp.StatusCode)
+		}
+		_ = resp.Body.Close()
+
+		return fmt.Errorf("status code %d received, response message: %v", resp.StatusCode, message)
 	}
 
 	if data != nil {

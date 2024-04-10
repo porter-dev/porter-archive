@@ -72,6 +72,7 @@ const groupServicesByNamespace = (services: Service[]): GroupedServices => {
 
 const ClusterStatus: React.FC<Props> = ({ projectId, clusterId }) => {
   // TODO: make API call to get cluster status
+  // TODO: add types for the response
   const [statusData, setStatusData] = useState<any | null>(null);
 
   useEffect(() => {
@@ -134,7 +135,7 @@ const ClusterStatus: React.FC<Props> = ({ projectId, clusterId }) => {
                   </Container>
                 }
               >
-                {statusData.services[key].map((service, i) => {
+                {statusData.services[key].map((service: Service) => {
                   return (
                     <>
                       <Text color="helper">{service.system_service.name}</Text>

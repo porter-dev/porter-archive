@@ -392,6 +392,7 @@ func filterNewServiceValues(service v2.Service) v2.Service {
 		Private:                       service.Private,
 		IngressAnnotations:            service.IngressAnnotations,
 		DisableTLS:                    service.DisableTLS,
+		Sleep:                         service.Sleep,
 	}
 }
 

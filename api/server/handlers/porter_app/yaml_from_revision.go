@@ -435,6 +435,10 @@ func zeroOutValues(app v2.PorterApp) v2.PorterApp {
 			if app.Services[i].Autoscaling != nil && !app.Services[i].Autoscaling.Enabled {
 				app.Services[i].Autoscaling = nil
 			}
+			// remove health if not enabled
+			if app.Services[i].HealthCheck != nil && !app.Services[i].HealthCheck.Enabled {
+				app.Services[i].HealthCheck = nil
+			}
 			// remove port
 			app.Services[i].Port = 0
 		case v2.ServiceType_Job:
@@ -476,6 +480,8 @@ func zeroOutValues(app v2.PorterApp) v2.PorterApp {
 		app.Predeploy.AllowConcurrent = nil
 		// remove timeout
 		app.Predeploy.TimeoutSeconds = 0
+		// remove gpu
+		app.Predeploy.GPU = nil
 	}
 
 	if app.InitialDeploy != nil {
@@ -501,6 +507,8 @@ func zeroOutValues(app v2.PorterApp) v2.PorterApp {
 		app.InitialDeploy.AllowConcurrent = nil
 		// remove timeout
 		app.InitialDeploy.TimeoutSeconds = 0
+		// remove gpu
+		app.InitialDeploy.GPU = nil
 	}
 
 	return app

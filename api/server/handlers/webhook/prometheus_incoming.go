@@ -65,6 +65,7 @@ func (p *PrometheusAlertWebhookHandler) ServeHTTP(w http.ResponseWriter, r *http
 		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusInternalServerError))
 		return
 	}
+	p.WriteResult(w, r, "")
 }
 
 func (p *PrometheusAlertWebhookHandler) handlePrometheusAlert(ctx context.Context, projectId, clusterId int64, prometheusAlert *types.PrometheusAlert) error {

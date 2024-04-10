@@ -17,12 +17,7 @@ func NewAppRevisionRepository() repository.AppRevisionRepository {
 	return &AppRevisionRepository{canQuery: false}
 }
 
-// AppRevisionByInstanceIDAndRevisionNumber finds an app revision by revision number
-func (repo *AppRevisionRepository) AppRevisionByInstanceIDAndRevisionNumber(projectID uint, appInstanceId string, revisionNumber uint) (*models.AppRevision, error) {
-	return nil, errors.New("cannot read database")
-}
-
-// LatestNumberedAppRevision finds the latest numbered app revision
-func (repo *AppRevisionRepository) LatestNumberedAppRevision(projectID uint, appInstanceId string) (*models.AppRevision, error) {
+// AppRevisionById finds an app revision by revision number
+func (repo *AppRevisionRepository) AppRevisionById(projectID uint, appRevisionId string) (*models.AppRevision, error) {
 	return nil, errors.New("cannot read database")
 }

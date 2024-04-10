@@ -3459,6 +3459,15 @@ const getPorterCredits = baseApi<
   }
 >("GET", ({ project_id }) => `/api/projects/${project_id}/billing/credits`);
 
+const getUsageDashboard = baseApi<
+  {
+    dashboard: string;
+  },
+  {
+    project_id?: number;
+  }
+>("POST", ({ project_id }) => `/api/projects/${project_id}/billing/dashboard`);
+
 const getHasBilling = baseApi<{}, { project_id: number }>(
   "GET",
   ({ project_id }) => `/api/projects/${project_id}/billing`
@@ -3857,6 +3866,7 @@ export default {
   // BILLING
   getPublishableKey,
   getPorterCredits,
+  getUsageDashboard,
   listPaymentMethod,
   addPaymentMethod,
   setDefaultPaymentMethod,

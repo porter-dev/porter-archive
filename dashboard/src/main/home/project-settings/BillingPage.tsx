@@ -11,6 +11,7 @@ import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import {
   checkIfProjectHasPayment,
+  useCustomerDashboard,
   usePaymentMethods,
   usePorterCredits,
   useSetDefaultPaymentMethod,
@@ -39,6 +40,10 @@ function BillingPage(): JSX.Element {
   const { setDefaultPaymentMethod } = useSetDefaultPaymentMethod();
 
   const { refetchPaymentEnabled } = checkIfProjectHasPayment();
+
+  const { url: creditsDashboard } = useCustomerDashboard("credits");
+  const { url: invoicesDashboard } = useCustomerDashboard("invoices");
+  const { url: usageDashboard } = useCustomerDashboard("usage");
 
   const formatCredits = (credits: number): string => {
     return (credits / 100).toFixed(2);
@@ -79,6 +84,12 @@ function BillingPage(): JSX.Element {
               {credits > 0 ? `$${formatCredits(credits)}` : "$ 0.00"}
             </Text>
           </Container>
+          <Spacer y={2} />
+          <iframe src={creditsDashboard} />
+          <Spacer y={2} />
+          <iframe src={invoicesDashboard} />
+          <Spacer y={2} />
+          <iframe src={usageDashboard} />
           <Spacer y={2} />
         </div>
       ) : (

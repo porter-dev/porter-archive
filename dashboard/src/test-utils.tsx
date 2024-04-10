@@ -8,7 +8,7 @@ import { useHistory, useLocation } from "react-router";
 import { BrowserRouter } from "react-router-dom";
 import { createGlobalStyle, ThemeProvider } from "styled-components";
 
-import AuthProvider from "shared/auth/AuthContext";
+import AuthzProvider from "shared/auth/AuthzContext";
 import { ContextProvider } from "shared/Context";
 import standard from "shared/themes/standard";
 
@@ -19,7 +19,7 @@ const AllTheProviders: React.FC<{ children: React.ReactNode }> = ({
     <ThemeProvider theme={standard}>
       <BrowserRouter>
         <ContextProvider history={null} location={null}>
-          <AuthProvider>{children}</AuthProvider>
+          <AuthzProvider>{children}</AuthzProvider>
         </ContextProvider>
       </BrowserRouter>
     </ThemeProvider>

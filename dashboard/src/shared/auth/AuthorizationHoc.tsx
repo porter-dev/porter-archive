@@ -1,5 +1,5 @@
 import React, { useCallback, useContext } from "react";
-import { AuthContext } from "./AuthContext";
+import { AuthzContext } from "./AuthzContext";
 import { isAuthorized } from "./authorization-helpers";
 import { ScopeType, Verbs } from "./types";
 
@@ -8,7 +8,7 @@ export const GuardedComponent = <ComponentProps extends object>(
   resource: string,
   verb: Verbs | Array<Verbs>
 ) => (Component: any) => (props: ComponentProps) => {
-  const authContext = useContext(AuthContext);
+  const authContext = useContext(AuthzContext);
 
   if (isAuthorized(authContext.currentPolicy, scope, resource, verb)) {
     return <Component {...props} />;
@@ -36,7 +36,7 @@ export function withAuth<P>(
   })`;
 
   const C = (props: P) => {
-    const authContext = useContext(AuthContext);
+    const authContext = useContext(AuthzContext);
 
     const isAuth = useCallback(
       (scope: ScopeType, resource: string, verb: Verbs | Array<Verbs>) =>

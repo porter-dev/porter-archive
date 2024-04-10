@@ -1,7 +1,9 @@
 package types
 
 import (
+	"errors"
 	"fmt"
+	"time"
 
 	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
 )
@@ -19,32 +21,39 @@ const (
 	ServiceDaemonSet InvolvedObjectType = "daemonset"
 )
 
-// ServiceStatus is the status of a service
+// Status is the status of a service
 // it has to be one of healthy, partial_failure or failure
-type ServiceStatus string
+type Status string
 
 const (
-	// ServiceStatusHealthy is when a service is fully healthy
-	ServiceStatusHealthy ServiceStatus = "healthy"
-	// ServiceStatusPartialFailure is when a service is partially failing
-	ServiceStatusPartialFailure ServiceStatus = "partial_failure"
-	// ServiceStatusFailure is when a service is critically in failure mode
-	ServiceStatusFailure ServiceStatus = "failure"
+	// StatusHealthy is when a service is fully healthy
+	StatusHealthy Status = "healthy"
+	// StatusPartialFailure is when a service is partially failing
+	StatusPartialFailure Status = "partial_failure"
+	// StatusFailure is when a service is critically in failure mode
+	StatusFailure Status = "failure"
 )
 
 // SystemServicesStatus contains the system infrastructure status for a cluster
-type SystemServicesStatus struct {
-	// NoClusterHeartbeat is set to true if the cluster hasn't heartbeat in 10 minutes
-	NoClusterHeartbeat bool
-	// Statuses is a list of SystemServiceStatus
+type SystemStatusHistory struct {
+	// ClusterStatusHistory is a time series of the cluster's health
+	ClusterStatusHistory []ClusterHealthStatus
+	// SystemServiceStatusHistories is a list of SystemServiceStatusHistory for each service
 	// there should be only one entry for a service
-	Statuses []SystemServiceStatus
+	SystemServiceStatusHistories []SystemServiceStatusHistory
 }
 
-// SystemServiceStatus contains the status of a system service
-type SystemServiceStatus struct {
+// ClusterHealthStatus is the status of a cluster at a certain timestamp
+type ClusterHealthStatus struct {
+	Timestamp time.Time
+	// Responsive is set to true if the cluster sent all heartbeats in the time period represented by the Timestamp
+	Responsive bool
+}
+
+// SystemServiceStatusHistory contains the status of a system service
+type SystemServiceStatusHistory struct {
 	SystemService SystemService
-	SystemStatus  ServiceStatus
+	StatusHistory []ServiceStatus
 }
 
 // SystemService identifies a system service
@@ -54,41 +63,76 @@ type SystemService struct {
 	InvolvedObjectType InvolvedObjectType
 }
 
-// ToSystemServicesStatus converts the CCP resposne to the internal SystemServicesStatus
-func ToSystemServicesStatus(apiResp *porterv1.ListSystemServiceStatusResponse) (SystemServicesStatus, error) {
+type ServiceStatus struct {
+	Timestamp time.Time
+	Status    Status
+}
+
+// ToSystemStatusHistory converts the CCP resposne to the internal SystemStatusHistory
+func ToSystemStatusHistory(apiResp *porterv1.SystemStatusHistoryResponse) (SystemStatusHistory, error) {
 	if apiResp == nil {
-		return SystemServicesStatus{}, fmt.Errorf("nil system service status response")
+		return SystemStatusHistory{}, fmt.Errorf("nil system service status response")
 	}
-	resp := SystemServicesStatus{
-		NoClusterHeartbeat: apiResp.NoClusterHearbeat,
-		Statuses:           []SystemServiceStatus{},
+	resp := SystemStatusHistory{
+		ClusterStatusHistory:         []ClusterHealthStatus{},
+		SystemServiceStatusHistories: []SystemServiceStatusHistory{},
 	}
-	for _, apiStatus := range apiResp.SystemServiceStatus {
-		status, err := toSystemServiceStatus(*apiStatus)
+	for _, apiClusterStatus := range apiResp.ClusterStatusHistory {
+		clusterHealthStatus, err := toClusterHealthStatus(apiClusterStatus)
 		if err != nil {
-			return SystemServicesStatus{}, err
+			return resp, err
 		}
-		resp.Statuses = append(resp.Statuses, status)
+		resp.ClusterStatusHistory = append(resp.ClusterStatusHistory, clusterHealthStatus)
+	}
+	for _, apiServiceStatusHistory := range apiResp.SystemServiceStatusHistories {
+		statusHistory, err := toSystemServiceStatusHistory(apiServiceStatusHistory)
+		if err != nil {
+			return resp, err
+		}
+		resp.SystemServiceStatusHistories = append(resp.SystemServiceStatusHistories, statusHistory)
 	}
 	return resp, nil
 }
 
-func toSystemServiceStatus(apiStatus porterv1.SystemServiceStatus) (SystemServiceStatus, error) {
-	systemService, err := toSystemService(*apiStatus.SystemService)
-	if err != nil {
-		return SystemServiceStatus{}, err
+func toClusterHealthStatus(apiClusterStatus *porterv1.ClusterStatus) (ClusterHealthStatus, error) {
+	if apiClusterStatus == nil {
+		return ClusterHealthStatus{}, errors.New("unexpected nil: ClusterStatus")
 	}
-	status, err := toServiceStatus(apiStatus.ServiceStatus)
-	if err != nil {
-		return SystemServiceStatus{}, err
-	}
-	return SystemServiceStatus{
-		SystemService: systemService,
-		SystemStatus:  status,
+	return ClusterHealthStatus{
+		Timestamp:  apiClusterStatus.TimestampField.AsTime(),
+		Responsive: apiClusterStatus.Responsive,
 	}, nil
 }
 
-func toSystemService(apiSystemService porterv1.SystemService) (SystemService, error) {
+func toSystemServiceStatusHistory(apiServiceStatusHistory *porterv1.SystemServiceStatusHistory) (SystemServiceStatusHistory, error) {
+	if apiServiceStatusHistory == nil {
+		return SystemServiceStatusHistory{}, errors.New("unexpected nil: SystemServiceStatusHistory")
+	}
+	systemService, err := toSystemService(apiServiceStatusHistory.SystemService)
+	if err != nil {
+		return SystemServiceStatusHistory{}, err
+	}
+	resp := SystemServiceStatusHistory{
+		SystemService: systemService,
+		StatusHistory: []ServiceStatus{},
+	}
+	for _, apiStatus := range apiServiceStatusHistory.StatusHistory {
+		status, err := toStatus(apiStatus.Status)
+		if err != nil {
+			return resp, err
+		}
+		resp.StatusHistory = append(resp.StatusHistory, ServiceStatus{
+			Timestamp: apiStatus.TimestampField.AsTime(),
+			Status:    status,
+		})
+	}
+	return resp, nil
+}
+
+func toSystemService(apiSystemService *porterv1.SystemService) (SystemService, error) {
+	if apiSystemService == nil {
+		return SystemService{}, errors.New("unexpected nil: SystemService")
+	}
 	involvedObjectType, err := toInternalInvolvedObjectType(apiSystemService.InvolvedObjectType)
 	if err != nil {
 		return SystemService{}, err
@@ -113,15 +157,15 @@ func toInternalInvolvedObjectType(apiType porterv1.InvolvedObjectType) (Involved
 	}
 }
 
-func toServiceStatus(apiStatus porterv1.ServiceStatus) (ServiceStatus, error) {
+func toStatus(apiStatus porterv1.Status) (Status, error) {
 	switch apiStatus {
-	case porterv1.ServiceStatus_SERVICE_STATUS_HEALTHY:
-		return ServiceStatusHealthy, nil
-	case porterv1.ServiceStatus_SERVICE_STATUS_PARTIAL_FAILURE:
-		return ServiceStatusPartialFailure, nil
-	case porterv1.ServiceStatus_SERVICE_STATUS_FAILURE:
-		return ServiceStatusFailure, nil
+	case porterv1.Status_STATUS_HEALTHY:
+		return StatusHealthy, nil
+	case porterv1.Status_STATUS_PARTIAL_FAILURE:
+		return StatusPartialFailure, nil
+	case porterv1.Status_STATUS_FAILURE:
+		return StatusFailure, nil
 	default:
-		return "", fmt.Errorf("unknown service status")
+		return "", errors.New("unknown service status")
 	}
 }

@@ -40,22 +40,22 @@ func (p *SystemServiceStatusListHandler) ServeHTTP(w http.ResponseWriter, r *htt
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
-	request := connect.NewRequest(&porterv1.ListSystemServiceStatusRequest{
+	request := connect.NewRequest(&porterv1.SystemStatusHistoryRequest{
 		ProjectId:     int64(project.ID),
 		ClusterId:     int64(cluster.ID),
 		CloudProvider: cloudProvider,
 	})
-	resp, err := p.Config().ClusterControlPlaneClient.ListSystemServiceStatus(ctx, request)
+	resp, err := p.Config().ClusterControlPlaneClient.SystemStatusHistory(ctx, request)
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
-	statuses, err := types.ToSystemServicesStatus(resp.Msg)
+	systemStatusHistory, err := types.ToSystemStatusHistory(resp.Msg)
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
-	p.WriteResult(w, r, statuses)
+	p.WriteResult(w, r, systemStatusHistory)
 }
 
 func (p *SystemServiceStatusListHandler) getCloudProviderEnum(cloudProvider string) (porterv1.EnumCloudProvider, error) {

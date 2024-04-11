@@ -5,7 +5,9 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"time"
 
+	"github.com/gorilla/websocket"
 	"github.com/porter-dev/porter/api/server/handlers/porter_app"
 	"github.com/porter-dev/porter/internal/models"
 	appInternal "github.com/porter-dev/porter/internal/porter_app"
@@ -260,6 +262,65 @@ func (c *Client) UpdateApp(
 	)
 
 	return resp, err
+}
+
+// AppLogsInput is the input struct to AppLogs and AppLogsStream
+type AppLogsInput struct {
+	ProjectID            uint
+	ClusterID            uint
+	AppName              string
+	ServiceName          string
+	DeploymentTargetName string
+	StartRange           time.Time
+}
+
+// AppLogs gets logs for an app
+func (c *Client) AppLogs(
+	ctx context.Context,
+	inp AppLogsInput,
+) (*porter_app.AppLogsResponse, error) {
+	resp := &porter_app.AppLogsResponse{}
+
+	req := &porter_app.AppLogsRequest{
+		ServiceName:          inp.ServiceName,
+		DeploymentTargetName: inp.DeploymentTargetName,
+		StartRange:           inp.StartRange,
+	}
+
+	err := c.getRequest(
+		fmt.Sprintf(
+			"/projects/%d/clusters/%d/apps/%s/logs",
+			inp.ProjectID, inp.ClusterID, inp.AppName,
+		),
+		req,
+		resp,
+	)
+
+	return resp, err
+}
+
+// AppLogsStream streams logs for an app
+func (c *Client) AppLogsStream(
+	ctx context.Context,
+	inp AppLogsInput,
+) (*websocket.Conn, error) {
+	req := &porter_app.AppLogsRequest{
+		ServiceName:          inp.ServiceName,
+		DeploymentTargetName: inp.DeploymentTargetName,
+	}
+
+	conn, err := c.websocketDial(
+		fmt.Sprintf(
+			"/projects/%d/clusters/%d/apps/%s/logs/loki",
+			inp.ProjectID, inp.ClusterID, inp.AppName,
+		),
+		req,
+	)
+	if err != nil {
+		return conn, err
+	}
+
+	return conn, nil
 }
 
 // DefaultDeploymentTarget returns the default deployment target for a given project and cluster

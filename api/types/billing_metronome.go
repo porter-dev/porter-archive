@@ -71,16 +71,21 @@ type EmbeddableDashboardRequest struct {
 	ColorOverrides []ColorOverrides `json:"color_overrides,omitempty"`
 }
 
-// DashboardOptions are optional dashboard specific options
-type DashboardOptions struct {
-	Key   string
-	Value string
+// Plan is a pricing plan to which a user is currently subscribed
+type Plan struct {
+	ID                  uuid.UUID `json:"id"`
+	PlanID              uuid.UUID `json:"plan_id"`
+	PlanName            string    `json:"plan_name"`
+	PlanDescription     string    `json:"plan_description"`
+	StartingOn          string    `json:"starting_on"`
+	EndingBefore        string    `json:"ending_before"`
+	NetPaymentTermsDays int       `json:"net_payment_terms_days"`
+	TrialInfo           Trial     `json:"trial_info,omitempty"`
 }
 
-// ColorOverrides is an optional list of colors to override
-type ColorOverrides struct {
-	Name  string
-	Value string
+// Trial contains the information for a trial period
+type Trial struct {
+	EndingBefore string `json:"ending_before"`
 }
 
 // CreditType is the type of the credit used in the credit grant
@@ -89,19 +94,13 @@ type CreditType struct {
 	ID   string `json:"id"`
 }
 
-// GrantAmount represents the amount of credits granted
-type GrantAmount struct {
-	Amount     int64      `json:"amount"`
-	CreditType CreditType `json:"credit_type"`
-}
-
 // Balance represents the effective balance of the grant as of the end of the customer's
 // current billing period.
 type Balance struct {
 	// ExcludingPending is the grant's current balance excluding pending deductions
-	ExcludingPending int64 `json:"excluding_pending"`
+	ExcludingPending float64 `json:"excluding_pending"`
 	// IncludingPending is the grant's current balance including pending deductions
-	IncludingPending int64 `json:"including_pending"`
+	IncludingPending float64 `json:"including_pending"`
 	// EffectiveAt is a RFC3339 timestamp that can be used to filter credit grants by effective date
 	EffectiveAt string `json:"effective_at"`
 }
@@ -109,8 +108,21 @@ type Balance struct {
 // CreditGrant is a grant given to a specific user on a specific plan
 type CreditGrant struct {
 	ID          uuid.UUID `json:"id"`
-	Name        string
-	CustomerID  uuid.UUID
-	GrantAmount GrantAmount
-	Balance     Balance
+	Name        string    `json:"name"`
+	Balance     Balance   `json:"balance"`
+	Reason      string    `json:"reason"`
+	EffectiveAt string    `json:"effective_at"`
+	ExpiresAt   string    `json:"expires_at"`
+}
+
+// DashboardOptions are optional dashboard specific options
+type DashboardOptions struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
+}
+
+// ColorOverrides is an optional list of colors to override
+type ColorOverrides struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
 }

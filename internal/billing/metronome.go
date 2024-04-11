@@ -35,6 +35,26 @@ func NewMetronomeClient(metronomeApiKey string) MetronomeClient {
 	}
 }
 
+// CreateCustomerWithPlan will create the customer in Metronome and immediately add it to the plan
+func (m MetronomeClient) CreateCustomerWithPlan(ctx context.Context, userEmail string, projectName string, projectID uint, billingID string, planID string) (customerID uuid.UUID, customerPlanID uuid.UUID, err error) {
+	ctx, span := telemetry.NewSpan(ctx, "add-metronome-customer-plan")
+	defer span.End()
+
+	porterCloudPlanID, err := uuid.Parse(planID)
+	if err != nil {
+		return customerID, customerPlanID, telemetry.Error(ctx, span, err, "error parsing starter plan id")
+	}
+
+	customerID, err = m.createCustomer(ctx, userEmail, projectName, projectID, billingID)
+	if err != nil {
+		return customerID, customerPlanID, telemetry.Error(ctx, span, err, "error while creatinc customer with plan")
+	}
+
+	customerPlanID, err = m.addCustomerPlan(ctx, customerID, porterCloudPlanID)
+
+	return customerID, customerPlanID, err
+}
+
 // createCustomer will create the customer in Metronome
 func (m MetronomeClient) createCustomer(ctx context.Context, userEmail string, projectName string, projectID uint, billingID string) (customerID uuid.UUID, err error) {
 	ctx, span := telemetry.NewSpan(ctx, "create-metronome-customer")
@@ -63,7 +83,7 @@ func (m MetronomeClient) createCustomer(ctx context.Context, userEmail string, p
 		Data types.Customer `json:"data"`
 	}
 
-	err = post(path, m.ApiKey, customer, &result)
+	err = do(http.MethodPost, path, m.ApiKey, customer, &result)
 	if err != nil {
 		return customerID, telemetry.Error(ctx, span, err, "error creating customer")
 	}
@@ -97,7 +117,7 @@ func (m MetronomeClient) addCustomerPlan(ctx context.Context, customerID uuid.UU
 		} `json:"data"`
 	}
 
-	err = post(path, m.ApiKey, req, &result)
+	err = do(http.MethodPost, path, m.ApiKey, req, &result)
 	if err != nil {
 		return customerPlanID, telemetry.Error(ctx, span, err, "failed to add customer to plan")
 	}
@@ -105,24 +125,27 @@ func (m MetronomeClient) addCustomerPlan(ctx context.Context, customerID uuid.UU
 	return result.Data.CustomerPlanID, nil
 }
 
-// CreateCustomerWithPlan will create the customer in Metronome and immediately add it to the plan
-func (m MetronomeClient) CreateCustomerWithPlan(ctx context.Context, userEmail string, projectName string, projectID uint, billingID string, planID string) (customerID uuid.UUID, customerPlanID uuid.UUID, err error) {
-	ctx, span := telemetry.NewSpan(ctx, "add-metronome-customer-plan")
+// ListCustomerPlan will return the current active plan to which the user is subscribed
+func (m MetronomeClient) ListCustomerPlan(ctx context.Context, customerID uuid.UUID) (plan types.Plan, err error) {
+	ctx, span := telemetry.NewSpan(ctx, "list-customer-plans")
 	defer span.End()
 
-	porterCloudPlanID, err := uuid.Parse(planID)
-	if err != nil {
-		return customerID, customerPlanID, telemetry.Error(ctx, span, err, "error parsing starter plan id")
+	if customerID == uuid.Nil {
+		return plan, telemetry.Error(ctx, span, err, "customer id empty")
 	}
 
-	customerID, err = m.createCustomer(ctx, userEmail, projectName, projectID, billingID)
-	if err != nil {
-		return customerID, customerPlanID, telemetry.Error(ctx, span, err, "error while creatinc customer with plan")
+	path := fmt.Sprintf("/customers/%s/plans", customerID)
+
+	var result struct {
+		Data []types.Plan `json:"data"`
 	}
 
-	customerPlanID, err = m.addCustomerPlan(ctx, customerID, porterCloudPlanID)
+	err = do(http.MethodGet, path, m.ApiKey, nil, &result)
+	if err != nil {
+		return plan, telemetry.Error(ctx, span, err, "failed to list customer plans")
+	}
 
-	return customerID, customerPlanID, err
+	return result.Data[0], nil
 }
 
 // EndCustomerPlan will immediately end the plan for the given customer
@@ -145,7 +168,7 @@ func (m MetronomeClient) EndCustomerPlan(ctx context.Context, customerID uuid.UU
 		EndingBeforeUTC: endBefore,
 	}
 
-	err = post(path, m.ApiKey, req, nil)
+	err = do(http.MethodPost, path, m.ApiKey, req, nil)
 	if err != nil {
 		return telemetry.Error(ctx, span, err, "failed to end customer plan")
 	}
@@ -153,9 +176,9 @@ func (m MetronomeClient) EndCustomerPlan(ctx context.Context, customerID uuid.UU
 	return nil
 }
 
-// GetCustomerCredits will return the first credit grant for the customer
-func (m MetronomeClient) GetCustomerCredits(ctx context.Context, customerID uuid.UUID) (credits int64, err error) {
-	ctx, span := telemetry.NewSpan(ctx, "get-customer-credits")
+// ListCustomerCredits will return the list of credit grants for the customer
+func (m MetronomeClient) ListCustomerCredits(ctx context.Context, customerID uuid.UUID) (credits []types.CreditGrant, err error) {
+	ctx, span := telemetry.NewSpan(ctx, "list-customer-credits")
 	defer span.End()
 
 	if customerID == uuid.Nil {
@@ -174,15 +197,15 @@ func (m MetronomeClient) GetCustomerCredits(ctx context.Context, customerID uuid
 		Data []types.CreditGrant `json:"data"`
 	}
 
-	err = post(path, m.ApiKey, req, &result)
+	err = do(http.MethodPost, path, m.ApiKey, req, &result)
 	if err != nil {
-		return credits, telemetry.Error(ctx, span, err, "failed to get customer credits")
+		return credits, telemetry.Error(ctx, span, err, "failed to list customer credits")
 	}
 
-	return result.Data[0].Balance.IncludingPending, nil
+	return result.Data, nil
 }
 
-func (m MetronomeClient) GetCustomerDashboard(ctx context.Context, customerID uuid.UUID, dashboardType string) (url string, err error) {
+func (m MetronomeClient) GetCustomerDashboard(ctx context.Context, customerID uuid.UUID, dashboardType string, options []types.DashboardOptions, colorOverrides []types.ColorOverrides) (url string, err error) {
 	ctx, span := telemetry.NewSpan(ctx, "get-customer-usage-dashboard")
 	defer span.End()
 
@@ -193,15 +216,17 @@ func (m MetronomeClient) GetCustomerDashboard(ctx context.Context, customerID uu
 	path := "dashboards/getEmbeddableUrl"
 
 	req := types.EmbeddableDashboardRequest{
-		CustomerID:    customerID,
-		DashboardType: dashboardType,
+		CustomerID:     customerID,
+		Options:        options,
+		DashboardType:  dashboardType,
+		ColorOverrides: colorOverrides,
 	}
 
 	var result struct {
 		Data map[string]string `json:"data"`
 	}
 
-	err = post(path, m.ApiKey, req, &result)
+	err = do(http.MethodPost, path, m.ApiKey, req, &result)
 	if err != nil {
 		return url, telemetry.Error(ctx, span, err, "failed to get embeddable dashboard")
 	}
@@ -209,7 +234,7 @@ func (m MetronomeClient) GetCustomerDashboard(ctx context.Context, customerID uu
 	return result.Data["url"], nil
 }
 
-func post(path string, apiKey string, body interface{}, data interface{}) (err error) {
+func do(method string, path string, apiKey string, body interface{}, data interface{}) (err error) {
 	client := http.Client{}
 	endpoint, err := url.JoinPath(metronomeBaseUrl, path)
 	if err != nil {
@@ -224,7 +249,7 @@ func post(path string, apiKey string, body interface{}, data interface{}) (err e
 		}
 	}
 
-	req, err := http.NewRequest(http.MethodPost, endpoint, bytes.NewBuffer(bodyJson))
+	req, err := http.NewRequest(method, endpoint, bytes.NewBuffer(bodyJson))
 	if err != nil {
 		return err
 	}

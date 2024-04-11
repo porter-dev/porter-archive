@@ -117,6 +117,13 @@ func (c *StreamLogsLokiHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	}
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "start-time", Value: string(startTime)})
 
+	app, err := c.Repo().PorterApp().ReadPorterAppByName(cluster.ID, appName)
+	if err != nil {
+		err := telemetry.Error(ctx, span, err, "error reading porter app by name")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+
 	safeRW := r.Context().Value(types.RequestCtxWebsocketKey).(*websocket.WebsocketSafeReadWriter)
 
 	agent, err := c.GetAgent(r, cluster, "")
@@ -129,8 +136,8 @@ func (c *StreamLogsLokiHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	labels := []string{
 		fmt.Sprintf("%s=%s", lokiLabel_Namespace, namespace),
 		fmt.Sprintf("%s=%s", lokiLabel_PorterAppName, appName),
-		fmt.Sprintf("%s=%s", lokiLabel_DeploymentTargetId, request.DeploymentTargetID),
-		fmt.Sprintf("%s=%s", lokiLabel_PorterAppID, fmt.Sprintf("%d", request.AppID)),
+		fmt.Sprintf("%s=%s", lokiLabel_DeploymentTargetId, deploymentTarget.ID),
+		fmt.Sprintf("%s=%s", lokiLabel_PorterAppID, fmt.Sprintf("%d", app.ID)),
 	}
 
 	if request.ServiceName != "all" {

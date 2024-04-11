@@ -151,6 +151,11 @@ buildpacks using the --builder and --attach-buildpacks flags:
 		"",
 		"set the image tag to use for the build",
 	)
+	appBuildCommand.PersistentFlags().Bool(
+		flags.App_NoPull,
+		false,
+		"do not pull the previous image before building",
+	)
 	appCmd.AddCommand(appBuildCommand)
 
 	appPushCommand := &cobra.Command{
@@ -290,6 +295,19 @@ in that it only updates the app, but does not attempt to build a new image.`,
 	}
 	appCmd.AddCommand(appManifestsCmd)
 
+	// appLogsCmd represents the "porter app logs" subcommand
+	appLogsCmd := &cobra.Command{
+		Use:   "logs [application]",
+		Args:  cobra.MinimumNArgs(1),
+		Short: "Streams the latest logs for an application.",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return checkLoginAndRunWithConfig(cmd, cliConf, args, appLogs)
+		},
+	}
+	appLogsCmd.PersistentFlags().String("service", "", "the name of the service to get logs for")
+
+	appCmd.AddCommand(appLogsCmd)
+
 	return appCmd
 }
 
@@ -423,6 +441,12 @@ func appBuild(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client
 		return fmt.Errorf("error getting tag: %w", err)
 	}
 
+	noPull, err := cmd.Flags().GetBool(flags.App_NoPull)
+	if err != nil {
+		return fmt.Errorf("could not retrieve no-pull flag from command")
+	}
+	pullBeforeBuild := !noPull
+
 	err = v2.AppBuild(ctx, v2.AppBuildInput{
 		CLIConfig:            cliConfig,
 		Client:               client,
@@ -435,6 +459,7 @@ func appBuild(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client
 		BuildContext:         buildValues.BuildContext,
 		ImageTag:             tag,
 		PatchOperations:      patchOperations,
+		PullImageBeforeBuild: pullBeforeBuild,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to build app: %w", err)
@@ -557,6 +582,36 @@ func appRollback(ctx context.Context, _ *types.GetAuthenticatedUserResponse, cli
 	})
 	if err != nil {
 		return fmt.Errorf("failed to rollback app: %w", err)
+	}
+
+	return nil
+}
+
+func appLogs(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ config.FeatureFlags, cmd *cobra.Command, args []string) error {
+	appName := args[0]
+	if appName == "" {
+		return fmt.Errorf("app name must be specified")
+	}
+
+	serviceFlag, err := cmd.Flags().GetString("service")
+	if err != nil {
+		return fmt.Errorf("error getting service flag: %w", err)
+	}
+
+	serviceName := v2.ServiceName_AllServices
+	if serviceFlag != "" {
+		serviceName = serviceFlag
+	}
+
+	err = v2.AppLogs(ctx, v2.AppLogsInput{
+		CLIConfig:            cliConfig,
+		Client:               client,
+		AppName:              appName,
+		DeploymentTargetName: deploymentTargetName,
+		ServiceName:          serviceName,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to get app logs: %w", err)
 	}
 
 	return nil

@@ -5,6 +5,9 @@ import { match } from "ts-pattern";
 import { v4 as uuidv4 } from "uuid";
 
 import Back from "components/porter/Back";
+import BlockSelect, {
+  type BlockSelectOption,
+} from "components/porter/BlockSelect";
 import Button from "components/porter/Button";
 import { ControlledInput } from "components/porter/ControlledInput";
 import { Error as ErrorComponent } from "components/porter/Error";
@@ -23,9 +26,6 @@ import { useClusterList } from "lib/hooks/useCluster";
 
 import database from "assets/database.svg";
 
-import BlockSelect, {
-  type BlockSelectOption,
-} from "../../../../components/porter/BlockSelect";
 import {
   DATASTORE_ENGINE_POSTGRES,
   DATASTORE_ENGINE_REDIS,
@@ -145,7 +145,7 @@ const DatastoreForm: React.FC = () => {
                 error={errors.name?.message}
                 {...register("name")}
               />
-              {clusters.length > 0 && (
+              {clusters.length > 1 && (
                 <>
                   <Spacer y={1} />
                   <Selector<string>

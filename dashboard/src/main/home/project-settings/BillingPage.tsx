@@ -12,6 +12,7 @@ import Text from "components/porter/Text";
 import {
   checkIfProjectHasPayment,
   useCustomerDashboard,
+  useCustomerPlan,
   usePaymentMethods,
   usePorterCredits,
   useSetDefaultPaymentMethod,
@@ -20,6 +21,7 @@ import {
 import { Context } from "shared/Context";
 import cardIcon from "assets/credit-card.svg";
 import gift from "assets/gift.svg";
+import time from "assets/time.png";
 import trashIcon from "assets/trash.png";
 
 import BillingModal from "../modals/BillingModal";
@@ -29,7 +31,8 @@ function BillingPage(): JSX.Element {
   const [shouldCreate, setShouldCreate] = useState(false);
   const { currentProject } = useContext(Context);
 
-  const { credits } = usePorterCredits();
+  const { creditGrantsList } = usePorterCredits();
+  const { plan } = useCustomerPlan();
 
   const {
     paymentMethodList,
@@ -40,13 +43,40 @@ function BillingPage(): JSX.Element {
   const { setDefaultPaymentMethod } = useSetDefaultPaymentMethod();
 
   const { refetchPaymentEnabled } = checkIfProjectHasPayment();
-
-  const { url: creditsDashboard } = useCustomerDashboard("credits");
-  const { url: invoicesDashboard } = useCustomerDashboard("invoices");
   const { url: usageDashboard } = useCustomerDashboard("usage");
 
   const formatCredits = (credits: number): string => {
     return (credits / 100).toFixed(2);
+  };
+
+  const monthDiff = (d1: Date, d2: Date) => {
+    var months;
+    months = (d2.getFullYear() - d1.getFullYear()) * 12;
+    months -= d1.getMonth();
+    months += d2.getMonth();
+    return months <= 0 ? 0 : months;
+  };
+
+  const daysDiff = (d1: Date, d2: Date) => {
+    const _MS_PER_DAY = 1000 * 60 * 60 * 24;
+    const utc1 = Date.UTC(d1.getFullYear(), d1.getMonth(), d1.getDate());
+    const utc2 = Date.UTC(d2.getFullYear(), d2.getMonth(), d2.getDate());
+
+    return Math.floor((utc2 - utc1) / _MS_PER_DAY);
+  };
+
+  const relativeTime = (timestampUTC: string): string => {
+    const tsDate = new Date(timestampUTC);
+    const now = new Date();
+
+    const remainingMonths = monthDiff(now, tsDate);
+    const remainingDays = daysDiff(now, tsDate);
+
+    const relativeFormat = remainingMonths > 0 ? "months" : "days";
+    const relativeValue = remainingMonths > 0 ? remainingMonths : remainingDays;
+
+    const rt = new Intl.RelativeTimeFormat("en", { style: "short" });
+    return rt.format(relativeValue, relativeFormat);
   };
 
   const onCreate = async () => {
@@ -70,26 +100,62 @@ function BillingPage(): JSX.Element {
     <>
       {currentProject?.metronome_enabled ? (
         <div>
-          <Text size={16}>Porter credit balance</Text>
+          <Text size={16}>Porter credit grants</Text>
           <Spacer y={1} />
           <Text color="helper">
             View the amount of Porter credits you have available to spend on
             resources within this project.
           </Text>
           <Spacer y={1} />
-          <Container row>
-            <Image src={gift} style={{ marginTop: "-2px" }} />
-            <Spacer inline x={1} />
-            <Text size={20}>
-              {credits > 0 ? `$${formatCredits(credits)}` : "$ 0.00"}
-            </Text>
-          </Container>
-          <Spacer y={2} />
-          <iframe src={creditsDashboard} />
-          <Spacer y={2} />
-          <iframe src={invoicesDashboard} />
-          <Spacer y={2} />
-          <iframe src={usageDashboard} />
+
+          <div>
+            {creditGrantsList === undefined ? (
+              <Loading></Loading>
+            ) : creditGrantsList.length === 0 ? (
+              <div>No credit grants available.</div>
+            ) : (
+              creditGrantsList.map((grant) => (
+                <Container>
+                  <Image src={gift} style={{ marginTop: "-2px" }} />
+                  <Spacer inline x={1} />
+                  <Text size={20}>
+                    {grant.balance.including_pending > 0
+                      ? `$${formatCredits(grant.balance.including_pending)}`
+                      : "$ 0.00"}
+                  </Text>
+                </Container>
+              ))
+            )}
+            <Spacer y={1} />
+          </div>
+
+          <Text size={16}>Plan Details</Text>
+          <Spacer y={1} />
+          <Text color="helper">
+            View the details of the current plan you are subscribed to.
+          </Text>
+          <Spacer y={1} />
+
+          <div>
+            {plan === undefined ? (
+              <Loading></Loading>
+            ) : (
+              <Fieldset>
+                <Container row>
+                  <Text size={14}>{plan.plan_name}</Text>
+                </Container>
+                {plan.trial_info !== undefined ? (
+                  <div>
+                    <Text size={13}>
+                      Trial Ending {relativeTime(plan.trial_info.ending_before)}
+                    </Text>
+                  </div>
+                ) : (
+                  <div></div>
+                )}
+              </Fieldset>
+            )}
+          </div>
           <Spacer y={2} />
         </div>
       ) : (

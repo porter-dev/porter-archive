@@ -124,6 +124,8 @@ applying a configuration:
 		"set this to wait and be notified when an apply is successful, otherwise time out",
 	)
 	applyCmd.PersistentFlags().Bool(flags.App_NoBuild, false, "apply configuration without building a new image")
+	applyCmd.PersistentFlags().Bool(flags.App_NoPull, false, "do not pull the previous image before building")
+	applyCmd.PersistentFlags().MarkDeprecated("pull-before-build", "previous image is pulled by default, use --no-pull to disable") //nolint:errcheck,gosec
 
 	flags.UseAppBuildFlags(applyCmd)
 	flags.UseAppImageFlags(applyCmd)
@@ -172,6 +174,12 @@ func apply(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client ap
 		return fmt.Errorf("could not retrieve no-build flag from command")
 	}
 
+	noPull, err := cmd.Flags().GetBool(flags.App_NoPull)
+	if err != nil {
+		return fmt.Errorf("could not retrieve no-pull flag from command")
+	}
+	pullBeforeBuild := !noPull
+
 	if project.ValidateApplyV2 {
 		if previewApply && !project.PreviewEnvsEnabled {
 			return fmt.Errorf("preview environments are not enabled for this project. Please contact support@porter.run")
@@ -196,7 +204,7 @@ func apply(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client ap
 			ImageTagOverride:            imageValues.Tag,
 			PreviewApply:                previewApply,
 			WaitForSuccessfulDeployment: appWait,
-			PullImageBeforeBuild:        pullImageBeforeBuild,
+			PullImageBeforeBuild:        pullBeforeBuild,
 			WithPredeploy:               predeploy,
 			Exact:                       exact,
 			PatchOperations:             patchOperations,

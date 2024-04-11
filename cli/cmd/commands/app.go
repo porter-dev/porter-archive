@@ -151,6 +151,11 @@ buildpacks using the --builder and --attach-buildpacks flags:
 		"",
 		"set the image tag to use for the build",
 	)
+	appBuildCommand.PersistentFlags().Bool(
+		flags.App_NoPull,
+		false,
+		"do not pull the previous image before building",
+	)
 	appCmd.AddCommand(appBuildCommand)
 
 	appPushCommand := &cobra.Command{
@@ -436,6 +441,12 @@ func appBuild(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client
 		return fmt.Errorf("error getting tag: %w", err)
 	}
 
+	noPull, err := cmd.Flags().GetBool(flags.App_NoPull)
+	if err != nil {
+		return fmt.Errorf("could not retrieve no-pull flag from command")
+	}
+	pullBeforeBuild := !noPull
+
 	err = v2.AppBuild(ctx, v2.AppBuildInput{
 		CLIConfig:            cliConfig,
 		Client:               client,
@@ -448,6 +459,7 @@ func appBuild(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client
 		BuildContext:         buildValues.BuildContext,
 		ImageTag:             tag,
 		PatchOperations:      patchOperations,
+		PullImageBeforeBuild: pullBeforeBuild,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to build app: %w", err)

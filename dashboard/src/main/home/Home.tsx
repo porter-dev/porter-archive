@@ -30,8 +30,11 @@ import {
   type ProjectType,
 } from "shared/types";
 
-import AddOnDashboard from "./add-on-dashboard/AddOnDashboard";
-import NewAddOnFlow from "./add-on-dashboard/NewAddOnFlow";
+import AddonDashboard from "./add-on-dashboard/AddonDashboard";
+import AddonTemplates from "./add-on-dashboard/AddonTemplates";
+import AddonView from "./add-on-dashboard/AddonView";
+import LegacyAddOnDashboard from "./add-on-dashboard/legacy_AddOnDashboard";
+import LegacyNewAddOnFlow from "./add-on-dashboard/legacy_NewAddOnFlow";
 import AppView from "./app-dashboard/app-view/AppView";
 import AppDashboard from "./app-dashboard/AppDashboard";
 import Apps from "./app-dashboard/apps/Apps";
@@ -463,10 +466,21 @@ const Home: React.FC<Props> = (props) => {
               </Route>
 
               <Route path="/addons/new">
-                <NewAddOnFlow />
+                {currentProject?.beta_features_enabled ? (
+                  <AddonTemplates />
+                ) : (
+                  <LegacyNewAddOnFlow />
+                )}
+              </Route>
+              <Route path="/addons/:addonName">
+                <AddonView />
               </Route>
               <Route path="/addons">
-                <AddOnDashboard />
+                {currentProject?.beta_features_enabled ? (
+                  <AddonDashboard />
+                ) : (
+                  <LegacyAddOnDashboard />
+                )}
               </Route>
               <Route
                 path="/new-project"

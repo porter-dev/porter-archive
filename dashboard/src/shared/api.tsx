@@ -1313,6 +1313,18 @@ const listLatestAddons = baseApi<
   return `/api/projects/${projectId}/clusters/${clusterId}/addons/latest`;
 });
 
+const updateAddon = baseApi<
+  {
+    b64_addon: string;
+  },
+  {
+    projectId: number;
+    deploymentTargetId: string;
+  }
+>("POST", ({ projectId, deploymentTargetId }) => {
+  return `/api/projects/${projectId}/targets/${deploymentTargetId}/addons/update`;
+});
+
 const getGitlabProcfileContents = baseApi<
   {
     path: string;
@@ -3725,6 +3737,7 @@ export default {
   getDeploymentTarget,
   getAppTemplate,
   listLatestAddons,
+  updateAddon,
   getGitlabProcfileContents,
   getProjectClusters,
   getProjectRegistries,

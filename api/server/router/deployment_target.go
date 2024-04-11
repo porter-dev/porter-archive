@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/porter-dev/porter/api/server/handlers/addons"
 	"github.com/porter-dev/porter/api/server/handlers/deployment_target"
 	"github.com/porter-dev/porter/api/server/handlers/porter_app"
 	"github.com/porter-dev/porter/api/server/shared"
@@ -142,6 +143,35 @@ func getDeploymentTargetRoutes(
 	routes = append(routes, &router.Route{
 		Endpoint: createCloudSqlSecretEndpoint,
 		Handler:  createCloudSqlSecretHandler,
+		Router:   r,
+	})
+
+	// POST /api/projects/{project_id}/targets/{deployment_target_identifier}/addons/update -> addons.UpdateAddonHandler
+	updateAddonEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbUpdate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/addons/update", relPath),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.DeploymentTargetScope,
+			},
+		},
+	)
+
+	updateAddonHandler := addons.NewUpdateAddonHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: updateAddonEndpoint,
+		Handler:  updateAddonHandler,
 		Router:   r,
 	})
 

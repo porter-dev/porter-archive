@@ -7,14 +7,21 @@ import { z } from "zod";
 
 import { serviceStringValidator } from "lib/porter-apps/values";
 
+import { datadogConfigValidator } from "./datadog";
 import { defaultPostgresAddon, postgresConfigValidator } from "./postgres";
 import { redisConfigValidator } from "./redis";
+import {
+  ADDON_TEMPLATE_DATADOG,
+  ADDON_TEMPLATE_POSTGRES,
+  ADDON_TEMPLATE_REDIS,
+  type AddonTemplate,
+} from "./template";
 
 export const clientAddonValidator = z.object({
   expanded: z.boolean().default(false),
   canDelete: z.boolean().default(true),
   name: z.object({
-    readOnly: z.boolean(),
+    readOnly: z.boolean().default(false),
     value: z
       .string()
       .min(1, { message: "Name must be at least 1 character" })
@@ -27,30 +34,48 @@ export const clientAddonValidator = z.object({
   config: z.discriminatedUnion("type", [
     postgresConfigValidator,
     redisConfigValidator,
+    datadogConfigValidator,
   ]),
 });
-export type ClientAddon = z.infer<typeof clientAddonValidator>;
+export type ClientAddon = z.infer<typeof clientAddonValidator> & {
+  template: AddonTemplate;
+};
+export type ClientDatadogAddon = ClientAddon & {
+  config: z.infer<typeof datadogConfigValidator>;
+};
 
 export function defaultClientAddon(
   type: ClientAddon["config"]["type"]
 ): ClientAddon {
   return match(type)
-    .with("postgres", () =>
-      clientAddonValidator.parse({
+    .with("postgres", () => ({
+      ...clientAddonValidator.parse({
         expanded: true,
         name: { readOnly: false, value: "postgres" },
         config: defaultPostgresAddon(),
-      })
-    )
-    .with("redis", () =>
-      clientAddonValidator.parse({
+      }),
+      template: ADDON_TEMPLATE_POSTGRES,
+    }))
+    .with("redis", () => ({
+      ...clientAddonValidator.parse({
         expanded: true,
         name: { readOnly: false, value: "redis" },
         config: redisConfigValidator.parse({
           type: "redis",
         }),
-      })
-    )
+      }),
+      template: ADDON_TEMPLATE_REDIS,
+    }))
+    .with("datadog", () => ({
+      ...clientAddonValidator.parse({
+        expanded: true,
+        name: { readOnly: false, value: "datadog" },
+        config: datadogConfigValidator.parse({
+          type: "datadog",
+        }),
+      }),
+      template: ADDON_TEMPLATE_DATADOG,
+    }))
     .exhaustive();
 }
 
@@ -58,6 +83,7 @@ function addonTypeEnumProto(type: ClientAddon["config"]["type"]): AddonType {
   return match(type)
     .with("postgres", () => AddonType.POSTGRES)
     .with("redis", () => AddonType.REDIS)
+    .with("datadog", () => AddonType.DATADOG)
     .exhaustive();
 }
 
@@ -78,6 +104,18 @@ export function clientAddonToProto(addon: ClientAddon): Addon {
         storageGigabytes: data.storageGigabytes.value,
       },
       case: "redis" as const,
+    }))
+    .with({ type: "datadog" }, (data) => ({
+      value: {
+        cpuCores: data.cpuCores,
+        ramMegabytes: data.ramMegabytes,
+        site: data.site,
+        apiKey: data.apiKey,
+        loggingEnabled: data.loggingEnabled,
+        apmEnabled: data.apmEnabled,
+        dogstatsdEnabled: data.dogstatsdEnabled,
+      },
+      case: "datadog" as const,
     }))
     .exhaustive();
 
@@ -140,15 +178,34 @@ export function clientAddonFromProto({
       },
       password: secrets.REDIS_PASSWORD,
     }))
+    .with({ case: "datadog" }, (data) => ({
+      type: "datadog" as const,
+      cpuCores: data.value.cpuCores,
+      ramMegabytes: data.value.ramMegabytes,
+      site: data.value.site,
+      apiKey: data.value.apiKey,
+      loggingEnabled: data.value.loggingEnabled,
+      apmEnabled: data.value.apmEnabled,
+      dogstatsdEnabled: data.value.dogstatsdEnabled,
+    }))
     .exhaustive();
 
-  const clientAddon = clientAddonValidator.parse({
-    name: { readOnly: false, value: addon.name },
-    envGroups: addon.envGroups.map((envGroup) => ({
-      value: envGroup.name,
-    })),
-    config,
-  });
+  const template = match(addon.config)
+    .with({ case: "postgres" }, () => ADDON_TEMPLATE_POSTGRES)
+    .with({ case: "redis" }, () => ADDON_TEMPLATE_REDIS)
+    .with({ case: "datadog" }, () => ADDON_TEMPLATE_DATADOG)
+    .exhaustive();
+
+  const clientAddon = {
+    ...clientAddonValidator.parse({
+      name: { readOnly: false, value: addon.name },
+      envGroups: addon.envGroups.map((envGroup) => ({
+        value: envGroup.name,
+      })),
+      config,
+    }),
+    template,
+  };
 
   return clientAddon;
 }

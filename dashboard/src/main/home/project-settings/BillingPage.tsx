@@ -29,7 +29,7 @@ function BillingPage(): JSX.Element {
   const [shouldCreate, setShouldCreate] = useState(false);
   const { currentProject } = useContext(Context);
 
-  const { creditGrantsList } = usePorterCredits();
+  const { totalCredits } = usePorterCredits();
   const { plan } = useCustomerPlan();
 
   const {
@@ -105,26 +105,14 @@ function BillingPage(): JSX.Element {
           </Text>
           <Spacer y={1} />
 
-          <div>
-            {creditGrantsList === undefined ? (
-              <Loading></Loading>
-            ) : creditGrantsList.length === 0 ? (
-              <div>No credit grants available.</div>
-            ) : (
-              creditGrantsList.map((grant) => (
-                <Container>
-                  <Image src={gift} style={{ marginTop: "-2px" }} />
-                  <Spacer inline x={1} />
-                  <Text size={20}>
-                    {grant.balance.including_pending > 0
-                      ? `$${formatCredits(grant.balance.including_pending)}`
-                      : "$ 0.00"}
-                  </Text>
-                </Container>
-              ))
-            )}
-            <Spacer y={1} />
-          </div>
+          <Container>
+            <Image src={gift} style={{ marginTop: "-2px" }} />
+            <Spacer inline x={1} />
+            <Text size={20}>
+              {totalCredits > 0 ? `$${formatCredits(totalCredits)}` : "$ 0.00"}
+            </Text>
+          </Container>
+          <Spacer y={1} />
 
           <Text size={16}>Plan Details</Text>
           <Spacer y={1} />

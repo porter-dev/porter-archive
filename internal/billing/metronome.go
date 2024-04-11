@@ -176,8 +176,8 @@ func (m MetronomeClient) EndCustomerPlan(ctx context.Context, customerID uuid.UU
 	return nil
 }
 
-// ListCustomerCredits will return the list of credit grants for the customer
-func (m MetronomeClient) ListCustomerCredits(ctx context.Context, customerID uuid.UUID) (credits []types.CreditGrant, err error) {
+// ListCustomerCredits will return the total number of credits for the customer
+func (m MetronomeClient) ListCustomerCredits(ctx context.Context, customerID uuid.UUID) (credits float64, err error) {
 	ctx, span := telemetry.NewSpan(ctx, "list-customer-credits")
 	defer span.End()
 
@@ -202,7 +202,12 @@ func (m MetronomeClient) ListCustomerCredits(ctx context.Context, customerID uui
 		return credits, telemetry.Error(ctx, span, err, "failed to list customer credits")
 	}
 
-	return result.Data, nil
+	var totalCredits float64
+	for _, grant := range result.Data {
+		totalCredits += grant.Balance.IncludingPending
+	}
+
+	return totalCredits, nil
 }
 
 func do(method string, path string, apiKey string, body interface{}, data interface{}) (err error) {

@@ -38,7 +38,7 @@ type TGetPublishableKey = {
 };
 
 type TGetCredits = {
-  creditGrantsList: CreditGrantList;
+  totalCredits: number;
 };
 
 type TGetPlan = {
@@ -208,7 +208,7 @@ export const usePorterCredits = (): TGetCredits => {
   );
 
   return {
-    creditGrantsList: creditsReq.data,
+    totalCredits: creditsReq.data,
   };
 };
 

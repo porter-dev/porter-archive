@@ -10,10 +10,12 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"reflect"
 	"strings"
 	"time"
 
 	"github.com/gorilla/schema"
+	"github.com/gorilla/websocket"
 	"github.com/porter-dev/porter/api/types"
 )
 
@@ -79,6 +81,65 @@ func NewClientWithConfig(ctx context.Context, input NewClientInput) (Client, err
 
 // ErrNoAuthCredential returns an error when no auth credentials have been provided such as cookies or tokens
 var ErrNoAuthCredential = errors.New("unable to create an API session with cookie nor token")
+
+func (c *Client) websocketDial(relPath string, data interface{}) (*websocket.Conn, error) {
+	var conn *websocket.Conn
+
+	var header http.Header
+	if c.Token != "" {
+		header = http.Header{
+			"Authorization": []string{fmt.Sprintf("Bearer %s", c.Token)},
+		}
+	} else if cookie, _ := c.getCookie(); cookie != nil {
+		c.Cookie = cookie
+		header = http.Header{
+			"Cookie": []string{fmt.Sprintf("%s=%s", c.Cookie.Name, c.Cookie.Value)},
+		}
+	}
+
+	encoder := schema.NewEncoder()
+
+	// handle encoding of timestamps
+	encoder.RegisterEncoder(time.Time{}, func(t reflect.Value) string {
+		return t.Interface().(time.Time).Format(time.RFC3339)
+	})
+
+	vals := map[string][]string{}
+	err := encoder.Encode(data, vals)
+	if err != nil {
+		return conn, fmt.Errorf("error encoding data: %w", err)
+	}
+
+	urlVals := url.Values(vals)
+	encodedURLVals := urlVals.Encode()
+
+	baseURL, err := url.Parse(c.BaseURL)
+	if err != nil {
+		return conn, fmt.Errorf("error parsing base url: %w", err)
+	}
+
+	var wsScheme string
+	switch baseURL.Scheme {
+	case "http":
+		wsScheme = "ws"
+	case "https":
+		wsScheme = "wss"
+	}
+
+	u := url.URL{
+		Scheme:   wsScheme,
+		Host:     baseURL.Host,
+		Path:     fmt.Sprintf("/api%s", relPath),
+		RawQuery: encodedURLVals,
+	}
+
+	conn, _, err = websocket.DefaultDialer.Dial(u.String(), header)
+	if err != nil {
+		return nil, fmt.Errorf("error dialing websocket: %w", err)
+	}
+
+	return conn, err
+}
 
 // getRequestConfig defines configuration for a GET request
 type getRequestConfig struct {
@@ -364,7 +425,6 @@ func (c *Client) getCookie() (*http.Cookie, error) {
 	cookie := &CookieStorage{}
 
 	err = json.Unmarshal(data, cookie)
-
 	if err != nil {
 		return nil, err
 	}
@@ -403,7 +463,6 @@ func GetProjectIDFromToken(token string) (uint, bool, error) {
 	res := &TokenProjectID{}
 
 	err = json.Unmarshal(decodedBytes, res)
-
 	if err != nil {
 		return 0, false, fmt.Errorf("could not get token project id: %v", err)
 	}

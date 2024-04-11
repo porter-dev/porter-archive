@@ -107,7 +107,7 @@ func (c *Client) websocketDial(relPath string, data interface{}) (*websocket.Con
 	vals := map[string][]string{}
 	err := encoder.Encode(data, vals)
 	if err != nil {
-		return conn, err
+		return conn, fmt.Errorf("error encoding data: %w", err)
 	}
 
 	urlVals := url.Values(vals)
@@ -115,7 +115,7 @@ func (c *Client) websocketDial(relPath string, data interface{}) (*websocket.Con
 
 	baseURL, err := url.Parse(c.BaseURL)
 	if err != nil {
-		return conn, err
+		return conn, fmt.Errorf("error parsing base url: %w", err)
 	}
 
 	var wsScheme string
@@ -135,7 +135,7 @@ func (c *Client) websocketDial(relPath string, data interface{}) (*websocket.Con
 
 	conn, _, err = websocket.DefaultDialer.Dial(u.String(), header)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error dialing websocket: %w", err)
 	}
 
 	return conn, err

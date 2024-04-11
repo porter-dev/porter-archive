@@ -37,35 +37,12 @@ type TGetPublishableKey = {
   publishableKey: string;
 };
 
-type TGetUsageDashboard = {
-  url: string;
-};
-
 type TGetCredits = {
   creditGrantsList: CreditGrantList;
 };
 
 type TGetPlan = {
   plan: Plan;
-};
-
-const embeddableDashboardColors = {
-  standardText: "Gray_dark",
-  greyMedium: "Gray_medium",
-  borders: "Gray_light",
-  hover: "Gray_extralight",
-  background: "White",
-  primaryMedium: "Primary_medium",
-  primaryLight: "Primary_light",
-  usageLine0: "Usageline_0",
-  usageLine1: "Usageline_1",
-  usageLine2: "Usageline_2",
-  usageLine3: "Usageline_3",
-  usageLine4: "Usageline_4",
-  usageLine5: "Usageline_5",
-  usageLine6: "Usageline_6",
-  usageLine7: "Usageline_7",
-  usageLine8: "Usageline_8",
 };
 
 export const usePaymentMethods = (): TUsePaymentMethod => {
@@ -180,49 +157,6 @@ export const checkIfProjectHasPayment = (): TCheckHasPaymentEnabled => {
   return {
     hasPaymentEnabled: paymentEnabledReq.data ?? false,
     refetchPaymentEnabled: paymentEnabledReq.refetch,
-  };
-};
-
-export const useCustomerDashboard = (dashboard: string): TGetUsageDashboard => {
-  const { currentProject } = useContext(Context);
-
-  const colorOverrides = [
-    { name: embeddableDashboardColors.background, value: "#121212" },
-    { name: embeddableDashboardColors.borders, value: "#121212" },
-    { name: embeddableDashboardColors.hover, value: "#DFDFE1" },
-    { name: embeddableDashboardColors.greyMedium, value: "#121212" },
-    { name: embeddableDashboardColors.primaryLight, value: "#121212" },
-    { name: embeddableDashboardColors.primaryMedium, value: "#DFDFE1" },
-    { name: embeddableDashboardColors.standardText, value: "#DFDFE1" },
-  ];
-
-  // Return an embeddable dashboard for the customer
-  const dashboardReq = useQuery(
-    ["getUsageDashboard", currentProject?.id, dashboard],
-    async () => {
-      if (!currentProject?.id || currentProject.id === -1) {
-        return;
-      }
-      const res = await api.getUsageDashboard(
-        "<token>",
-        {
-          dashboard,
-          color_overrides: colorOverrides,
-        },
-        {
-          project_id: currentProject?.id,
-        }
-      );
-      console.log(res);
-      return res.data;
-    },
-    {
-      staleTime: Infinity,
-    }
-  );
-
-  return {
-    url: dashboardReq.data,
   };
 };
 

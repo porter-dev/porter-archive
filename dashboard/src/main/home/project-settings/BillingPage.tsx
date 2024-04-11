@@ -11,7 +11,6 @@ import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import {
   checkIfProjectHasPayment,
-  useCustomerDashboard,
   useCustomerPlan,
   usePaymentMethods,
   usePorterCredits,
@@ -21,7 +20,6 @@ import {
 import { Context } from "shared/Context";
 import cardIcon from "assets/credit-card.svg";
 import gift from "assets/gift.svg";
-import time from "assets/time.png";
 import trashIcon from "assets/trash.png";
 
 import BillingModal from "../modals/BillingModal";
@@ -43,7 +41,6 @@ function BillingPage(): JSX.Element {
   const { setDefaultPaymentMethod } = useSetDefaultPaymentMethod();
 
   const { refetchPaymentEnabled } = checkIfProjectHasPayment();
-  const { url: usageDashboard } = useCustomerDashboard("usage");
 
   const formatCredits = (credits: number): string => {
     return (credits / 100).toFixed(2);

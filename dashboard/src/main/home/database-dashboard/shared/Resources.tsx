@@ -39,7 +39,13 @@ const Resources: React.FC<Props> = ({
                     - {o.cpuCores} CPU, {o.ramGigabytes} GB RAM
                   </Text>
                 </Container>
-                <StorageTag>{o.storageGigabytes} GB Storage</StorageTag>
+                {o.storageGigabytes > 1024 ? (
+                  <StorageTag>
+                    {Math.round(o.storageGigabytes / 1024)} TB Storage
+                  </StorageTag>
+                ) : (
+                  <StorageTag>{o.storageGigabytes} GB Storage</StorageTag>
+                )}
               </>
             ) : (
               <>

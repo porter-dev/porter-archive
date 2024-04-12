@@ -213,7 +213,6 @@ export const useCustomerDashboard = (dashboard: string): TGetUsageDashboard => {
           project_id: currentProject?.id,
         }
       );
-      console.log(res);
       return res.data;
     },
     {
@@ -300,7 +299,7 @@ export const useCustomerPlan = (): TGetPlan => {
   );
 
   return {
-    plan: planReq.data,
+    plan: planReq.data != "" ? planReq.data : null,
   };
 };
 

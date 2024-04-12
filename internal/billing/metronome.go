@@ -25,32 +25,46 @@ const (
 
 // MetronomeClient is the client used to call the Metronome API
 type MetronomeClient struct {
-	ApiKey string
+	ApiKey               string
+	PorterCloudPlanID    uuid.UUID
+	PorterStandardPlanID uuid.UUID
 }
 
 // NewMetronomeClient returns a new Metronome client
-func NewMetronomeClient(metronomeApiKey string) MetronomeClient {
-	return MetronomeClient{
-		ApiKey: metronomeApiKey,
+func NewMetronomeClient(metronomeApiKey string, porterCloudPlanID string, porterStandardPlanID string) (client MetronomeClient, err error) {
+	porterCloudPlanUUID, err := uuid.Parse(porterCloudPlanID)
+	if err != nil {
+		return client, err
 	}
+
+	porterStandardPlanUUID, err := uuid.Parse(porterStandardPlanID)
+	if err != nil {
+		return client, err
+	}
+
+	return MetronomeClient{
+		ApiKey:               metronomeApiKey,
+		PorterCloudPlanID:    porterCloudPlanUUID,
+		PorterStandardPlanID: porterStandardPlanUUID,
+	}, nil
 }
 
 // CreateCustomerWithPlan will create the customer in Metronome and immediately add it to the plan
-func (m MetronomeClient) CreateCustomerWithPlan(ctx context.Context, userEmail string, projectName string, projectID uint, billingID string, planID string) (customerID uuid.UUID, customerPlanID uuid.UUID, err error) {
+func (m MetronomeClient) CreateCustomerWithPlan(ctx context.Context, userEmail string, projectName string, projectID uint, billingID string, sandboxEnabled bool) (customerID uuid.UUID, customerPlanID uuid.UUID, err error) {
 	ctx, span := telemetry.NewSpan(ctx, "add-metronome-customer-plan")
 	defer span.End()
 
-	porterCloudPlanID, err := uuid.Parse(planID)
-	if err != nil {
-		return customerID, customerPlanID, telemetry.Error(ctx, span, err, "error parsing starter plan id")
+	planID := m.PorterStandardPlanID
+	if sandboxEnabled {
+		planID = m.PorterCloudPlanID
 	}
 
 	customerID, err = m.createCustomer(ctx, userEmail, projectName, projectID, billingID)
 	if err != nil {
-		return customerID, customerPlanID, telemetry.Error(ctx, span, err, "error while creatinc customer with plan")
+		return customerID, customerPlanID, telemetry.Error(ctx, span, err, fmt.Sprintf("error while creating customer with plan %s", planID))
 	}
 
-	customerPlanID, err = m.addCustomerPlan(ctx, customerID, porterCloudPlanID)
+	customerPlanID, err = m.addCustomerPlan(ctx, customerID, planID)
 
 	return customerID, customerPlanID, err
 }
@@ -145,7 +159,11 @@ func (m MetronomeClient) ListCustomerPlan(ctx context.Context, customerID uuid.U
 		return plan, telemetry.Error(ctx, span, err, "failed to list customer plans")
 	}
 
-	return result.Data[0], nil
+	if len(result.Data) > 0 {
+		plan = result.Data[0]
+	}
+
+	return plan, nil
 }
 
 // EndCustomerPlan will immediately end the plan for the given customer

@@ -33,7 +33,7 @@ func (c *ListPlansHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
-	if !proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient) {
+	if !c.Config().BillingManager.MetronomeEnabled || !proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient) {
 		c.WriteResult(w, r, "")
 
 		telemetry.WithAttributes(span,
@@ -79,7 +79,7 @@ func (c *ListCreditsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
-	if !proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient) {
+	if !c.Config().BillingManager.MetronomeEnabled || !proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient) {
 		c.WriteResult(w, r, "")
 
 		telemetry.WithAttributes(span,
@@ -126,7 +126,7 @@ func (c *GetUsageDashboardHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 
 	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
-	if !proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient) {
+	if !c.Config().BillingManager.MetronomeEnabled || !proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient) {
 		c.WriteResult(w, r, "")
 
 		telemetry.WithAttributes(span,

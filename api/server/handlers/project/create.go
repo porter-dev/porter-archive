@@ -98,8 +98,8 @@ func (p *ProjectCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	}
 
 	// Create Metronome customer and add to starter plan
-	if p.Config().ServerConf.MetronomeAPIKey != "" && p.Config().ServerConf.PorterCloudPlanID != "" && proj.GetFeatureFlag(models.MetronomeEnabled, p.Config().LaunchDarklyClient) {
-		customerID, customerPlanID, err := p.Config().BillingManager.MetronomeClient.CreateCustomerWithPlan(ctx, user.Email, proj.Name, proj.ID, proj.BillingID, p.Config().ServerConf.PorterCloudPlanID)
+	if p.Config().BillingManager.MetronomeEnabled && proj.GetFeatureFlag(models.MetronomeEnabled, p.Config().LaunchDarklyClient) {
+		customerID, customerPlanID, err := p.Config().BillingManager.MetronomeClient.CreateCustomerWithPlan(ctx, user.Email, proj.Name, proj.ID, proj.BillingID, proj.EnableSandbox)
 		if err != nil {
 			err = telemetry.Error(ctx, span, err, "error creating Metronome customer")
 			p.HandleAPIError(w, r, apierrors.NewErrInternal(err))

@@ -334,8 +334,9 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 	}
 
 	var (
-		stripeClient    billing.StripeClient
-		metronomeClient billing.MetronomeClient
+		stripeClient     billing.StripeClient
+		metronomeClient  billing.MetronomeClient
+		metronomeEnabled bool
 	)
 	if sc.StripeSecretKey != "" {
 		stripeClient = billing.NewStripeClient(InstanceEnvConf.ServerConf.StripeSecretKey, InstanceEnvConf.ServerConf.StripePublishableKey)
@@ -343,16 +344,21 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 		res.Logger.Info().Msg("STRIPE_SECRET_KEY not set, all Stripe functionality will be disabled")
 	}
 
-	if sc.MetronomeAPIKey != "" {
-		metronomeClient = billing.NewMetronomeClient(InstanceEnvConf.ServerConf.MetronomeAPIKey)
+	if sc.MetronomeAPIKey != "" && sc.PorterCloudPlanID != "" && sc.PorterStandardPlanID != "" {
+		metronomeClient, err = billing.NewMetronomeClient(InstanceEnvConf.ServerConf.MetronomeAPIKey, InstanceEnvConf.ServerConf.PorterCloudPlanID, InstanceEnvConf.ServerConf.PorterStandardPlanID)
+		if err != nil {
+			return nil, fmt.Errorf("unable to create metronome client: %w", err)
+		}
+		metronomeEnabled = true
 	} else {
-		res.Logger.Info().Msg("METRONOME_API_KEY not set, all Metronome functionality will be disabled")
+		res.Logger.Info().Msg("METRONOME_API_KEY, PORTER_CLOUD_PLAN_ID, or PORTER_STANDARD_PLAN_ID not set, all Metronome functionality will be disabled")
 	}
 
 	res.Logger.Info().Msg("Creating billing manager")
 	res.BillingManager = billing.Manager{
-		StripeClient:    stripeClient,
-		MetronomeClient: metronomeClient,
+		StripeClient:     stripeClient,
+		MetronomeClient:  metronomeClient,
+		MetronomeEnabled: metronomeEnabled,
 	}
 	res.Logger.Info().Msg("Created billing manager")
 

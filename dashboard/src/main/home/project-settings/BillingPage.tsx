@@ -209,53 +209,53 @@ function BillingPage(): JSX.Element {
             </Text>
             <Spacer y={1} />
 
-            <Text>Active Plan</Text>
-            <Spacer y={0.5} />
-            {plan !== undefined ? (
-              <Fieldset>
-                <Container row spaced>
-                  <Container row>
-                    <Text color="helper">{plan.plan_name}</Text>
+            {plan != null && plan.plan_name != "" ? (
+              <div>
+                <Text>Active Plan</Text>
+                <Spacer y={0.5} />
+                <Fieldset>
+                  <Container row spaced>
+                    <Container row>
+                      <Text color="helper">{plan.plan_name}</Text>
+                    </Container>
+                    <Container row>
+                      {plan.trial_info !== undefined &&
+                      plan.trial_info.ending_before !== "" ? (
+                        <Text>
+                          Free trial ends{" "}
+                          {relativeTime(plan.trial_info.ending_before)}
+                        </Text>
+                      ) : (
+                        <Text>Started on {readableDate(plan.starting_on)}</Text>
+                      )}
+                    </Container>
                   </Container>
-                  <Container row>
-                    {plan.trial_info !== undefined ? (
-                      <Text>
-                        Free trial ends{" "}
-                        {relativeTime(plan.trial_info.ending_before)}
-                      </Text>
-                    ) : (
-                      <Text>Started on {readableDate(plan.starting_on)}</Text>
+                </Fieldset>
+                <Text size={16}>Current Usage</Text>
+                <Spacer y={1} />
+                <Text color="helper">
+                  View the current usage of this billing period.
+                </Text>
+                <Spacer y={1} />{" "}
+                <Container row style={{ width: "100%", height: "70vh" }}>
+                  <ParentSize>
+                    {({ width, height }) => (
+                      <iframe
+                        width={width}
+                        height={height}
+                        src={usageDashboard}
+                        scrolling="no"
+                        frameBorder={0}
+                        allowTransparency={true}
+                      ></iframe>
                     )}
-                  </Container>
+                  </ParentSize>
                 </Container>
-              </Fieldset>
+              </div>
             ) : (
-              <Loading></Loading>
+              <Text>This project doesn't have an active billing plan.</Text>
             )}
             <Spacer y={2} />
-          </div>
-
-          <div>
-            <Text size={16}>Current Usage</Text>
-            <Spacer y={1} />
-            <Text color="helper">
-              View the current usage of this billing period.
-            </Text>
-            <Spacer y={1} />{" "}
-            <Container row style={{ width: "100%", height: "70vh" }}>
-              <ParentSize>
-                {({ width, height }) => (
-                  <iframe
-                    width={width}
-                    height={height}
-                    src={usageDashboard}
-                    scrolling="no"
-                    frameBorder={0}
-                    allowTransparency={true}
-                  ></iframe>
-                )}
-              </ParentSize>
-            </Container>
           </div>
         </div>
       ) : (

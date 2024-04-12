@@ -60,11 +60,13 @@ type ListCreditGrantsRequest struct {
 	EffectiveBefore string `json:"effective_before,omitempty"`
 }
 
+// ListCreditGrantsResponse returns the total remaining and granted credits for a customer.
 type ListCreditGrantsResponse struct {
 	RemainingCredits float64 `json:"remaining_credits"`
 	GrantedCredits   float64 `json:"granted_credits"`
 }
 
+// EmbeddableDashboardRequest requests an embeddable customer dashboard to Metronome
 type EmbeddableDashboardRequest struct {
 	// CustomerID is the id of the customer
 	CustomerID uuid.UUID `json:"customer_id,omitempty"`

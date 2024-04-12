@@ -17,7 +17,7 @@ type ListPlansHandler struct {
 	handlers.PorterHandlerWriter
 }
 
-// NewListCreditsHandler will create a new ListPlansHandler
+// NewListPlansHandler will create a new ListPlansHandler
 func NewListPlansHandler(
 	config *config.Config,
 	writer shared.ResultWriter,

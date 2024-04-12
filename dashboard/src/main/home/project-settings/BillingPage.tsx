@@ -231,13 +231,14 @@ function BillingPage(): JSX.Element {
                     </Container>
                   </Container>
                 </Fieldset>
+                <Spacer y={2} />
                 <Text size={16}>Current Usage</Text>
                 <Spacer y={1} />
                 <Text color="helper">
                   View the current usage of this billing period.
                 </Text>
                 <Spacer y={1} />{" "}
-                <Container row style={{ width: "100%", height: "70vh" }}>
+                <Container row style={{ width: "100%", height: "80vh" }}>
                   <ParentSize>
                     {({ width, height }) => (
                       <iframe
@@ -255,7 +256,6 @@ function BillingPage(): JSX.Element {
             ) : (
               <Text>This project doesn't have an active billing plan.</Text>
             )}
-            <Spacer y={2} />
           </div>
         </div>
       ) : (

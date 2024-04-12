@@ -230,7 +230,7 @@ func (m MetronomeClient) ListCustomerCredits(ctx context.Context, customerID uui
 }
 
 // GetCustomerDashboard will return an embeddable Metronome dashboard
-func (m MetronomeClient) GetCustomerDashboard(ctx context.Context, customerID uuid.UUID, dashboardType string, options []types.DashboardOptions, colorOverrides []types.ColorOverrides) (url string, err error) {
+func (m MetronomeClient) GetCustomerDashboard(ctx context.Context, customerID uuid.UUID, dashboardType string, options []types.DashboardOption, colorOverrides []types.ColorOverride) (url string, err error) {
 	ctx, span := telemetry.NewSpan(ctx, "get-customer-usage-dashboard")
 	defer span.End()
 

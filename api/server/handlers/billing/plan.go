@@ -28,7 +28,7 @@ func NewListPlansHandler(
 }
 
 func (c *ListPlansHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx, span := telemetry.NewSpan(r.Context(), "list-plans-endpoint")
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-list-plans")
 	defer span.End()
 
 	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
@@ -42,18 +42,17 @@ func (c *ListPlansHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "metronome-enabled", Value: true},
+		telemetry.AttributeKV{Key: "usage-id", Value: proj.UsageID},
+	)
+
 	plan, err := c.Config().BillingManager.MetronomeClient.ListCustomerPlan(ctx, proj.UsageID)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error listing plans")
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
-
-	telemetry.WithAttributes(span,
-		telemetry.AttributeKV{Key: "metronome-enabled", Value: true},
-		telemetry.AttributeKV{Key: "project-id", Value: proj.ID},
-		telemetry.AttributeKV{Key: "usage-id", Value: proj.UsageID},
-	)
 
 	c.WriteResult(w, r, plan)
 }
@@ -74,7 +73,7 @@ func NewListCreditsHandler(
 }
 
 func (c *ListCreditsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx, span := telemetry.NewSpan(r.Context(), "list-credits-endpoint")
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-list-credits")
 	defer span.End()
 
 	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
@@ -97,7 +96,6 @@ func (c *ListCreditsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	telemetry.WithAttributes(span,
 		telemetry.AttributeKV{Key: "metronome-enabled", Value: true},
-		telemetry.AttributeKV{Key: "project-id", Value: proj.ID},
 		telemetry.AttributeKV{Key: "usage-id", Value: proj.UsageID},
 	)
 
@@ -135,6 +133,11 @@ func (c *GetUsageDashboardHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "metronome-enabled", Value: true},
+		telemetry.AttributeKV{Key: "usage-id", Value: proj.UsageID},
+	)
+
 	request := &types.EmbeddableDashboardRequest{}
 
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
@@ -149,12 +152,6 @@ func (c *GetUsageDashboardHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
-
-	telemetry.WithAttributes(span,
-		telemetry.AttributeKV{Key: "metronome-enabled", Value: true},
-		telemetry.AttributeKV{Key: "project-id", Value: proj.ID},
-		telemetry.AttributeKV{Key: "usage-id", Value: proj.UsageID},
-	)
 
 	c.WriteResult(w, r, credits)
 }

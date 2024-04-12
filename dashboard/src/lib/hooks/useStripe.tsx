@@ -1,13 +1,15 @@
 import { useContext, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, type UseQueryResult } from "@tanstack/react-query";
 import { z } from "zod";
 
 import {
   ClientSecretResponse,
-  CreditGrants,
-  PaymentMethodList,
+  CreditGrantsValidator,
   PaymentMethodValidator,
   Plan,
+  type CreditGrants,
+  type PaymentMethod,
+  type PaymentMethodList,
 } from "lib/billing/types";
 
 import api from "shared/api";
@@ -15,7 +17,10 @@ import { Context } from "shared/Context";
 
 type TUsePaymentMethod = {
   paymentMethodList: PaymentMethodList;
-  refetchPaymentMethods: any;
+  refetchPaymentMethods: (options: {
+    throwOnError: boolean;
+    cancelRefetch: boolean;
+  }) => Promise<UseQueryResult>;
   deletingIds: string[];
   deletePaymentMethod: (paymentMethodId: string) => Promise<void>;
 };
@@ -30,7 +35,10 @@ type TSetDefaultPaymentMethod = {
 
 type TCheckHasPaymentEnabled = {
   hasPaymentEnabled: boolean;
-  refetchPaymentEnabled: any;
+  refetchPaymentEnabled: (options: {
+    throwOnError: boolean;
+    cancelRefetch: boolean;
+  }) => Promise<UseQueryResult>;
 };
 
 type TGetPublishableKey = {
@@ -42,11 +50,11 @@ type TGetUsageDashboard = {
 };
 
 type TGetCredits = {
-  creditGrants: CreditGrants;
+  creditGrants: CreditGrants | undefined;
 };
 
 type TGetPlan = {
-  plan: Plan;
+  plan: Plan | undefined;
 };
 
 const embeddableDashboardColors = {
@@ -57,15 +65,6 @@ const embeddableDashboardColors = {
   white: "White",
   primaryMedium: "Primary_medium",
   primaryLight: "Primary_light",
-  usageLine0: "Usageline_0",
-  usageLine1: "Usageline_1",
-  usageLine2: "Usageline_2",
-  usageLine3: "Usageline_3",
-  usageLine4: "Usageline_4",
-  usageLine5: "Usageline_5",
-  usageLine6: "Usageline_6",
-  usageLine7: "Usageline_7",
-  usageLine8: "Usageline_8",
 };
 
 export const usePaymentMethods = (): TUsePaymentMethod => {
@@ -81,9 +80,9 @@ export const usePaymentMethods = (): TUsePaymentMethod => {
   // Fetch list of payment methods
   const paymentMethodReq = useQuery(
     ["getPaymentMethods", currentProject?.id],
-    async () => {
+    async (): Promise<PaymentMethod[]> => {
       if (!currentProject?.id || currentProject.id === -1) {
-        return;
+        return [];
       }
       const listResponse = await api.listPaymentMethod(
         "<token>",
@@ -99,7 +98,9 @@ export const usePaymentMethods = (): TUsePaymentMethod => {
   );
 
   // Delete list of payment methods
-  const deletePaymentMethod = async (paymentMethodId: string) => {
+  const deletePaymentMethod = async (
+    paymentMethodId: string
+  ): Promise<void> => {
     if (!currentProject?.id) {
       throw new Error("Project ID is missing");
     }
@@ -138,7 +139,7 @@ export const usePaymentMethods = (): TUsePaymentMethod => {
 export const useCreatePaymentMethod = (): TCreatePaymentMethod => {
   const { currentProject } = useContext(Context);
 
-  const createPaymentMethod = async () => {
+  const createPaymentMethod = async (): Promise<string> => {
     const resp = await api.addPaymentMethod(
       "<token>",
       {},
@@ -165,7 +166,7 @@ export const checkIfProjectHasPayment = (): TCheckHasPaymentEnabled => {
   // Fetch list of payment methods
   const paymentEnabledReq = useQuery(
     ["checkPaymentEnabled", currentProject?.id],
-    async () => {
+    async (): Promise<boolean> => {
       const res = await api.getHasBilling(
         "<token>",
         {},
@@ -183,7 +184,9 @@ export const checkIfProjectHasPayment = (): TCheckHasPaymentEnabled => {
   };
 };
 
-export const useCustomerDashboard = (dashboard: string): TGetUsageDashboard => {
+export const useCustomeUsageDashboard = (
+  dashboard: string
+): TGetUsageDashboard => {
   const { currentProject } = useContext(Context);
 
   const colorOverrides = [
@@ -268,7 +271,7 @@ export const usePorterCredits = (): TGetCredits => {
           project_id: currentProject?.id,
         }
       );
-      return res.data;
+      return CreditGrantsValidator.parse(res.data);
     }
   );
 
@@ -294,19 +297,22 @@ export const useCustomerPlan = (): TGetPlan => {
           project_id: currentProject?.id,
         }
       );
-      return res.data;
+      const plan = Plan.parse(res.data);
+      return plan;
     }
   );
 
   return {
-    plan: planReq.data != "" ? planReq.data : null,
+    plan: planReq.data,
   };
 };
 
 export const useSetDefaultPaymentMethod = (): TSetDefaultPaymentMethod => {
   const { currentProject } = useContext(Context);
 
-  const setDefaultPaymentMethod = async (paymentMethodId: string) => {
+  const setDefaultPaymentMethod = async (
+    paymentMethodId: string
+  ): Promise<void> => {
     // Set payment method as default
     const res = await api.setDefaultPaymentMethod(
       "<token>",

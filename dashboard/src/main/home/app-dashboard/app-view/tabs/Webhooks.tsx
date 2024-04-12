@@ -95,6 +95,7 @@ const Webhooks: React.FC = () => {
                   toggleChecked={() => {
                     const newWebhooks = [...webhooks];
                     newWebhooks[i].hasSecret = !newWebhooks[i].hasSecret;
+                    newWebhooks[i].secret = "";
                     setWebhooks(newWebhooks);
                   }}
                 >

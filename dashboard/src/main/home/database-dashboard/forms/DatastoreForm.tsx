@@ -41,7 +41,7 @@ import ConnectionInfo from "../shared/ConnectionInfo";
 import Resources from "../shared/Resources";
 
 const DatastoreForm: React.FC = () => {
-  const [currentStep, setCurrentStep] = useState(1);
+  const [currentStep, setCurrentStep] = useState(0);
   const [template, setTemplate] = useState<DatastoreTemplate | undefined>(
     undefined
   );
@@ -132,42 +132,7 @@ const DatastoreForm: React.FC = () => {
         <VerticalSteps
           steps={[
             <>
-              <Text size={16}>Datastore name</Text>
-              <Spacer y={0.5} />
-              <Text color="helper">
-                Lowercase letters, numbers, and &quot;-&quot; only.
-              </Text>
-              <Spacer y={0.5} />
-              <ControlledInput
-                placeholder="ex: academic-sophon-db"
-                type="text"
-                width="300px"
-                error={errors.name?.message}
-                {...register("name")}
-              />
-              {clusters.length > 1 && (
-                <>
-                  <Spacer y={1} />
-                  <Selector<string>
-                    activeValue={watchClusterId.toString()}
-                    width="300px"
-                    options={clusters.map((c) => ({
-                      value: c.id.toString(),
-                      label: c.vanity_name,
-                      key: c.id.toString(),
-                    }))}
-                    setActiveValue={(value: string) => {
-                      setValue("clusterId", parseInt(value));
-                      setValue("engine", "UNKNOWN");
-                      setCurrentStep(1);
-                    }}
-                    label={"Cluster"}
-                  />
-                </>
-              )}
-            </>,
-            <>
-              <Text size={16}>Datastore engine</Text>
+              <Text size={16}>Datastore type</Text>
               <Spacer y={0.5} />
               <Controller
                 name="engine"
@@ -181,15 +146,58 @@ const DatastoreForm: React.FC = () => {
                       onChange(opt.name);
                       setValue("workloadType", "unspecified");
                       setTemplate(undefined);
-                      setCurrentStep(2);
+                      setCurrentStep(1);
                     }}
                   />
                 )}
               />
             </>,
             <>
-              <Text size={16}>Workload type</Text>
+              <Text size={16}>Datastore name</Text>
               {watchEngine !== "UNKNOWN" && (
+                <>
+                  <Spacer y={0.5} />
+                  <Text color="helper">
+                    Lowercase letters, numbers, and &quot;-&quot; only.
+                  </Text>
+                  <Spacer y={0.5} />
+                  <ControlledInput
+                    placeholder="ex: academic-sophon-db"
+                    type="text"
+                    width="300px"
+                    error={errors.name?.message}
+                    {...register("name")}
+                    onChange={(e) => {
+                      setValue("name", e.target.value);
+                      setCurrentStep(Math.max(2, currentStep));
+                    }}
+                  />
+                  {clusters.length > 1 && (
+                    <>
+                      <Spacer y={1} />
+                      <Selector<string>
+                        activeValue={watchClusterId.toString()}
+                        width="300px"
+                        options={clusters.map((c) => ({
+                          value: c.id.toString(),
+                          label: c.vanity_name,
+                          key: c.id.toString(),
+                        }))}
+                        setActiveValue={(value: string) => {
+                          setValue("clusterId", parseInt(value));
+                          setValue("workloadType", "unspecified");
+                          setCurrentStep(2);
+                        }}
+                        label={"Cluster"}
+                      />
+                    </>
+                  )}
+                </>
+              )}
+            </>,
+            <>
+              <Text size={16}>Workload type</Text>
+              {currentStep >= 2 && (
                 <>
                   <Spacer y={0.5} />
                   <Controller

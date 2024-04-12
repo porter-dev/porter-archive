@@ -5,27 +5,28 @@ import { useHistory } from "react-router";
 import styled from "styled-components";
 import { z } from "zod";
 
+import UploadArea from "components/form-components/UploadArea";
 import Button from "components/porter/Button";
 import Checkbox from "components/porter/Checkbox";
+import Container from "components/porter/Container";
+import { ControlledInput } from "components/porter/ControlledInput";
+import Input from "components/porter/Input";
 import Spacer from "components/porter/Spacer";
 import Tag from "components/porter/Tag";
 import Text from "components/porter/Text";
 import { useAppAnalytics } from "lib/hooks/useAppAnalytics";
+import { useCloudSqlSecret } from "lib/hooks/useCloudSqlSecret";
 import { type PorterAppFormData } from "lib/porter-apps";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
+import { useDeploymentTarget } from "shared/DeploymentTargetContext";
 import document from "assets/document.svg";
 
-import UploadArea from "components/form-components/UploadArea";
-import Container from "components/porter/Container";
-import { ControlledInput } from "components/porter/ControlledInput";
-import Input from "components/porter/Input";
-import { useCloudSqlSecret } from "lib/hooks/useCloudSqlSecret";
-import { useDeploymentTarget } from "shared/DeploymentTargetContext";
 import DeleteApplicationModal from "../../expanded-app/DeleteApplicationModal";
 import { useLatestRevision } from "../LatestRevisionContext";
 import ExportAppModal from "./ExportAppModal";
+import Webhooks from "./Webhooks";
 
 const Settings: React.FC = () => {
   const { currentProject, currentCluster } = useContext(Context);
@@ -219,6 +220,14 @@ const Settings: React.FC = () => {
             <Spacer y={1} />
           </>
         )}
+      <Text size={16}>Application webhooks</Text>
+      <Spacer y={0.5} />
+      <Text color="helper">
+        Configure custom webhooks to trigger on different deployment events.
+      </Text>
+      <Spacer y={1} />
+      <Webhooks />
+      <Spacer y={1} />
       <Text size={16}>Export &quot;{porterApp.name}&quot;</Text>
       <Spacer y={0.5} />
       <Text color="helper">Export this application as Porter YAML.</Text>

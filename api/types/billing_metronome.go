@@ -60,6 +60,22 @@ type ListCreditGrantsRequest struct {
 	EffectiveBefore string `json:"effective_before,omitempty"`
 }
 
+type ListCreditGrantsResponse struct {
+	RemainingCredits float64 `json:"remaining_credits"`
+	GrantedCredits   float64 `json:"granted_credits"`
+}
+
+type EmbeddableDashboardRequest struct {
+	// CustomerID is the id of the customer
+	CustomerID uuid.UUID `json:"customer_id,omitempty"`
+	// DashboardType is the type of dashboard to retrieve
+	DashboardType string `json:"dashboard"`
+	// Options are optional dashboard specific options
+	Options []DashboardOptions `json:"dashboard_options,omitempty"`
+	//  ColorOverrides is an optional list of colors to override
+	ColorOverrides []ColorOverrides `json:"color_overrides,omitempty"`
+}
+
 // Plan is a pricing plan to which a user is currently subscribed
 type Plan struct {
 	ID                  uuid.UUID `json:"id"`
@@ -109,11 +125,6 @@ type CreditGrant struct {
 	Reason      string      `json:"reason"`
 	EffectiveAt string      `json:"effective_at"`
 	ExpiresAt   string      `json:"expires_at"`
-}
-
-type ListCreditGrantsResponse struct {
-	RemainingCredits float64 `json:"remaining_credits"`
-	GrantedCredits   float64 `json:"granted_credits"`
 }
 
 // DashboardOptions are optional dashboard specific options

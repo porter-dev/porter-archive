@@ -37,6 +37,10 @@ type TGetPublishableKey = {
   publishableKey: string;
 };
 
+type TGetUsageDashboard = {
+  url: string;
+};
+
 type TGetCredits = {
   creditGrants: CreditGrants;
 };
@@ -186,7 +190,7 @@ export const useCustomerDashboard = (dashboard: string): TGetUsageDashboard => {
     { name: embeddableDashboardColors.grayDark, value: "#121212" },
     { name: embeddableDashboardColors.grayMedium, value: "#DFDFE1" },
     { name: embeddableDashboardColors.grayLight, value: "#DFDFE1" },
-    { name: embeddableDashboardColors.grayExtraLigth, value: "#00ff63" },
+    { name: embeddableDashboardColors.grayExtraLigth, value: "#DFDFE1" },
     { name: embeddableDashboardColors.white, value: "#121212" },
     { name: embeddableDashboardColors.primaryLight, value: "#121212" },
     { name: embeddableDashboardColors.primaryMedium, value: "#DFDFE1" },

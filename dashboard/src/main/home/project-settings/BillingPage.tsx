@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useState } from "react";
+import ParentSize from "@visx/responsive/lib/components/ParentSize";
 import styled from "styled-components";
 
 import Loading from "components/Loading";
@@ -11,6 +12,7 @@ import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import {
   checkIfProjectHasPayment,
+  useCustomerDashboard,
   useCustomerPlan,
   usePaymentMethods,
   usePorterCredits,
@@ -41,6 +43,8 @@ function BillingPage(): JSX.Element {
   const { setDefaultPaymentMethod } = useSetDefaultPaymentMethod();
 
   const { refetchPaymentEnabled } = checkIfProjectHasPayment();
+
+  const { url: usageDashboard } = useCustomerDashboard("usage");
 
   const formatCredits = (credits: number): string => {
     return (credits / 100).toFixed(2);
@@ -97,108 +101,6 @@ function BillingPage(): JSX.Element {
 
   return (
     <>
-      {currentProject?.metronome_enabled ? (
-        <div>
-          <div>
-            <Text size={16}>Porter credit grants</Text>
-            <Spacer y={1} />
-            <Text color="helper">
-              View the amount of Porter credits you have available to spend on
-              resources within this project.
-            </Text>
-            <Spacer y={1} />
-
-            <Container>
-              <Image src={gift} style={{ marginTop: "-2px" }} />
-              <Spacer inline x={1} />
-              <Text size={20}>
-                {creditGrants !== undefined &&
-                creditGrants.remaining_credits > 0
-                  ? `$${formatCredits(
-                      creditGrants.remaining_credits
-                    )}/$${formatCredits(creditGrants.granted_credits)}`
-                  : "$ 0.00"}
-              </Text>
-            </Container>
-            <Spacer y={2} />
-          </div>
-
-          <div>
-            <Text size={16}>Plan Details</Text>
-            <Spacer y={1} />
-            <Text color="helper">
-              View the details of the current billing plan of this project.
-            </Text>
-            <Spacer y={1} />
-
-            <Text>Active Plan</Text>
-            <Spacer y={0.5} />
-            {plan !== undefined ? (
-              <Fieldset>
-                <Container row spaced>
-                  <Container row>
-                    <Text color="helper">{plan.plan_name}</Text>
-                  </Container>
-                  <Container row>
-                    {plan.trial_info !== undefined ? (
-                      <Text>
-                        Free trial ends{" "}
-                        {relativeTime(plan.trial_info.ending_before)}
-                      </Text>
-                    ) : (
-                      <Text>Started on {readableDate(plan.starting_on)}</Text>
-                    )}
-                  </Container>
-                </Container>
-              </Fieldset>
-            ) : (
-              <Loading></Loading>
-            )}
-            <Spacer y={1} />
-          </div>
-
-          <Text size={16}>Usage</Text>
-          <Spacer y={1} />
-          <iframe
-            src={usageDashboard}
-            scrolling="no"
-            frameBorder={0}
-            allowTransparency={true}
-            style={{
-              width: "100%",
-              height: "80vh",
-              overflowY: "hidden",
-              border: "none",
-              backgroundColor: "#121212",
-            }}
-          ></iframe>
-          <Spacer y={1} />
-
-          <div>
-            {plan === undefined ? (
-              <Loading></Loading>
-            ) : (
-              <Fieldset>
-                <Container row>
-                  <Text size={14}>{plan.plan_name}</Text>
-                </Container>
-                {plan.trial_info !== undefined ? (
-                  <div>
-                    <Text size={13}>
-                      Trial Ending {relativeTime(plan.trial_info.ending_before)}
-                    </Text>
-                  </div>
-                ) : (
-                  <div></div>
-                )}
-              </Fieldset>
-            )}
-          </div>
-          <Spacer y={2} />
-        </div>
-      ) : (
-        <div></div>
-      )}
       <Text size={16}>Payment methods</Text>
       <Spacer y={1} />
       <Text color="helper">
@@ -271,6 +173,94 @@ function BillingPage(): JSX.Element {
         <I className="material-icons">add</I>
         Add Payment Method
       </Button>
+      <Spacer y={2} />
+
+      {currentProject?.metronome_enabled ? (
+        <div>
+          <div>
+            <Text size={16}>Porter credit grants</Text>
+            <Spacer y={1} />
+            <Text color="helper">
+              View the amount of Porter credits you have available to spend on
+              resources within this project.
+            </Text>
+            <Spacer y={1} />
+
+            <Container>
+              <Image src={gift} style={{ marginTop: "-2px" }} />
+              <Spacer inline x={1} />
+              <Text size={20}>
+                {creditGrants !== undefined &&
+                creditGrants.remaining_credits > 0
+                  ? `$${formatCredits(
+                      creditGrants.remaining_credits
+                    )}/$${formatCredits(creditGrants.granted_credits)}`
+                  : "$ 0.00"}
+              </Text>
+            </Container>
+            <Spacer y={2} />
+          </div>
+
+          <div>
+            <Text size={16}>Plan Details</Text>
+            <Spacer y={1} />
+            <Text color="helper">
+              View the details of the current billing plan of this project.
+            </Text>
+            <Spacer y={1} />
+
+            <Text>Active Plan</Text>
+            <Spacer y={0.5} />
+            {plan !== undefined ? (
+              <Fieldset>
+                <Container row spaced>
+                  <Container row>
+                    <Text color="helper">{plan.plan_name}</Text>
+                  </Container>
+                  <Container row>
+                    {plan.trial_info !== undefined ? (
+                      <Text>
+                        Free trial ends{" "}
+                        {relativeTime(plan.trial_info.ending_before)}
+                      </Text>
+                    ) : (
+                      <Text>Started on {readableDate(plan.starting_on)}</Text>
+                    )}
+                  </Container>
+                </Container>
+              </Fieldset>
+            ) : (
+              <Loading></Loading>
+            )}
+            <Spacer y={2} />
+          </div>
+
+          <div>
+            <Text size={16}>Current Usage</Text>
+            <Spacer y={1} />
+            <Text color="helper">
+              View the current usage of this billing period.
+            </Text>
+            <Spacer y={1} />{" "}
+            <Container row style={{ width: "100%", height: "70vh" }}>
+              <ParentSize>
+                {({ width, height }) => (
+                  <iframe
+                    width={width}
+                    height={height}
+                    src={usageDashboard}
+                    scrolling="no"
+                    frameBorder={0}
+                    allowTransparency={true}
+                  ></iframe>
+                )}
+              </ParentSize>
+            </Container>
+          </div>
+        </div>
+      ) : (
+        <div></div>
+      )}
     </>
   );
 }

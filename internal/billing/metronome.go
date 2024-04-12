@@ -211,6 +211,36 @@ func (m MetronomeClient) ListCustomerCredits(ctx context.Context, customerID uui
 	return response, nil
 }
 
+// GetCustomerDashboard will return an embeddable Metronome dashboard
+func (m MetronomeClient) GetCustomerDashboard(ctx context.Context, customerID uuid.UUID, dashboardType string, options []types.DashboardOptions, colorOverrides []types.ColorOverrides) (url string, err error) {
+	ctx, span := telemetry.NewSpan(ctx, "get-customer-usage-dashboard")
+	defer span.End()
+
+	if customerID == uuid.Nil {
+		return url, telemetry.Error(ctx, span, err, "customer id empty")
+	}
+
+	path := "dashboards/getEmbeddableUrl"
+
+	req := types.EmbeddableDashboardRequest{
+		CustomerID:     customerID,
+		Options:        options,
+		DashboardType:  dashboardType,
+		ColorOverrides: colorOverrides,
+	}
+
+	var result struct {
+		Data map[string]string `json:"data"`
+	}
+
+	err = do(http.MethodPost, path, m.ApiKey, req, &result)
+	if err != nil {
+		return url, telemetry.Error(ctx, span, err, "failed to get embeddable dashboard")
+	}
+
+	return result.Data["url"], nil
+}
+
 func do(method string, path string, apiKey string, body interface{}, data interface{}) (err error) {
 	client := http.Client{}
 	endpoint, err := url.JoinPath(metronomeBaseUrl, path)

@@ -140,7 +140,7 @@ function BillingPage(): JSX.Element {
                     <Text color="helper">{plan.plan_name}</Text>
                   </Container>
                   <Container row>
-                    {plan.trial_info !== undefined && false ? (
+                    {plan.trial_info !== undefined ? (
                       <Text>
                         Free trial ends{" "}
                         {relativeTime(plan.trial_info.ending_before)}

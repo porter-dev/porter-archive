@@ -73,6 +73,7 @@ type ServerConf struct {
 	StripePublishableKey string `env:"STRIPE_PUBLISHABLE_KEY"`
 	MetronomeAPIKey      string `env:"METRONOME_API_KEY"`
 	PorterCloudPlanID    string `env:"PORTER_CLOUD_PLAN_ID"`
+	PorterStandardPlanID string `env:"PORTER_STANDARD_PLAN_ID"`
 
 	// This endpoint will be passed to the porter-agent so that
 	// the billing manager can query Prometheus.

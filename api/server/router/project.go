@@ -341,8 +341,35 @@ func getProjectRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/billing/plan -> project.NewListPlansHandler
+	listPlanEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/billing/plan",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	listPlanHandler := billing.NewListPlansHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: listPlanEndpoint,
+		Handler:  listPlanHandler,
+		Router:   r,
+	})
+
 	// GET /api/projects/{project_id}/billing/credits -> project.NewGetCreditsHandler
-	getCreditsEndpoint := factory.NewAPIEndpoint(
+	listCreditsEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbGet,
 			Method: types.HTTPVerbGet,
@@ -357,14 +384,42 @@ func getProjectRoutes(
 		},
 	)
 
-	getCreditsHandler := billing.NewGetCreditsHandler(
+	listCreditsHandler := billing.NewListCreditsHandler(
 		config,
 		factory.GetResultWriter(),
 	)
 
 	routes = append(routes, &router.Route{
-		Endpoint: getCreditsEndpoint,
-		Handler:  getCreditsHandler,
+		Endpoint: listCreditsEndpoint,
+		Handler:  listCreditsHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/billing/dashboard -> project.NewGetUsageDashboardHandler
+	getUsageDashboardEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/billing/dashboard",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	getUsageDashboardHandler := billing.NewGetUsageDashboardHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: getUsageDashboardEndpoint,
+		Handler:  getUsageDashboardHandler,
 		Router:   r,
 	})
 

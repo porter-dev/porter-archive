@@ -257,6 +257,7 @@ func (m MetronomeClient) GetCustomerDashboard(ctx context.Context, customerID uu
 	return result.Data["url"], nil
 }
 
+// IngestEvents sends a list of billing events to Metronome's ingest endpoint
 func (m MetronomeClient) IngestEvents(ctx context.Context, events []types.BillingEvent) (err error) {
 	path := "ingest"
 
@@ -314,6 +315,7 @@ func (m MetronomeClient) do(method string, path string, body interface{}, data i
 	if err != nil {
 		return statusCode, err
 	}
+	statusCode = resp.StatusCode
 
 	if resp.StatusCode != http.StatusOK {
 		// If there is an error, try to decode the message

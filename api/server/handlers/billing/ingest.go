@@ -18,6 +18,7 @@ type IngestEventsHandler struct {
 	handlers.PorterHandlerReadWriter
 }
 
+// NewIngestEventsHandler returns a new IngestEventsHandler
 func NewIngestEventsHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,

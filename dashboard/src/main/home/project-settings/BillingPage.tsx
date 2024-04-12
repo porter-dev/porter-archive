@@ -156,6 +156,45 @@ function BillingPage(): JSX.Element {
             )}
             <Spacer y={1} />
           </div>
+
+          <Text size={16}>Usage</Text>
+          <Spacer y={1} />
+          <iframe
+            src={usageDashboard}
+            scrolling="no"
+            frameBorder={0}
+            allowTransparency={true}
+            style={{
+              width: "100%",
+              height: "80vh",
+              overflowY: "hidden",
+              border: "none",
+              backgroundColor: "#121212",
+            }}
+          ></iframe>
+          <Spacer y={1} />
+
+          <div>
+            {plan === undefined ? (
+              <Loading></Loading>
+            ) : (
+              <Fieldset>
+                <Container row>
+                  <Text size={14}>{plan.plan_name}</Text>
+                </Container>
+                {plan.trial_info !== undefined ? (
+                  <div>
+                    <Text size={13}>
+                      Trial Ending {relativeTime(plan.trial_info.ending_before)}
+                    </Text>
+                  </div>
+                ) : (
+                  <div></div>
+                )}
+              </Fieldset>
+            )}
+          </div>
+          <Spacer y={2} />
         </div>
       ) : (
         <div></div>

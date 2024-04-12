@@ -45,6 +45,25 @@ type TGetPlan = {
   plan: Plan;
 };
 
+const embeddableDashboardColors = {
+  grayDark: "Gray_dark",
+  grayMedium: "Gray_medium",
+  grayLight: "Gray_light",
+  grayExtraLigth: "Gray_extralight",
+  white: "White",
+  primaryMedium: "Primary_medium",
+  primaryLight: "Primary_light",
+  usageLine0: "Usageline_0",
+  usageLine1: "Usageline_1",
+  usageLine2: "Usageline_2",
+  usageLine3: "Usageline_3",
+  usageLine4: "Usageline_4",
+  usageLine5: "Usageline_5",
+  usageLine6: "Usageline_6",
+  usageLine7: "Usageline_7",
+  usageLine8: "Usageline_8",
+};
+
 export const usePaymentMethods = (): TUsePaymentMethod => {
   const { currentProject } = useContext(Context);
 
@@ -157,6 +176,49 @@ export const checkIfProjectHasPayment = (): TCheckHasPaymentEnabled => {
   return {
     hasPaymentEnabled: paymentEnabledReq.data ?? false,
     refetchPaymentEnabled: paymentEnabledReq.refetch,
+  };
+};
+
+export const useCustomerDashboard = (dashboard: string): TGetUsageDashboard => {
+  const { currentProject } = useContext(Context);
+
+  const colorOverrides = [
+    { name: embeddableDashboardColors.grayDark, value: "#121212" },
+    { name: embeddableDashboardColors.grayMedium, value: "#DFDFE1" },
+    { name: embeddableDashboardColors.grayLight, value: "#DFDFE1" },
+    { name: embeddableDashboardColors.grayExtraLigth, value: "#00ff63" },
+    { name: embeddableDashboardColors.white, value: "#121212" },
+    { name: embeddableDashboardColors.primaryLight, value: "#121212" },
+    { name: embeddableDashboardColors.primaryMedium, value: "#DFDFE1" },
+  ];
+
+  // Return an embeddable dashboard for the customer
+  const dashboardReq = useQuery(
+    ["getUsageDashboard", currentProject?.id, dashboard],
+    async () => {
+      if (!currentProject?.id || currentProject.id === -1) {
+        return;
+      }
+      const res = await api.getUsageDashboard(
+        "<token>",
+        {
+          dashboard,
+          color_overrides: colorOverrides,
+        },
+        {
+          project_id: currentProject?.id,
+        }
+      );
+      console.log(res);
+      return res.data;
+    },
+    {
+      staleTime: Infinity,
+    }
+  );
+
+  return {
+    url: dashboardReq.data,
   };
 };
 

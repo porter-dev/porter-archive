@@ -33,6 +33,7 @@ type GormRepository struct {
 	githubAppInstallation     repository.GithubAppInstallationRepository
 	githubAppOAuthIntegration repository.GithubAppOAuthIntegrationRepository
 	slackIntegration          repository.SlackIntegrationRepository
+	appEventWebhook           repository.AppEventWebhookRepository
 	gitlabIntegration         repository.GitlabIntegrationRepository
 	gitlabAppOAuthIntegration repository.GitlabAppOAuthIntegrationRepository
 	notificationConfig        repository.NotificationConfigRepository
@@ -165,6 +166,10 @@ func (t *GormRepository) GithubAppOAuthIntegration() repository.GithubAppOAuthIn
 
 func (t *GormRepository) SlackIntegration() repository.SlackIntegrationRepository {
 	return t.slackIntegration
+}
+
+func (t *GormRepository) AppEventWebhook() repository.AppEventWebhookRepository {
+	return t.appEventWebhook
 }
 
 func (t *GormRepository) GitlabIntegration() repository.GitlabIntegrationRepository {

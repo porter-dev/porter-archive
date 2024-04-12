@@ -145,5 +145,32 @@ func getDeploymentTargetRoutes(
 		Router:   r,
 	})
 
+	// POST /api/projects/{project_id}/targets/{deployment_target_identifier}/apps/{porter_app_name}/add-app-event-webhook-> porter_app.NewAddAppEventWebhookHandler
+	addAppEventWebhookEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/apps/{%s}/add-app-event-webhook", relPath, types.URLParamPorterAppName),
+			},
+			Scopes: []types.PermissionScope{
+				types.ProjectScope,
+			},
+		},
+	)
+
+	addAppEventWebhookHandler := porter_app.NewAddAppEventWebhookHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: addAppEventWebhookEndpoint,
+		Handler:  addAppEventWebhookHandler,
+		Router:   r,
+	})
+
 	return routes, newPath
 }

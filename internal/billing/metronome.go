@@ -16,11 +16,9 @@ import (
 )
 
 const (
-	metronomeBaseUrl         = "https://api.metronome.com/v1/"
-	defaultCollectionMethod  = "charge_automatically"
-	defaultGrantCredits      = 5000
-	defaultGrantName         = "Starter Credits"
-	defaultGrantExpiryMonths = 1
+	metronomeBaseUrl        = "https://api.metronome.com/v1/"
+	defaultCollectionMethod = "charge_automatically"
+	defaultMaxRetries       = 10
 )
 
 // MetronomeClient is the client used to call the Metronome API
@@ -97,7 +95,7 @@ func (m MetronomeClient) createCustomer(ctx context.Context, userEmail string, p
 		Data types.Customer `json:"data"`
 	}
 
-	err = do(http.MethodPost, path, m.ApiKey, customer, &result)
+	_, err = m.do(http.MethodPost, path, customer, &result)
 	if err != nil {
 		return customerID, telemetry.Error(ctx, span, err, "error creating customer")
 	}
@@ -131,7 +129,7 @@ func (m MetronomeClient) addCustomerPlan(ctx context.Context, customerID uuid.UU
 		} `json:"data"`
 	}
 
-	err = do(http.MethodPost, path, m.ApiKey, req, &result)
+	_, err = m.do(http.MethodPost, path, req, &result)
 	if err != nil {
 		return customerPlanID, telemetry.Error(ctx, span, err, "failed to add customer to plan")
 	}
@@ -154,7 +152,7 @@ func (m MetronomeClient) ListCustomerPlan(ctx context.Context, customerID uuid.U
 		Data []types.Plan `json:"data"`
 	}
 
-	err = do(http.MethodGet, path, m.ApiKey, nil, &result)
+	_, err = m.do(http.MethodGet, path, nil, &result)
 	if err != nil {
 		return plan, telemetry.Error(ctx, span, err, "failed to list customer plans")
 	}
@@ -186,7 +184,7 @@ func (m MetronomeClient) EndCustomerPlan(ctx context.Context, customerID uuid.UU
 		EndingBeforeUTC: endBefore,
 	}
 
-	err = do(http.MethodPost, path, m.ApiKey, req, nil)
+	_, err = m.do(http.MethodPost, path, req, nil)
 	if err != nil {
 		return telemetry.Error(ctx, span, err, "failed to end customer plan")
 	}
@@ -215,7 +213,7 @@ func (m MetronomeClient) ListCustomerCredits(ctx context.Context, customerID uui
 		Data []types.CreditGrant `json:"data"`
 	}
 
-	err = do(http.MethodPost, path, m.ApiKey, req, &result)
+	_, err = m.do(http.MethodPost, path, req, &result)
 	if err != nil {
 		return credits, telemetry.Error(ctx, span, err, "failed to list customer credits")
 	}
@@ -251,7 +249,7 @@ func (m MetronomeClient) GetCustomerDashboard(ctx context.Context, customerID uu
 		Data map[string]string `json:"data"`
 	}
 
-	err = do(http.MethodPost, path, m.ApiKey, req, &result)
+	_, err = m.do(http.MethodPost, path, req, &result)
 	if err != nil {
 		return url, telemetry.Error(ctx, span, err, "failed to get embeddable dashboard")
 	}
@@ -259,32 +257,62 @@ func (m MetronomeClient) GetCustomerDashboard(ctx context.Context, customerID uu
 	return result.Data["url"], nil
 }
 
-func do(method string, path string, apiKey string, body interface{}, data interface{}) (err error) {
+func (m MetronomeClient) IngestEvents(ctx context.Context, events []types.BillingEvent) (err error) {
+	path := "ingest"
+
+	var currentAttempts int
+	for currentAttempts < defaultMaxRetries {
+		statusCode, err := m.do(http.MethodPost, path, events, nil)
+		// Check errors that are not from error http codes
+		if statusCode == 0 && err != nil {
+			return err
+		}
+
+		if statusCode == http.StatusForbidden || statusCode == http.StatusUnauthorized {
+			return fmt.Errorf("unauthorized")
+		}
+
+		// 400 responses should not be retried
+		if statusCode == http.StatusBadRequest {
+			return fmt.Errorf("malformed billing events")
+		}
+
+		// Any other status code can be safely retried
+		if statusCode == 200 {
+			return nil
+		}
+		currentAttempts++
+	}
+
+	return fmt.Errorf("max number of retry attempts reached with no success")
+}
+
+func (m MetronomeClient) do(method string, path string, body interface{}, data interface{}) (statusCode int, err error) {
 	client := http.Client{}
 	endpoint, err := url.JoinPath(metronomeBaseUrl, path)
 	if err != nil {
-		return err
+		return statusCode, err
 	}
 
 	var bodyJson []byte
 	if body != nil {
 		bodyJson, err = json.Marshal(body)
 		if err != nil {
-			return err
+			return statusCode, err
 		}
 	}
 
 	req, err := http.NewRequest(method, endpoint, bytes.NewBuffer(bodyJson))
 	if err != nil {
-		return err
+		return statusCode, err
 	}
-	bearer := "Bearer " + apiKey
+	bearer := "Bearer " + m.ApiKey
 	req.Header.Set("Authorization", bearer)
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return err
+		return statusCode, err
 	}
 
 	if resp.StatusCode != http.StatusOK {
@@ -292,20 +320,20 @@ func do(method string, path string, apiKey string, body interface{}, data interf
 		var message map[string]string
 		err = json.NewDecoder(resp.Body).Decode(&message)
 		if err != nil {
-			return fmt.Errorf("status code %d received, couldn't process response message", resp.StatusCode)
+			return statusCode, fmt.Errorf("status code %d received, couldn't process response message", resp.StatusCode)
 		}
 		_ = resp.Body.Close()
 
-		return fmt.Errorf("status code %d received, response message: %v", resp.StatusCode, message)
+		return statusCode, fmt.Errorf("status code %d received, response message: %v", resp.StatusCode, message)
 	}
 
 	if data != nil {
 		err = json.NewDecoder(resp.Body).Decode(data)
 		if err != nil {
-			return err
+			return statusCode, err
 		}
 	}
 	_ = resp.Body.Close()
 
-	return nil
+	return statusCode, nil
 }

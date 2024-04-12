@@ -1,6 +1,5 @@
 import React, { useContext, useState } from "react";
 import ParentSize from "@visx/responsive/lib/components/ParentSize";
-import { intlFormatDistance } from "date-fns";
 import styled from "styled-components";
 
 import Loading from "components/Loading";
@@ -50,11 +49,34 @@ function BillingPage(): JSX.Element {
   const formatCredits = (credits: number): string => {
     return (credits / 100).toFixed(2);
   };
+  const monthDiff = (d1: Date, d2: Date): number => {
+    let months;
+    months = (d2.getFullYear() - d1.getFullYear()) * 12;
+    months -= d1.getMonth();
+    months += d2.getMonth();
+    return months <= 0 ? 0 : months;
+  };
+
+  const daysDiff = (d1: Date, d2: Date): number => {
+    const _MS_PER_DAY = 1000 * 60 * 60 * 24;
+    const utc1 = Date.UTC(d1.getFullYear(), d1.getMonth(), d1.getDate());
+    const utc2 = Date.UTC(d2.getFullYear(), d2.getMonth(), d2.getDate());
+
+    return Math.floor((utc2 - utc1) / _MS_PER_DAY);
+  };
 
   const relativeTime = (timestampUTC: string): string => {
     const tsDate = new Date(timestampUTC);
     const now = new Date();
-    return intlFormatDistance(tsDate, now);
+
+    const remainingMonths = monthDiff(now, tsDate);
+    const remainingDays = daysDiff(now, tsDate);
+
+    const relativeFormat = remainingMonths > 0 ? "months" : "days";
+    const relativeValue = remainingMonths > 0 ? remainingMonths : remainingDays;
+
+    const rt = new Intl.RelativeTimeFormat("en", { style: "short" });
+    return rt.format(relativeValue, relativeFormat);
   };
 
   const readableDate = (s: string): string => new Date(s).toLocaleDateString();

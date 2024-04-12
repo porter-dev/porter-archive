@@ -29,7 +29,7 @@ function BillingPage(): JSX.Element {
   const [shouldCreate, setShouldCreate] = useState(false);
   const { currentProject } = useContext(Context);
 
-  const { totalCredits } = usePorterCredits();
+  const { creditGrants } = usePorterCredits();
   const { plan } = useCustomerPlan();
 
   const {
@@ -76,6 +76,8 @@ function BillingPage(): JSX.Element {
     return rt.format(relativeValue, relativeFormat);
   };
 
+  const readableDate = (s: string) => new Date(s).toLocaleDateString();
+
   const onCreate = async () => {
     await refetchPaymentMethods();
     setShouldCreate(false);
@@ -97,51 +99,63 @@ function BillingPage(): JSX.Element {
     <>
       {currentProject?.metronome_enabled ? (
         <div>
-          <Text size={16}>Porter credit grants</Text>
-          <Spacer y={1} />
-          <Text color="helper">
-            View the amount of Porter credits you have available to spend on
-            resources within this project.
-          </Text>
-          <Spacer y={1} />
-
-          <Container>
-            <Image src={gift} style={{ marginTop: "-2px" }} />
-            <Spacer inline x={1} />
-            <Text size={20}>
-              {totalCredits > 0 ? `$${formatCredits(totalCredits)}` : "$ 0.00"}
+          <div>
+            <Text size={16}>Porter credit grants</Text>
+            <Spacer y={1} />
+            <Text color="helper">
+              View the amount of Porter credits you have available to spend on
+              resources within this project.
             </Text>
-          </Container>
-          <Spacer y={1} />
+            <Spacer y={1} />
 
-          <Text size={16}>Plan Details</Text>
-          <Spacer y={1} />
-          <Text color="helper">
-            View the details of the current plan you are subscribed to.
-          </Text>
-          <Spacer y={1} />
+            <Container>
+              <Image src={gift} style={{ marginTop: "-2px" }} />
+              <Spacer inline x={1} />
+              <Text size={20}>
+                {creditGrants !== undefined &&
+                creditGrants.remaining_credits > 0
+                  ? `$${formatCredits(
+                      creditGrants.remaining_credits
+                    )}/$${formatCredits(creditGrants.granted_credits)}`
+                  : "$ 0.00"}
+              </Text>
+            </Container>
+            <Spacer y={2} />
+          </div>
 
           <div>
-            {plan === undefined ? (
-              <Loading></Loading>
-            ) : (
+            <Text size={16}>Plan Details</Text>
+            <Spacer y={1} />
+            <Text color="helper">
+              View the details of the current billing plan of this project.
+            </Text>
+            <Spacer y={1} />
+
+            <Text>Active Plan</Text>
+            <Spacer y={0.5} />
+            {plan !== undefined ? (
               <Fieldset>
-                <Container row>
-                  <Text size={14}>{plan.plan_name}</Text>
+                <Container row spaced>
+                  <Container row>
+                    <Text color="helper">{plan.plan_name}</Text>
+                  </Container>
+                  <Container row>
+                    {plan.trial_info !== undefined && false ? (
+                      <Text>
+                        Free trial ends{" "}
+                        {relativeTime(plan.trial_info.ending_before)}
+                      </Text>
+                    ) : (
+                      <Text>Started on {readableDate(plan.starting_on)}</Text>
+                    )}
+                  </Container>
                 </Container>
-                {plan.trial_info !== undefined ? (
-                  <div>
-                    <Text size={13}>
-                      Trial Ending {relativeTime(plan.trial_info.ending_before)}
-                    </Text>
-                  </div>
-                ) : (
-                  <div></div>
-                )}
               </Fieldset>
+            ) : (
+              <Loading></Loading>
             )}
+            <Spacer y={1} />
           </div>
-          <Spacer y={2} />
         </div>
       ) : (
         <div></div>

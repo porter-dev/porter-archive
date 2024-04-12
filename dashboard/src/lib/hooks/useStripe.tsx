@@ -4,7 +4,7 @@ import { z } from "zod";
 
 import {
   ClientSecretResponse,
-  CreditGrantList,
+  CreditGrants,
   PaymentMethodList,
   PaymentMethodValidator,
   Plan,
@@ -38,7 +38,7 @@ type TGetPublishableKey = {
 };
 
 type TGetCredits = {
-  totalCredits: number;
+  creditGrants: CreditGrants;
 };
 
 type TGetPlan = {
@@ -208,7 +208,7 @@ export const usePorterCredits = (): TGetCredits => {
   );
 
   return {
-    totalCredits: creditsReq.data,
+    creditGrants: creditsReq.data,
   };
 };
 

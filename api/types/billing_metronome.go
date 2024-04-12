@@ -83,6 +83,12 @@ type CreditType struct {
 	ID   string `json:"id"`
 }
 
+// GrantAmount represents the amount of credits granted
+type GrantAmount struct {
+	Amount     float64    `json:"amount"`
+	CreditType CreditType `json:"credit_type"`
+}
+
 // Balance represents the effective balance of the grant as of the end of the customer's
 // current billing period.
 type Balance struct {
@@ -96,12 +102,18 @@ type Balance struct {
 
 // CreditGrant is a grant given to a specific user on a specific plan
 type CreditGrant struct {
-	ID          uuid.UUID `json:"id"`
-	Name        string    `json:"name"`
-	Balance     Balance   `json:"balance"`
-	Reason      string    `json:"reason"`
-	EffectiveAt string    `json:"effective_at"`
-	ExpiresAt   string    `json:"expires_at"`
+	ID          uuid.UUID   `json:"id"`
+	Name        string      `json:"name"`
+	GrantAmount GrantAmount `json:"grant_amount"`
+	Balance     Balance     `json:"balance"`
+	Reason      string      `json:"reason"`
+	EffectiveAt string      `json:"effective_at"`
+	ExpiresAt   string      `json:"expires_at"`
+}
+
+type ListCreditGrantsResponse struct {
+	RemainingCredits float64 `json:"remaining_credits"`
+	GrantedCredits   float64 `json:"granted_credits"`
 }
 
 // DashboardOptions are optional dashboard specific options

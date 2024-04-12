@@ -27,19 +27,10 @@ export const Plan = z.object({
   trial_info: Trial,
 });
 
-export type CreditGrantList = CreditGrant[];
-export type CreditGrant = z.infer<typeof CreditGrantValidator>;
-export const CreditGrantValidator = z.object({
-  id: z.string(),
-  name: z.string(),
-  balance: z.object({
-    excluding_pending: z.number(),
-    including_pending: z.number(),
-    effective_at: z.string(),
-  }),
-  reason: z.string(),
-  effective_at: z.string(),
-  expires_at: z.string(),
+export type CreditGrants = z.infer<typeof CreditGrantsValidator>;
+export const CreditGrantsValidator = z.object({
+  granted_credits: z.number(),
+  remaining_credits: z.number(),
 });
 
 export const ClientSecretResponse = z.string();

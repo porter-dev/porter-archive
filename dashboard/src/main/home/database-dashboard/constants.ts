@@ -95,6 +95,13 @@ export const DATASTORE_TEMPLATE_AWS_RDS: DatastoreTemplate = Object.freeze({
       ramGigabytes: 8,
       storageGigabytes: 512,
     },
+    {
+      tier: "db.r6g.4xlarge" as const,
+      label: "Extra Large",
+      cpuCores: 16,
+      ramGigabytes: 128,
+      storageGigabytes: 2048,
+    },
   ],
   formTitle: "Create an RDS PostgreSQL instance",
   creationStateProgression: [
@@ -167,6 +174,13 @@ export const DATASTORE_TEMPLATE_AWS_ELASTICACHE: DatastoreTemplate =
         label: "Micro",
         cpuCores: 2,
         ramGigabytes: 0.5,
+        storageGigabytes: 0,
+      },
+      {
+        tier: "cache.t4g.small" as const,
+        label: "Small",
+        cpuCores: 2,
+        ramGigabytes: 1.37,
         storageGigabytes: 0,
       },
       {

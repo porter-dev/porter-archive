@@ -16,6 +16,7 @@ import Text from "components/porter/Text";
 import Toggle from "components/porter/Toggle";
 import { type ClientAddon } from "lib/addons";
 import { useAddonList } from "lib/hooks/useAddon";
+import { useDefaultDeploymentTarget } from "lib/hooks/useDeploymentTarget";
 
 import { Context } from "shared/Context";
 import addOnGrad from "assets/add-on-grad.svg";
@@ -33,11 +34,15 @@ const isDisplayableAddon = (addon: ClientAddon): boolean => {
 
 const AddonDashboard: React.FC = () => {
   const { currentProject, currentCluster } = useContext(Context);
+  const { defaultDeploymentTarget, isDefaultDeploymentTargetLoading } =
+    useDefaultDeploymentTarget();
+
   const [searchValue, setSearchValue] = useState("");
   const [view, setView] = useState("grid");
 
-  const { addons, isLoading } = useAddonList({
-    clusterId: currentCluster?.id,
+  const { addons, isLoading: isAddonListLoading } = useAddonList({
+    projectId: currentProject?.id,
+    deploymentTargetId: defaultDeploymentTarget.id,
   });
 
   const filteredAddons = useMemo(() => {
@@ -71,7 +76,7 @@ const AddonDashboard: React.FC = () => {
         </DashboardPlaceholder>
       ) : filteredAddons.length === 0 ||
         (filteredAddons.length === 0 && searchValue === "") ? (
-        isLoading ? (
+        isDefaultDeploymentTargetLoading || isAddonListLoading ? (
           <Loading offset="-150px" />
         ) : (
           <DashboardPlaceholder>
@@ -129,7 +134,7 @@ const AddonDashboard: React.FC = () => {
                 </Text>
               </Container>
             </Fieldset>
-          ) : isLoading ? (
+          ) : isDefaultDeploymentTargetLoading || isAddonListLoading ? (
             <Loading offset="-150px" />
           ) : view === "grid" ? (
             <GridList>

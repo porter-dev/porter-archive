@@ -7,7 +7,15 @@ import Link from "components/porter/Link";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import { type ClientAddon } from "lib/addons";
-import { useAddonList } from "lib/hooks/useAddon";
+import {
+  useAddonList,
+  useAddonStatus,
+  type ClientAddonStatus,
+} from "lib/hooks/useAddon";
+import {
+  useDefaultDeploymentTarget,
+  type DeploymentTarget,
+} from "lib/hooks/useDeploymentTarget";
 
 import { Context } from "shared/Context";
 import notFound from "assets/not-found.png";
@@ -15,6 +23,8 @@ import notFound from "assets/not-found.png";
 type AddonContextType = {
   addon: ClientAddon;
   projectId: number;
+  deploymentTarget: DeploymentTarget;
+  status: ClientAddonStatus;
 };
 
 const AddonContext = createContext<AddonContextType | null>(null);
@@ -38,9 +48,16 @@ export const AddonContextProvider: React.FC<AddonContextProviderProps> = ({
   addonName,
   children,
 }) => {
-  const { currentCluster, currentProject } = useContext(Context);
-  const { addons, isLoading, isError } = useAddonList({
-    clusterId: currentCluster?.id,
+  const { currentProject } = useContext(Context);
+  const { defaultDeploymentTarget, isDefaultDeploymentTargetLoading } =
+    useDefaultDeploymentTarget();
+  const {
+    addons,
+    isLoading: isAddonListLoading,
+    isError,
+  } = useAddonList({
+    projectId: currentProject?.id,
+    deploymentTargetId: defaultDeploymentTarget.id,
   });
 
   // TODO: add getAddon call to backend
@@ -48,14 +65,19 @@ export const AddonContextProvider: React.FC<AddonContextProviderProps> = ({
     return addons.find((a) => a.name.value === addonName);
   }, [addons]);
 
+  const status = useAddonStatus({
+    projectId: currentProject?.id,
+    deploymentTarget: defaultDeploymentTarget,
+    addon,
+  });
+
   const paramsExist =
     !!addonName &&
-    !!currentCluster &&
-    currentCluster.id !== -1 &&
+    !!defaultDeploymentTarget &&
     !!currentProject &&
     currentProject.id !== -1;
 
-  if (isLoading || !paramsExist) {
+  if (isDefaultDeploymentTargetLoading || isAddonListLoading || !paramsExist) {
     return <Loading />;
   }
 
@@ -75,7 +97,14 @@ export const AddonContextProvider: React.FC<AddonContextProviderProps> = ({
   }
 
   return (
-    <AddonContext.Provider value={{ addon, projectId: currentProject.id }}>
+    <AddonContext.Provider
+      value={{
+        addon,
+        projectId: currentProject.id,
+        deploymentTarget: defaultDeploymentTarget,
+        status,
+      }}
+    >
       {children}
     </AddonContext.Provider>
   );

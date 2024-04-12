@@ -1301,16 +1301,14 @@ const getAppTemplate = baseApi<
   return `/api/projects/${project_id}/clusters/${cluster_id}/apps/${porter_app_name}/templates`;
 });
 
-const listLatestAddons = baseApi<
-  {
-    deployment_target_id?: string;
-  },
+const listAddons = baseApi<
+  {},
   {
     projectId: number;
-    clusterId: number;
+    deploymentTargetId: string;
   }
->("GET", ({ projectId, clusterId }) => {
-  return `/api/projects/${projectId}/clusters/${clusterId}/addons/latest`;
+>("GET", ({ projectId, deploymentTargetId }) => {
+  return `/api/projects/${projectId}/targets/${deploymentTargetId}/addons`;
 });
 
 const updateAddon = baseApi<
@@ -3736,7 +3734,7 @@ export default {
   createDeploymentTarget,
   getDeploymentTarget,
   getAppTemplate,
-  listLatestAddons,
+  listAddons,
   updateAddon,
   getGitlabProcfileContents,
   getProjectClusters,

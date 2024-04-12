@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"connectrpc.com/connect"
+	"github.com/google/uuid"
 	"github.com/porter-dev/api-contracts/generated/go/helpers"
 	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -16,7 +17,7 @@ import (
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
-// LatestAddonsHandler handles requests to the /addons/latest endpoint
+// LatestAddonsHandler handles requests to the /addons endpoint
 type LatestAddonsHandler struct {
 	handlers.PorterHandlerReadWriter
 }
@@ -32,12 +33,7 @@ func NewLatestAddonsHandler(
 	}
 }
 
-// LatestAddonsRequest represents the request for the /addons/latest endpoint
-type LatestAddonsRequest struct {
-	DeploymentTargetID string `schema:"deployment_target_id"`
-}
-
-// LatestAddonsResponse represents the response from the /addons/latest endpoint
+// LatestAddonsResponse represents the response from the /addons endpoint
 type LatestAddonsResponse struct {
 	Base64Addons []string `json:"base64_addons"`
 }
@@ -47,29 +43,17 @@ func (c *LatestAddonsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	defer span.End()
 
 	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
-	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
-
-	request := &LatestAddonsRequest{}
-	if ok := c.DecodeAndValidate(w, r, request); !ok {
-		err := telemetry.Error(ctx, span, nil, "error decoding request")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-		return
-	}
-
-	telemetry.WithAttributes(span,
-		telemetry.AttributeKV{Key: "deployment-target-id", Value: request.DeploymentTargetID},
-	)
+	deploymentTarget, _ := ctx.Value(types.DeploymentTargetScope).(types.DeploymentTarget)
 
 	var deploymentTargetIdentifier *porterv1.DeploymentTargetIdentifier
-	if request.DeploymentTargetID != "" {
+	if deploymentTarget.ID != uuid.Nil {
 		deploymentTargetIdentifier = &porterv1.DeploymentTargetIdentifier{
-			Id: request.DeploymentTargetID,
+			Id: deploymentTarget.ID.String(),
 		}
 	}
 
 	latestAddonsReq := connect.NewRequest(&porterv1.LatestAddonsRequest{
 		ProjectId:                  int64(project.ID),
-		ClusterId:                  int64(cluster.ID),
 		DeploymentTargetIdentifier: deploymentTargetIdentifier,
 	})
 

@@ -1,38 +1,79 @@
 import React from "react";
 import styled from "styled-components";
 
-import Banner from "components/porter/Banner";
+import Container from "components/porter/Container";
 import Spacer from "components/porter/Spacer";
+import Text from "components/porter/Text";
+import Tooltip from "components/porter/Tooltip";
 import TitleSection from "components/TitleSection";
 
 import { useAddonContext } from "./AddonContextProvider";
 
 const AddonHeader: React.FC = () => {
-  const { addon } = useAddonContext();
+  const { addon, status } = useAddonContext();
+
   return (
     <HeaderWrapper>
       <TitleSection icon={addon.template.icon} iconWidth="33px">
         {addon.name.value}
-        {/* <DeploymentType currentChart={currentChart} /> */}
       </TitleSection>
-
-      <InfoWrapper>
-        {/*
-          <StatusIndicator
-            controllers={controllers}
-            status={currentChart.info.status}
-            margin_left={"0px"}
-          />
-          */}
-        {/* {!templateWhitelist.includes(currentChart.chart.metadata.name) &&
-            <><DeployStatusSection
-              chart={currentChart}
-              setLogData={renderLogsAtTimestamp} /><LastDeployed>
-                <Dot>•</Dot>Last deployed
-                {" " + getReadableDate(currentChart.info.last_deployed)}
-              </LastDeployed></>
-          } */}
-      </InfoWrapper>
+      {/* <InfoWrapper>
+        <StyledDeployStatusSection>
+          <StatusWrapper>
+            <StatusCircle percentage={percentageDeployed} />
+            <Text>
+              {status.isLoading
+                ? "Initializing"
+                : percentageDeployed === 100
+                ? "Deployed"
+                : "Deploying"}
+            </Text>
+          </StatusWrapper>
+        </StyledDeployStatusSection>
+      </InfoWrapper> */}
+      <Spacer y={0.5} />
+      <div>
+        <Container row>
+          <Text size={16}>Deploy status</Text>
+          <Spacer x={1} inline />
+          {status.isLoading && <Text color="helper">Initializing...</Text>}
+        </Container>
+        <Spacer y={0.5} />
+        {status.isLoading ? (
+          <LoadingBars />
+        ) : (
+          <StatusBars>
+            {status.pods.map((p, i) => {
+              return (
+                <div key={p.name} style={{ width: "20px" }}>
+                  <Tooltip
+                    key={p.name}
+                    content={
+                      <Container>
+                        <Container row>
+                          <Text>{`Pod: ${p.name}`}</Text>
+                        </Container>
+                        <Spacer y={0.5} />
+                        <Container row>
+                          <Text color="gray">{p.status}</Text>
+                        </Container>
+                      </Container>
+                    }
+                    position="right"
+                  >
+                    <Bar
+                      isFirst={i === 0}
+                      isLast={i === status.pods.length}
+                      status={p.status}
+                      animate={p.status === "pending"}
+                    />
+                  </Tooltip>
+                </div>
+              );
+            })}
+          </StatusBars>
+        )}
+      </div>
     </HeaderWrapper>
   );
 };
@@ -43,60 +84,131 @@ const HeaderWrapper = styled.div`
   position: relative;
 `;
 
-const Dot = styled.div`
-  margin-right: 16px;
-`;
+// const InfoWrapper = styled.div`
+//   display: flex;
+//   align-items: center;
+//   margin-left: 3px;
+//   margin-top: 22px;
+// `;
 
-const InfoWrapper = styled.div`
-  display: flex;
-  align-items: center;
-  margin-left: 3px;
-  margin-top: 22px;
-`;
+// const StyledDeployStatusSection = styled.div<{ isExpanded?: boolean }>`
+//   font-size: 13px;
+//   height: 30px;
+//   border-radius: 5px;
+//   padding: 0 9px;
+//   padding-left: 7px;
+//   display: flex;
+//   margin-left: -1px;
+//   align-items: center;
+//   ${(props) =>
+//     props.isExpanded &&
+//     `
+//   background: #26292e;
+//   border: 1px solid #494b4f;
+//   border: 1px solid #7a7b80;
+//   margin-left: -2px;
+//   margin-right: -1px;
+//   `}
+//   justify-content: center;
+// `;
 
-const LastDeployed = styled.div`
-  font-size: 13px;
-  margin-left: 8px;
-  margin-top: -1px;
-  display: flex;
-  align-items: center;
-  color: #aaaabb66;
-`;
+// const StatusWrapper = styled.div`
+//   display: flex;
+//   justify-content: space-between;
+//   align-items: center;
+//   gap: 8px;
+// `;
 
-const TagWrapper = styled.div`
+// const StatusCircle = styled.div<{ percentage: number }>`
+//   width: 16px;
+//   height: 16px;
+//   border-radius: 50%;
+//   margin-right: 10px;
+//   background: ${(props) =>
+//     `conic-gradient(
+//       from 0deg,
+//       #4797ff ${props.percentage}%,
+//       #ffffffaa 0% ${props.percentage}%
+//     )`};
+// `;
+
+const getBackgroundGradient = (status: string): string => {
+  switch (status) {
+    case "loading":
+      return "linear-gradient(#76767644, #76767622)";
+    case "running":
+      return "linear-gradient(#01a05d, #0f2527)";
+    case "failed":
+      return "linear-gradient(#E1322E, #25100f)";
+    case "pending":
+      return "linear-gradient(#E49621, #25270f)";
+    default:
+      return "linear-gradient(#76767644, #76767622)"; // Default or unknown status
+  }
+};
+
+const Bar = styled.div<{
+  isFirst: boolean;
+  isLast: boolean;
+  status: string;
+  animate?: boolean;
+}>`
   height: 20px;
-  font-size: 12px;
+  max-width: 20px;
   display: flex;
-  margin-left: 15px;
-  margin-bottom: -3px;
-  align-items: center;
-  font-weight: 400;
-  justify-content: center;
-  color: #ffffff44;
-  border: 1px solid #ffffff44;
-  border-radius: 3px;
-  padding-left: 5px;
-  background: #26282e;
+  flex: 1;
+  border-top-left-radius: ${(props) => (props.isFirst ? "5px" : "0")};
+  border-bottom-left-radius: ${(props) => (props.isFirst ? "5px" : "0")};
+  border-top-right-radius: ${(props) => (props.isLast ? "5px" : "0")};
+  border-bottom-right-radius: ${(props) => (props.isLast ? "5px" : "0")};
+  background: ${(props) => getBackgroundGradient(props.status)};
+  ${(props) =>
+    props.animate
+      ? "animation: loadingAnimation 1.5s infinite;"
+      : "animation: fadeIn 0.3s 0s;"}
+  @keyframes loadingAnimation {
+    0% {
+      opacity: 0.3;
+    }
+    50% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0.3;
+    }
+  }
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
 `;
 
-const NamespaceTag = styled.div`
-  height: 20px;
-  margin-left: 6px;
-  color: #aaaabb;
-  background: #43454a;
-  border-radius: 3px;
-  font-size: 12px;
+const StatusBars = styled.div`
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0px 6px;
-  padding-left: 7px;
-  border-top-left-radius: 0px;
-  border-bottom-left-radius: 0px;
+  gap: 2px;
 `;
 
-const BannerContents = styled.div`
+const LoadingBars: React.FC = () => {
+  return (
+    <StyledLoadingBars>
+      {Array.from({ length: 5 }).map((_, i) => (
+        <Bar
+          key={i}
+          isFirst={i === 0}
+          isLast={i === 4}
+          status="loading"
+          animate
+        />
+      ))}
+    </StyledLoadingBars>
+  );
+};
+
+const StyledLoadingBars = styled.div`
   display: flex;
-  flex-direction: column;
-  row-gap: 0.5rem;
+  gap: 2px;
 `;

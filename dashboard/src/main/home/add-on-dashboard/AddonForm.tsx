@@ -14,6 +14,7 @@ import { type ClientAddon } from "lib/addons";
 import { datadogConfigValidator } from "lib/addons/datadog";
 import { type AddonTemplate } from "lib/addons/template";
 import { useAddonList } from "lib/hooks/useAddon";
+import { useDefaultDeploymentTarget } from "lib/hooks/useDeploymentTarget";
 
 import { Context } from "shared/Context";
 
@@ -24,10 +25,14 @@ type Props = {
   template: AddonTemplate;
 };
 const AddonForm: React.FC<Props> = ({ template }) => {
-  const { currentCluster } = useContext(Context);
+  const { currentProject } = useContext(Context);
+  const { defaultDeploymentTarget, isDefaultDeploymentTargetLoading } =
+    useDefaultDeploymentTarget();
+
   const history = useHistory();
-  const { addons, isLoading: isLoadingAddons } = useAddonList({
-    clusterId: currentCluster?.id,
+  const { addons, isLoading: isAddonListLoading } = useAddonList({
+    projectId: currentProject?.id,
+    deploymentTargetId: defaultDeploymentTarget.id,
   });
 
   const {
@@ -69,7 +74,7 @@ const AddonForm: React.FC<Props> = ({ template }) => {
     }
   }, [watchName]);
 
-  if (isLoadingAddons) {
+  if (isDefaultDeploymentTargetLoading || isAddonListLoading) {
     return <Loading />;
   }
 

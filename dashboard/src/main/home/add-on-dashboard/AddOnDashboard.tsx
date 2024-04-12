@@ -86,7 +86,7 @@ const AddonDashboard: React.FC = () => {
               Deploy from our suite of curated add-ons.
             </Text>
             <Spacer y={1} />
-            <Link to="/filteredAddons/new">
+            <Link to="/addons/new">
               <Button alt onClick={() => {}} height="35px">
                 Deploy a new add-on <Spacer inline x={1} />{" "}
                 <i className="material-icons" style={{ fontSize: "18px" }}>

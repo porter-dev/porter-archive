@@ -192,7 +192,7 @@ const DeleteButton = styled.div`
 const WebhookWrapper = styled.div`
   display: flex;
   height: 30px;
-  width: 1500px;
+  width: 1000px;
   max-width: 100%;
   margin-bottom: 10px;
 `;

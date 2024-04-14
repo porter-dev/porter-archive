@@ -55,6 +55,15 @@ func (repo *UserRepository) ReadUserByEmail(email string) (*models.User, error) 
 	return user, nil
 }
 
+// ReadUserByAuthProvider finds a single user based on their auth provider and external id
+func (repo *UserRepository) ReadUserByAuthProvider(authProvider string, externalId string) (*models.User, error) {
+	user := &models.User{}
+	if err := repo.db.Where("auth_provider = ? AND external_id = ?", authProvider, externalId).First(&user).Error; err != nil {
+		return nil, err
+	}
+	return user, nil
+}
+
 // ReadUserByGithubUserID finds a single user based on their github user id
 func (repo *UserRepository) ReadUserByGithubUserID(id int64) (*models.User, error) {
 	user := &models.User{}

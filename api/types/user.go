@@ -10,12 +10,14 @@ type User struct {
 }
 
 type CreateUserRequest struct {
-	Email          string `json:"email" form:"required,max=255,email"`
-	Password       string `json:"password" form:"required,max=255"`
-	FirstName      string `json:"first_name" form:"required,max=255"`
-	LastName       string `json:"last_name" form:"required,max=255"`
-	CompanyName    string `json:"company_name" form:"required,max=255"`
-	ReferralMethod string `json:"referral_method" form:"max=255"`
+	Email          string `json:"email"`
+	Password       string `json:"password"`
+	FirstName      string `json:"first_name"`
+	LastName       string `json:"last_name"`
+	CompanyName    string `json:"company_name"`
+	ReferralMethod string `json:"referral_method"`
+	AuthProvider   string `json:"auth_provider"`
+	ExternalId     string `json:"external_id"`
 }
 
 type CreateUserResponse User

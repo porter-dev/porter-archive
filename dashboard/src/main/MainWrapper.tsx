@@ -8,18 +8,41 @@ import AuthnProvider from "../shared/auth/AuthnContext";
 import { ContextProvider } from "../shared/Context";
 import Main from "./Main";
 
+import {
+    ThemeProvider,
+    IntlProvider,
+} from "@ory/elements"
+
+// required styles for Ory Elements
+import "@ory/elements/dist/style.css"
+
+
 type PropsType = RouteComponentProps & {};
 
 const MainWrapper: React.FC<PropsType> = ({ history, location }) => {
   return (
     <ContextProvider history={history} location={location}>
-      <AuthzProvider>
+        <ThemeProvider themeOverrides={{}}>
+            {/* We dont need to pass any custom translations */}
+            {/* <IntlProvider> */}
+            {/* We pass custom translations */}
+            <IntlProvider
+                locale="en"
+                defaultLocale="en"
+            >
+        <AuthzProvider>
         <AuthnProvider>
-          <MainWrapperErrorBoundary>
+
+
+            <MainWrapperErrorBoundary>
             <Main />
           </MainWrapperErrorBoundary>
         </AuthnProvider>
       </AuthzProvider>
+            </IntlProvider>
+
+        </ThemeProvider>
+
     </ContextProvider>
   );
 };

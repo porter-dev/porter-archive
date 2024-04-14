@@ -16,6 +16,10 @@ import SetInfo from "./auth/SetInfo";
 import VerifyEmail from "./auth/VerifyEmail";
 import CurrentError from "./CurrentError";
 import Home from "./home/Home";
+import RegisterOry from "./auth/RegisterOry";
+import { basePath } from "shared/auth/sdk";
+import OryLogin from "./auth/OryLogin";
+import LoginWrapper from "./auth/LoginWrapper";
 
 type PropsType = {};
 
@@ -36,9 +40,12 @@ const Main: React.FC<PropsType> = () => {
     isLoading,
     hasInfo,
     isEmailVerified,
+      session,
   } = useContext(AuthnContext);
   const [local, setLocal] = useState(false);
   const [version, setVersion] = useState("");
+
+  console.log(session?.identity)
 
   useEffect(() => {
     // Get capabilities to case on user info requirements
@@ -72,6 +79,8 @@ const Main: React.FC<PropsType> = () => {
       return <Loading />;
     }
 
+    // return <div>test</div>
+
     // if logged in but not verified, block until email verification
     if (!local && isLoggedIn && !isEmailVerified) {
       return (
@@ -86,7 +95,7 @@ const Main: React.FC<PropsType> = () => {
       );
     }
 
-    // Handle case where new user signs up via OAuth and has not set name and company
+  // Handle case where new user signs up via OAuth and has not set name and company
     if (version === "production" && !hasInfo && user?.id > 9312 && isLoggedIn) {
       return (
         <Switch>
@@ -105,13 +114,13 @@ const Main: React.FC<PropsType> = () => {
       );
     }
 
-    return (
+      return (
       <Switch>
         <Route
           path="/login"
           render={() => {
             if (!isLoggedIn) {
-              return <Login authenticate={authenticate} />;
+              return <LoginWrapper authenticate={authenticate}/>;
             } else {
               return <Redirect to="/" />;
             }
@@ -159,9 +168,17 @@ const Main: React.FC<PropsType> = () => {
           }}
         />
         <Route
+            path={`/${basePath}/ui/:page?`}
+            render={() => {
+                  console.log("here")
+                  return <div>test</div>
+            }}
+        />
+        <Route
           path={`/:baseRoute/:cluster?/:namespace?`}
           render={(routeProps) => {
             const baseRoute = routeProps.match.params.baseRoute;
+            console.log(baseRoute)
             if (isLoggedIn && PorterUrls.includes(baseRoute)) {
               return (
                 <Home

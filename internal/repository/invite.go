@@ -10,6 +10,7 @@ type InviteRepository interface {
 	ReadInvite(projectID, inviteID uint) (*models.Invite, error)
 	ReadInviteByToken(token string) (*models.Invite, error)
 	ListInvitesByProjectID(projectID uint) ([]*models.Invite, error)
+	ListInvitesByEmail(email string) ([]*models.Invite, error)
 	UpdateInvite(invite *models.Invite) (*models.Invite, error)
 	DeleteInvite(invite *models.Invite) error
 }

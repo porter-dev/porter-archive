@@ -13,6 +13,7 @@ type UserRepository interface {
 	CheckPassword(id int, pwd string) (bool, error)
 	ReadUser(id uint) (*models.User, error)
 	ReadUserByEmail(email string) (*models.User, error)
+	ReadUserByAuthProvider(authProvider string, externalId string) (*models.User, error)
 	ReadUserByGithubUserID(id int64) (*models.User, error)
 	ReadUserByGoogleUserID(id string) (*models.User, error)
 	ListUsersByIDs(ids []uint) ([]*models.User, error)

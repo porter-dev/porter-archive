@@ -1199,6 +1199,38 @@ const SUPPORTED_AZURE_MACHINE_TYPES: ClientMachineType[] = [
     ramMegabytes: 8192,
   },
   {
+    name: "Standard_DC1s_v2",
+    displayName: "Standard_DC1s_v2",
+    supportedRegions: ["eastus", "westeurope"],
+    isGPU: false,
+    cpuCores: 1,
+    ramMegabytes: 4096,
+  },
+  {
+    name: "Standard_DC2s_v2",
+    displayName: "Standard_DC2s_v2",
+    supportedRegions: ["eastus", "westeurope"],
+    isGPU: false,
+    cpuCores: 2,
+    ramMegabytes: 8192,
+  },
+  {
+    name: "Standard_DC4s_v2",
+    displayName: "Standard_DC4s_v2",
+    supportedRegions: ["eastus", "westeurope"],
+    isGPU: false,
+    cpuCores: 4,
+    ramMegabytes: 16384,
+  },
+  {
+    name: "Standard_DC8_v2",
+    displayName: "Standard_DC8_v2",
+    supportedRegions: ["eastus", "westeurope"],
+    isGPU: false,
+    cpuCores: 8,
+    ramMegabytes: 32768,
+  },
+  {
     name: "Standard_B4als_v2",
     displayName: "Standard_B4als_v2",
     supportedRegions: [

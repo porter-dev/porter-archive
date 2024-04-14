@@ -84,9 +84,8 @@ func (c *CheckPaymentEnabledHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 		)
 	}
 
-	if c.Config().ServerConf.MetronomeAPIKey != "" && c.Config().ServerConf.PorterCloudPlanID != "" &&
-		proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient) && proj.UsageID == uuid.Nil {
-		customerID, customerPlanID, err := c.Config().BillingManager.MetronomeClient.CreateCustomerWithPlan(ctx, user.Email, proj.Name, proj.ID, proj.BillingID, c.Config().ServerConf.PorterCloudPlanID)
+	if c.Config().BillingManager.MetronomeEnabled && proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient) && proj.UsageID == uuid.Nil {
+		customerID, customerPlanID, err := c.Config().BillingManager.MetronomeClient.CreateCustomerWithPlan(ctx, user.Email, proj.Name, proj.ID, proj.BillingID, proj.EnableSandbox)
 		if err != nil {
 			err = telemetry.Error(ctx, span, err, "error creating Metronome customer")
 			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))

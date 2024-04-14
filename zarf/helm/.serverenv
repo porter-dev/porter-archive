@@ -78,3 +78,6 @@ METRONOME_API_KEY=
 
 # PORTER_CLOUD_PLAN_ID is the id of the starter plan in Metronome. Only used if METRONOME_API_KEY is set
 PORTER_CLOUD_PLAN_ID=
+
+# PORTER_STANDARD_PLAN_ID is the id of the standard plan in Metronome. Only used if METRONOME_API_KEY is set
+PORTER_STANDARD_PLAN_ID=

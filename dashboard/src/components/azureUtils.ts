@@ -327,6 +327,30 @@ const AzureMachineTypeOptions: MachineTypeOption[] = [
     ]),
   },
   {
+    value: "Standard_DC1s_v2",
+    label: "Standard_DC1s_v2",
+    resources: { vCPU: 1, RAM: 4 },
+    supportedRegions: new Set<string>(["eastus", "westeurope"]),
+  },
+  {
+    value: "Standard_DC2s_v2",
+    label: "Standard_DC2s_v2",
+    resources: { vCPU: 2, RAM: 8 },
+    supportedRegions: new Set<string>(["eastus", "westeurope"]),
+  },
+  {
+    value: "Standard_DC4s_v2",
+    label: "Standard_DC4s_v2",
+    resources: { vCPU: 4, RAM: 16 },
+    supportedRegions: new Set<string>(["eastus", "westeurope"]),
+  },
+  {
+    value: "Standard_DC8_v2",
+    label: "Standard_DC8_v2",
+    resources: { vCPU: 8, RAM: 32 },
+    supportedRegions: new Set<string>(["eastus", "westeurope"]),
+  },
+  {
     value: "Standard_NC4as_T4_v3",
     label: "Standard_NC4as_T4_v3",
     resources: { vCPU: 4, RAM: 28, GPU: 1 },

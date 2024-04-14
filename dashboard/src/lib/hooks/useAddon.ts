@@ -151,6 +151,122 @@ export const useAddonStatus = ({
   const { newWebsocket, openWebsocket, closeAllWebsockets, closeWebsocket } =
     useWebsockets();
 
+  const controllersResp = useQuery(
+    ["listControllers", projectId, addon],
+    async () => {
+      if (!projectId || projectId === -1 || !addon) {
+        return;
+      }
+
+      const resp = await api.getChartControllers(
+        "<token>",
+        {},
+        {
+          name: addon.name.value,
+          namespace: deploymentTarget.namespace,
+          cluster_id: deploymentTarget.cluster_id,
+          revision: 0,
+          id: projectId,
+        }
+      );
+      const parsed = await z
+        .array(
+          z.object({
+            metadata: z.object({
+              uid: z.string(),
+            }),
+            spec: z.object({
+              selector: z.object({
+                matchLabels: z.record(z.string()),
+              }),
+            }),
+          })
+        )
+        .parseAsync(resp.data);
+
+      return parsed;
+    },
+    {
+      enabled: !!projectId && projectId !== -1 && !!addon,
+      retryDelay: 5000,
+    }
+  );
+
+  useEffect(() => {
+    setIsInitializingStatus(true);
+    if (!controllersResp.isSuccess || !controllersResp.data) {
+      return;
+    }
+
+    const setupPodWebsocketWithSelectors = (
+      controllerUid: string,
+      selectors: string
+    ): void => {
+      if (!projectId || projectId === -1 || !deploymentTarget) {
+        return;
+      }
+      const websocketKey = `${Math.random().toString(36).substring(2, 15)}`;
+      const apiEndpoint = `/api/projects/${projectId}/clusters/${deploymentTarget.cluster_id}/pod/status?selectors=${selectors}`;
+
+      const options: NewWebsocketOptions = {
+        onopen: () => {
+          // console.log("connected to websocket for selectors: ", selectors);
+        },
+        onmessage: (evt: MessageEvent) => {
+          const event = JSON.parse(evt.data);
+          const object = event.Object;
+          object.metadata.kind = event.Kind;
+
+          void updatePodsForController(controllerUid, selectors);
+        },
+        onclose: () => {
+          // console.log("closing websocket");
+        },
+        onerror: () => {
+          // console.log(err);
+          closeWebsocket(websocketKey);
+        },
+      };
+
+      newWebsocket(websocketKey, apiEndpoint, options);
+      openWebsocket(websocketKey);
+    };
+
+    const controllers = controllersResp.data;
+
+    const initializeControllers = async (): Promise<void> => {
+      try {
+        // this initializes the controllerPodMap on mount
+        const controllerPodMap: Record<string, ClientAddonPod[]> = {};
+        for (const controller of controllers) {
+          const selectors = Object.keys(
+            controller.spec.selector.matchLabels
+          ).map((key) => `${key}=${controller.spec.selector.matchLabels[key]}`);
+          const pods = await getPodsForSelectors(selectors.join(","));
+          controllerPodMap[controller.metadata.uid] = pods;
+        }
+        setControllerPodMap(controllerPodMap);
+
+        // this sets up websockets for each controller, for pod updates
+        for (const controller of controllers) {
+          const selectors = Object.keys(
+            controller.spec.selector.matchLabels
+          ).map((key) => `${key}=${controller.spec.selector.matchLabels[key]}`);
+          setupPodWebsocketWithSelectors(
+            controller.metadata.uid,
+            selectors.join(",")
+          );
+        }
+      } catch (err) {
+        // TODO: handle error
+      } finally {
+        setIsInitializingStatus(false);
+      }
+    };
+
+    void initializeControllers();
+  }, [controllersResp.data]);
+
   const getPodsForSelectors = async (
     selectors: string
   ): Promise<ClientAddonPod[]> => {
@@ -227,108 +343,6 @@ export const useAddonStatus = ({
       };
     });
   };
-
-  useEffect(() => {
-    const setupPodWebsocketWithSelectors = (
-      controllerUid: string,
-      selectors: string
-    ): void => {
-      if (!projectId || projectId === -1 || !deploymentTarget) {
-        return;
-      }
-      const websocketKey = `${Math.random().toString(36).substring(2, 15)}`;
-      const apiEndpoint = `/api/projects/${projectId}/clusters/${deploymentTarget.cluster_id}/pod/status?selectors=${selectors}`;
-
-      const options: NewWebsocketOptions = {
-        onopen: () => {
-          // console.log("connected to websocket for selectors: ", selectors);
-        },
-        onmessage: (evt: MessageEvent) => {
-          const event = JSON.parse(evt.data);
-          const object = event.Object;
-          object.metadata.kind = event.Kind;
-
-          void updatePodsForController(controllerUid, selectors);
-        },
-        onclose: () => {
-          // console.log("closing websocket");
-        },
-        onerror: () => {
-          // console.log(err);
-          closeWebsocket(websocketKey);
-        },
-      };
-
-      newWebsocket(websocketKey, apiEndpoint, options);
-      openWebsocket(websocketKey);
-    };
-
-    const fetchControllers = async (): Promise<void> => {
-      if (!projectId || projectId === -1 || !addon) {
-        return;
-      }
-
-      setIsInitializingStatus(true);
-      try {
-        const resp = await api.getChartControllers(
-          "<token>",
-          {},
-          {
-            name: addon.name.value,
-            namespace: deploymentTarget.namespace,
-            cluster_id: deploymentTarget.cluster_id,
-            revision: 0,
-            id: projectId,
-          }
-        );
-        const parsed = z
-          .array(
-            z.object({
-              metadata: z.object({
-                uid: z.string(),
-              }),
-              spec: z.object({
-                selector: z.object({
-                  matchLabels: z.record(z.string()),
-                }),
-              }),
-            })
-          )
-          .safeParse(resp.data);
-        if (!parsed.success) {
-          // console.log(parsed.error);
-          return;
-        }
-
-        // this initializes the controllerPodMap on mount
-        const controllerPodMap: Record<string, ClientAddonPod[]> = {};
-        for (const controller of parsed.data) {
-          const selectors = Object.keys(
-            controller.spec.selector.matchLabels
-          ).map((key) => `${key}=${controller.spec.selector.matchLabels[key]}`);
-          const pods = await getPodsForSelectors(selectors.join(","));
-          controllerPodMap[controller.metadata.uid] = pods;
-        }
-        setControllerPodMap(controllerPodMap);
-
-        // this sets up websockets for each controller, for pod updates
-        for (const controller of parsed.data) {
-          const selectors = Object.keys(
-            controller.spec.selector.matchLabels
-          ).map((key) => `${key}=${controller.spec.selector.matchLabels[key]}`);
-          setupPodWebsocketWithSelectors(
-            controller.metadata.uid,
-            selectors.join(",")
-          );
-        }
-      } catch (err) {
-        // TODO: handle error
-      } finally {
-        setIsInitializingStatus(false);
-      }
-    };
-    void fetchControllers();
-  }, [projectId, deploymentTarget, addon]);
 
   useEffect(() => {
     return () => {

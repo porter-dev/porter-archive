@@ -395,7 +395,7 @@ func getProjectRoutes(
 		Router:   r,
 	})
 
-	// GET /api/projects/{project_id}/billing/dashboard -> project.NewGetUsageDashboardHandler
+	// POST /api/projects/{project_id}/billing/dashboard -> project.NewGetUsageDashboardHandler
 	getUsageDashboardEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbCreate,
@@ -420,6 +420,34 @@ func getProjectRoutes(
 	routes = append(routes, &router.Route{
 		Endpoint: getUsageDashboardEndpoint,
 		Handler:  getUsageDashboardHandler,
+		Router:   r,
+	})
+
+	// POST /api/projects/{project_id}/billing/ingest -> project.NewGetUsageDashboardHandler
+	ingestEventsEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/billing/ingest",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	ingestEventsHandler := billing.NewIngestEventsHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: ingestEventsEndpoint,
+		Handler:  ingestEventsHandler,
 		Router:   r,
 	})
 

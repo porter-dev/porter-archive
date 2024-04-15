@@ -119,7 +119,7 @@ func NewGetUsageDashboardHandler(
 }
 
 func (c *GetUsageDashboardHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx, span := telemetry.NewSpan(r.Context(), "get-usage-dashboard-endpoint")
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-usage-dashboard")
 	defer span.End()
 
 	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)

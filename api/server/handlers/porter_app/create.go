@@ -131,6 +131,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		revisionNumber, err := pollForRevisionNumber(ctx, pollForRevisionNumberInput{
 			ProjectID:  project.ID,
 			RevisionID: appImageResp.Msg.RevisionId,
+			Namespace:  namespace,
 			K8sAgent:   k8sAgent,
 		})
 		if err != nil {
@@ -619,7 +620,7 @@ func pollForRevisionNumber(ctx context.Context, input pollForRevisionNumberInput
 		if len(deploymentList.Items) > 0 {
 			firstDeployment := deploymentList.Items[0]
 
-			if len(firstDeployment.Spec.Template.Annotations) == 0 || firstDeployment.Spec.Template.Annotations["helm.sh/revision"] == "" {
+			if len(firstDeployment.Spec.Template.Annotations) > 0 && firstDeployment.Spec.Template.Annotations["helm.sh/revision"] != "" {
 				helmRevisionNumberString := firstDeployment.Spec.Template.Annotations["helm.sh/revision"]
 				helmRevisionNumber, err := strconv.Atoi(helmRevisionNumberString)
 				if err != nil {

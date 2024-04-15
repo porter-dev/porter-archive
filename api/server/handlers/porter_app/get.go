@@ -77,6 +77,7 @@ func (c *GetPorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		}
 
 		c.WriteResult(w, r, app.ToPorterAppTypeWithRevision(helmRelease.Version))
+		return
 	}
 
 	c.WriteResult(w, r, app.ToPorterAppType())

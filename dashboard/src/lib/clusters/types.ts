@@ -152,6 +152,10 @@ const awsMachineTypeValidator = z.enum([
   "r7a.16xlarge",
   "r7a.24xlarge",
   "r7a.32xlarge",
+  "r7g.medium",
+  "r7g.large",
+  "r7g.xlarge",
+  "r7g.2xlarge",
   "m5n.large",
   "m5n.xlarge",
   "m5n.2xlarge",
@@ -254,6 +258,7 @@ const azureMachineTypeValidator = z.enum([
   "Standard_NC16as_T4_v3",
   "Standard_NC64as_T4_v3",
   "Standard_D8s_v3",
+  "Standard_D8s_v5",
 ]);
 type AzureMachineType = z.infer<typeof azureMachineTypeValidator>;
 type AzureSKUTier = {

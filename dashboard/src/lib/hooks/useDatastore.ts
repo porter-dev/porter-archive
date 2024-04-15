@@ -122,6 +122,7 @@ const clientDbToCreateInput = (values: DbFormData): CreateDatastoreInput => {
               name: values.name,
               masterUserPassword: values.config.masterUserPassword,
               engineVersion: values.config.engineVersion,
+              allocatedStorage: values.config.allocatedStorageGigabytes,
               cpuCores: instanceTypeMatch?.cpuCores ?? 1,
               ramMegabytes: instanceTypeMatch?.ramGigabytes
                 ? instanceTypeMatch.ramGigabytes * 1024

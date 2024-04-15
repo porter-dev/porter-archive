@@ -8,6 +8,7 @@ import (
 	"gorm.io/gorm"
 )
 
+// AppEventWebhooks is a gorm model for storing webhook configuration for an app
 type AppEventWebhooks struct {
 	gorm.Model
 

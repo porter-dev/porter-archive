@@ -14,10 +14,12 @@ import (
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
+// AppEventWebhooksHandler is the handler for fetching app event webhooks
 type AppEventWebhooksHandler struct {
 	handlers.PorterHandlerReadWriter
 }
 
+// NewAppEventWebhooksHandler returns a AppEventWebhooksHandler
 func NewAppEventWebhooksHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
@@ -28,10 +30,12 @@ func NewAppEventWebhooksHandler(
 	}
 }
 
+// AppEventWebhooksResposne is the response payload for the AppEventWebhooksHandler
 type AppEventWebhooksResponse struct {
 	AppEventWebhooks []AppEventWebhook `json:"app_event_webhooks"`
 }
 
+// AppEventWebhook holds details for a single app event webhook
 type AppEventWebhook struct {
 	WebhookURL           string `json:"url"`
 	AppEventType         string `json:"app_event_type"`
@@ -39,6 +43,7 @@ type AppEventWebhook struct {
 	PayloadEncryptionKey string `json:"payload_encryption_key"`
 }
 
+// ServeHTTP handles the app event webhook fetch request
 func (a *AppEventWebhooksHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, span := telemetry.NewSpan(r.Context(), "serve-app-event-webhooks")
 	defer span.End()

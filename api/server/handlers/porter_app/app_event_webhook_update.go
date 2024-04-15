@@ -15,10 +15,12 @@ import (
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
+// UpdateAppEventWebhookHandler is the handler for updating app event webhooks
 type UpdateAppEventWebhookHandler struct {
 	handlers.PorterHandlerReadWriter
 }
 
+// NewAppEventWebhooksHandler returns a AppEventWebhooksHandler
 func NewUpdateAppEventWebhookHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
@@ -29,12 +31,15 @@ func NewUpdateAppEventWebhookHandler(
 	}
 }
 
+// UpdateAppEventWebhookRequest is the request payload for the UpdateAppEventWebhookHandler
 type UpdateAppEventWebhookRequest struct {
 	AppEventWebhooks []AppEventWebhook `json:"app_event_webhooks"`
 }
 
+// UpdateAppEventWebhook holds details for a single app event webhook
 type UpdateAppEventResponse struct{}
 
+// ServeHTTP handles the app event webhook update request
 func (a *UpdateAppEventWebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, span := telemetry.NewSpan(r.Context(), "serve-update-app-event-webhook")
 	defer span.End()
@@ -92,10 +97,10 @@ func (a *UpdateAppEventWebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.
 			return
 		}
 		ccpReq.Msg.AppEventWebhooks = append(ccpReq.Msg.AppEventWebhooks, &porterv1.AppEventWebhook{
-			WebhookUrl:           []byte(appEventWebhook.WebhookURL),
+			WebhookUrl:           appEventWebhook.WebhookURL,
 			AppEventType:         appEventTypeEnum,
 			AppEventStatus:       appEventStatusEnum,
-			PayloadEncryptionKey: []byte(appEventWebhook.PayloadEncryptionKey),
+			PayloadEncryptionKey: appEventWebhook.PayloadEncryptionKey,
 		})
 	}
 	_, err := a.Config().ClusterControlPlaneClient.UpdateAppEventWebhooks(ctx, ccpReq)
@@ -113,8 +118,6 @@ func toWebhookAppEventTypeEnum(appEventType string) (porterv1.WebhookAppEventTyp
 		return porterv1.WebhookAppEventType_WEBHOOK_APP_EVENT_TYPE_DEPLOY, nil
 	case "build":
 		return porterv1.WebhookAppEventType_WEBHOOK_APP_EVENT_TYPE_BUILD, nil
-	case "inittial_deploy":
-		return porterv1.WebhookAppEventType_WEBHOOK_APP_EVENT_TYPE_INIT_DEPLOY, nil
 	case "predeploy":
 		return porterv1.WebhookAppEventType_WEBHOOK_APP_EVENT_TYPE_PREDEPLOY, nil
 	default:
@@ -128,8 +131,6 @@ func toAppEventType(appEventWebhookEnum porterv1.WebhookAppEventType) (string, e
 		return "deploy", nil
 	case porterv1.WebhookAppEventType_WEBHOOK_APP_EVENT_TYPE_BUILD:
 		return "build", nil
-	case porterv1.WebhookAppEventType_WEBHOOK_APP_EVENT_TYPE_INIT_DEPLOY:
-		return "inittial_deploy", nil
 	case porterv1.WebhookAppEventType_WEBHOOK_APP_EVENT_TYPE_PREDEPLOY:
 		return "predeploy", nil
 	default:
@@ -145,8 +146,6 @@ func toWebhookAppEventStatusEnum(appEventStatus string) (porterv1.WebhookAppEven
 		return porterv1.WebhookAppEventStatus_WEBHOOK_APP_EVENT_STATUS_FAILED, nil
 	case "canceled":
 		return porterv1.WebhookAppEventStatus_WEBHOOK_APP_EVENT_STATUS_CANCELED, nil
-	case "progressing":
-		return porterv1.WebhookAppEventStatus_WEBHOOK_APP_EVENT_STATUS_PROGRESSING, nil
 	default:
 		return porterv1.WebhookAppEventStatus_WEBHOOK_APP_EVENT_STATUS_UNSPECIFIED, nil
 	}
@@ -160,8 +159,6 @@ func toAppEventStatus(appEventStatusEnum porterv1.WebhookAppEventStatus) (string
 		return "failed", nil
 	case porterv1.WebhookAppEventStatus_WEBHOOK_APP_EVENT_STATUS_CANCELED:
 		return "canceled", nil
-	case porterv1.WebhookAppEventStatus_WEBHOOK_APP_EVENT_STATUS_PROGRESSING:
-		return "progressing", nil
 	default:
 		return "", nil
 	}

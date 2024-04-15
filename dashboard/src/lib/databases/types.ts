@@ -305,6 +305,11 @@ const managedRedisConfigValidator = z.object({
     .nonempty("Master password is required")
     .default(""),
   engineVersion: z.string().default("7.1"),
+  allocatedStorageGigabytes: z
+    .number()
+    .int()
+    .positive("Allocated storage must be a positive integer")
+    .default(1),
 });
 
 export const dbFormValidator = z.object({

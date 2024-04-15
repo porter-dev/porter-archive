@@ -60,7 +60,7 @@ func (c *IngestEventsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	}
 
 	telemetry.WithAttributes(span,
-		telemetry.AttributeKV{Key: "usage-events", Value: len(ingestEventsRequest.Events)},
+		telemetry.AttributeKV{Key: "usage-events-count", Value: len(ingestEventsRequest.Events)},
 	)
 
 	err := c.Config().BillingManager.MetronomeClient.IngestEvents(ctx, ingestEventsRequest.Events)

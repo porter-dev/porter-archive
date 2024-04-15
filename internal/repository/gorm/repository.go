@@ -350,5 +350,6 @@ func NewRepository(db *gorm.DB, key *[32]byte, storageBackend credentials.Creden
 		datastore:                 NewDatastoreRepository(db),
 		appInstance:               NewAppInstanceRepository(db),
 		ipam:                      NewIpamRepository(db),
+		appEventWebhook:           NewAppEventWebhookRepository(db),
 	}
 }

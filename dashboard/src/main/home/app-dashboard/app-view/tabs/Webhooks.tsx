@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, {useEffect, useState } from "react";
 import styled from "styled-components";
 
 import Button from "components/porter/Button";
@@ -8,6 +8,10 @@ import Input from "components/porter/Input";
 import Select from "components/porter/Select";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
+
+import api from "shared/api";
+import { AppEventWebhook } from "shared/types";
+import { url } from "inspector";
 
 type Webhook = {
   step: string;
@@ -29,8 +33,76 @@ const statusOptions = [
   { value: "canceled", label: "Canceled" },
 ];
 
-const Webhooks: React.FC = () => {
+type Props = {
+  projectId: number;
+  deploymentTargetId: string;
+  appName: string;
+};
+
+const Webhooks: React.FC<Props> = ({ 
+  projectId,
+  deploymentTargetId, 
+  appName,
+}) => {
   const [webhooks, setWebhooks] = useState<Webhook[]>([]);
+  const [saveStatus, setSaveStatus] = useState<string>("");
+
+  useEffect(() => {
+    api.appEventWebhooks(
+      "<token>",
+      {},
+      { 
+        projectId: projectId,
+        deploymentTargetId: deploymentTargetId,
+        appName: appName,
+       },
+    )
+    .then(({ data:  { app_event_webhooks } }) =>  {
+      console.log(app_event_webhooks);
+        setWebhooks(app_event_webhooks.map((item: AppEventWebhook) => {
+          return {
+            url: item.url, 
+            step: item.appEventType,
+            status: item.appEventStatus, 
+            secret: item.payloadEncryptionKey,
+            hasSecret: item.payloadEncryptionKey.length > 0,
+          };
+      }))
+    })
+    .catch((err) => {
+      console.error(err);
+    });
+  }, []);
+
+  // TODO: implement
+  const saveWebhooks = (): void => {
+    setSaveStatus("loading");
+    api.updateAppEventWebhooks(
+      "<token>",
+      {
+        app_event_webhooks: webhooks.map((item: Webhook) => {
+          return {
+            url: item.url, 
+            appEventType: item.step,
+            appEventStatus: item.status, 
+            payloadEncryptionKey: item.secret,
+          };
+      })
+      },
+      { 
+        projectId: projectId,
+        deploymentTargetId: deploymentTargetId,
+        appName: appName,
+       },
+    )
+    .then(() => {
+      setSaveStatus("success");
+    })
+    .catch((err) => {
+      console.error(err)
+      setSaveStatus("error");
+    })
+  };
 
   const addWebhook = (): void => {
     setWebhooks([
@@ -45,12 +117,10 @@ const Webhooks: React.FC = () => {
     ]);
   };
 
-  // TODO: implement
-  const saveWebhooks = (): void => {};
 
   return (
     <StyledWebhooks>
-      {webhooks.map((webhook, i) => (
+      {webhooks?.map((webhook, i) => (
         <>
           <WebhookWrapper key={i}>
             <Container row>
@@ -138,7 +208,7 @@ const Webhooks: React.FC = () => {
           <I className="material-icons">add</I> Add row
         </Button>
         <Spacer x={1} inline />
-        <Button onClick={saveWebhooks}>Save webhooks</Button>
+        <Button onClick={saveWebhooks} status={saveStatus}>Save webhooks</Button>
       </Container>
     </StyledWebhooks>
   );

@@ -16,6 +16,6 @@ func NewAppEventWebhookRepository(canQuery bool, failingMethods ...string) repos
 	return &AppEventWebhookRepository{canQuery: false}
 }
 
-func (repo *AppEventWebhookRepository) Insert(context.Context, models.AppEventWebhook) (models.AppEventWebhook, error) {
-	return models.AppEventWebhook{}, errors.New("cannot read database")
+func (repo *AppEventWebhookRepository) Insert(context.Context, models.AppEventWebhooks) (models.AppEventWebhooks, error) {
+	return models.AppEventWebhooks{}, errors.New("cannot read database")
 }

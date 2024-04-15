@@ -35,12 +35,18 @@ const Settings: React.FC = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const { porterApp, clusterId, projectId } = useLatestRevision();
+  const { currentDeploymentTarget } = useDeploymentTarget();
   const { updateAppStep } = useAppAnalytics();
   const [isDeleting, setIsDeleting] = useState(false);
   const { control, register, watch } = useFormContext<PorterAppFormData>();
   const [githubWorkflowFilename, setGithubWorkflowFilename] = useState(
     `porter_stack_${porterApp.name}.yml`
   );
+
+  // this should always be in a deployment target context
+  if (!currentDeploymentTarget) {
+    return null;
+  }
 
   const workflowFileExists = useCallback(async () => {
     try {
@@ -151,7 +157,6 @@ const Settings: React.FC = () => {
     },
     [githubWorkflowFilename, porterApp.name, clusterId, projectId]
   );
-
   return (
     <StyledSettingsTab>
       <Text size={16}>Enable application auto-rollback</Text>
@@ -226,7 +231,11 @@ const Settings: React.FC = () => {
         Configure custom webhooks to trigger on different deployment events.
       </Text>
       <Spacer y={1} />
-      <Webhooks />
+      <Webhooks 
+        projectId={projectId}
+        appName={porterApp.name}
+        deploymentTargetId={currentDeploymentTarget.id}
+      />
       <Spacer y={1} />
       <Text size={16}>Export &quot;{porterApp.name}&quot;</Text>
       <Spacer y={0.5} />

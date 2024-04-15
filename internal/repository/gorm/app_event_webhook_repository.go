@@ -19,6 +19,6 @@ func NewAppEventWebhookRepository(db *gorm.DB) repository.AppEventWebhookReposit
 }
 
 // Insert is a placeholder - actual implementation of this repository in CCP
-func (repo *AppEventWebhookRepository) Insert(ctx context.Context, webhook models.AppEventWebhook) (models.AppEventWebhook, error) {
+func (repo *AppEventWebhookRepository) Insert(ctx context.Context, webhook models.AppEventWebhooks) (models.AppEventWebhooks, error) {
 	return webhook, nil
 }

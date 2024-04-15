@@ -7,5 +7,5 @@ import (
 )
 
 type AppEventWebhookRepository interface {
-	Insert(ctx context.Context, webhook models.AppEventWebhook) (models.AppEventWebhook, error)
+	Insert(ctx context.Context, webhook models.AppEventWebhooks) (models.AppEventWebhooks, error)
 }

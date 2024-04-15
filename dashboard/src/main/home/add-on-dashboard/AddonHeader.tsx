@@ -36,7 +36,15 @@ const AddonHeader: React.FC = () => {
         <Container row>
           <Text size={16}>Deploy status</Text>
           <Spacer x={1} inline />
-          {status.isLoading && <Text color="helper">Initializing...</Text>}
+          {status.isLoading ? (
+            <Text color="helper">Initializing...</Text>
+          ) : status.pods.every((p) => p.status === "running") ? (
+            <Text color="#01a05d">Deployed</Text>
+          ) : status.pods.some((p) => p.status === "failed") ? (
+            <Text color="#E1322E">Failed</Text>
+          ) : (
+            <Text color="#E49621">Deploying...</Text>
+          )}
         </Container>
         <Spacer y={0.5} />
         {status.isLoading ? (

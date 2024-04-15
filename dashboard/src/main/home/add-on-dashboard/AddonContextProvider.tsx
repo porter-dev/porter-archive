@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useMemo } from "react";
+import React, { createContext, useCallback, useContext, useMemo } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import styled from "styled-components";
 
 import Loading from "components/Loading";
@@ -8,6 +9,7 @@ import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import { type ClientAddon } from "lib/addons";
 import {
+  useAddon,
   useAddonList,
   useAddonStatus,
   type ClientAddonStatus,
@@ -25,6 +27,7 @@ type AddonContextType = {
   projectId: number;
   deploymentTarget: DeploymentTarget;
   status: ClientAddonStatus;
+  deleteAddon: () => Promise<void>;
 };
 
 const AddonContext = createContext<AddonContextType | null>(null);
@@ -59,6 +62,8 @@ export const AddonContextProvider: React.FC<AddonContextProviderProps> = ({
     projectId: currentProject?.id,
     deploymentTargetId: defaultDeploymentTarget.id,
   });
+  const { deleteAddon } = useAddon();
+  const queryClient = useQueryClient();
 
   // TODO: add getAddon call to backend
   const addon = useMemo(() => {
@@ -76,6 +81,20 @@ export const AddonContextProvider: React.FC<AddonContextProviderProps> = ({
     !!defaultDeploymentTarget &&
     !!currentProject &&
     currentProject.id !== -1;
+
+  const deleteContextAddon = useCallback(async () => {
+    if (!paramsExist || !addon) {
+      return;
+    }
+
+    await deleteAddon({
+      projectId: currentProject.id,
+      deploymentTargetId: defaultDeploymentTarget.id,
+      addon,
+    });
+
+    await queryClient.invalidateQueries(["listAddons"]);
+  }, [paramsExist]);
 
   if (isDefaultDeploymentTargetLoading || isAddonListLoading || !paramsExist) {
     return <Loading />;
@@ -103,6 +122,7 @@ export const AddonContextProvider: React.FC<AddonContextProviderProps> = ({
         projectId: currentProject.id,
         deploymentTarget: defaultDeploymentTarget,
         status,
+        deleteAddon: deleteContextAddon,
       }}
     >
       {children}

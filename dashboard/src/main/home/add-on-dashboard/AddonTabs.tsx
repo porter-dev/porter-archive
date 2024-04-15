@@ -13,6 +13,7 @@ import { type ClientAddon } from "lib/addons";
 import { useAddonContext } from "./AddonContextProvider";
 import AddonSaveButton from "./AddonSaveButton";
 import DatadogForm from "./DatadogForm";
+import Settings from "./tabs/Settings";
 
 const validTabs = ["overview", "settings", "advanced"] as const;
 const DEFAULT_TAB = "overview" as const;
@@ -88,7 +89,7 @@ const AddonTabs: React.FC<Props> = ({ tabParam }) => {
             .with("datadog", () => <DatadogForm />)
             .otherwise(() => null)
         )
-        // .with("settings", () => <Settings />)
+        .with("settings", () => <Settings />)
         .otherwise(() => null)}
     </DashboardWrapper>
   );

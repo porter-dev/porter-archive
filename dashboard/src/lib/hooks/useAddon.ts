@@ -96,6 +96,15 @@ export const useAddon = (): {
     deploymentTargetId: string;
     addon: ClientAddon;
   }) => Promise<void>;
+  deleteAddon: ({
+    projectId,
+    deploymentTargetId,
+    addon,
+  }: {
+    projectId: number;
+    deploymentTargetId: string;
+    addon: ClientAddon;
+  }) => Promise<void>;
 } => {
   const updateAddon = async ({
     projectId,
@@ -120,8 +129,29 @@ export const useAddon = (): {
     );
   };
 
+  const deleteAddon = async ({
+    projectId,
+    deploymentTargetId,
+    addon,
+  }: {
+    projectId: number;
+    deploymentTargetId: string;
+    addon: ClientAddon;
+  }): Promise<void> => {
+    await api.deleteAddon(
+      "<token>",
+      {},
+      {
+        projectId,
+        deploymentTargetId,
+        addonName: addon.name.value,
+      }
+    );
+  };
+
   return {
     updateAddon,
+    deleteAddon,
   };
 };
 

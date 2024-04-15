@@ -1323,6 +1323,17 @@ const updateAddon = baseApi<
   return `/api/projects/${projectId}/targets/${deploymentTargetId}/addons/update`;
 });
 
+const deleteAddon = baseApi<
+  {},
+  {
+    projectId: number;
+    deploymentTargetId: string;
+    addonName: string;
+  }
+>("DELETE", ({ projectId, deploymentTargetId, addonName }) => {
+  return `/api/projects/${projectId}/targets/${deploymentTargetId}/addons/${addonName}`;
+});
+
 const getGitlabProcfileContents = baseApi<
   {
     path: string;
@@ -3465,8 +3476,8 @@ const getPublishableKey = baseApi<
 const getUsageDashboard = baseApi<
   {
     dashboard: string;
-    dashboard_options?: { key: string; value: string }[];
-    color_overrides?: { name: string; value: string }[];
+    dashboard_options?: Array<{ key: string; value: string }>;
+    color_overrides?: Array<{ name: string; value: string }>;
   },
   {
     project_id?: number;
@@ -3754,6 +3765,7 @@ export default {
   getAppTemplate,
   listAddons,
   updateAddon,
+  deleteAddon,
   getGitlabProcfileContents,
   getProjectClusters,
   getProjectRegistries,

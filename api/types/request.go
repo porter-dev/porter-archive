@@ -61,6 +61,7 @@ const (
 	URLParamCloudProviderType     URLParam = "cloud_provider_type"
 	URLParamCloudProviderID       URLParam = "cloud_provider_id"
 	URLParamDeploymentTargetID    URLParam = "deployment_target_id"
+	URLParamAddonName             URLParam = "addon_name"
 	// URLParamDeploymentTargetIdentifier can be either the deployment target id or deployment target name
 	URLParamDeploymentTargetIdentifier URLParam = "deployment_target_identifier"
 	URLParamWebhookID                  URLParam = "webhook_id"

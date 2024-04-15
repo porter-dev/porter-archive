@@ -204,5 +204,34 @@ func getDeploymentTargetRoutes(
 		Router:   r,
 	})
 
+	// DELETE /api/projects/{project_id}/targets/{deployment_target_identifier}/addons/{addon_name} -> addons.DeleteAddonHandler
+	deleteAddonEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbDelete,
+			Method: types.HTTPVerbDelete,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/addons/{%s}", relPath, types.URLParamAddonName),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.DeploymentTargetScope,
+			},
+		},
+	)
+
+	deleteAddonHandler := addons.NewDeleteAddonHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: deleteAddonEndpoint,
+		Handler:  deleteAddonHandler,
+		Router:   r,
+	})
+
 	return routes, newPath
 }

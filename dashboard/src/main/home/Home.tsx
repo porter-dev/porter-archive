@@ -472,6 +472,9 @@ const Home: React.FC<Props> = (props) => {
                   <LegacyNewAddOnFlow />
                 )}
               </Route>
+              <Route path="/addons/:addonName/:tab">
+                <AddonView />
+              </Route>
               <Route path="/addons/:addonName">
                 <AddonView />
               </Route>

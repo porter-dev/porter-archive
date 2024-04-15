@@ -259,6 +259,10 @@ func (m MetronomeClient) GetCustomerDashboard(ctx context.Context, customerID uu
 
 // IngestEvents sends a list of billing events to Metronome's ingest endpoint
 func (m MetronomeClient) IngestEvents(ctx context.Context, events []types.BillingEvent) (err error) {
+	if len(events) == 0 {
+		return nil
+	}
+
 	path := "ingest"
 
 	var currentAttempts int

@@ -140,3 +140,12 @@ type ColorOverride struct {
 	Name  string `json:"name"`
 	Value string `json:"value"`
 }
+
+// BillingEvent represents a Metronome billing event.
+type BillingEvent struct {
+	CustomerID    string                 `json:"customer_id"`
+	EventType     string                 `json:"event_type"`
+	Properties    map[string]interface{} `json:"properties"`
+	TransactionID string                 `json:"transaction_id"`
+	Timestamp     string                 `json:"timestamp"`
+}

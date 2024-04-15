@@ -7,10 +7,9 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
-
-	"github.com/porter-dev/api-contracts/generated/go/porter/v1/porterv1connect"
 
 	"connectrpc.com/connect"
 
@@ -119,10 +118,20 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			return
 		}
 
+		namespace := fmt.Sprintf("app-%s", appName)
+		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "application-name", Value: appName})
+
+		k8sAgent, err := c.GetAgent(r, cluster, namespace)
+		if err != nil {
+			err = telemetry.Error(ctx, span, err, "error getting k8s agent")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+
 		revisionNumber, err := pollForRevisionNumber(ctx, pollForRevisionNumberInput{
 			ProjectID:  project.ID,
 			RevisionID: appImageResp.Msg.RevisionId,
-			CCPClient:  c.Config().ClusterControlPlaneClient,
+			K8sAgent:   k8sAgent,
 		})
 		if err != nil {
 			err := telemetry.Error(ctx, span, err, "error polling for revision number")
@@ -583,7 +592,8 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 type pollForRevisionNumberInput struct {
 	ProjectID  uint
 	RevisionID string
-	CCPClient  porterv1connect.ClusterControlPlaneServiceClient
+	Namespace  string
+	K8sAgent   *kubernetes.Agent
 }
 
 func pollForRevisionNumber(ctx context.Context, input pollForRevisionNumberInput) (int, error) {
@@ -597,20 +607,28 @@ func pollForRevisionNumber(ctx context.Context, input pollForRevisionNumberInput
 			return 0, telemetry.Error(ctx, span, nil, "timed out waiting for revision number")
 		}
 
-		appRevisionResp, err := input.CCPClient.GetAppRevision(ctx, connect.NewRequest(&porterv1.GetAppRevisionRequest{
-			ProjectId:     int64(input.ProjectID),
-			AppRevisionId: input.RevisionID,
-		}))
+		deploymentList, err := input.K8sAgent.GetDeploymentsBySelector(ctx, input.Namespace, fmt.Sprintf("porter.run/app-revision-id=%s", input.RevisionID))
 		if err != nil {
 			return 0, telemetry.Error(ctx, span, err, "error getting app revision")
 		}
 
-		if appRevisionResp == nil || appRevisionResp.Msg == nil || appRevisionResp.Msg.AppRevision == nil {
-			return 0, telemetry.Error(ctx, span, err, "app revision resp is nil")
+		if deploymentList == nil {
+			return 0, telemetry.Error(ctx, span, nil, "deployment list is nil")
 		}
 
-		if appRevisionResp.Msg.AppRevision.RevisionNumber != 0 {
-			return int(appRevisionResp.Msg.AppRevision.RevisionNumber), nil
+		if len(deploymentList.Items) > 0 {
+			firstDeployment := deploymentList.Items[0]
+
+			if len(firstDeployment.Spec.Template.Annotations) == 0 || firstDeployment.Spec.Template.Annotations["helm.sh/revision"] == "" {
+				helmRevisionNumberString := firstDeployment.Spec.Template.Annotations["helm.sh/revision"]
+				helmRevisionNumber, err := strconv.Atoi(helmRevisionNumberString)
+				if err != nil {
+					err = telemetry.Error(ctx, span, err, "error converting helm revision number to int")
+					return 0, err
+				}
+
+				return helmRevisionNumber, nil
+			}
 		}
 
 		time.Sleep(2 * time.Second)

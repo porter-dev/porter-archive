@@ -168,6 +168,7 @@ func (t *GormRepository) SlackIntegration() repository.SlackIntegrationRepositor
 	return t.slackIntegration
 }
 
+// AppEventWebhook returns the AppEventWebhookRepository interface implemented by gorm
 func (t *GormRepository) AppEventWebhook() repository.AppEventWebhookRepository {
 	return t.appEventWebhook
 }

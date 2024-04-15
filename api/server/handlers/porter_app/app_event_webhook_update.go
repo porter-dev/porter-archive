@@ -1,7 +1,6 @@
 package porter_app
 
 import (
-	"errors"
 	"net/http"
 
 	"connectrpc.com/connect"
@@ -20,7 +19,7 @@ type UpdateAppEventWebhookHandler struct {
 	handlers.PorterHandlerReadWriter
 }
 
-// NewAppEventWebhooksHandler returns a AppEventWebhooksHandler
+// NewUpdateAppEventWebhookHandler returns an AppEventWebhooksHandler
 func NewUpdateAppEventWebhookHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
@@ -36,8 +35,8 @@ type UpdateAppEventWebhookRequest struct {
 	AppEventWebhooks []AppEventWebhook `json:"app_event_webhooks"`
 }
 
-// UpdateAppEventWebhook holds details for a single app event webhook
-type UpdateAppEventResponse struct{}
+// UpdateAppEventWebhookResponse holds details for a single app event webhook
+type UpdateAppEventWebhookResponse struct{}
 
 // ServeHTTP handles the app event webhook update request
 func (a *UpdateAppEventWebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -109,57 +108,5 @@ func (a *UpdateAppEventWebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.
 		a.HandleAPIError(w, r, apierrors.NewErrInternal(e))
 		return
 	}
-	a.WriteResult(w, r, UpdateAppEventResponse{})
-}
-
-func toWebhookAppEventTypeEnum(appEventType string) (porterv1.WebhookAppEventType, error) {
-	switch appEventType {
-	case "deploy":
-		return porterv1.WebhookAppEventType_WEBHOOK_APP_EVENT_TYPE_DEPLOY, nil
-	case "build":
-		return porterv1.WebhookAppEventType_WEBHOOK_APP_EVENT_TYPE_BUILD, nil
-	case "predeploy":
-		return porterv1.WebhookAppEventType_WEBHOOK_APP_EVENT_TYPE_PREDEPLOY, nil
-	default:
-		return porterv1.WebhookAppEventType_WEBHOOK_APP_EVENT_TYPE_UNSPECIFIED, errors.New("unsupported app event type")
-	}
-}
-
-func toAppEventType(appEventWebhookEnum porterv1.WebhookAppEventType) (string, error) {
-	switch appEventWebhookEnum {
-	case porterv1.WebhookAppEventType_WEBHOOK_APP_EVENT_TYPE_DEPLOY:
-		return "deploy", nil
-	case porterv1.WebhookAppEventType_WEBHOOK_APP_EVENT_TYPE_BUILD:
-		return "build", nil
-	case porterv1.WebhookAppEventType_WEBHOOK_APP_EVENT_TYPE_PREDEPLOY:
-		return "predeploy", nil
-	default:
-		return "", errors.New("unsupported app event type")
-	}
-}
-
-func toWebhookAppEventStatusEnum(appEventStatus string) (porterv1.WebhookAppEventStatus, error) {
-	switch appEventStatus {
-	case "success":
-		return porterv1.WebhookAppEventStatus_WEBHOOK_APP_EVENT_STATUS_SUCCESS, nil
-	case "failed":
-		return porterv1.WebhookAppEventStatus_WEBHOOK_APP_EVENT_STATUS_FAILED, nil
-	case "canceled":
-		return porterv1.WebhookAppEventStatus_WEBHOOK_APP_EVENT_STATUS_CANCELED, nil
-	default:
-		return porterv1.WebhookAppEventStatus_WEBHOOK_APP_EVENT_STATUS_UNSPECIFIED, nil
-	}
-}
-
-func toAppEventStatus(appEventStatusEnum porterv1.WebhookAppEventStatus) (string, error) {
-	switch appEventStatusEnum {
-	case porterv1.WebhookAppEventStatus_WEBHOOK_APP_EVENT_STATUS_SUCCESS:
-		return "success", nil
-	case porterv1.WebhookAppEventStatus_WEBHOOK_APP_EVENT_STATUS_FAILED:
-		return "failed", nil
-	case porterv1.WebhookAppEventStatus_WEBHOOK_APP_EVENT_STATUS_CANCELED:
-		return "canceled", nil
-	default:
-		return "", nil
-	}
+	a.WriteResult(w, r, UpdateAppEventWebhookResponse{})
 }

@@ -8,12 +8,12 @@ import (
 	"gorm.io/gorm"
 )
 
-// AppEvetnWebhookRespostiory provides storage for app event webhook config
+// AppEventWebhookRepository provides storage for app event webhook config
 type AppEventWebhookRepository struct {
 	db *gorm.DB
 }
 
-// NewAppEventWebhookRespository returns a dummy AppEventWebhookRespository
+// NewAppEventWebhookRepository returns a dummy AppEventWebhookRespository
 func NewAppEventWebhookRepository(db *gorm.DB) repository.AppEventWebhookRepository {
 	return &AppEventWebhookRepository{db}
 }

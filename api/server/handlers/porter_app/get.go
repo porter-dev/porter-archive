@@ -39,6 +39,7 @@ func (c *GetPorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	defer span.End()
 
 	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
+	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
 	appName, reqErr := requestutils.GetURLParamString(r, types.URLParamPorterAppName)
 	if reqErr != nil {
@@ -60,19 +61,23 @@ func (c *GetPorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	namespace := fmt.Sprintf("app-%s", app.Name)
-	helmAgent, err := c.GetHelmAgent(ctx, r, cluster, namespace)
-	if err != nil {
-		err = telemetry.Error(ctx, span, err, "error getting helm agent")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-		return
-	}
-	helmRelease, err := helmAgent.GetRelease(ctx, appName, 0, false)
-	if err != nil {
-		err = telemetry.Error(ctx, span, err, "error getting helm release for app")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-		return
+	if project.ID == 10004 || project.ID == 9952 {
+		namespace := fmt.Sprintf("app-%s", app.Name)
+		helmAgent, err := c.GetHelmAgent(ctx, r, cluster, namespace)
+		if err != nil {
+			err = telemetry.Error(ctx, span, err, "error getting helm agent")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+		helmRelease, err := helmAgent.GetRelease(ctx, appName, 0, false)
+		if err != nil {
+			err = telemetry.Error(ctx, span, err, "error getting helm release for app")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+
+		c.WriteResult(w, r, app.ToPorterAppTypeWithRevision(helmRelease.Version))
 	}
 
-	c.WriteResult(w, r, app.ToPorterAppTypeWithRevision(helmRelease.Version))
+	c.WriteResult(w, r, app.ToPorterAppType())
 }

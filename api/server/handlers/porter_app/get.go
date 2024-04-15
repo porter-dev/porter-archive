@@ -1,6 +1,7 @@
 package porter_app
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/authz"
@@ -10,7 +11,6 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
-	utils "github.com/porter-dev/porter/api/utils/porter_app"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/telemetry"
 )
@@ -30,13 +30,15 @@ func NewGetPorterAppHandler(
 	}
 }
 
+// ServeHTTP handles the get porter app API endpoint
+//
+// NOTE: This endpoint is still in use as of 2024-04-15.
 func (c *GetPorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	ctx, span := telemetry.NewSpan(ctx, "serve-get-porter-app")
 	defer span.End()
 
 	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
-	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
 	appName, reqErr := requestutils.GetURLParamString(r, types.URLParamPorterAppName)
 	if reqErr != nil {
@@ -58,14 +60,7 @@ func (c *GetPorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// this is a temporary fix until we figure out how to reconcile the new revisions table
-	// with dependencies on helm releases throuhg the api
-	if project.GetFeatureFlag(models.ValidateApplyV2, c.Config().LaunchDarklyClient) {
-		c.WriteResult(w, r, app.ToPorterAppType())
-		return
-	}
-
-	namespace := utils.NamespaceFromPorterAppName(appName)
+	namespace := fmt.Sprintf("app-%s", app.Name)
 	helmAgent, err := c.GetHelmAgent(ctx, r, cluster, namespace)
 	if err != nil {
 		err = telemetry.Error(ctx, span, err, "error getting helm agent")

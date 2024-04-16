@@ -28,7 +28,6 @@ func RegisterCommands() (*cobra.Command, error) {
 	rootCmd.AddCommand(registerCommand_Auth(cliConf))
 	rootCmd.AddCommand(registerCommand_Cluster(cliConf))
 	rootCmd.AddCommand(registerCommand_Config(cliConf))
-	rootCmd.AddCommand(registerCommand_Connect(cliConf))
 	rootCmd.AddCommand(registerCommand_Create(cliConf))
 	rootCmd.AddCommand(registerCommand_Delete(cliConf))
 	rootCmd.AddCommand(registerCommand_Deploy(cliConf))

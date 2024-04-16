@@ -44,9 +44,6 @@ function BillingPage(): JSX.Element {
 
   const { refetchPaymentEnabled } = checkIfProjectHasPayment();
 
-  // const { url: usageDashboard } = useCustomeUsageDashboard("usage");
-
-  // This will return the aggregated daily usage, only for this billing period
   const { usage } = useCustomerUsage("day", true);
 
   const processedData = useMemo(() => {
@@ -54,7 +51,7 @@ function BillingPage(): JSX.Element {
     const resultMap = new Map();
 
     before?.forEach((metric) => {
-      const metricName = metric.metric_name.toLowerCase().replace(" ", "_");
+      const metricName = metric.metric_name.toLowerCase().replacqme(" ", "_");
       metric.usage_metrics.forEach(({ starting_on, value }) => {
         if (resultMap.has(starting_on)) {
           resultMap.get(starting_on)[metricName] = value;

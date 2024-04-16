@@ -21,11 +21,7 @@ type Props = {
   title?: string;
 };
 
-const CustomTooltip = ({
-  active,
-  payload,
-  label,
-}: TooltipProps<string, string>) => {
+const CustomTooltip = ({ active, payload }: TooltipProps<string, string>) => {
   if (active && payload?.length) {
     return (
       <div

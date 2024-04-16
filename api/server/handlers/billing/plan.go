@@ -204,12 +204,11 @@ func (c *ListCustomerUsageHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	credits, err := c.Config().BillingManager.MetronomeClient.ListCustomerUsage(ctx, proj.UsageID, req.StartingOn, req.EndingBefore, req.WindowSize, req.CurrentPeriod)
+	usage, err := c.Config().BillingManager.MetronomeClient.ListCustomerUsage(ctx, proj.UsageID, req.StartingOn, req.EndingBefore, req.WindowSize, req.CurrentPeriod)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error listing customer usage")
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
-
-	c.WriteResult(w, r, credits)
+	c.WriteResult(w, r, usage)
 }

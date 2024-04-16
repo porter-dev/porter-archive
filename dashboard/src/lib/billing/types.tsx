@@ -27,12 +27,18 @@ export const Plan = z.object({
   trial_info: Trial,
 });
 
-export type UsageList = Usage[];
-export type Usage = z.infer<typeof Usage>;
-export const Usage = z.object({
+export type UsageMetric = z.infer<typeof UsageMetricValidator>;
+export const UsageMetricValidator = z.object({
   starting_on: z.string(),
   ending_on: z.string(),
   value: z.number(),
+});
+
+export type UsageList = Usage[];
+export type Usage = z.infer<typeof UsageValidator>;
+export const UsageValidator = z.object({
+  metric_name: z.string(),
+  usage_metrics: z.array(UsageMetricValidator),
 });
 
 export type CreditGrants = z.infer<typeof CreditGrantsValidator>;

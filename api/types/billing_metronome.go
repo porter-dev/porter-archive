@@ -83,13 +83,19 @@ type ListCustomerUsageRequest struct {
 	CustomerID       uuid.UUID `json:"customer_id"`
 	BillableMetricID uuid.UUID `json:"billable_metric_id"`
 	WindowSize       string    `json:"window_size"`
-	StartingOn       string    `json:"starting_on"`
-	EndingBefore     string    `json:"ending_before"`
-	CurrentPeriod    bool      `json:"current_period"`
+	StartingOn       string    `json:"starting_on,omitempty"`
+	EndingBefore     string    `json:"ending_before,omitempty"`
+	CurrentPeriod    bool      `json:"current_period,omitempty"`
 }
 
-// Usage is the usage of a customer
+// Usage is the aggregated usage for a customer
 type Usage struct {
+	MetricName   string                `json:"metric_name"`
+	UsageMetrics []CustomerUsageMetric `json:"usage_metrics"`
+}
+
+// CustomerUsageMetric is a metric representing usage for a customer
+type CustomerUsageMetric struct {
 	StartingOn   string  `json:"starting_on"`
 	EndingBefore string  `json:"ending_before"`
 	Value        float64 `json:"value"`

@@ -8,10 +8,10 @@ import {
   PaymentMethodValidator,
   Plan,
   UsageValidator,
-  UsageList,
   type CreditGrants,
   type PaymentMethod,
   type PaymentMethodList,
+  type UsageList,
 } from "lib/billing/types";
 
 import api from "shared/api";
@@ -62,7 +62,6 @@ type TGetPlan = {
 type TGetUsage = {
   usage: UsageList | undefined;
 };
-
 
 const embeddableDashboardColors = {
   grayDark: "Gray_dark",

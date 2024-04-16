@@ -3,6 +3,8 @@ package router
 import (
 	"fmt"
 
+	"github.com/porter-dev/porter/api/server/handlers/cloud_provider"
+
 	"github.com/porter-dev/porter/api/server/handlers/deployment_target"
 
 	"github.com/go-chi/chi/v5"
@@ -1794,6 +1796,35 @@ func getProjectRoutes(
 	routes = append(routes, &router.Route{
 		Endpoint: preflightCheckEndpoint,
 		Handler:  preflightCheckHandler,
+		Router:   r,
+	})
+
+	// POST /api/projects/{project_id}/cloud/machines -> apiContract.NewCloudProviderMachineTypesHandler
+	machineTypeEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb: types.APIVerbGet,
+			// need to use POST for body
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/cloud/machines", relPath),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	machineTypeHandler := cloud_provider.NewCloudProviderMachineTypesHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: machineTypeEndpoint,
+		Handler:  machineTypeHandler,
 		Router:   r,
 	})
 

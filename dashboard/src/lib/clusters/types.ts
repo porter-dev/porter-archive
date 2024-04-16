@@ -607,3 +607,8 @@ export type UpdateClusterResponse =
       preflightChecks?: ClientPreflightCheck[];
       createContractResponse: CreateContractResponse;
     };
+
+export const machineTypeValidator = z.object({
+  name: z.string(),
+});
+export type MachineType = z.infer<typeof machineTypeValidator>;

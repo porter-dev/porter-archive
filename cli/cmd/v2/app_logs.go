@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -26,6 +27,11 @@ type AppLogsInput struct {
 	AppName string
 	// ServiceName is an optional service name filter
 	ServiceName string
+}
+
+// LogLine represents a single line of log output
+type LogLine struct {
+	Line string `json:"line"`
 }
 
 // ServiceName_AllServices is a special value for ServiceName that indicates all services should be included
@@ -71,27 +77,29 @@ func AppLogs(ctx context.Context, inp AppLogsInput) error {
 		case <-ctx.Done():
 			return ctx.Err()
 		default:
-			_, message, _ := conn.ReadMessage()
+			_, message, err := conn.ReadMessage()
 			if err != nil {
-				return err
+				return fmt.Errorf("error reading message from app logs stream: %w", err)
 			}
 			if len(message) == 0 {
 				return nil
 			}
 
-			var line struct {
-				Line string `json:"line"`
+			lines := strings.Split(string(message), "\n")
+			for _, l := range lines {
+				var line LogLine
+
+				err = json.Unmarshal([]byte(l), &line)
+				if err != nil {
+					continue
+				}
+
+				message = append([]byte(line.Line), '\n')
+				if _, err = os.Stdout.Write(message); err != nil {
+					return nil
+				}
 			}
 
-			err = json.Unmarshal(message, &line)
-			if err != nil {
-				return err
-			}
-
-			message = append([]byte(line.Line), '\n')
-			if _, err = os.Stdout.Write(message); err != nil {
-				return nil
-			}
 		}
 	}
 }

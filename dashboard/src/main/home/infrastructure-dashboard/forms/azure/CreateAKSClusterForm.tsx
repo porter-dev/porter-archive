@@ -3,7 +3,7 @@ import { useFormContext } from "react-hook-form";
 import { match } from "ts-pattern";
 
 import { CloudProviderAzure } from "lib/clusters/constants";
-import { MachineType, type ClientClusterContract } from "lib/clusters/types";
+import { type ClientClusterContract } from "lib/clusters/types";
 import { useClusterAnalytics } from "lib/hooks/useClusterAnalytics";
 
 import { useClusterFormContext } from "../../ClusterFormContextProvider";
@@ -20,19 +20,11 @@ const CreateAKSClusterForm: React.FC<Props> = ({
   projectId,
   projectName,
 }) => {
-  const { availableMachineTypes } = useClusterFormContext();
-
   const [step, setStep] = useState<"permissions" | "cluster">("permissions");
 
   const { setValue, reset } = useFormContext<ClientClusterContract>();
   const { setCurrentContract } = useClusterFormContext();
   const { reportToAnalytics } = useClusterAnalytics();
-
-  const { watch } = useFormContext<ClientClusterContract>();
-
-  const cloudProviderCredentialIdentifier = watch(
-    "cluster.cloudProviderCredentialsId"
-  );
 
   useEffect(() => {
     const truncatedProjectName = projectName
@@ -109,13 +101,6 @@ const CreateAKSClusterForm: React.FC<Props> = ({
         goBack={() => {
           setStep("permissions");
           setValue("cluster.cloudProviderCredentialsId", "");
-        }}
-        availableMachineTypes={async (region: string) => {
-          return await availableMachineTypes(
-            "azure",
-            cloudProviderCredentialIdentifier,
-            region
-          );
         }}
       />
     ))

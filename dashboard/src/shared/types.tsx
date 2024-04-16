@@ -773,3 +773,10 @@ export type Soc2Check = {
 export type Soc2Data = {
   soc2_checks: Record<string, Soc2Check>;
 };
+
+export type AppEventWebhook = {
+  url: string;
+  app_event_type: string;
+  app_event_status: string;
+  payload_encryption_key: string;
+}

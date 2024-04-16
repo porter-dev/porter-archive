@@ -33,6 +33,7 @@ type GormRepository struct {
 	githubAppInstallation     repository.GithubAppInstallationRepository
 	githubAppOAuthIntegration repository.GithubAppOAuthIntegrationRepository
 	slackIntegration          repository.SlackIntegrationRepository
+	appEventWebhook           repository.AppEventWebhookRepository
 	gitlabIntegration         repository.GitlabIntegrationRepository
 	gitlabAppOAuthIntegration repository.GitlabAppOAuthIntegrationRepository
 	notificationConfig        repository.NotificationConfigRepository
@@ -165,6 +166,11 @@ func (t *GormRepository) GithubAppOAuthIntegration() repository.GithubAppOAuthIn
 
 func (t *GormRepository) SlackIntegration() repository.SlackIntegrationRepository {
 	return t.slackIntegration
+}
+
+// AppEventWebhook returns the AppEventWebhookRepository interface implemented by gorm
+func (t *GormRepository) AppEventWebhook() repository.AppEventWebhookRepository {
+	return t.appEventWebhook
 }
 
 func (t *GormRepository) GitlabIntegration() repository.GitlabIntegrationRepository {
@@ -345,5 +351,6 @@ func NewRepository(db *gorm.DB, key *[32]byte, storageBackend credentials.Creden
 		datastore:                 NewDatastoreRepository(db),
 		appInstance:               NewAppInstanceRepository(db),
 		ipam:                      NewIpamRepository(db),
+		appEventWebhook:           NewAppEventWebhookRepository(db),
 	}
 }

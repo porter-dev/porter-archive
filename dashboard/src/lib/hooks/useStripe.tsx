@@ -313,10 +313,13 @@ export const useCustomerPlan = (): TGetPlan => {
   };
 };
 
-export const useCustomerUsage = (windowSize: string, currentPeriod: boolean): TGetUsage => {
+export const useCustomerUsage = (
+  windowSize: string,
+  currentPeriod: boolean
+): TGetUsage => {
   const { currentProject } = useContext(Context);
 
-  // Fetch current plan
+  // Fetch customer usage
   const usageReq = useQuery(
     ["listCustomerUsage", currentProject?.id],
     async () => {

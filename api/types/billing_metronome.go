@@ -78,6 +78,28 @@ type EmbeddableDashboardRequest struct {
 	ColorOverrides []ColorOverride `json:"color_overrides,omitempty"`
 }
 
+// ListCustomerUsageRequest is the request to list usage for a customer
+type ListCustomerUsageRequest struct {
+	CustomerID       uuid.UUID `json:"customer_id"`
+	BillableMetricID uuid.UUID `json:"billable_metric_id"`
+	WindowSize       string    `json:"window_size"`
+	StartingOn       string    `json:"starting_on"`
+	EndingBefore     string    `json:"ending_before"`
+	CurrentPeriod    bool      `json:"current_period"`
+}
+
+// Usage is the usage of a customer
+type Usage struct {
+	StartingOn   string  `json:"starting_on"`
+	EndingBefore string  `json:"ending_before"`
+	Value        float64 `json:"value"`
+}
+
+type BillableMetric struct {
+	ID   uuid.UUID `json:"id"`
+	Name string    `json:"name"`
+}
+
 // Plan is a pricing plan to which a user is currently subscribed
 type Plan struct {
 	ID                  uuid.UUID `json:"id"`

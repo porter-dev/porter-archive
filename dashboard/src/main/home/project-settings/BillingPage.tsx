@@ -13,6 +13,7 @@ import Text from "components/porter/Text";
 import {
   checkIfProjectHasPayment,
   useCustomerPlan,
+  useCustomerUsage,
   useCustomeUsageDashboard,
   usePaymentMethods,
   usePorterCredits,
@@ -45,6 +46,9 @@ function BillingPage(): JSX.Element {
   const { refetchPaymentEnabled } = checkIfProjectHasPayment();
 
   const { url: usageDashboard } = useCustomeUsageDashboard("usage");
+
+  const { usage } = useCustomerUsage();
+  console.log(usage)
 
   const formatCredits = (credits: number): string => {
     return (credits / 100).toFixed(2);
@@ -195,10 +199,10 @@ function BillingPage(): JSX.Element {
               <Spacer inline x={1} />
               <Text size={20}>
                 {creditGrants !== undefined &&
-                creditGrants.remaining_credits > 0
+                  creditGrants.remaining_credits > 0
                   ? `$${formatCredits(
-                      creditGrants.remaining_credits
-                    )}/$${formatCredits(creditGrants.granted_credits)}`
+                    creditGrants.remaining_credits
+                  )}/$${formatCredits(creditGrants.granted_credits)}`
                   : "$ 0.00"}
               </Text>
             </Container>
@@ -224,7 +228,7 @@ function BillingPage(): JSX.Element {
                     </Container>
                     <Container row>
                       {plan.trial_info !== undefined &&
-                      plan.trial_info.ending_before !== "" ? (
+                        plan.trial_info.ending_before !== "" ? (
                         <Text>
                           Free trial ends{" "}
                           {relativeTime(plan.trial_info.ending_before)}

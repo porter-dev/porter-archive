@@ -16,11 +16,11 @@ import type {
   NodeGroupType,
 } from "lib/clusters/types";
 import { useIntercom } from "lib/hooks/useIntercom";
+import { useMachineTypeList } from "lib/hooks/useNodeGroups";
 
 import { Context } from "shared/Context";
 import { valueExists } from "shared/util";
 
-import { useMachineTypeList } from "../../../../../lib/hooks/useNodeGroups";
 import { useClusterFormContext } from "../../ClusterFormContextProvider";
 import ClusterSaveButton from "../../ClusterSaveButton";
 import NodeGroups from "../../shared/NodeGroups";

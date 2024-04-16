@@ -41,3 +41,8 @@ func (repo *DeploymentTargetRepository) CreateDeploymentTarget(deploymentTarget 
 func (repo *DeploymentTargetRepository) DeploymentTarget(projectID uint, deploymentTargetIdentifier string) (*models.DeploymentTarget, error) {
 	return nil, errors.New("cannot read database")
 }
+
+// DeploymentTargetById finds a deployment target by its uuid
+func (repo *DeploymentTargetRepository) DeploymentTargetById(id string) (*models.DeploymentTarget, error) {
+	return nil, errors.New("cannot read database")
+}

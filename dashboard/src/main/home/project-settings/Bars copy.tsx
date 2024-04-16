@@ -3,11 +3,12 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
+  Legend,
+  Rectangle,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
-  type TooltipProps,
 } from "recharts";
 import styled from "styled-components";
 
@@ -19,33 +20,6 @@ type Props = {
   xKey: string;
   fill?: string;
   title?: string;
-};
-
-const CustomTooltip = ({
-  active,
-  payload,
-  label,
-}: TooltipProps<string, string>) => {
-  if (active && payload?.length) {
-    return (
-      <div
-        className="custom-tooltip"
-        style={{
-          backgroundColor: "#42444933",
-          backdropFilter: "saturate(150%) blur(8px)",
-          border: "1px solid #494b4f",
-          fontSize: "13px",
-          padding: "10px",
-          borderRadius: "5px",
-          color: "white",
-        }}
-      >
-        <p className="intro">{`Value: ${payload[0].value}`}</p>
-      </div>
-    );
-  }
-
-  return null;
 };
 
 const Bars: React.FC<Props> = ({ data, yKey, xKey, fill, title }) => {
@@ -65,7 +39,7 @@ const Bars: React.FC<Props> = ({ data, yKey, xKey, fill, title }) => {
         <CartesianGrid vertical={false} stroke="#ffffff22" />
         <XAxis dataKey={xKey} tick={{ fontSize: 13 }} />
         <YAxis tick={{ fontSize: 13 }} />
-        <Tooltip content={<CustomTooltip />} cursor={{ fill: "#ffffff11" }} />
+        <Tooltip wrapperStyle={{ background: "red" }} />
         <Bar dataKey={yKey} fill={fill || "#6A7FC4"} />
       </BarChart>
       <Center>

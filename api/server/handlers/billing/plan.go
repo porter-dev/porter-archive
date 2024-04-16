@@ -37,7 +37,8 @@ func (c *ListPlansHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		c.WriteResult(w, r, "")
 
 		telemetry.WithAttributes(span,
-			telemetry.AttributeKV{Key: "metronome-enabled", Value: false},
+			telemetry.AttributeKV{Key: "metronome-config-exists", Value: c.Config().BillingManager.MetronomeEnabled},
+			telemetry.AttributeKV{Key: "metronome-enabled", Value: proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient)},
 		)
 		return
 	}
@@ -82,7 +83,8 @@ func (c *ListCreditsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		c.WriteResult(w, r, "")
 
 		telemetry.WithAttributes(span,
-			telemetry.AttributeKV{Key: "metronome-enabled", Value: false},
+			telemetry.AttributeKV{Key: "metronome-config-exists", Value: c.Config().BillingManager.MetronomeEnabled},
+			telemetry.AttributeKV{Key: "metronome-enabled", Value: proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient)},
 		)
 		return
 	}
@@ -128,7 +130,8 @@ func (c *GetUsageDashboardHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		c.WriteResult(w, r, "")
 
 		telemetry.WithAttributes(span,
-			telemetry.AttributeKV{Key: "metronome-enabled", Value: false},
+			telemetry.AttributeKV{Key: "metronome-config-exists", Value: c.Config().BillingManager.MetronomeEnabled},
+			telemetry.AttributeKV{Key: "metronome-enabled", Value: proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient)},
 		)
 		return
 	}

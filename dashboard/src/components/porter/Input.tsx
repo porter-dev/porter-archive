@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import { boolean } from "zod";
+
 import Tooltip from "./Tooltip";
 
 type Props = {
@@ -18,6 +19,7 @@ type Props = {
   disabledTooltip?: string;
   onValueChange?: (value: string) => void;
   hideCursor?: boolean;
+  style?: React.CSSProperties;
 };
 
 const Input: React.FC<Props> = ({
@@ -35,6 +37,7 @@ const Input: React.FC<Props> = ({
   disabledTooltip,
   onValueChange,
   hideCursor = false,
+  style,
 }) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
@@ -49,6 +52,7 @@ const Input: React.FC<Props> = ({
       <Block width={width}>
         {label && <Label>{label}</Label>}
         <StyledInput
+          style={style}
           value={value}
           onChange={handleChange}
           placeholder={placeholder}
@@ -56,7 +60,7 @@ const Input: React.FC<Props> = ({
           height={height}
           type={type || "text"}
           hasError={(error && true) || error === ""}
-          disabled={disabled ? disabled : false}
+          disabled={disabled || false}
           hideCursor={hideCursor}
         />
         {error && (
@@ -72,6 +76,7 @@ const Input: React.FC<Props> = ({
     <Block width={width}>
       {label && <Label>{label}</Label>}
       <StyledInput
+        style={style}
         autoFocus={autoFocus}
         value={value}
         onChange={handleChange}
@@ -80,7 +85,7 @@ const Input: React.FC<Props> = ({
         height={height}
         type={type || "text"}
         hasError={(error && true) || error === ""}
-        disabled={disabled ? disabled : false}
+        disabled={disabled || false}
         hideCursor={hideCursor}
       />
       {error && (

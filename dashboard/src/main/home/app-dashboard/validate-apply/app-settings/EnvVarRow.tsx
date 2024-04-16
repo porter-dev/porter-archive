@@ -2,14 +2,14 @@ import React from "react";
 import { Controller, useFormContext } from "react-hook-form";
 import styled from "styled-components";
 
-import warning from "assets/warning.svg";
-
 import Image from "components/porter/Image";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import Tooltip from "components/porter/Tooltip";
 import { type KeyValueType } from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
 import { type PorterAppFormData } from "lib/porter-apps";
+
+import warning from "assets/warning.svg";
 
 type Props = {
   entry: KeyValueType;
@@ -171,14 +171,15 @@ type InputProps = {
 const Input = styled.input<{ flex?: boolean; override?: boolean }>`
   outline: none;
   display: ${(props) => (props.flex ? "flex" : "block")};
-  ${(props) => (props.flex && 'flex: 1;')}
+  ${(props) => props.flex && "flex: 1;"}
   border: none;
   font-size: 13px;
   background: ${(props) => props.theme.fg};
-  border: ${(props) => (props.override ? '2px solid #f4cb42' : ' 1px solid #494b4f')};
+  border: ${(props) =>
+    props.override ? "2px solid #f4cb42" : " 1px solid #494b4f"};
   border-radius: 5px;
-  width: ${(props) => props.width ? props.width : "270px"};
-  color: ${(props) => props.disabled ? "#ffffff44" : "#fefefe"};
+  width: ${(props) => (props.width ? props.width : "270px")};
+  color: ${(props) => (props.disabled ? "#ffffff44" : "#fefefe")};
   padding: 5px 10px;
   height: 35px;
 `;
@@ -190,7 +191,8 @@ export const MultiLineInputer = styled.textarea<InputProps>`
   flex: 1;
   font-size: 13px;
   background: ${(props) => props.theme.fg};
-  border: ${(props) => (props.override ? '2px solid #f4cb42' : ' 1px solid #494b4f')};
+  border: ${(props) =>
+    props.override ? "2px solid #f4cb42" : " 1px solid #494b4f"};
   border-radius: 5px;
   color: ${(props) => (props.disabled ? "#ffffff44" : "#fefefe")};
   padding: 8px 10px 5px 10px;
@@ -242,7 +244,7 @@ const DeleteButton = styled.div`
       color: #ffffff88;
     }
   }
-                    `;
+`;
 
 const HideButton = styled(DeleteButton)`
   > i {

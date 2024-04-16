@@ -87,7 +87,7 @@ const Dashboard: React.FC<Props> = ({
         .catch(console.log);
     }
   }, [currentProject]);
-
+ 
   const currentTab = () => new URLSearchParams(props.location.search).get("tab") || "overview";
 
   useEffect(() => {

@@ -47,8 +47,8 @@ function BillingPage(): JSX.Element {
 
   const { url: usageDashboard } = useCustomeUsageDashboard("usage");
 
-  const { usage } = useCustomerUsage();
-  console.log(usage)
+  // This will return the aggregated daily usage, only for this billing period
+  const { usage } = useCustomerUsage("day", true);
 
   const formatCredits = (credits: number): string => {
     return (credits / 100).toFixed(2);

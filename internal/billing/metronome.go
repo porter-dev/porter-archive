@@ -258,6 +258,7 @@ func (m MetronomeClient) GetCustomerDashboard(ctx context.Context, customerID uu
 	return result.Data["url"], nil
 }
 
+// ListCustomerUsage will return the aggregated usage for a customer
 func (m MetronomeClient) ListCustomerUsage(ctx context.Context, customerID uuid.UUID, startingOn string, endingBefore string, windowsSize string, currentPeriod bool) (usage []types.Usage, err error) {
 	ctx, span := telemetry.NewSpan(ctx, "list-customer-usage")
 	defer span.End()

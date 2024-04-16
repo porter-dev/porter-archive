@@ -40,7 +40,6 @@ func RegisterCommands() (*cobra.Command, error) {
 	rootCmd.AddCommand(registerCommand_List(cliConf))
 	rootCmd.AddCommand(registerCommand_Logs(cliConf))
 	rootCmd.AddCommand(registerCommand_Open(cliConf))
-	rootCmd.AddCommand(registerCommand_PortForward(cliConf))
 	rootCmd.AddCommand(registerCommand_Project(cliConf))
 	rootCmd.AddCommand(registerCommand_Registry(cliConf))
 	rootCmd.AddCommand(registerCommand_Run(cliConf))

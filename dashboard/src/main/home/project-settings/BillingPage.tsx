@@ -44,7 +44,7 @@ function BillingPage(): JSX.Element {
 
   const { refetchPaymentEnabled } = checkIfProjectHasPayment();
 
-  const { usage } = useCustomerUsage();
+  const { usage } = useCustomerUsage("day", true);
 
   const processedData = useMemo(() => {
     const before = usage;
@@ -221,10 +221,10 @@ function BillingPage(): JSX.Element {
               <Spacer inline x={1} />
               <Text size={20}>
                 {creditGrants !== undefined &&
-                creditGrants.remaining_credits > 0
+                  creditGrants.remaining_credits > 0
                   ? `$${formatCredits(
-                      creditGrants.remaining_credits
-                    )}/$${formatCredits(creditGrants.granted_credits)}`
+                    creditGrants.remaining_credits
+                  )}/$${formatCredits(creditGrants.granted_credits)}`
                   : "$ 0.00"}
               </Text>
             </Container>
@@ -250,7 +250,7 @@ function BillingPage(): JSX.Element {
                     </Container>
                     <Container row>
                       {plan.trial_info !== undefined &&
-                      plan.trial_info.ending_before !== "" ? (
+                        plan.trial_info.ending_before !== "" ? (
                         <Text>
                           Free trial ends{" "}
                           {relativeTime(plan.trial_info.ending_before)}
@@ -269,8 +269,8 @@ function BillingPage(): JSX.Element {
                 </Text>
                 <Spacer y={1} />
                 {usage?.length &&
-                usage.length > 0 &&
-                usage[0].usage_metrics.length > 0 ? (
+                  usage.length > 0 &&
+                  usage[0].usage_metrics.length > 0 ? (
                   <Flex>
                     <BarWrapper>
                       <Bars

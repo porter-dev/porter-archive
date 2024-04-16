@@ -12,25 +12,27 @@ export const PaymentMethodValidator = z.object({
   is_default: z.boolean(),
 });
 
-type Trial = z.infer<typeof Trial>;
-
-const Trial = z.object({
+const TrialValidator = z.object({
   ending_before: z.string(),
 });
 
-export type Plan = z.infer<typeof Plan>;
-export const Plan = z.object({
+export type Plan = z.infer<typeof PlanValidator>;
+export const PlanValidator = z.object({
   id: z.string(),
   plan_name: z.string(),
   plan_description: z.string(),
   starting_on: z.string(),
-  trial_info: Trial,
+  trial_info: TrialValidator,
 });
 
 export type UsageMetric = z.infer<typeof UsageMetricValidator>;
 export const UsageMetricValidator = z.object({
+  // starting_on and ending_before are ISO 8601 date strings
+  // that represent the timeframe where the metric was ingested.
+  // If the granularity is set per day, the starting_on field
+  // represents the dat the metric was ingested.
   starting_on: z.string(),
-  ending_on: z.string(),
+  ending_before: z.string(),
   value: z.number(),
 });
 

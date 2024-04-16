@@ -1,20 +1,31 @@
 import React from "react";
 import { Controller, useFormContext } from "react-hook-form";
 
+import Loading from "components/Loading";
 import Container from "components/porter/Container";
 import Select from "components/porter/Select";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import { CloudProviderAzure } from "lib/clusters/constants";
 import { type ClientClusterContract } from "lib/clusters/types";
+import { useMachineTypeList } from "lib/hooks/useNodeGroups";
 
 import NodeGroups from "../../shared/NodeGroups";
 
 const AKSClusterOverview: React.FC = () => {
   const { control, watch } = useFormContext<ClientClusterContract>();
 
+  const cloudProviderCredentialIdentifier = watch(
+    "cluster.cloudProviderCredentialsId"
+  );
   const region = watch("cluster.config.region");
   const cidrRange = watch("cluster.config.cidrRange");
+
+  const { machineTypes, isLoading } = useMachineTypeList({
+    cloudProvider: "azure",
+    cloudProviderCredentialIdentifier,
+    region,
+  });
 
   return (
     <>
@@ -73,12 +84,16 @@ const AKSClusterOverview: React.FC = () => {
         </a>
       </Text>
       <Spacer y={1} />
-      <NodeGroups
-        availableMachineTypes={CloudProviderAzure.machineTypes.filter((mt) =>
-          mt.supportedRegions.includes(region)
-        )}
-        isDefaultExpanded={false}
-      />
+      {isLoading || !machineTypes ? (
+        <Container style={{ width: "300px" }}>
+          <Loading />
+        </Container>
+      ) : (
+        <NodeGroups
+          availableMachineTypes={machineTypes}
+          isDefaultExpanded={false}
+        />
+      )}
     </>
   );
 };

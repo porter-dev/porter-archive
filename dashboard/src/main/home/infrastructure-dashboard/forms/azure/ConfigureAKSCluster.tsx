@@ -19,7 +19,7 @@ import { useIntercom } from "lib/hooks/useIntercom";
 
 import { valueExists } from "shared/util";
 
-import Error from "../../../../../components/porter/Error";
+import Error from "components/porter/Error";
 import { useClusterFormContext } from "../../ClusterFormContextProvider";
 import ClusterSaveButton from "../../ClusterSaveButton";
 import NodeGroups from "../../shared/NodeGroups";

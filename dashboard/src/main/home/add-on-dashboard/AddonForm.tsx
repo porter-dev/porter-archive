@@ -2,7 +2,6 @@ import React, { useContext, useEffect, useMemo } from "react";
 import { useFormContext } from "react-hook-form";
 import { useHistory } from "react-router";
 import styled from "styled-components";
-import { match } from "ts-pattern";
 
 import Loading from "components/Loading";
 import Back from "components/porter/Back";
@@ -10,8 +9,7 @@ import { ControlledInput } from "components/porter/ControlledInput";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import VerticalSteps from "components/porter/VerticalSteps";
-import { type ClientAddon } from "lib/addons";
-import { datadogConfigValidator } from "lib/addons/datadog";
+import { defaultClientAddon, type ClientAddon } from "lib/addons";
 import { type AddonTemplate } from "lib/addons/template";
 import { useAddonList } from "lib/hooks/useAddon";
 import { useDefaultDeploymentTarget } from "lib/hooks/useDeploymentTarget";
@@ -19,13 +17,14 @@ import { useDefaultDeploymentTarget } from "lib/hooks/useDeploymentTarget";
 import { Context } from "shared/Context";
 
 import DashboardHeader from "../cluster-dashboard/DashboardHeader";
-import DatadogForm from "./DatadogForm";
+import ClusterContextProvider from "../infrastructure-dashboard/ClusterContextProvider";
+import Configuration from "./tabs/Overview";
 
 type Props = {
   template: AddonTemplate;
 };
 const AddonForm: React.FC<Props> = ({ template }) => {
-  const { currentProject } = useContext(Context);
+  const { currentProject, currentCluster } = useContext(Context);
   const { defaultDeploymentTarget, isDefaultDeploymentTargetLoading } =
     useDefaultDeploymentTarget();
 
@@ -36,7 +35,7 @@ const AddonForm: React.FC<Props> = ({ template }) => {
   });
 
   const {
-    setValue,
+    reset,
     register,
     watch,
     setError,
@@ -52,16 +51,7 @@ const AddonForm: React.FC<Props> = ({ template }) => {
   }, [watchName]);
 
   useEffect(() => {
-    match(template)
-      .with({ name: "Datadog" }, () => {
-        setValue(
-          "config",
-          datadogConfigValidator.parse({
-            type: "datadog",
-          })
-        );
-      })
-      .otherwise(() => null);
+    reset(defaultClientAddon(template.type));
   }, [template]);
 
   useEffect(() => {
@@ -79,48 +69,50 @@ const AddonForm: React.FC<Props> = ({ template }) => {
   }
 
   return (
-    <CenterWrapper>
-      <Div>
-        <StyledConfigureTemplate>
-          <Back
-            onClick={() => {
-              history.push(`/addons/new`);
-            }}
-          />
-          <DashboardHeader
-            prefix={<Icon src={template.icon} />}
-            title={`Configure new "${template.displayName}" instance`}
-            capitalize={false}
-            disableLineBreak
-          />
-          <DarkMatter />
-          <VerticalSteps
-            currentStep={currentStep}
-            steps={[
-              <>
-                <Text size={16}>Add-on name</Text>
-                <Spacer y={0.5} />
-                <Text color="helper">
-                  Lowercase letters, numbers, and &quot;-&quot; only.
-                </Text>
-                <Spacer height="20px" />
-                <ControlledInput
-                  type="text"
-                  width="300px"
-                  placeholder="ex: my-addon"
-                  error={errors.name?.value?.message}
-                  {...register("name.value")}
-                />
-              </>,
-              match(template)
-                .with({ name: "Datadog" }, () => <DatadogForm />)
-                .otherwise(() => null),
-            ]}
-          />
-          <Spacer height="80px" />
-        </StyledConfigureTemplate>
-      </Div>
-    </CenterWrapper>
+    <ClusterContextProvider clusterId={currentCluster?.id} refetchInterval={0}>
+      <CenterWrapper>
+        <Div>
+          <StyledConfigureTemplate>
+            <Back
+              onClick={() => {
+                history.push(`/addons/new`);
+              }}
+            />
+            <DashboardHeader
+              prefix={<Icon src={template.icon} />}
+              title={`Configure new "${template.displayName}" instance`}
+              capitalize={false}
+              disableLineBreak
+            />
+            <DarkMatter />
+            <VerticalSteps
+              currentStep={currentStep}
+              steps={[
+                <>
+                  <Text size={16}>Add-on name</Text>
+                  <Spacer y={0.5} />
+                  <Text color="helper">
+                    Lowercase letters, numbers, and &quot;-&quot; only.
+                  </Text>
+                  <Spacer height="20px" />
+                  <ControlledInput
+                    type="text"
+                    width="300px"
+                    placeholder="ex: my-addon"
+                    error={errors.name?.value?.message}
+                    {...register("name.value")}
+                  />
+                </>,
+                <>
+                  <Configuration type={template.type} />
+                </>,
+              ]}
+            />
+            <Spacer height="80px" />
+          </StyledConfigureTemplate>
+        </Div>
+      </CenterWrapper>
+    </ClusterContextProvider>
   );
 };
 

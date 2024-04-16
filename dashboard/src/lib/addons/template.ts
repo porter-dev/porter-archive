@@ -1,3 +1,5 @@
+import { type ClientAddon } from ".";
+
 export type AddonTemplateTag =
   | "Monitoring"
   | "Logging"
@@ -16,7 +18,7 @@ export const AddonTemplateTagColor: {
 };
 
 export type AddonTemplate = {
-  name: string;
+  type: ClientAddon["config"]["type"];
   displayName: string;
   description: string;
   icon: string;
@@ -24,7 +26,7 @@ export type AddonTemplate = {
 };
 
 export const ADDON_TEMPLATE_REDIS: AddonTemplate = {
-  name: "Redis",
+  type: "redis",
   displayName: "Redis",
   description: "An in-memory database that persists on disk.",
   icon: "https://cdn4.iconfinder.com/data/icons/redis-2/1451/Untitled-2-512.png",
@@ -32,7 +34,7 @@ export const ADDON_TEMPLATE_REDIS: AddonTemplate = {
 };
 
 export const ADDON_TEMPLATE_POSTGRES: AddonTemplate = {
-  name: "Postgres",
+  type: "postgres",
   displayName: "Postgres",
   description: "An object-relational database system.",
   icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postgresql/postgresql-original.svg",
@@ -40,13 +42,50 @@ export const ADDON_TEMPLATE_POSTGRES: AddonTemplate = {
 };
 
 export const ADDON_TEMPLATE_DATADOG: AddonTemplate = {
-  name: "Datadog",
-  displayName: "Datadog",
-  description: "DataDog Agent",
+  type: "datadog",
+  displayName: "DataDog",
+  description:
+    "Pipe logs, metrics and APM data from your workloads to DataDog.",
   icon: "https://datadog-live.imgix.net/img/dd_logo_70x75.png",
   tags: ["Monitoring"],
 };
 
+export const ADDON_TEMPLATE_MEZMO: AddonTemplate = {
+  type: "mezmo",
+  displayName: "Mezmo",
+  description: "A popular logging management system.",
+  icon: "https://media.licdn.com/dms/image/D560BAQEDU9GQqUZHsQ/company-logo_200_200/0/1664831631499/mezmo_logo?e=2147483647&v=beta&t=h-mCuJh3FSVhXKvvGcfFrL6w9LPaCexypRcw2QWboEs",
+  tags: ["Logging"],
+};
+
+export const ADDON_TEMPLATE_METABASE: AddonTemplate = {
+  type: "metabase",
+  displayName: "Metabase",
+  description: "An open-source business intelligence tool.",
+  icon: "https://pbs.twimg.com/profile_images/961380992727465985/4unoiuHt.jpg",
+  tags: ["Analytics"],
+};
+
+export const ADDON_TEMPLATE_NEWRELIC: AddonTemplate = {
+  type: "newrelic",
+  displayName: "New Relic",
+  description: "Monitor your applications and infrastructure.",
+  icon: "https://companieslogo.com/img/orig/NEWR-de5fcb2e.png?t=1681801483",
+  tags: ["Monitoring"],
+};
+
+export const ADDON_TEMPLATE_TAILSCALE: AddonTemplate = {
+  type: "tailscale",
+  displayName: "Tailscale",
+  description: "A secure network for teams.",
+  icon: "https://play-lh.googleusercontent.com/wczDL05-AOb39FcL58L32h6j_TrzzGTXDLlOrOmJ-aNsnoGsT1Gkk2vU4qyTb7tGxRw=w240-h480-rw",
+  tags: ["Networking"],
+};
+
 export const SUPPORTED_ADDON_TEMPLATES: AddonTemplate[] = [
   ADDON_TEMPLATE_DATADOG,
+  ADDON_TEMPLATE_MEZMO,
+  ADDON_TEMPLATE_METABASE,
+  ADDON_TEMPLATE_NEWRELIC,
+  ADDON_TEMPLATE_TAILSCALE,
 ];

@@ -1,36 +1,48 @@
-import React from "react";
+import React, { useMemo } from "react";
 import styled from "styled-components";
+import { match } from "ts-pattern";
 
 import Container from "components/porter/Container";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import Tooltip from "components/porter/Tooltip";
 import TitleSection from "components/TitleSection";
+import { prefixSubdomain } from "lib/porter-apps/services";
 
 import { useAddonContext } from "./AddonContextProvider";
 
 const AddonHeader: React.FC = () => {
   const { addon, status } = useAddonContext();
 
+  const domain = useMemo(() => {
+    return match(addon.config)
+      .with({ type: "metabase" }, (config) => {
+        return config.customDomain || config.porterDomain;
+      })
+      .otherwise(() => "");
+  }, [addon]);
+
   return (
     <HeaderWrapper>
       <TitleSection icon={addon.template.icon} iconWidth="33px">
         {addon.name.value}
       </TitleSection>
-      {/* <InfoWrapper>
-        <StyledDeployStatusSection>
-          <StatusWrapper>
-            <StatusCircle percentage={percentageDeployed} />
+      {domain && (
+        <>
+          <Spacer y={0.5} />
+          <Container>
             <Text>
-              {status.isLoading
-                ? "Initializing"
-                : percentageDeployed === 100
-                ? "Deployed"
-                : "Deploying"}
+              <a
+                href={prefixSubdomain(domain)}
+                target="_blank"
+                rel="noreferrer"
+              >
+                {domain}
+              </a>
             </Text>
-          </StatusWrapper>
-        </StyledDeployStatusSection>
-      </InfoWrapper> */}
+          </Container>
+        </>
+      )}
       <Spacer y={0.5} />
       <div>
         <Container row>
@@ -43,7 +55,7 @@ const AddonHeader: React.FC = () => {
           ) : status.pods.some((p) => p.status === "failed") ? (
             <Text color="#E1322E">Failed</Text>
           ) : (
-            <Text color="#E49621">Deploying...</Text>
+            <Text color="#E49621">Deploying</Text>
           )}
         </Container>
         <Spacer y={0.5} />
@@ -71,7 +83,7 @@ const AddonHeader: React.FC = () => {
                   >
                     <Bar
                       isFirst={i === 0}
-                      isLast={i === status.pods.length}
+                      isLast={i === status.pods.length - 1}
                       status={p.status}
                       animate={p.status === "pending"}
                     />
@@ -92,53 +104,53 @@ const HeaderWrapper = styled.div`
   position: relative;
 `;
 
-// const InfoWrapper = styled.div`
-//   display: flex;
-//   align-items: center;
-//   margin-left: 3px;
-//   margin-top: 22px;
-// `;
+const InfoWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  margin-left: 3px;
+  margin-top: 22px;
+`;
 
-// const StyledDeployStatusSection = styled.div<{ isExpanded?: boolean }>`
-//   font-size: 13px;
-//   height: 30px;
-//   border-radius: 5px;
-//   padding: 0 9px;
-//   padding-left: 7px;
-//   display: flex;
-//   margin-left: -1px;
-//   align-items: center;
-//   ${(props) =>
-//     props.isExpanded &&
-//     `
-//   background: #26292e;
-//   border: 1px solid #494b4f;
-//   border: 1px solid #7a7b80;
-//   margin-left: -2px;
-//   margin-right: -1px;
-//   `}
-//   justify-content: center;
-// `;
+const StyledDeployStatusSection = styled.div<{ isExpanded?: boolean }>`
+  font-size: 13px;
+  height: 30px;
+  border-radius: 5px;
+  padding: 0 9px;
+  padding-left: 7px;
+  display: flex;
+  margin-left: -1px;
+  align-items: center;
+  ${(props) =>
+    props.isExpanded &&
+    `
+  background: #26292e;
+  border: 1px solid #494b4f;
+  border: 1px solid #7a7b80;
+  margin-left: -2px;
+  margin-right: -1px;
+  `}
+  justify-content: center;
+`;
 
-// const StatusWrapper = styled.div`
-//   display: flex;
-//   justify-content: space-between;
-//   align-items: center;
-//   gap: 8px;
-// `;
+const StatusWrapper = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+`;
 
-// const StatusCircle = styled.div<{ percentage: number }>`
-//   width: 16px;
-//   height: 16px;
-//   border-radius: 50%;
-//   margin-right: 10px;
-//   background: ${(props) =>
-//     `conic-gradient(
-//       from 0deg,
-//       #4797ff ${props.percentage}%,
-//       #ffffffaa 0% ${props.percentage}%
-//     )`};
-// `;
+const StatusCircle = styled.div<{ percentage: number }>`
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  margin-right: 10px;
+  background: ${(props) =>
+    `conic-gradient(
+      from 0deg,
+      #4797ff ${props.percentage}%,
+      #ffffffaa 0% ${props.percentage}%
+    )`};
+`;
 
 const getBackgroundGradient = (status: string): string => {
   switch (status) {

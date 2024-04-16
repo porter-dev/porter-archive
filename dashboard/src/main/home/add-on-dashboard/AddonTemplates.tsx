@@ -25,7 +25,7 @@ const AddonTemplates: React.FC = () => {
 
   const templateMatch = useMemo(() => {
     const addonName = queryParams.get("addon_name");
-    return SUPPORTED_ADDON_TEMPLATES.find((t) => t.name === addonName);
+    return SUPPORTED_ADDON_TEMPLATES.find((t) => t.type === addonName);
   }, [queryParams]);
 
   if (templateMatch) {
@@ -50,13 +50,13 @@ const AddonTemplates: React.FC = () => {
         {SUPPORTED_ADDON_TEMPLATES.map((template: AddonTemplate) => {
           return (
             <TemplateBlock
-              key={template.name}
+              key={template.type}
               onClick={() => {
-                history.push(`/addons/new?addon_name=${template.name}`);
+                history.push(`/addons/new?addon_name=${template.type}`);
               }}
             >
               <Icon src={template.icon} />
-              <TemplateTitle>{template.name}</TemplateTitle>
+              <TemplateTitle>{template.displayName}</TemplateTitle>
               <TemplateDescription>{template.description}</TemplateDescription>
               <Spacer y={0.5} />
               {template.tags.map((t) => (

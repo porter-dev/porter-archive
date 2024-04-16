@@ -5,6 +5,7 @@ import { FormProvider, useForm } from "react-hook-form";
 import { useHistory } from "react-router";
 import styled from "styled-components";
 
+import Loading from "components/Loading";
 import { Error as ErrorComponent } from "components/porter/Error";
 import { clientAddonValidator, type ClientAddon } from "lib/addons";
 import { useAddon } from "lib/hooks/useAddon";
@@ -15,6 +16,7 @@ import { type UpdateClusterButtonProps } from "../infrastructure-dashboard/Clust
 
 type AddonFormContextType = {
   updateAddonButtonProps: UpdateClusterButtonProps;
+  projectId: number;
 };
 
 const AddonFormContext = createContext<AddonFormContextType | null>(null);
@@ -47,7 +49,7 @@ const AddonFormContextProvider: React.FC<AddonFormContextProviderProps> = ({
   const history = useHistory();
 
   const addonForm = useForm<ClientAddon>({
-    reValidateMode: "onChange",
+    reValidateMode: "onSubmit",
     resolver: zodResolver(clientAddonValidator),
   });
   const {
@@ -59,7 +61,7 @@ const AddonFormContextProvider: React.FC<AddonFormContextProviderProps> = ({
     if (!projectId) {
       return;
     }
-
+    setUpdateAddonError("");
     try {
       await updateAddon({
         projectId,
@@ -98,16 +100,20 @@ const AddonFormContextProvider: React.FC<AddonFormContextProviderProps> = ({
     if (Object.keys(errors).length > 0) {
       // TODO: remove this and properly handle form validation errors
       console.log("errors", errors);
-      props.isDisabled = true;
     }
 
     return props;
   }, [isSubmitting, errors, errors?.name?.value]);
 
+  if (!projectId) {
+    return <Loading />;
+  }
+
   return (
     <AddonFormContext.Provider
       value={{
         updateAddonButtonProps,
+        projectId,
       }}
     >
       <Wrapper>

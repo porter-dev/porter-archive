@@ -8,6 +8,7 @@ import Spacer from "components/porter/Spacer";
 
 import { Context } from "shared/Context";
 
+import ClusterContextProvider from "../infrastructure-dashboard/ClusterContextProvider";
 import { AddonContextProvider } from "./AddonContextProvider";
 import AddonFormContextProvider from "./AddonFormContextProvider";
 import AddonHeader from "./AddonHeader";
@@ -16,7 +17,7 @@ import AddonTabs from "./AddonTabs";
 type Props = RouteComponentProps;
 
 const AddonView: React.FC<Props> = ({ match }) => {
-  const { currentProject } = useContext(Context);
+  const { currentProject, currentCluster } = useContext(Context);
   const params = useMemo(() => {
     const { params } = match;
     const validParams = z
@@ -36,16 +37,18 @@ const AddonView: React.FC<Props> = ({ match }) => {
   }, [match]);
 
   return (
-    <AddonContextProvider addonName={params.addonName}>
-      <AddonFormContextProvider projectId={currentProject?.id}>
-        <StyledExpandedAddon>
-          <Back to="/addons" />
-          <AddonHeader />
-          <Spacer y={1} />
-          <AddonTabs tabParam={params.tab} />
-        </StyledExpandedAddon>
-      </AddonFormContextProvider>
-    </AddonContextProvider>
+    <ClusterContextProvider clusterId={currentCluster?.id} refetchInterval={0}>
+      <AddonContextProvider addonName={params.addonName}>
+        <AddonFormContextProvider projectId={currentProject?.id}>
+          <StyledExpandedAddon>
+            <Back to="/addons" />
+            <AddonHeader />
+            <Spacer y={1} />
+            <AddonTabs tabParam={params.tab} />
+          </StyledExpandedAddon>
+        </AddonFormContextProvider>
+      </AddonContextProvider>
+    </ClusterContextProvider>
   );
 };
 

@@ -106,11 +106,11 @@ export const AddonContextProvider: React.FC<AddonContextProviderProps> = ({
         <Container row>
           <PlaceholderIcon src={notFound} />
           <Text color="helper">
-            No datastore matching &quot;{addonName}&quot; was found.
+            No addon matching &quot;{addonName}&quot; was found.
           </Text>
         </Container>
         <Spacer y={1} />
-        <Link to="/datastores">Return to dashboard</Link>
+        <Link to="/addons">Return to dashboard</Link>
       </Placeholder>
     );
   }

@@ -73,6 +73,20 @@ func (repo *DeploymentTargetRepository) DeploymentTarget(projectID uint, deploym
 	return deploymentTarget, nil
 }
 
+// DeploymentTargetById finds a deployment target by its uuid
+func (repo *DeploymentTargetRepository) DeploymentTargetById(id string) (*models.DeploymentTarget, error) {
+	if id == "" {
+		return nil, errors.New("deployment target id is empty")
+	}
+
+	deploymentTarget := &models.DeploymentTarget{}
+	if err := repo.db.Where("id = ?", id).Find(deploymentTarget).Error; err != nil {
+		return nil, err
+	}
+
+	return deploymentTarget, nil
+}
+
 // CreateDeploymentTarget creates a new deployment target
 func (repo *DeploymentTargetRepository) CreateDeploymentTarget(deploymentTarget *models.DeploymentTarget) (*models.DeploymentTarget, error) {
 	if deploymentTarget == nil {

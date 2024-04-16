@@ -16,4 +16,7 @@ type DeploymentTargetRepository interface {
 	CreateDeploymentTarget(deploymentTarget *models.DeploymentTarget) (*models.DeploymentTarget, error)
 	// DeploymentTarget retrieves a deployment target by its id if a uuid is provided or by name
 	DeploymentTarget(projectID uint, deploymentTargetIdentifier string) (*models.DeploymentTarget, error)
+	// DeploymentTargetById retrieves a deployment target by its uuid
+	// This bypasses the projectID check, and should only be used to retrieve a deployment target for a cloud project.
+	DeploymentTargetById(deploymentTargetIdentifier string) (*models.DeploymentTarget, error)
 }

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Controller, useFormContext } from "react-hook-form";
 
@@ -19,6 +19,7 @@ import type {
 } from "lib/clusters/types";
 import { useIntercom } from "lib/hooks/useIntercom";
 
+import { Context } from "shared/Context";
 import { valueExists } from "shared/util";
 
 import { useClusterFormContext } from "../../ClusterFormContextProvider";
@@ -39,11 +40,12 @@ const ConfigureAKSCluster: React.FC<Props> = ({
   const [customSetupRequired, setCustomSetupRequired] =
     useState<boolean>(false);
   const { showIntercomWithMessage } = useIntercom();
+  const { user } = useContext(Context);
 
   useEffect(() => {
     if (customSetupRequired) {
       showIntercomWithMessage({
-        message: "I need custom configuration for creating  an Azure cluster.",
+        message: "I need help configuring instance types for my Azure cluster.",
       });
     }
   }, [customSetupRequired]);
@@ -65,7 +67,7 @@ const ConfigureAKSCluster: React.FC<Props> = ({
   const defaultNodeGroupType = (
     nodeGroupType: NodeGroupType,
     availableMachineTypes: ClientMachineType[]
-  ): string => {
+  ): { defaultType: string; notAvailable: boolean } => {
     const availableNonGPUMachineTypes = availableMachineTypes
       .filter((mt) => !mt.isGPU)
       .map((mt) => mt.name.toString());
@@ -77,7 +79,7 @@ const ConfigureAKSCluster: React.FC<Props> = ({
       NodeGroupType,
       {
         defaultTypes: string[];
-        fallback: boolean; // if true, will fallback to first available machine type if no default machine types are available
+        fallback: boolean; // if true, will fallback to first available machine type if no default machine types are available; if false, will require custom setup
       }
     > = {
       APPLICATION: {
@@ -109,15 +111,17 @@ const ConfigureAKSCluster: React.FC<Props> = ({
 
     for (const machineType of defaultMachineTypes[nodeGroupType].defaultTypes) {
       if (availableMachines.includes(machineType)) {
-        return machineType;
+        return {
+          defaultType: machineType,
+          notAvailable: false,
+        };
       }
     }
 
-    if (defaultMachineTypes[nodeGroupType].fallback) {
-      return availableMachines[0];
-    }
-
-    return "";
+    return {
+      defaultType: availableMachines[0],
+      notAvailable: !defaultMachineTypes[nodeGroupType].fallback,
+    };
   };
 
   const { data: machineTypes, status: machineTypesStatus } = useQuery(
@@ -142,7 +146,9 @@ const ConfigureAKSCluster: React.FC<Props> = ({
   );
 
   const regionValid =
-    !customSetupRequired && machineTypesStatus !== "loading" && machineTypes;
+    machineTypesStatus !== "loading" &&
+    machineTypes &&
+    (!customSetupRequired || user?.isPorterUser);
 
   useEffect(() => {
     if (
@@ -156,40 +162,32 @@ const ConfigureAKSCluster: React.FC<Props> = ({
     }
 
     let instanceTypeReplaced = false;
+    let anyCustomSetupRequired = false;
     const substituteBadInstanceTypes = nodeGroups.map((nodeGroup) => {
-      const defaultMachineType = defaultNodeGroupType(
+      const { defaultType, notAvailable } = defaultNodeGroupType(
         nodeGroup.nodeGroupType,
         machineTypes
       );
 
-      if (nodeGroup.instanceType !== defaultMachineType) {
+      if (notAvailable) {
+        anyCustomSetupRequired = true;
+      }
+
+      if (nodeGroup.instanceType !== defaultType) {
         instanceTypeReplaced = true;
         return {
           ...nodeGroup,
-          instanceType: defaultMachineType,
+          instanceType: defaultType,
         };
       }
 
       return nodeGroup;
     });
 
-    // if we cannot find a valid machine type for any node group, set custom setup required and exit
-    for (const nodeGroup of substituteBadInstanceTypes) {
-      if (nodeGroup.instanceType === "") {
-        setCustomSetupRequired(true);
-        return;
-      }
-    }
+    setCustomSetupRequired(anyCustomSetupRequired);
 
-    // if we reach here, custom setup is not required
-    if (customSetupRequired) {
-      setCustomSetupRequired(false);
-    }
-
-    // if any instance types were replaced, update the form
-    if (instanceTypeReplaced) {
+    instanceTypeReplaced &&
       setValue(`cluster.config.nodeGroups`, substituteBadInstanceTypes);
-    }
   }, [machineTypes, machineTypesStatus, region]);
 
   return (

@@ -156,6 +156,10 @@ const awsMachineTypeValidator = z.enum([
   "r7g.large",
   "r7g.xlarge",
   "r7g.2xlarge",
+  "r7g.4xlarge",
+  "r7g.8xlarge",
+  "r7g.12xlarge",
+  "r7g.16xlarge",
   "m5n.large",
   "m5n.xlarge",
   "m5n.2xlarge",
@@ -409,7 +413,7 @@ const nodeGroupTypeValidator = z.enum([
   "APPLICATION",
   "CUSTOM",
 ]);
-type NodeGroupType = z.infer<typeof nodeGroupTypeValidator>;
+export type NodeGroupType = z.infer<typeof nodeGroupTypeValidator>;
 const eksNodeGroupValidator = z.object({
   instanceType: z.string(),
   minInstances: z.number(),
@@ -607,3 +611,8 @@ export type UpdateClusterResponse =
       preflightChecks?: ClientPreflightCheck[];
       createContractResponse: CreateContractResponse;
     };
+
+export const machineTypeValidator = z.object({
+  name: z.string(),
+});
+export type MachineType = z.infer<typeof machineTypeValidator>;

@@ -39,7 +39,8 @@ func (c *IngestEventsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		c.WriteResult(w, r, "")
 
 		telemetry.WithAttributes(span,
-			telemetry.AttributeKV{Key: "metronome-enabled", Value: false},
+			telemetry.AttributeKV{Key: "metronome-config-exists", Value: c.Config().BillingManager.MetronomeEnabled},
+			telemetry.AttributeKV{Key: "metronome-enabled", Value: proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient)},
 		)
 		return
 	}
@@ -49,15 +50,21 @@ func (c *IngestEventsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		telemetry.AttributeKV{Key: "usage-id", Value: proj.UsageID},
 	)
 
-	request := []types.BillingEvent{}
+	ingestEventsRequest := struct {
+		Events []types.BillingEvent `json:"billing_events"`
+	}{}
 
-	if ok := c.DecodeAndValidate(w, r, &request); !ok {
+	if ok := c.DecodeAndValidate(w, r, &ingestEventsRequest); !ok {
 		err := telemetry.Error(ctx, span, nil, "error decoding ingest events request")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
 
-	err := c.Config().BillingManager.MetronomeClient.IngestEvents(ctx, request)
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "usage-events-count", Value: len(ingestEventsRequest.Events)},
+	)
+
+	err := c.Config().BillingManager.MetronomeClient.IngestEvents(ctx, ingestEventsRequest.Events)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error ingesting events")
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))

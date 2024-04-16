@@ -12,6 +12,7 @@ import {
 
 import { type PolicyDocType } from "./auth/types";
 import { baseApi } from "./baseApi";
+import { type AppEventWebhook } from "./types";
 import {
   type BuildConfig,
   type CreateUpdatePorterAppOptions,
@@ -1594,6 +1595,17 @@ const cloudContractPreflightCheck = baseApi<Contract, { project_id: number }>(
     return `/api/projects/${project_id}/contract/preflight`;
   }
 );
+
+const cloudProviderMachineTypes = baseApi<
+  {
+    cloud_provider: string;
+    cloud_provider_credential_identifier: string;
+    region: string;
+  },
+  { project_id: number }
+>("GET", ({ project_id }) => {
+  return `/api/projects/${project_id}/cloud/machines`;
+});
 
 const getContracts = baseApi<
   { cluster_id?: number; latest?: boolean },
@@ -3455,8 +3467,8 @@ const getPublishableKey = baseApi<
 const getUsageDashboard = baseApi<
   {
     dashboard: string;
-    dashboard_options?: { key: string; value: string }[];
-    color_overrides?: { name: string; value: string }[];
+    dashboard_options?: Array<{ key: string; value: string }>;
+    color_overrides?: Array<{ name: string; value: string }>;
   },
   {
     project_id?: number;
@@ -3582,6 +3594,27 @@ const createCloudSqlSecret = baseApi<
   ({ project_id, deployment_target_id, app_name }) =>
     `/api/projects/${project_id}/targets/${deployment_target_id}/apps/${app_name}/cloudsql`
 );
+
+const appEventWebhooks = baseApi<
+  {},
+  {
+    projectId: number; deploymentTargetId: string; appName: string
+  }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.projectId}/targets/${pathParams.deploymentTargetId}/apps/${pathParams.appName}/app-event-webhooks`;
+});
+
+const updateAppEventWebhooks = baseApi<
+  {
+    app_event_webhooks: AppEventWebhook[];
+  },
+  {
+    projectId: number; deploymentTargetId: string; appName: string
+  }
+>("POST", (pathParams) => {
+  return `/api/projects/${pathParams.projectId}/targets/${pathParams.deploymentTargetId}/apps/${pathParams.appName}/update-app-event-webhooks`;
+});
+
 
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {
@@ -3888,4 +3921,10 @@ export default {
 
   getCloudSqlSecret,
   createCloudSqlSecret,
+
+  cloudProviderMachineTypes,
+
+  // Webhooks
+  appEventWebhooks,
+  updateAppEventWebhooks
 };

@@ -86,5 +86,6 @@ func AutoMigrate(db *gorm.DB, debug bool) error {
 		&ints.GithubAppOAuthIntegration{},
 		&ints.SlackIntegration{},
 		&models.Ipam{},
+		&models.AppEventWebhooks{},
 	)
 }

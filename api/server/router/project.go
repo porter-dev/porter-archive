@@ -425,6 +425,34 @@ func getProjectRoutes(
 		Router:   r,
 	})
 
+	// POST /api/projects/{project_id}/billing/usage -> project.NewListCustomerUsageHandler
+	listCustomerUsageEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/billing/usage",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	listCustomerUsageHandler := billing.NewListCustomerUsageHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: listCustomerUsageEndpoint,
+		Handler:  listCustomerUsageHandler,
+		Router:   r,
+	})
+
 	// POST /api/projects/{project_id}/billing/ingest -> project.NewGetUsageDashboardHandler
 	ingestEventsEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

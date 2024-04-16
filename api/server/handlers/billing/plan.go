@@ -158,3 +158,52 @@ func (c *GetUsageDashboardHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 
 	c.WriteResult(w, r, credits)
 }
+
+// ListCustomerUsageHandler returns customer usage aggregations like CPU and RAM hours.
+type ListCustomerUsageHandler struct {
+	handlers.PorterHandlerReadWriter
+}
+
+// NewListCustomerUsageHandler returns a new ListCustomerUsageHandler
+func NewListCustomerUsageHandler(
+	config *config.Config,
+	decoderValidator shared.RequestDecoderValidator,
+	writer shared.ResultWriter,
+) *ListCustomerUsageHandler {
+	return &ListCustomerUsageHandler{
+		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
+	}
+}
+
+func (c *ListCustomerUsageHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-list-customer-usage")
+	defer span.End()
+
+	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
+
+	if !c.Config().BillingManager.MetronomeEnabled || !proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient) {
+		c.WriteResult(w, r, "")
+
+		telemetry.WithAttributes(span,
+			telemetry.AttributeKV{Key: "metronome-config-exists", Value: c.Config().BillingManager.MetronomeEnabled},
+			telemetry.AttributeKV{Key: "metronome-enabled", Value: proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient)},
+		)
+		return
+	}
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "metronome-enabled", Value: true},
+		telemetry.AttributeKV{Key: "usage-id", Value: proj.UsageID},
+	)
+
+	req := &types.ListCustomerUsageRequest{}
+
+	credits, err := c.Config().BillingManager.MetronomeClient.ListCustomerUsage(ctx, proj.UsageID, req.StartingOn, req.EndingBefore, req.WindowSize, req.CurrentPeriod)
+	if err != nil {
+		err := telemetry.Error(ctx, span, err, "error listing customer usage")
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	c.WriteResult(w, r, credits)
+}

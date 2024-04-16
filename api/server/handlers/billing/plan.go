@@ -198,6 +198,12 @@ func (c *ListCustomerUsageHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 
 	req := &types.ListCustomerUsageRequest{}
 
+	if ok := c.DecodeAndValidate(w, r, req); !ok {
+		err := telemetry.Error(ctx, span, nil, "error decoding list customer usage request")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+		return
+	}
+
 	credits, err := c.Config().BillingManager.MetronomeClient.ListCustomerUsage(ctx, proj.UsageID, req.StartingOn, req.EndingBefore, req.WindowSize, req.CurrentPeriod)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error listing customer usage")

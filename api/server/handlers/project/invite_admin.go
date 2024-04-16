@@ -56,7 +56,7 @@ func (p *ProjectInviteAdminHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 			Role: types.Role{
 				UserID:    adminUserId,
 				ProjectID: proj.ID,
-				Kind:      types.RoleAdmin,
+				Kind:      types.RoleViewer,
 			},
 		})
 	}

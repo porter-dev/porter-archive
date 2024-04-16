@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import {
   Bar,
   BarChart,
@@ -14,7 +14,7 @@ import styled from "styled-components";
 import Text from "components/porter/Text";
 
 type Props = {
-  data: any;
+  data: Array<Record<string, unknown>>;
   yKey: string;
   xKey: string;
   fill?: string;

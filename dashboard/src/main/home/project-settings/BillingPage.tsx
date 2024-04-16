@@ -50,22 +50,27 @@ function BillingPage(): JSX.Element {
     const before = usage;
     const resultMap = new Map();
 
-    before?.forEach((metric) => {
-      const metricName = metric.metric_name.toLowerCase().replace(" ", "_");
-      metric.usage_metrics.forEach(({ starting_on, value }) => {
-        if (resultMap.has(starting_on)) {
-          resultMap.get(starting_on)[metricName] = value;
-        } else {
-          resultMap.set(starting_on, {
-            starting_on: new Date(starting_on).toLocaleDateString("en-US", {
-              month: "short",
-              day: "numeric",
-            }),
-            [metricName]: value,
-          });
-        }
-      });
-    });
+    before?.forEach(
+      (metric: {
+        metric_name: string;
+        usage_metrics: Array<{ starting_on: string; value: number }>;
+      }) => {
+        const metricName = metric.metric_name.toLowerCase().replace(" ", "_");
+        metric.usage_metrics.forEach(({ starting_on, value }) => {
+          if (resultMap.has(starting_on)) {
+            resultMap.get(starting_on)[metricName] = value;
+          } else {
+            resultMap.set(starting_on, {
+              starting_on: new Date(starting_on).toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+              }),
+              [metricName]: value,
+            });
+          }
+        });
+      }
+    );
 
     // Convert the map to an array of values
     const x = Array.from(resultMap.values());

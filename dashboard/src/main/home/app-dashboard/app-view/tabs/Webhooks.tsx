@@ -22,9 +22,7 @@ type Webhook = {
 };
 
 const stepOptions = [
-  { value: "build", label: "Build" },
   { value: "deploy", label: "Deploy" },
-  { value: "predeploy", label: "Predeploy" },
 ];
 
 const statusOptions = [

@@ -1,5 +1,4 @@
 import React, { useContext, useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { Controller, useFormContext } from "react-hook-form";
 
 import Loading from "components/Loading";
@@ -14,7 +13,6 @@ import { CloudProviderAzure } from "lib/clusters/constants";
 import type {
   ClientClusterContract,
   ClientMachineType,
-  MachineType,
   NodeGroupType,
 } from "lib/clusters/types";
 import { useIntercom } from "lib/hooks/useIntercom";
@@ -22,6 +20,7 @@ import { useIntercom } from "lib/hooks/useIntercom";
 import { Context } from "shared/Context";
 import { valueExists } from "shared/util";
 
+import { useMachineTypeList } from "../../../../../lib/hooks/useNodeGroups";
 import { useClusterFormContext } from "../../ClusterFormContextProvider";
 import ClusterSaveButton from "../../ClusterSaveButton";
 import NodeGroups from "../../shared/NodeGroups";
@@ -29,13 +28,9 @@ import { BackButton, Img } from "../CreateClusterForm";
 
 type Props = {
   goBack: () => void;
-  availableMachineTypes: (region: string) => Promise<MachineType[]>;
 };
 
-const ConfigureAKSCluster: React.FC<Props> = ({
-  goBack,
-  availableMachineTypes,
-}) => {
+const ConfigureAKSCluster: React.FC<Props> = ({ goBack }) => {
   const [currentStep, _setCurrentStep] = useState<number>(100); // hack to show all steps
   const [customSetupRequired, setCustomSetupRequired] =
     useState<boolean>(false);
@@ -63,6 +58,16 @@ const ConfigureAKSCluster: React.FC<Props> = ({
   const region = watch("cluster.config.region");
   const clusterId = watch("cluster.clusterId");
   const nodeGroups = watch("cluster.config.nodeGroups");
+  const cloudProviderCredentialIdentifier = watch(
+    "cluster.cloudProviderCredentialsId"
+  );
+
+  const { machineTypes, isLoading: areMachineTypesLoading } =
+    useMachineTypeList({
+      cloudProvider: "azure",
+      cloudProviderCredentialIdentifier,
+      region,
+    });
 
   const defaultNodeGroupType = (
     nodeGroupType: NodeGroupType,
@@ -124,36 +129,15 @@ const ConfigureAKSCluster: React.FC<Props> = ({
     };
   };
 
-  const { data: machineTypes, status: machineTypesStatus } = useQuery(
-    ["availableMachineTypes", region],
-    async () => {
-      try {
-        const machineTypes = await availableMachineTypes(region);
-        const machineTypesNames = machineTypes.map(
-          (machineType) => machineType.name
-        );
-
-        return CloudProviderAzure.machineTypes.filter((mt) =>
-          machineTypesNames.includes(mt.name)
-        );
-      } catch (err) {
-        // fallback to default machine types if api call fails
-        return CloudProviderAzure.machineTypes.filter((mt) =>
-          mt.supportedRegions.includes(region)
-        );
-      }
-    }
-  );
-
   const regionValid =
-    machineTypesStatus !== "loading" &&
+    !areMachineTypesLoading &&
     machineTypes &&
     (!customSetupRequired || user?.isPorterUser);
 
   useEffect(() => {
     if (
       clusterId || // if cluster has already been provisioned, don't change instance types that have been set
-      machineTypesStatus === "loading" ||
+      areMachineTypesLoading ||
       !machineTypes || // if machine types are still loading, don't change instance types
       !nodeGroups ||
       nodeGroups.length === 0 // wait until node groups are loaded
@@ -188,7 +172,7 @@ const ConfigureAKSCluster: React.FC<Props> = ({
 
     instanceTypeReplaced &&
       setValue(`cluster.config.nodeGroups`, substituteBadInstanceTypes);
-  }, [machineTypes, machineTypesStatus, region]);
+  }, [machineTypes, areMachineTypesLoading, region]);
 
   return (
     <div>
@@ -248,7 +232,7 @@ const ConfigureAKSCluster: React.FC<Props> = ({
                 </Container>
               )}
             />
-            {machineTypesStatus === "loading" ? (
+            {areMachineTypesLoading ? (
               <Container style={{ width: "300px" }}>
                 <Spacer y={1} />
                 <Loading />

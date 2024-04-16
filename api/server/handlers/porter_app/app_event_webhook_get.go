@@ -21,9 +21,7 @@ type AppEventWebhooksHandler struct {
 }
 
 const (
-	appEventTypeBuild     string = "build"
-	appEventTypePredeploy string = "predeploy"
-	appEventTypeDeploy    string = "deploy"
+	appEventTypeDeploy string = "deploy"
 
 	appEventStatusSuccess  string = "success"
 	appEventStatusFailed   string = "failed"
@@ -127,10 +125,6 @@ func (a *AppEventWebhooksHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 
 func toWebhookAppEventTypeEnum(appEventType string) (porterv1.WebhookAppEventType, error) {
 	switch appEventType {
-	case appEventTypeBuild:
-		return porterv1.WebhookAppEventType_WEBHOOK_APP_EVENT_TYPE_BUILD, nil
-	case appEventTypePredeploy:
-		return porterv1.WebhookAppEventType_WEBHOOK_APP_EVENT_TYPE_PREDEPLOY, nil
 	case appEventTypeDeploy:
 		return porterv1.WebhookAppEventType_WEBHOOK_APP_EVENT_TYPE_DEPLOY, nil
 	default:
@@ -140,10 +134,6 @@ func toWebhookAppEventTypeEnum(appEventType string) (porterv1.WebhookAppEventTyp
 
 func toAppEventType(appEventWebhookEnum porterv1.WebhookAppEventType) (string, error) {
 	switch appEventWebhookEnum {
-	case porterv1.WebhookAppEventType_WEBHOOK_APP_EVENT_TYPE_BUILD:
-		return appEventTypeBuild, nil
-	case porterv1.WebhookAppEventType_WEBHOOK_APP_EVENT_TYPE_PREDEPLOY:
-		return appEventTypePredeploy, nil
 	case porterv1.WebhookAppEventType_WEBHOOK_APP_EVENT_TYPE_DEPLOY:
 		return appEventTypeDeploy, nil
 	default:

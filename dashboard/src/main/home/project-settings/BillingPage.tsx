@@ -51,7 +51,7 @@ function BillingPage(): JSX.Element {
     const resultMap = new Map();
 
     before?.forEach((metric) => {
-      const metricName = metric.metric_name.toLowerCase().replacqme(" ", "_");
+      const metricName = metric.metric_name.toLowerCase().replace(" ", "_");
       metric.usage_metrics.forEach(({ starting_on, value }) => {
         if (resultMap.has(starting_on)) {
           resultMap.get(starting_on)[metricName] = value;

@@ -776,7 +776,7 @@ export type Soc2Data = {
 
 export type AppEventWebhook = {
   url: string;
-  appEventType: string;
-  appEventStatus: string;
-  payloadEncryptionKey: string;
+  app_event_type: string;
+  app_event_status: string;
+  payload_encryption_key: string;
 }

@@ -62,10 +62,10 @@ const Webhooks: React.FC<Props> = ({
         setWebhooks(app_event_webhooks.map((item: AppEventWebhook) => {
           return {
             url: item.url, 
-            step: item.appEventType,
-            status: item.appEventStatus, 
-            secret: item.payloadEncryptionKey,
-            hasSecret: item.payloadEncryptionKey.length > 0,
+            step: item.app_event_type,
+            status: item.app_event_status, 
+            secret: item.payload_encryption_key,
+            hasSecret: item.payload_encryption_key.length > 0,
           };
       }))
     })
@@ -83,9 +83,9 @@ const Webhooks: React.FC<Props> = ({
         app_event_webhooks: webhooks.map((item: Webhook) => {
           return {
             url: item.url, 
-            appEventType: item.step,
-            appEventStatus: item.status, 
-            payloadEncryptionKey: item.secret,
+            app_event_type: item.step,
+            app_event_status: item.status, 
+            payload_encryption_key: item.secret,
           };
       })
       },

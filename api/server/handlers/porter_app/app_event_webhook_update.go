@@ -83,6 +83,12 @@ func (a *UpdateAppEventWebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.
 		return
 	}
 	for _, appEventWebhook := range req.AppEventWebhooks {
+		telemetry.WithAttributes(
+			span,
+			telemetry.AttributeKV{Key: "app-event-type", Value: appEventWebhook.AppEventType},
+			telemetry.AttributeKV{Key: "app-event-status", Value: appEventWebhook.AppEventStatus},
+			telemetry.AttributeKV{Key: "webhook-url", Value: appEventWebhook.WebhookURL},
+		)
 		appEventTypeEnum, err := toWebhookAppEventTypeEnum(appEventWebhook.AppEventType)
 		if err != nil {
 			e := telemetry.Error(ctx, span, err, "invalid app event type")

@@ -1,5 +1,4 @@
-import React, { useContext, useState } from "react";
-import ParentSize from "@visx/responsive/lib/components/ParentSize";
+import React, { useContext, useMemo, useState } from "react";
 import styled from "styled-components";
 
 import Loading from "components/Loading";
@@ -14,7 +13,6 @@ import {
   checkIfProjectHasPayment,
   useCustomerPlan,
   useCustomerUsage,
-  useCustomeUsageDashboard,
   usePaymentMethods,
   usePorterCredits,
   useSetDefaultPaymentMethod,
@@ -26,6 +24,7 @@ import gift from "assets/gift.svg";
 import trashIcon from "assets/trash.png";
 
 import BillingModal from "../modals/BillingModal";
+import Bars from "./Bars";
 
 function BillingPage(): JSX.Element {
   const { setCurrentOverlay } = useContext(Context);
@@ -45,10 +44,33 @@ function BillingPage(): JSX.Element {
 
   const { refetchPaymentEnabled } = checkIfProjectHasPayment();
 
-  const { url: usageDashboard } = useCustomeUsageDashboard("usage");
-
   const { usage } = useCustomerUsage();
-  console.log(usage)
+
+  const processedData = useMemo(() => {
+    const before = usage;
+    const resultMap = new Map();
+
+    before?.forEach((metric) => {
+      const metricName = metric.metric_name.toLowerCase().replace(" ", "_");
+      metric.usage_metrics.forEach(({ starting_on, value }) => {
+        if (resultMap.has(starting_on)) {
+          resultMap.get(starting_on)[metricName] = value;
+        } else {
+          resultMap.set(starting_on, {
+            starting_on: new Date(starting_on).toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+            }),
+            [metricName]: value,
+          });
+        }
+      });
+    });
+
+    // Convert the map to an array of values
+    const x = Array.from(resultMap.values());
+    return x;
+  }, [usage]);
 
   const formatCredits = (credits: number): string => {
     return (credits / 100).toFixed(2);
@@ -113,10 +135,10 @@ function BillingPage(): JSX.Element {
       {paymentMethodList.map((paymentMethod, idx) => {
         return (
           <div key={idx}>
-            <Fieldset>
+            <Fieldset row>
               <Container row spaced>
                 <Container row>
-                  <Icon src={cardIcon} height={"14px"} />
+                  <Icon opacity={0.5} src={cardIcon} height={"14px"} />
                   <Spacer inline x={1} />
                   <Text color="helper">
                     **** **** **** {paymentMethod.last4}
@@ -199,10 +221,10 @@ function BillingPage(): JSX.Element {
               <Spacer inline x={1} />
               <Text size={20}>
                 {creditGrants !== undefined &&
-                  creditGrants.remaining_credits > 0
+                creditGrants.remaining_credits > 0
                   ? `$${formatCredits(
-                    creditGrants.remaining_credits
-                  )}/$${formatCredits(creditGrants.granted_credits)}`
+                      creditGrants.remaining_credits
+                    )}/$${formatCredits(creditGrants.granted_credits)}`
                   : "$ 0.00"}
               </Text>
             </Container>
@@ -221,14 +243,14 @@ function BillingPage(): JSX.Element {
               <div>
                 <Text>Active Plan</Text>
                 <Spacer y={0.5} />
-                <Fieldset>
+                <Fieldset row>
                   <Container row spaced>
                     <Container row>
                       <Text color="helper">{plan.plan_name}</Text>
                     </Container>
                     <Container row>
                       {plan.trial_info !== undefined &&
-                        plan.trial_info.ending_before !== "" ? (
+                      plan.trial_info.ending_before !== "" ? (
                         <Text>
                           Free trial ends{" "}
                           {relativeTime(plan.trial_info.ending_before)}
@@ -245,20 +267,39 @@ function BillingPage(): JSX.Element {
                 <Text color="helper">
                   View the current usage of this billing period.
                 </Text>
-                <Spacer y={1} />{" "}
-                <Container row style={{ width: "100%", height: "80vh" }}>
-                  <ParentSize>
-                    {({ width, height }) => (
-                      <iframe
-                        width={width}
-                        height={height}
-                        src={usageDashboard}
-                        scrolling="no"
-                        frameBorder={0}
-                      ></iframe>
-                    )}
-                  </ParentSize>
-                </Container>
+                <Spacer y={1} />
+                {usage?.length &&
+                usage.length > 0 &&
+                usage[0].usage_metrics.length > 0 ? (
+                  <Flex>
+                    <BarWrapper>
+                      <Bars
+                        title="GiB Hours"
+                        fill="#8784D2"
+                        yKey="gib_hours"
+                        xKey="starting_on"
+                        data={processedData}
+                      />
+                    </BarWrapper>
+                    <Spacer x={1} inline />
+                    <BarWrapper>
+                      <Bars
+                        title="CPU Hours"
+                        fill="#5886E0"
+                        yKey="cpu_hours"
+                        xKey="starting_on"
+                        data={processedData}
+                      />
+                    </BarWrapper>
+                  </Flex>
+                ) : (
+                  <Fieldset>
+                    <Text color="helper">
+                      No usage data available for this billing period.
+                    </Text>
+                  </Fieldset>
+                )}
+                <Spacer y={2} />
               </div>
             ) : (
               <Text>This project does not have an active billing plan.</Text>
@@ -273,6 +314,17 @@ function BillingPage(): JSX.Element {
 }
 
 export default BillingPage;
+
+const Flex = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+`;
+
+const BarWrapper = styled.div`
+  flex: 1;
+  height: 300px;
+  min-width: 450px;
+`;
 
 const I = styled.i`
   font-size: 18px;

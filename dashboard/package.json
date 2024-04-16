@@ -73,6 +73,7 @@
     "react-table": "^7.7.0",
     "react-timer-hook": "^3.0.7",
     "react-transition-group": "^4.4.2",
+    "recharts": "^2.12.5",
     "regenerator-runtime": "^0.13.9",
     "semver": "^7.3.5",
     "simple-statistics": "^7.8.0",

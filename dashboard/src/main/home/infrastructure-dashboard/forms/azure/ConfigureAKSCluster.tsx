@@ -45,7 +45,7 @@ const ConfigureAKSCluster: React.FC<Props> = ({
   useEffect(() => {
     if (customSetupRequired) {
       showIntercomWithMessage({
-        message: "I need custom configuration for creating  an Azure cluster.",
+        message: "I need help configuring instance types for my Azure cluster.",
       });
     }
   }, [customSetupRequired]);

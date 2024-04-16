@@ -24,7 +24,7 @@ export const useMachineTypeList = ({
 }): TUseMachineTypeList => {
   const { availableMachineTypes } = useClusterFormContext();
 
-  const { data: machineTypes, isLoading } = useQuery(
+  const { data: machineTypes = [], isLoading } = useQuery(
     [
       "availableMachineTypes",
       region,
@@ -62,7 +62,7 @@ export const useMachineTypeList = ({
   );
 
   return {
-    machineTypes: machineTypes ?? [],
+    machineTypes,
     isLoading,
   };
 };

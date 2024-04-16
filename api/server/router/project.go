@@ -1799,12 +1799,11 @@ func getProjectRoutes(
 		Router:   r,
 	})
 
-	// POST /api/projects/{project_id}/cloud/machines -> apiContract.NewCloudProviderMachineTypesHandler
+	// GET /api/projects/{project_id}/cloud/machines -> apiContract.NewCloudProviderMachineTypesHandler
 	machineTypeEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
-			Verb: types.APIVerbGet,
-			// need to use POST for body
-			Method: types.HTTPVerbPost,
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
 			Path: &types.Path{
 				Parent:       basePath,
 				RelativePath: fmt.Sprintf("%s/cloud/machines", relPath),

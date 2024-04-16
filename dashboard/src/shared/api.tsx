@@ -1602,7 +1602,7 @@ const cloudProviderMachineTypes = baseApi<
     region: string;
   },
   { project_id: number }
->("POST", ({ project_id }) => {
+>("GET", ({ project_id }) => {
   return `/api/projects/${project_id}/cloud/machines`;
 });
 

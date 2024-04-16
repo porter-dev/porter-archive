@@ -409,7 +409,7 @@ const nodeGroupTypeValidator = z.enum([
   "APPLICATION",
   "CUSTOM",
 ]);
-type NodeGroupType = z.infer<typeof nodeGroupTypeValidator>;
+export type NodeGroupType = z.infer<typeof nodeGroupTypeValidator>;
 const eksNodeGroupValidator = z.object({
   instanceType: z.string(),
   minInstances: z.number(),

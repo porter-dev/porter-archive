@@ -35,9 +35,9 @@ func NewCloudProviderMachineTypesHandler(
 
 // CloudProviderMachineTypesRequest is the request object for the CloudProviderMachineTypesHandler
 type CloudProviderMachineTypesRequest struct {
-	CloudProvider                     string `json:"cloud_provider"`
-	CloudProviderCredentialIdentifier string `json:"cloud_provider_credential_identifier"`
-	Region                            string `json:"region"`
+	CloudProvider                     string `schema:"cloud_provider"`
+	CloudProviderCredentialIdentifier string `schema:"cloud_provider_credential_identifier"`
+	Region                            string `schema:"region"`
 }
 
 // CloudProviderMachineTypesResponse is the response object for the CloudProviderMachineTypesHandler

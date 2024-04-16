@@ -5,6 +5,7 @@ import { Controller, useFormContext } from "react-hook-form";
 import Loading from "components/Loading";
 import Container from "components/porter/Container";
 import { ControlledInput } from "components/porter/ControlledInput";
+import Error from "components/porter/Error";
 import Select from "components/porter/Select";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
@@ -14,12 +15,12 @@ import type {
   ClientClusterContract,
   ClientMachineType,
   MachineType,
+  NodeGroupType,
 } from "lib/clusters/types";
 import { useIntercom } from "lib/hooks/useIntercom";
 
 import { valueExists } from "shared/util";
 
-import Error from "components/porter/Error";
 import { useClusterFormContext } from "../../ClusterFormContextProvider";
 import ClusterSaveButton from "../../ClusterSaveButton";
 import NodeGroups from "../../shared/NodeGroups";
@@ -62,54 +63,58 @@ const ConfigureAKSCluster: React.FC<Props> = ({
   const nodeGroups = watch("cluster.config.nodeGroups");
 
   const defaultNodeGroupType = (
-    nodeGroupType:
-      | "UNKNOWN"
-      | "SYSTEM"
-      | "MONITORING"
-      | "APPLICATION"
-      | "CUSTOM",
+    nodeGroupType: NodeGroupType,
     availableMachineTypes: ClientMachineType[]
   ): string => {
-    // default machine types for each node group type
-    const applicationMachineTypes = ["Standard_B2als_v2", "Standard_A2_v2"];
-    const systemMachineTypes = ["Standard_B2als_v2", "Standard_A2_v2"];
-    const monitoringMachineTypes = ["Standard_B2as_v2", "Standard_A4_v2"];
-    const gpuMachineTypes = ["Standard_NC4as_T4_v3"];
-
     const availableNonGPUMachineTypes = availableMachineTypes
       .filter((mt) => !mt.isGPU)
       .map((mt) => mt.name.toString());
     const availableGPUMachineTypes = availableMachineTypes
       .filter((mt) => mt.isGPU)
       .map((mt) => mt.name.toString());
-    if (nodeGroupType === "APPLICATION") {
-      for (const machineType of applicationMachineTypes) {
-        if (availableNonGPUMachineTypes.includes(machineType)) {
-          return machineType;
-        }
+
+    const defaultMachineTypes: Record<
+      NodeGroupType,
+      {
+        defaultTypes: string[];
+        fallback: boolean; // if true, will fallback to first available machine type if no default machine types are available
       }
-      // if no default application machine types are available, default to first available machine type
-      return availableMachineTypes[0].name;
-    } else if (nodeGroupType === "SYSTEM") {
-      for (const machineType of systemMachineTypes) {
-        if (availableNonGPUMachineTypes.includes(machineType)) {
-          return machineType;
-        }
+    > = {
+      APPLICATION: {
+        defaultTypes: ["Standard_B2als_v2", "Standard_A2_v2"],
+        fallback: true,
+      },
+      SYSTEM: {
+        defaultTypes: ["Standard_B2als_v2", "Standard_A2_v2"],
+        fallback: false,
+      },
+      MONITORING: {
+        defaultTypes: ["Standard_B2as_v2", "Standard_A4_v2"],
+        fallback: false,
+      },
+      CUSTOM: {
+        defaultTypes: ["Standard_NC4as_T4_v3"],
+        fallback: true,
+      },
+      UNKNOWN: {
+        defaultTypes: [],
+        fallback: false,
+      },
+    };
+
+    const availableMachines =
+      nodeGroupType === "CUSTOM"
+        ? availableGPUMachineTypes
+        : availableNonGPUMachineTypes;
+
+    for (const machineType of defaultMachineTypes[nodeGroupType].defaultTypes) {
+      if (availableMachines.includes(machineType)) {
+        return machineType;
       }
-    } else if (nodeGroupType === "MONITORING") {
-      for (const machineType of monitoringMachineTypes) {
-        if (availableNonGPUMachineTypes.includes(machineType)) {
-          return machineType;
-        }
-      }
-    } else if (nodeGroupType === "CUSTOM") {
-      for (const machineType of gpuMachineTypes) {
-        if (availableGPUMachineTypes.includes(machineType)) {
-          return machineType;
-        }
-      }
-      // if no default gpu machine types are available, default to first available gpu machine type
-      return availableGPUMachineTypes[0];
+    }
+
+    if (defaultMachineTypes[nodeGroupType].fallback) {
+      return availableMachines[0];
     }
 
     return "";

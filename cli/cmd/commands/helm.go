@@ -16,7 +16,7 @@ import (
 func registerCommand_Helm(cliConf config.CLIConfig) *cobra.Command {
 	depMsg := `This command is no longer available. Please consult documentation of the respective cloud provider to get access to the kubeconfig of the cluster. 
 	Note that any change made directly on the kubernetes cluster under the hood can degrade the performance and reliability of the cluster, and Porter will 
-	automatically reconcile any changes that poses a threat to the uptime of the cluster to its original state. Porter is not responsible for the issues that 
+	automatically reconcile any changes that pose a threat to the uptime of the cluster to its original state. Porter is not responsible for the issues that 
 	arise due to the change implemented directly on the Kubernetes cluster via kubectl.`
 
 	helmCmd := &cobra.Command{
@@ -37,7 +37,7 @@ func registerCommand_Helm(cliConf config.CLIConfig) *cobra.Command {
 func runHelm(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
 	// this will never error because it just ran
 	user, _ := client.AuthCheck(ctx)
-	if !strings.Contains(user.Email, "porter.run") {
+	if !strings.HasSuffix(user.Email, "@porter.run") {
 		return fmt.Errorf("Forbidden")
 	}
 

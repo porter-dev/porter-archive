@@ -7,7 +7,7 @@ import {
   CreditGrantsValidator,
   PaymentMethodValidator,
   Plan,
-  Usage,
+  UsageValidator,
   UsageList,
   type CreditGrants,
   type PaymentMethod,
@@ -334,7 +334,7 @@ export const useCustomerUsage = (): TGetUsage => {
           project_id: currentProject?.id,
         }
       );
-      const usage = Usage.array().parse(res.data);
+      const usage = UsageValidator.array().parse(res.data);
       return usage;
     }
   );

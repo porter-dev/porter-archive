@@ -24,7 +24,7 @@ const (
 // MetronomeClient is the client used to call the Metronome API
 type MetronomeClient struct {
 	ApiKey               string
-	billableMetricIDs    []uuid.UUID
+	billableMetrics      []types.BillableMetric
 	PorterCloudPlanID    uuid.UUID
 	PorterStandardPlanID uuid.UUID
 }
@@ -195,14 +195,14 @@ func (m MetronomeClient) EndCustomerPlan(ctx context.Context, customerID uuid.UU
 
 // ListCustomerCredits will return the total number of credits for the customer
 func (m MetronomeClient) ListCustomerCredits(ctx context.Context, customerID uuid.UUID) (credits types.ListCreditGrantsResponse, err error) {
-	ctx, span := telemetry.NewSpan(ctx, "list-customer-usage")
+	ctx, span := telemetry.NewSpan(ctx, "list-customer-credits")
 	defer span.End()
 
 	if customerID == uuid.Nil {
 		return credits, telemetry.Error(ctx, span, err, "customer id empty")
 	}
 
-	path := "usage/groups"
+	path := "credits/listGrants"
 
 	req := types.ListCreditGrantsRequest{
 		CustomerIDs: []uuid.UUID{
@@ -266,7 +266,7 @@ func (m MetronomeClient) ListCustomerUsage(ctx context.Context, customerID uuid.
 		return usage, telemetry.Error(ctx, span, err, "customer id empty")
 	}
 
-	if len(m.billableMetricIDs) == 0 {
+	if len(m.billableMetrics) == 0 {
 		billableMetrics, err := m.listBillableMetricIDs(ctx, customerID)
 		if err != nil {
 			return nil, telemetry.Error(ctx, span, err, "failed to list billable metrics")
@@ -277,9 +277,7 @@ func (m MetronomeClient) ListCustomerUsage(ctx context.Context, customerID uuid.
 		)
 
 		// Cache billable metric ids for future calls
-		for _, billableMetricID := range billableMetrics {
-			m.billableMetricIDs = append(m.billableMetricIDs, billableMetricID.ID)
-		}
+		m.billableMetrics = append(m.billableMetrics, billableMetrics...)
 	}
 
 	path := "usage/groups"
@@ -292,22 +290,25 @@ func (m MetronomeClient) ListCustomerUsage(ctx context.Context, customerID uuid.
 		CurrentPeriod: currentPeriod,
 	}
 
-	for _, billableMetric := range m.billableMetricIDs {
+	for _, billableMetric := range m.billableMetrics {
 		telemetry.WithAttributes(span,
 			telemetry.AttributeKV{Key: "billable-metric-id", Value: billableMetric.ID},
 		)
 
 		var result struct {
-			Data []types.Usage `json:"data"`
+			Data []types.CustomerUsageMetric `json:"data"`
 		}
 
-		baseReq.BillableMetricID = billableMetric
+		baseReq.BillableMetricID = billableMetric.ID
 		_, err = m.do(http.MethodPost, path, baseReq, &result)
 		if err != nil {
 			return usage, telemetry.Error(ctx, span, err, "failed to get customer usage")
 		}
 
-		usage = append(usage, result.Data...)
+		usage = append(usage, types.Usage{
+			MetricName:   billableMetric.Name,
+			UsageMetrics: result.Data,
+		})
 	}
 
 	return usage, nil

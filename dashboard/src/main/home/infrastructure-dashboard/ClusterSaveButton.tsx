@@ -5,12 +5,14 @@ import Button from "components/porter/Button";
 import { useClusterFormContext } from "./ClusterFormContextProvider";
 
 type Props = {
+  forceDisable?: boolean;
   height?: string;
   disabledTooltipPosition?: "top" | "bottom" | "left" | "right";
   isClusterUpdating?: boolean;
   children: React.ReactNode;
 };
 const ClusterSaveButton: React.FC<Props> = ({
+  forceDisable,
   height,
   disabledTooltipPosition,
   isClusterUpdating,
@@ -23,7 +25,9 @@ const ClusterSaveButton: React.FC<Props> = ({
       type="submit"
       status={updateClusterButtonProps.status}
       loadingText={updateClusterButtonProps.loadingText}
-      disabled={updateClusterButtonProps.isDisabled || isClusterUpdating}
+      disabled={
+        updateClusterButtonProps.isDisabled || isClusterUpdating || forceDisable
+      }
       disabledTooltipMessage={
         "Please wait for the current update to complete before updating again."
       }

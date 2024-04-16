@@ -91,6 +91,7 @@ func AppLogs(ctx context.Context, inp AppLogsInput) error {
 
 				err = json.Unmarshal([]byte(l), &line)
 				if err != nil {
+					// silently fail in case output is not properly formatted
 					continue
 				}
 

@@ -1596,6 +1596,17 @@ const cloudContractPreflightCheck = baseApi<Contract, { project_id: number }>(
   }
 );
 
+const cloudProviderMachineTypes = baseApi<
+  {
+    cloud_provider: string;
+    cloud_provider_credential_identifier: string;
+    region: string;
+  },
+  { project_id: number }
+>("GET", ({ project_id }) => {
+  return `/api/projects/${project_id}/cloud/machines`;
+});
+
 const getContracts = baseApi<
   { cluster_id?: number; latest?: boolean },
   { project_id: number }
@@ -3456,8 +3467,8 @@ const getPublishableKey = baseApi<
 const getUsageDashboard = baseApi<
   {
     dashboard: string;
-    dashboard_options?: { key: string; value: string }[];
-    color_overrides?: { name: string; value: string }[];
+    dashboard_options?: Array<{ key: string; value: string }>;
+    color_overrides?: Array<{ name: string; value: string }>;
   },
   {
     project_id?: number;
@@ -3587,7 +3598,7 @@ const createCloudSqlSecret = baseApi<
 const appEventWebhooks = baseApi<
   {},
   {
-    projectId: number; deploymentTargetId: string; appName: string 
+    projectId: number; deploymentTargetId: string; appName: string
   }
 >("GET", (pathParams) => {
   return `/api/projects/${pathParams.projectId}/targets/${pathParams.deploymentTargetId}/apps/${pathParams.appName}/app-event-webhooks`;
@@ -3598,7 +3609,7 @@ const updateAppEventWebhooks = baseApi<
     app_event_webhooks: AppEventWebhook[];
   },
   {
-    projectId: number; deploymentTargetId: string; appName: string 
+    projectId: number; deploymentTargetId: string; appName: string
   }
 >("POST", (pathParams) => {
   return `/api/projects/${pathParams.projectId}/targets/${pathParams.deploymentTargetId}/apps/${pathParams.appName}/update-app-event-webhooks`;
@@ -3910,6 +3921,8 @@ export default {
 
   getCloudSqlSecret,
   createCloudSqlSecret,
+
+  cloudProviderMachineTypes,
 
   // Webhooks
   appEventWebhooks,

@@ -6,12 +6,15 @@ import { FormProvider, useForm } from "react-hook-form";
 import { useHistory } from "react-router";
 import styled from "styled-components";
 import { match } from "ts-pattern";
+import { z } from "zod";
 
 import { Error as ErrorComponent } from "components/porter/Error";
 import {
   clusterContractValidator,
+  machineTypeValidator,
   type ClientClusterContract,
   type ClientPreflightCheck,
+  type MachineType,
   type UpdateClusterResponse,
 } from "lib/clusters/types";
 import {
@@ -42,6 +45,11 @@ type ClusterFormContextType = {
   submitAndPatchCheckSuggestions: (args: {
     preflightChecks: ClientPreflightCheck[];
   }) => Promise<void>;
+  availableMachineTypes: (
+    cloud_provider: string,
+    cloud_provider_credential_identifier: string,
+    region: string
+  ) => Promise<MachineType[]>;
 };
 
 const ClusterFormContext = createContext<ClusterFormContextType | null>(null);
@@ -217,6 +225,31 @@ const ClusterFormContextProvider: React.FC<ClusterFormContextProviderProps> = ({
     await handleClusterUpdate(data);
   });
 
+  const availableMachineTypes = async (
+    cloudProvider: string,
+    cloudProviderCredentialIdentifier: string,
+    region: string
+  ): Promise<MachineType[]> => {
+    const response = await api.cloudProviderMachineTypes(
+      "<token>",
+      {
+        cloud_provider: cloudProvider,
+        cloud_provider_credential_identifier: cloudProviderCredentialIdentifier,
+        region,
+      },
+      {
+        project_id: projectId,
+      }
+    );
+    const parsed = await z
+      .object({
+        machine_types: z.array(machineTypeValidator),
+      })
+      .parseAsync(response.data);
+
+    return parsed.machine_types;
+  };
+
   const submitSkippingPreflightChecks = async (): Promise<void> => {
     if (clusterForm.formState.isSubmitting) {
       return;
@@ -271,6 +304,7 @@ const ClusterFormContextProvider: React.FC<ClusterFormContextProviderProps> = ({
         isMultiClusterEnabled,
         submitSkippingPreflightChecks,
         submitAndPatchCheckSuggestions,
+        availableMachineTypes,
       }}
     >
       <Wrapper ref={scrollToTopRef}>

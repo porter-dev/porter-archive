@@ -18,9 +18,6 @@ type AppEventWebhooks struct {
 	UpdatedAt sql.NullTime `db:"updated_at"`
 	DeletedAt sql.NullTime `db:"deleted_at"`
 
-	// ProjectID uniquely identifies the project this app is in
-	ProjectID uint `db:"project_id"`
-
 	// AppInstanceID uniquely identifies the application this webhook URL is configured for
 	AppInstanceID uuid.UUID `db:"app_instance_id"`
 

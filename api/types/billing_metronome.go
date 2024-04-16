@@ -101,6 +101,8 @@ type CustomerUsageMetric struct {
 	Value        float64 `json:"value"`
 }
 
+// BillableMetric is defined in Metronome and represents the events that will
+// be ingested
 type BillableMetric struct {
 	ID   uuid.UUID `json:"id"`
 	Name string    `json:"name"`

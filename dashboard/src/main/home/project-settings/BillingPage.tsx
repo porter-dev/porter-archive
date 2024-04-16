@@ -44,7 +44,10 @@ function BillingPage(): JSX.Element {
 
   const { refetchPaymentEnabled } = checkIfProjectHasPayment();
 
-  const { usage } = useCustomerUsage();
+  // const { url: usageDashboard } = useCustomeUsageDashboard("usage");
+
+  // This will return the aggregated daily usage, only for this billing period
+  const { usage } = useCustomerUsage("day", true);
 
   const processedData = useMemo(() => {
     const before = usage;

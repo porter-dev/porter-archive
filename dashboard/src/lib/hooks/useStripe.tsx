@@ -6,7 +6,7 @@ import {
   ClientSecretResponse,
   CreditGrantsValidator,
   PaymentMethodValidator,
-  Plan,
+  PlanValidator,
   UsageValidator,
   type CreditGrants,
   type PaymentMethod,
@@ -303,7 +303,7 @@ export const useCustomerPlan = (): TGetPlan => {
           project_id: currentProject?.id,
         }
       );
-      const plan = Plan.parse(res.data);
+      const plan = PlanValidator.parse(res.data);
       return plan;
     }
   );
@@ -313,7 +313,7 @@ export const useCustomerPlan = (): TGetPlan => {
   };
 };
 
-export const useCustomerUsage = (): TGetUsage => {
+export const useCustomerUsage = (windowSize: string, currentPeriod: boolean): TGetUsage => {
   const { currentProject } = useContext(Context);
 
   // Fetch current plan
@@ -326,8 +326,8 @@ export const useCustomerUsage = (): TGetUsage => {
       const res = await api.getCustomerUsage(
         "<token>",
         {
-          window_size: "none",
-          current_period: true,
+          window_size: windowSize,
+          current_period: currentPeriod,
         },
         {
           project_id: currentProject?.id,

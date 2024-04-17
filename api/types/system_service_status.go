@@ -37,35 +37,35 @@ const (
 // SystemServicesStatus contains the system infrastructure status for a cluster
 type SystemStatusHistory struct {
 	// ClusterStatusHistory is a time series of the cluster's health
-	ClusterStatusHistory []ClusterHealthStatus
+	ClusterStatusHistory []ClusterHealthStatus `json:"cluster_status_history"`
 	// SystemServiceStatusHistories is a list of SystemServiceStatusHistory for each service
 	// there should be only one entry for a service
-	SystemServiceStatusHistories []SystemServiceStatusHistory
+	SystemServiceStatusHistories []SystemServiceStatusHistory `json:"system_service_status_histories"`
 }
 
 // ClusterHealthStatus is the status of a cluster at a certain timestamp
 type ClusterHealthStatus struct {
-	Timestamp time.Time
+	Timestamp time.Time `json:"timestamp"`
 	// Responsive is set to true if the cluster sent all heartbeats in the time period represented by the Timestamp
-	Responsive bool
+	Responsive bool `json:"responsive"`
 }
 
 // SystemServiceStatusHistory contains the status of a system service
 type SystemServiceStatusHistory struct {
-	SystemService SystemService
-	StatusHistory []ServiceStatus
+	SystemService SystemService   `json:"system_service"`
+	StatusHistory []ServiceStatus `json:"status_history"`
 }
 
 // SystemService identifies a system service
 type SystemService struct {
-	Name               string
-	Namespace          string
-	InvolvedObjectType InvolvedObjectType
+	Name               string             `json:"name"`
+	Namespace          string             `json:"namespace"`
+	InvolvedObjectType InvolvedObjectType `json:"involved_object_type"`
 }
 
 type ServiceStatus struct {
-	Timestamp time.Time
-	Status    Status
+	Timestamp time.Time `json:"timestamp"`
+	Status    Status    `json:"status"`
 }
 
 // ToSystemStatusHistory converts the CCP resposne to the internal SystemStatusHistory

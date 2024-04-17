@@ -1871,8 +1871,8 @@ func getClusterRoutes(
 	// POST /api/projects/{project_id}/clusters/{cluster_id}/system-status-history -> systemstatus.NewSystemStatusHistoryHandler
 	systemStatusHistoryEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
-			Verb:   types.APIVerbUpdate,
-			Method: types.HTTPVerbPost,
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
 			Path: &types.Path{
 				Parent:       basePath,
 				RelativePath: fmt.Sprintf("%s/system-status-history", relPath),

@@ -6,27 +6,19 @@ import Expandable from "components/porter/Expandable";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 
+import api from "shared/api";
+
 type Props = {
   projectId: number;
   clusterId: number;
 };
 
 type StatusData = {
-  cluster_unresponsive: Array<{
+  cluster_responsive: Array<{
     timestamp: string;
-    status: string;
+    responsive: boolean;
   }>;
-  services: Array<{
-    system_service: {
-      name: string;
-      namespace: string;
-      involved_object_type: string;
-    };
-    system_statuses: Array<{
-      timestamp: string;
-      status: string;
-    }>;
-  }>;
+  services: Record<string, GroupedService[]>;
 };
 
 type SystemService = {
@@ -47,11 +39,17 @@ type Service = {
 
 // If you're also grouping services by namespace and want a type for the grouped structure:
 type GroupedService = {
-  system_service: Pick<SystemService, "name" | "involved_object_type">;
+  system_service: SystemService;
   system_statuses: SystemStatus[];
 };
 
 type GroupedServices = Record<string, GroupedService[]>;
+
+// Initialize statusData with empty arrays
+const initialState: StatusData = {
+  cluster_responsive: [],
+  services: {},
+};
 
 const groupServicesByNamespace = (services: Service[]): GroupedServices => {
   return services.reduce<GroupedServices>((acc, service) => {
@@ -62,6 +60,7 @@ const groupServicesByNamespace = (services: Service[]): GroupedServices => {
     acc[namespace].push({
       system_service: {
         name: service.system_service.name,
+        namespace: service.system_service.namespace,
         involved_object_type: service.system_service.involved_object_type,
       },
       system_statuses: service.system_statuses,
@@ -73,13 +72,27 @@ const groupServicesByNamespace = (services: Service[]): GroupedServices => {
 const ClusterStatus: React.FC<Props> = ({ projectId, clusterId }) => {
   // TODO: make API call to get cluster status
   // TODO: add types for the response
-  const [statusData, setStatusData] = useState<any | null>(null);
+  const [statusData, setStatusData] = useState<StatusData>(initialState);
 
   useEffect(() => {
-    const groupedServices = groupServicesByNamespace(dummyResponse.services);
-    setStatusData({
-      cluster_unresponsive: dummyResponse.cluster_unresponsive,
-      services: groupedServices,
+    api.systemStatusHistory(
+      "<token>",
+      {},
+      {
+        projectId: projectId,
+        clusterId: clusterId,
+      },
+    )
+    .then(({ data }) => {
+      const groupedServices = groupServicesByNamespace(data.system_service_status_histories);
+      setStatusData({
+        cluster_responsive: data.cluster_status_history,
+        services: groupedServices,
+      });
+    }
+    )
+    .catch((err) => {
+      console.error(err);
     });
   }, []);
 
@@ -99,16 +112,15 @@ const ClusterStatus: React.FC<Props> = ({ projectId, clusterId }) => {
         <StatusBars>
           {Array.from({ length: 90 }).map((_, i) => {
             const statusIndex =
-              dummyResponse.cluster_unresponsive.length - (90 - i);
+              statusData?.cluster_responsive.length - (90 - i);
+              const responsive =
+              statusData?.cluster_responsive[statusIndex]?.responsive || true; // Provide "true" as the default value
             return (
               <Bar
                 key={i}
                 isFirst={i === 0}
                 isLast={i === 89}
-                status={
-                  dummyResponse.cluster_unresponsive[statusIndex]?.status ||
-                  "unknown"
-                }
+                status={responsive ? "healthy" : "failure"} // Use "responsive" if the value is true, otherwise "unknown"
               />
             );
           })}

@@ -37,11 +37,19 @@ func (p *SystemStatusHistoryHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 	// read the project and cluster from context
 	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
 	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
+	telemetry.WithAttributes(
+		span,
+		telemetry.AttributeKV{Key: "project_id", Value: project.ID},
+		telemetry.AttributeKV{Key: "cluster_id", Value: cluster.ID},
+	)
 	cloudProvider, err := p.getCloudProviderEnum(cluster.CloudProvider)
 	if err != nil {
+		err = telemetry.Error(ctx, span, err, "error getting cloud provider enum")
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "cloud_provider", Value: cloudProvider.String()})
+
 	request := connect.NewRequest(&porterv1.SystemStatusHistoryRequest{
 		ProjectId:     int64(project.ID),
 		ClusterId:     int64(cluster.ID),
@@ -49,11 +57,13 @@ func (p *SystemStatusHistoryHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 	})
 	resp, err := p.Config().ClusterControlPlaneClient.SystemStatusHistory(ctx, request)
 	if err != nil {
+		err = telemetry.Error(ctx, span, err, "error getting system status history from ccp")
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 	systemStatusHistory, err := types.ToSystemStatusHistory(resp.Msg)
 	if err != nil {
+		err = telemetry.Error(ctx, span, err, "error converting to system status history type")
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}

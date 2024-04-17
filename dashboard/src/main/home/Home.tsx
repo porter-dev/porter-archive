@@ -215,7 +215,7 @@ const Home: React.FC<Props> = (props) => {
       } else {
         setHasFinishedOnboarding(true);
       }
-    } catch (error) {}
+    } catch (error) { }
   };
 
   useEffect(() => {
@@ -369,7 +369,7 @@ const Home: React.FC<Props> = (props) => {
   };
 
   const { cluster, baseRoute } = props.match.params as any;
-  const { hasPaymentEnabled } = checkIfProjectHasPayment();
+  const { hasPaymentEnabled, refetchPaymentEnabled } = checkIfProjectHasPayment();
   const { plan } = useCustomerPlan();
 
   const isTrialExpired = (timestamp: string): boolean => {
@@ -426,6 +426,7 @@ const Home: React.FC<Props> = (props) => {
                     setShowBillingModal(false);
                   }}
                   onCreate={async () => {
+                    await refetchPaymentEnabled({ throwOnError: false, cancelRefetch: false });
                     setShowBillingModal(false);
                   }}
                 />
@@ -434,6 +435,7 @@ const Home: React.FC<Props> = (props) => {
                 <BillingModal
                   trialExpired
                   onCreate={async () => {
+                    await refetchPaymentEnabled({ throwOnError: false, cancelRefetch: false });
                     setShowBillingModal(false);
                   }}
                 />

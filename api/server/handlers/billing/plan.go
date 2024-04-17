@@ -181,20 +181,16 @@ func (c *ListCustomerUsageHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 
 	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
-	if !c.Config().BillingManager.MetronomeEnabled || !proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient) {
-		c.WriteResult(w, r, "")
-
-		telemetry.WithAttributes(span,
-			telemetry.AttributeKV{Key: "metronome-config-exists", Value: c.Config().BillingManager.MetronomeEnabled},
-			telemetry.AttributeKV{Key: "metronome-enabled", Value: proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient)},
-		)
-		return
-	}
-
 	telemetry.WithAttributes(span,
-		telemetry.AttributeKV{Key: "metronome-enabled", Value: true},
+		telemetry.AttributeKV{Key: "metronome-config-exists", Value: c.Config().BillingManager.MetronomeEnabled},
+		telemetry.AttributeKV{Key: "metronome-enabled", Value: proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient)},
 		telemetry.AttributeKV{Key: "usage-id", Value: proj.UsageID},
 	)
+
+	if !c.Config().BillingManager.MetronomeEnabled || !proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient) {
+		c.WriteResult(w, r, "")
+		return
+	}
 
 	req := &types.ListCustomerUsageRequest{}
 

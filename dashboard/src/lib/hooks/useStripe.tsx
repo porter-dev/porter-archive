@@ -6,10 +6,13 @@ import {
   ClientSecretResponse,
   CreditGrantsValidator,
   PaymentMethodValidator,
+  PlanValidator,
   Plan,
+  UsageValidator,
   type CreditGrants,
   type PaymentMethod,
   type PaymentMethodList,
+  type UsageList,
 } from "lib/billing/types";
 
 import api from "shared/api";
@@ -55,6 +58,10 @@ type TGetCredits = {
 
 type TGetPlan = {
   plan: Plan | undefined;
+};
+
+type TGetUsage = {
+  usage: UsageList | undefined;
 };
 
 const embeddableDashboardColors = {
@@ -159,23 +166,21 @@ export const useCreatePaymentMethod = (): TCreatePaymentMethod => {
 export const checkIfProjectHasPayment = (): TCheckHasPaymentEnabled => {
   const { currentProject } = useContext(Context);
 
-  if (!currentProject?.id) {
-    throw new Error("Project ID is missing");
-  }
-
-  // Fetch list of payment methods
+  // Check if payment is enabled for the project
   const paymentEnabledReq = useQuery(
-    ["checkPaymentEnabled", currentProject?.id],
-    async (): Promise<boolean> => {
-      const res = await api.getHasBilling(
-        "<token>",
-        {},
-        { project_id: currentProject.id }
-      );
+    currentProject?.id ? ["checkPaymentEnabled", currentProject.id] : ["checkPaymentEnabled", null],
+    currentProject?.id
+      ? async (): Promise<boolean> => {
+        const res = await api.getHasBilling(
+          "<token>",
+          {},
+          { project_id: currentProject.id }
+        );
 
-      const data = z.boolean().parse(res.data);
-      return data;
-    }
+        const data = z.boolean().parse(res.data);
+        return data;
+      }
+      : async () => false
   );
 
   return {
@@ -236,7 +241,7 @@ export const usePublishableKey = (): TGetPublishableKey => {
     ["getPublishableKey", currentProject?.id],
     async () => {
       if (!currentProject?.id || currentProject.id === -1) {
-        return;
+        return null;
       }
       const res = await api.getPublishableKey(
         "<token>",
@@ -285,25 +290,56 @@ export const useCustomerPlan = (): TGetPlan => {
 
   // Fetch current plan
   const planReq = useQuery(
-    ["getCustomerPlan", currentProject?.id],
-    async () => {
-      if (!currentProject?.id || currentProject.id === -1) {
-        return;
+    currentProject?.id ? ["getCustomerPlan", currentProject.id] : ["getCustomerPlan", null],
+    currentProject?.id
+      ? async (): Promise<PlanType> => {
+        const res = await api.getCustomerPlan(
+          "<token>",
+          {},
+          { project_id: currentProject.id }
+        );
+
+        const plan = PlanValidator.parse(res.data);
+        return plan;
       }
-      const res = await api.getCustomerPlan(
-        "<token>",
-        {},
-        {
-          project_id: currentProject?.id,
-        }
-      );
-      const plan = Plan.parse(res.data);
-      return plan;
-    }
+      : async () => null
   );
 
   return {
     plan: planReq.data,
+  };
+};
+
+export const useCustomerUsage = (
+  windowSize: string,
+  currentPeriod: boolean
+): TGetUsage => {
+  const { currentProject } = useContext(Context);
+
+  // Fetch customer usage
+  const usageReq = useQuery(
+    ["listCustomerUsage", currentProject?.id],
+    async () => {
+      if (!currentProject?.id || currentProject.id === -1) {
+        return;
+      }
+      const res = await api.getCustomerUsage(
+        "<token>",
+        {
+          window_size: windowSize,
+          current_period: currentPeriod,
+        },
+        {
+          project_id: currentProject?.id,
+        }
+      );
+      const usage = UsageValidator.array().parse(res.data);
+      return usage;
+    }
+  );
+
+  return {
+    usage: usageReq.data,
   };
 };
 

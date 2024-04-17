@@ -3464,6 +3464,18 @@ const getPublishableKey = baseApi<
   ({ project_id }) => `/api/projects/${project_id}/billing/publishable_key`
 );
 
+const getCustomerUsage = baseApi<
+  {
+    window_size: string;
+    starting_on?: string;
+    ending_before?: string;
+    current_period?: boolean;
+  },
+  {
+    project_id?: number;
+  }
+>("POST", ({ project_id }) => `/api/projects/${project_id}/billing/usage`);
+
 const getUsageDashboard = baseApi<
   {
     dashboard: string;
@@ -3916,6 +3928,7 @@ export default {
   getPublishableKey,
   getPorterCredits,
   getCustomerPlan,
+  getCustomerUsage,
   getUsageDashboard,
   listPaymentMethod,
   addPaymentMethod,

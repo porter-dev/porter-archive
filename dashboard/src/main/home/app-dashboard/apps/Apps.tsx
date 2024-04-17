@@ -58,8 +58,8 @@ const Apps: React.FC = () => {
   const { deploymentTargetList } = useDeploymentTargetList({ preview: false });
   const [deploymentTargetIdFilter, setDeploymentTargetIdFilter] =
     useState<string>("all");
-
   const { hasPaymentEnabled } = checkIfProjectHasPayment();
+
   const history = useHistory();
 
   const [searchValue, setSearchValue] = useState("");

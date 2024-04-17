@@ -8,7 +8,7 @@ export const readableDate = (s: string) => {
   return `${time} on ${date}`;
 };
 
-export const relativeDate = (date: string | number) => {
+export const relativeDate = (date: string | number, future: boolean) => {
   if (!date) {
     return "N/A";
   }
@@ -25,7 +25,14 @@ export const relativeDate = (date: string | number) => {
     return "N/A";
   }
 
-  return rtf.format(-time.time, time.unitOfTime);
+  let format;
+  if (future) {
+    format = rtf.format(time.time, time.unitOfTime);
+  } else {
+    format = rtf.format(-time.time, time.unitOfTime);
+  }
+
+  return format;
 };
 
 export const feedDate = (timestamp: string) => {
@@ -34,11 +41,11 @@ export const feedDate = (timestamp: string) => {
     day: "numeric",
     hour: "numeric",
     minute: "2-digit",
-    hour12: true
+    hour12: true,
   });
 
   return localTime;
-}
+};
 
 export const timeFrom = (
   time: string | number,
@@ -114,7 +121,8 @@ export const capitalize = (s: string) => {
   return s.charAt(0).toUpperCase() + s.substring(1).toLowerCase();
 };
 
-const LINE = /(?:^|^)\s*(?:export\s+)?([\w.-]+)(?:\s*=\s*?|:\s+?)(\s*'(?:\\'|[^'])*'|\s*"(?:\\"|[^"])*"|\s*`(?:\\`|[^`])*`|[^#\r\n]+)?\s*(?:#.*)?(?:$|$)/gm;
+const LINE =
+  /(?:^|^)\s*(?:export\s+)?([\w.-]+)(?:\s*=\s*?|:\s+?)(\s*'(?:\\'|[^'])*'|\s*"(?:\\"|[^"])*"|\s*`(?:\\`|[^`])*`|[^#\r\n]+)?\s*(?:#.*)?(?:$|$)/gm;
 
 export const dotenv_parse = (src: string): Record<string, string> => {
   // Parser src into an Object

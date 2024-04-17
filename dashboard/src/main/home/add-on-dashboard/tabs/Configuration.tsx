@@ -3,9 +3,10 @@ import { match } from "ts-pattern";
 
 import { type ClientAddon } from "lib/addons";
 
-import DatadogForm from "../DatadogForm";
-import MetabaseForm from "../MetabaseForm";
-import MezmoForm from "../MezmoForm";
+import DatadogForm from "../forms/DatadogForm";
+import MetabaseForm from "../forms/MetabaseForm";
+import MezmoForm from "../forms/MezmoForm";
+import NewRelicForm from "../forms/NewRelicForm";
 
 type Props = {
   type: ClientAddon["config"]["type"];
@@ -16,6 +17,7 @@ const Configuration: React.FC<Props> = ({ type }) => {
     .with("datadog", () => <DatadogForm />)
     .with("mezmo", () => <MezmoForm />)
     .with("metabase", () => <MetabaseForm />)
+    .with("newrelic", () => <NewRelicForm />)
     .otherwise(() => null);
 };
 

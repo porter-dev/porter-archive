@@ -18,7 +18,7 @@ import { Context } from "shared/Context";
 
 import DashboardHeader from "../cluster-dashboard/DashboardHeader";
 import ClusterContextProvider from "../infrastructure-dashboard/ClusterContextProvider";
-import Configuration from "./tabs/Overview";
+import Configuration from "./tabs/Configuration";
 
 type Props = {
   template: AddonTemplate;

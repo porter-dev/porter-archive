@@ -6,7 +6,7 @@ import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import { type ClientAddon } from "lib/addons";
 
-import AddonSaveButton from "./AddonSaveButton";
+import AddonSaveButton from "../AddonSaveButton";
 
 const MezmoForm: React.FC = () => {
   const {

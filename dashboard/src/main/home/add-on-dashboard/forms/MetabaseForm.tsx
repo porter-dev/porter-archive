@@ -24,11 +24,11 @@ import { stringifiedDNSRecordType } from "utils/ip";
 import copy from "assets/copy-left.svg";
 import upload from "assets/upload.svg";
 
-import { DATASTORE_ENGINE_POSTGRES } from "../database-dashboard/constants";
-import { DatastoreList } from "../database-dashboard/DatabaseDashboard";
-import { useClusterContext } from "../infrastructure-dashboard/ClusterContextProvider";
-import { useAddonFormContext } from "./AddonFormContextProvider";
-import AddonSaveButton from "./AddonSaveButton";
+import { DATASTORE_ENGINE_POSTGRES } from "../../database-dashboard/constants";
+import { DatastoreList } from "../../database-dashboard/DatabaseDashboard";
+import { useClusterContext } from "../../infrastructure-dashboard/ClusterContextProvider";
+import { useAddonFormContext } from "../AddonFormContextProvider";
+import AddonSaveButton from "../AddonSaveButton";
 
 const MetabaseForm: React.FC = () => {
   const { cluster } = useClusterContext();
@@ -71,7 +71,7 @@ const MetabaseForm: React.FC = () => {
         {cluster.ingress_ip !== "" && (
           <>
             <Spacer y={0.5} />
-            <div style={{ width: "550px" }}>
+            <div style={{ width: "100%" }}>
               <Text color="helper">
                 To configure a custom domain, you must add{" "}
                 {stringifiedDNSRecordType(cluster.ingress_ip)} pointing to the
@@ -329,7 +329,7 @@ const IdContainer = styled.div`
   border-radius: 5px;
   padding: 10px;
   display: flex;
-  width: 550px;
+  width: 100%;
   border-radius: 5px;
   border: 1px solid ${({ theme }) => theme.border};
   align-items: center;

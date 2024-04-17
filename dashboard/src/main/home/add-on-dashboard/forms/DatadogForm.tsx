@@ -8,7 +8,7 @@ import Text from "components/porter/Text";
 import { Code } from "main/home/managed-addons/tabs/shared";
 import { type ClientAddon } from "lib/addons";
 
-import AddonSaveButton from "./AddonSaveButton";
+import AddonSaveButton from "../AddonSaveButton";
 
 const DatadogForm: React.FC = () => {
   const {

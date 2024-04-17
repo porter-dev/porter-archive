@@ -12,11 +12,11 @@ import { type ClientAddon } from "lib/addons";
 
 import { useAddonContext } from "./AddonContextProvider";
 import AddonSaveButton from "./AddonSaveButton";
-import Configuration from "./tabs/Overview";
+import Configuration from "./tabs/Configuration";
 import Settings from "./tabs/Settings";
 
-const validTabs = ["overview", "settings", "advanced"] as const;
-const DEFAULT_TAB = "overview" as const;
+const validTabs = ["configuration", "settings", "advanced"] as const;
+const DEFAULT_TAB = "configuration" as const;
 type ValidTab = (typeof validTabs)[number];
 
 type Props = {
@@ -38,8 +38,8 @@ const AddonTabs: React.FC<Props> = ({ tabParam }) => {
   const tabs = useMemo(() => {
     const tabs = [
       {
-        label: "Overview",
-        value: "overview" as ValidTab,
+        label: "Configuration",
+        value: "configuration" as ValidTab,
       },
       {
         label: "Settings",
@@ -84,7 +84,7 @@ const AddonTabs: React.FC<Props> = ({ tabParam }) => {
       />
       <Spacer y={1} />
       {match(currentTab)
-        .with("overview", () => <Configuration type={addon.config.type} />)
+        .with("configuration", () => <Configuration type={addon.config.type} />)
         .with("settings", () => <Settings />)
         .otherwise(() => null)}
     </DashboardWrapper>

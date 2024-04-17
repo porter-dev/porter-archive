@@ -35,7 +35,7 @@ func NewListBillingHandler(
 }
 
 func (c *ListBillingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx, span := telemetry.NewSpan(r.Context(), "list-payment-endpoint")
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-list-payment-methods")
 	defer span.End()
 
 	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
@@ -61,16 +61,42 @@ func NewCheckPaymentEnabledHandler(
 }
 
 func (c *CheckPaymentEnabledHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx, span := telemetry.NewSpan(r.Context(), "check-payment-endpoint")
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-check-payment-enabled")
 	defer span.End()
 
 	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
-	user, _ := ctx.Value(types.UserScope).(*models.User)
+
+	// Get project roles
+	roles, err := c.Repo().Project().ListProjectRoles(proj.ID)
+	if err != nil {
+		err = telemetry.Error(ctx, span, err, "error listing project roles")
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	// Get the project admin user
+	var adminUser *models.User
+	for _, role := range roles {
+		if role.Kind == types.RoleAdmin {
+			adminUser, err = c.Repo().User().ReadUser(role.UserID)
+			if err != nil {
+				err = telemetry.Error(ctx, span, err, "error reading user")
+				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+				return
+			}
+			break
+		}
+	}
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "admin-user-id", Value: adminUser.ID},
+		telemetry.AttributeKV{Key: "admin-user-email", Value: adminUser.Email},
+	)
 
 	// Create billing customer for project and set the billing ID if it doesn't exist
 	var shouldUpdate bool
 	if proj.BillingID == "" {
-		billingID, err := c.Config().BillingManager.StripeClient.CreateCustomer(ctx, user.Email, proj.ID, proj.Name)
+		billingID, err := c.Config().BillingManager.StripeClient.CreateCustomer(ctx, adminUser.Email, proj.ID, proj.Name)
 		if err != nil {
 			err = telemetry.Error(ctx, span, err, "error creating billing customer")
 			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
@@ -85,7 +111,7 @@ func (c *CheckPaymentEnabledHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 	}
 
 	if c.Config().BillingManager.MetronomeEnabled && proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient) && proj.UsageID == uuid.Nil {
-		customerID, customerPlanID, err := c.Config().BillingManager.MetronomeClient.CreateCustomerWithPlan(ctx, user.Email, proj.Name, proj.ID, proj.BillingID, proj.EnableSandbox)
+		customerID, customerPlanID, err := c.Config().BillingManager.MetronomeClient.CreateCustomerWithPlan(ctx, adminUser.Email, proj.Name, proj.ID, proj.BillingID, proj.EnableSandbox)
 		if err != nil {
 			err = telemetry.Error(ctx, span, err, "error creating Metronome customer")
 			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))

@@ -78,6 +78,36 @@ type EmbeddableDashboardRequest struct {
 	ColorOverrides []ColorOverride `json:"color_overrides,omitempty"`
 }
 
+// ListCustomerUsageRequest is the request to list usage for a customer
+type ListCustomerUsageRequest struct {
+	CustomerID       uuid.UUID `json:"customer_id"`
+	BillableMetricID uuid.UUID `json:"billable_metric_id"`
+	WindowSize       string    `json:"window_size"`
+	StartingOn       string    `json:"starting_on,omitempty"`
+	EndingBefore     string    `json:"ending_before,omitempty"`
+	CurrentPeriod    bool      `json:"current_period,omitempty"`
+}
+
+// Usage is the aggregated usage for a customer
+type Usage struct {
+	MetricName   string                `json:"metric_name"`
+	UsageMetrics []CustomerUsageMetric `json:"usage_metrics"`
+}
+
+// CustomerUsageMetric is a metric representing usage for a customer
+type CustomerUsageMetric struct {
+	StartingOn   string  `json:"starting_on"`
+	EndingBefore string  `json:"ending_before"`
+	Value        float64 `json:"value"`
+}
+
+// BillableMetric is defined in Metronome and represents the events that will
+// be ingested
+type BillableMetric struct {
+	ID   uuid.UUID `json:"id"`
+	Name string    `json:"name"`
+}
+
 // Plan is a pricing plan to which a user is currently subscribed
 type Plan struct {
 	ID                  uuid.UUID `json:"id"`

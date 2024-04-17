@@ -24,6 +24,7 @@ const (
 // MetronomeClient is the client used to call the Metronome API
 type MetronomeClient struct {
 	ApiKey               string
+	billableMetrics      []types.BillableMetric
 	PorterCloudPlanID    uuid.UUID
 	PorterStandardPlanID uuid.UUID
 }
@@ -257,8 +258,68 @@ func (m MetronomeClient) GetCustomerDashboard(ctx context.Context, customerID uu
 	return result.Data["url"], nil
 }
 
+// ListCustomerUsage will return the aggregated usage for a customer
+func (m MetronomeClient) ListCustomerUsage(ctx context.Context, customerID uuid.UUID, startingOn string, endingBefore string, windowsSize string, currentPeriod bool) (usage []types.Usage, err error) {
+	ctx, span := telemetry.NewSpan(ctx, "list-customer-usage")
+	defer span.End()
+
+	if customerID == uuid.Nil {
+		return usage, telemetry.Error(ctx, span, err, "customer id empty")
+	}
+
+	if len(m.billableMetrics) == 0 {
+		billableMetrics, err := m.listBillableMetricIDs(ctx, customerID)
+		if err != nil {
+			return nil, telemetry.Error(ctx, span, err, "failed to list billable metrics")
+		}
+
+		telemetry.WithAttributes(span,
+			telemetry.AttributeKV{Key: "billable-metric-count", Value: len(billableMetrics)},
+		)
+
+		// Cache billable metric ids for future calls
+		m.billableMetrics = append(m.billableMetrics, billableMetrics...)
+	}
+
+	path := "usage/groups"
+
+	baseReq := types.ListCustomerUsageRequest{
+		CustomerID:    customerID,
+		WindowSize:    windowsSize,
+		StartingOn:    startingOn,
+		EndingBefore:  endingBefore,
+		CurrentPeriod: currentPeriod,
+	}
+
+	for _, billableMetric := range m.billableMetrics {
+		telemetry.WithAttributes(span,
+			telemetry.AttributeKV{Key: "billable-metric-id", Value: billableMetric.ID},
+		)
+
+		var result struct {
+			Data []types.CustomerUsageMetric `json:"data"`
+		}
+
+		baseReq.BillableMetricID = billableMetric.ID
+		_, err = m.do(http.MethodPost, path, baseReq, &result)
+		if err != nil {
+			return usage, telemetry.Error(ctx, span, err, "failed to get customer usage")
+		}
+
+		usage = append(usage, types.Usage{
+			MetricName:   billableMetric.Name,
+			UsageMetrics: result.Data,
+		})
+	}
+
+	return usage, nil
+}
+
 // IngestEvents sends a list of billing events to Metronome's ingest endpoint
 func (m MetronomeClient) IngestEvents(ctx context.Context, events []types.BillingEvent) (err error) {
+	ctx, span := telemetry.NewSpan(ctx, "ingets-billing-events")
+	defer span.End()
+
 	if len(events) == 0 {
 		return nil
 	}
@@ -270,16 +331,16 @@ func (m MetronomeClient) IngestEvents(ctx context.Context, events []types.Billin
 		statusCode, err := m.do(http.MethodPost, path, events, nil)
 		// Check errors that are not from error http codes
 		if statusCode == 0 && err != nil {
-			return err
+			return telemetry.Error(ctx, span, err, "failed to ingest billing events")
 		}
 
 		if statusCode == http.StatusForbidden || statusCode == http.StatusUnauthorized {
-			return fmt.Errorf("unauthorized")
+			return telemetry.Error(ctx, span, err, "unauthorized")
 		}
 
 		// 400 responses should not be retried
 		if statusCode == http.StatusBadRequest {
-			return fmt.Errorf("malformed billing events")
+			return telemetry.Error(ctx, span, err, "malformed billing events")
 		}
 
 		// Any other status code can be safely retried
@@ -289,7 +350,29 @@ func (m MetronomeClient) IngestEvents(ctx context.Context, events []types.Billin
 		currentAttempts++
 	}
 
-	return fmt.Errorf("max number of retry attempts reached with no success")
+	return telemetry.Error(ctx, span, err, "max number of retry attempts reached with no success")
+}
+
+func (m MetronomeClient) listBillableMetricIDs(ctx context.Context, customerID uuid.UUID) (billableMetrics []types.BillableMetric, err error) {
+	ctx, span := telemetry.NewSpan(ctx, "list-billable-metrics")
+	defer span.End()
+
+	if customerID == uuid.Nil {
+		return billableMetrics, telemetry.Error(ctx, span, err, "customer id empty")
+	}
+
+	path := fmt.Sprintf("/customers/%s/billable-metrics", customerID)
+
+	var result struct {
+		Data []types.BillableMetric `json:"data"`
+	}
+
+	_, err = m.do(http.MethodGet, path, nil, &result)
+	if err != nil {
+		return billableMetrics, telemetry.Error(ctx, span, err, "failed to retrieve billable metrics from metronome")
+	}
+
+	return result.Data, nil
 }
 
 func (m MetronomeClient) do(method string, path string, body interface{}, data interface{}) (statusCode int, err error) {

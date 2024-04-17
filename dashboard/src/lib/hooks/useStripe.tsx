@@ -6,10 +6,12 @@ import {
   ClientSecretResponse,
   CreditGrantsValidator,
   PaymentMethodValidator,
-  Plan,
+  PlanValidator,
+  UsageValidator,
   type CreditGrants,
   type PaymentMethod,
   type PaymentMethodList,
+  type UsageList,
 } from "lib/billing/types";
 
 import api from "shared/api";
@@ -55,6 +57,10 @@ type TGetCredits = {
 
 type TGetPlan = {
   plan: Plan | undefined;
+};
+
+type TGetUsage = {
+  usage: UsageList | undefined;
 };
 
 const embeddableDashboardColors = {
@@ -297,13 +303,46 @@ export const useCustomerPlan = (): TGetPlan => {
           project_id: currentProject?.id,
         }
       );
-      const plan = Plan.parse(res.data);
+      const plan = PlanValidator.parse(res.data);
       return plan;
     }
   );
 
   return {
     plan: planReq.data,
+  };
+};
+
+export const useCustomerUsage = (
+  windowSize: string,
+  currentPeriod: boolean
+): TGetUsage => {
+  const { currentProject } = useContext(Context);
+
+  // Fetch customer usage
+  const usageReq = useQuery(
+    ["listCustomerUsage", currentProject?.id],
+    async () => {
+      if (!currentProject?.id || currentProject.id === -1) {
+        return;
+      }
+      const res = await api.getCustomerUsage(
+        "<token>",
+        {
+          window_size: windowSize,
+          current_period: currentPeriod,
+        },
+        {
+          project_id: currentProject?.id,
+        }
+      );
+      const usage = UsageValidator.array().parse(res.data);
+      return usage;
+    }
+  );
+
+  return {
+    usage: usageReq.data,
   };
 };
 

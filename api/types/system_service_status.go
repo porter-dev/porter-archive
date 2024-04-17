@@ -34,7 +34,7 @@ const (
 	StatusFailure Status = "failure"
 )
 
-// SystemServicesStatus contains the system infrastructure status for a cluster
+// SystemStatusHistory contains the system infrastructure status for a cluster
 type SystemStatusHistory struct {
 	// ClusterStatusHistory is a time series of the cluster's health
 	ClusterStatusHistory []ClusterHealthStatus `json:"cluster_status_history"`
@@ -63,6 +63,7 @@ type SystemService struct {
 	InvolvedObjectType InvolvedObjectType `json:"involved_object_type"`
 }
 
+// ServiceStatus is the status of a system service at a certain timestamp
 type ServiceStatus struct {
 	Timestamp time.Time `json:"timestamp"`
 	Status    Status    `json:"status"`

@@ -8,10 +8,9 @@ import Text from "components/porter/Text";
 
 import api from "shared/api";
 
-type Props = {
-  projectId: number;
-  clusterId: number;
-};
+import { useClusterContext } from "../ClusterContextProvider";
+
+type Props = {};
 
 type StatusData = {
   cluster_responsive: Array<{
@@ -34,13 +33,13 @@ type SystemStatus = {
 
 type Service = {
   system_service: SystemService;
-  system_statuses: SystemStatus[];
+  status_history: SystemStatus[];
 };
 
 // If you're also grouping services by namespace and want a type for the grouped structure:
 type GroupedService = {
   system_service: SystemService;
-  system_statuses: SystemStatus[];
+  status_history: SystemStatus[];
 };
 
 type GroupedServices = Record<string, GroupedService[]>;
@@ -63,15 +62,15 @@ const groupServicesByNamespace = (services: Service[]): GroupedServices => {
         namespace: service.system_service.namespace,
         involved_object_type: service.system_service.involved_object_type,
       },
-      system_statuses: service.system_statuses,
+      status_history: service.status_history,
     });
     return acc;
   }, {});
 };
 
-const ClusterStatus: React.FC<Props> = ({ projectId, clusterId }) => {
-  // TODO: make API call to get cluster status
-  // TODO: add types for the response
+const SystemStatus: React.FC<Props> = () => {
+  const { projectId, cluster, isClusterUpdating } = useClusterContext();
+
   const [statusData, setStatusData] = useState<StatusData>(initialState);
 
   useEffect(() => {
@@ -80,10 +79,12 @@ const ClusterStatus: React.FC<Props> = ({ projectId, clusterId }) => {
       {},
       {
         projectId: projectId,
-        clusterId: clusterId,
+        clusterId: cluster.id,
       },
     )
     .then(({ data }) => {
+      console.log(data.cluster_status_history);
+      console.log(data.system_service_status_histories)
       const groupedServices = groupServicesByNamespace(data.system_service_status_histories);
       setStatusData({
         cluster_responsive: data.cluster_status_history,
@@ -111,8 +112,7 @@ const ClusterStatus: React.FC<Props> = ({ projectId, clusterId }) => {
       >
         <StatusBars>
           {Array.from({ length: 90 }).map((_, i) => {
-            const statusIndex =
-              statusData?.cluster_responsive.length - (90 - i);
+            const statusIndex = 89 - i;
               const responsive =
               statusData?.cluster_responsive[statusIndex]?.responsive || true; // Provide "true" as the default value
             return (
@@ -154,18 +154,14 @@ const ClusterStatus: React.FC<Props> = ({ projectId, clusterId }) => {
                       <Spacer y={0.25} />
                       <StatusBars>
                         {Array.from({ length: 90 }).map((_, i) => {
-                          const statusIndex =
-                            service.system_statuses.length - (90 - i);
-
+                          const statusIndex = 89 - i;
                           return (
                             <Bar
                               key={i}
                               isFirst={i === 0}
                               isLast={i === 89}
                               status={
-                                statusIndex >= 0
-                                  ? service.system_statuses[statusIndex].status
-                                  : "unknown"
+                                service.status_history[statusIndex]?.status || "healthy"
                               }
                             />
                           );
@@ -188,7 +184,7 @@ const ClusterStatus: React.FC<Props> = ({ projectId, clusterId }) => {
   );
 };
 
-export default ClusterStatus;
+export default SystemStatus;
 
 const getBackgroundGradient = (status: string): string => {
   switch (status) {
@@ -219,232 +215,3 @@ const StatusBars = styled.div`
   justify-content: space-between;
   gap: 2px;
 `;
-
-const dummyResponse = {
-  cluster_unresponsive: [
-    {
-      timestamp: "4/1/24",
-      status: "failure",
-    },
-    {
-      timestamp: "4/2/24",
-      status: "healthy",
-    },
-    {
-      timestamp: "4/3/24",
-      status: "healthy",
-    },
-    {
-      timestamp: "4/4/24",
-      status: "partial_failure",
-    },
-    {
-      timestamp: "4/5/24",
-      status: "healthy",
-    },
-    {
-      timestamp: "4/6/24",
-      status: "healthy",
-    },
-  ],
-  services: [
-    {
-      system_service: {
-        name: "cert-manager",
-        namespace: "cert-manager",
-        involved_object_type: "deployment",
-      },
-      system_statuses: [
-        {
-          timestamp: "4/1/24",
-          status: "healthy",
-        },
-        {
-          timestamp: "4/2/24",
-          status: "healthy",
-        },
-        {
-          timestamp: "4/3/24",
-          status: "healthy",
-        },
-        {
-          timestamp: "4/4/24",
-          status: "healthy",
-        },
-        {
-          timestamp: "4/5/24",
-          status: "healthy",
-        },
-        {
-          timestamp: "4/6/24",
-          status: "healthy",
-        },
-      ],
-    },
-    {
-      system_service: {
-        name: "ca-manager",
-        namespace: "cert-manager",
-        involved_object_type: "statefulset",
-      },
-      system_statuses: [
-        {
-          timestamp: "4/1/24",
-          status: "healthy",
-        },
-        {
-          timestamp: "4/2/24",
-          status: "healthy",
-        },
-        {
-          timestamp: "4/3/24",
-          status: "healthy",
-        },
-        {
-          timestamp: "4/4/24",
-          status: "partial_failure",
-        },
-        {
-          timestamp: "4/5/24",
-          status: "healthy",
-        },
-        {
-          timestamp: "4/6/24",
-          status: "healthy",
-        },
-      ],
-    },
-    {
-      system_service: {
-        name: "ca-injector",
-        namespace: "cert-manager",
-        involved_object_type: "statefulset",
-      },
-      system_statuses: [
-        {
-          timestamp: "4/1/24",
-          status: "partial_failure",
-        },
-        {
-          timestamp: "4/2/24",
-          status: "partial_failure",
-        },
-        {
-          timestamp: "4/3/24",
-          status: "healthy",
-        },
-        {
-          timestamp: "4/4/24",
-          status: "healthy",
-        },
-        {
-          timestamp: "4/5/24",
-          status: "healthy",
-        },
-        {
-          timestamp: "4/6/24",
-          status: "healthy",
-        },
-      ],
-    },
-    {
-      system_service: {
-        name: "bar",
-        namespace: "foo",
-        involved_object_type: "statefulset",
-      },
-      system_statuses: [
-        {
-          timestamp: "4/1/24",
-          status: "healthy",
-        },
-        {
-          timestamp: "4/2/24",
-          status: "healthy",
-        },
-        {
-          timestamp: "4/3/24",
-          status: "healthy",
-        },
-        {
-          timestamp: "4/4/24",
-          status: "failure",
-        },
-        {
-          timestamp: "4/5/24",
-          status: "healthy",
-        },
-        {
-          timestamp: "4/6/24",
-          status: "healthy",
-        },
-      ],
-    },
-    {
-      system_service: {
-        name: "alice",
-        namespace: "foo",
-        involved_object_type: "statefulset",
-      },
-      system_statuses: [
-        {
-          timestamp: "4/1/24",
-          status: "healthy",
-        },
-        {
-          timestamp: "4/2/24",
-          status: "healthy",
-        },
-        {
-          timestamp: "4/3/24",
-          status: "healthy",
-        },
-        {
-          timestamp: "4/4/24",
-          status: "healthy",
-        },
-        {
-          timestamp: "4/5/24",
-          status: "healthy",
-        },
-        {
-          timestamp: "4/6/24",
-          status: "healthy",
-        },
-      ],
-    },
-    {
-      system_service: {
-        name: "bob",
-        namespace: "foo",
-        involved_object_type: "statefulset",
-      },
-      system_statuses: [
-        {
-          timestamp: "4/1/24",
-          status: "healthy",
-        },
-        {
-          timestamp: "4/2/24",
-          status: "healthy",
-        },
-        {
-          timestamp: "4/3/24",
-          status: "healthy",
-        },
-        {
-          timestamp: "4/4/24",
-          status: "partial_failure",
-        },
-        {
-          timestamp: "4/5/24",
-          status: "healthy",
-        },
-        {
-          timestamp: "4/6/24",
-          status: "healthy",
-        },
-      ],
-    },
-  ],
-};

@@ -20,8 +20,9 @@ import ClusterSaveButton from "./ClusterSaveButton";
 import AdvancedSettingsTab from "./tabs/AdvancedSettingsTab";
 import ClusterOverview from "./tabs/overview/ClusterOverview";
 import Settings from "./tabs/Settings";
+import SystemStatus from "./tabs/SystemStatus"
 
-const validTabs = ["overview", "settings", "advanced"] as const;
+const validTabs = ["overview", "settings", "advanced", "systemStatus"] as const;
 const DEFAULT_TAB = "overview" as const;
 type ValidTab = (typeof validTabs)[number];
 
@@ -67,6 +68,10 @@ const ClusterTabs: React.FC<Props> = ({ tabParam }) => {
         label: "Settings",
         value: "settings" as ValidTab,
       },
+      {
+        label: "System Status",
+        value: "systemStatus" as ValidTab,
+      }
     ].filter(valueExists);
 
     return tabs;
@@ -143,6 +148,7 @@ const ClusterTabs: React.FC<Props> = ({ tabParam }) => {
         .with("overview", () => <ClusterOverview />)
         .with("settings", () => <Settings />)
         .with("advanced", () => <AdvancedSettingsTab />)
+        .with("systemStatus", () =>  <SystemStatus />)
         .otherwise(() => null)}
     </DashboardWrapper>
   );

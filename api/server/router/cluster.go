@@ -1885,7 +1885,7 @@ func getClusterRoutes(
 		},
 	)
 
-	systemStatusHistoryHandler := systemstatus.NewSystemStatusHistoryHandler(
+	systemStatusHistoryHandler := systemstatus.NewHistoryHandler(
 		config,
 		factory.GetResultWriter(),
 	)

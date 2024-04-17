@@ -1,7 +1,6 @@
 package systemstatus
 
 import (
-	"fmt"
 	"net/http"
 
 	"connectrpc.com/connect"
@@ -15,22 +14,22 @@ import (
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
-// SystemStatusHistoryHandler handles requests to fetch history of system status
-type SystemStatusHistoryHandler struct {
+// HistoryHandler handles requests to fetch history of system status
+type HistoryHandler struct {
 	handlers.PorterHandlerWriter
 }
 
-// NewSystemStatusHistoryHandler returns a SystemStatusHistoryHandler
-func NewSystemStatusHistoryHandler(
+// NewHistoryHandler returns a HistoryHandler
+func NewHistoryHandler(
 	config *config.Config,
 	writer shared.ResultWriter,
-) *SystemStatusHistoryHandler {
-	return &SystemStatusHistoryHandler{
+) *HistoryHandler {
+	return &HistoryHandler{
 		PorterHandlerWriter: handlers.NewDefaultPorterHandler(config, nil, writer),
 	}
 }
 
-func (p *SystemStatusHistoryHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (p *HistoryHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, span := telemetry.NewSpan(r.Context(), "serve-system-service-status-handler")
 	defer span.End()
 
@@ -42,12 +41,7 @@ func (p *SystemStatusHistoryHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 		telemetry.AttributeKV{Key: "project_id", Value: project.ID},
 		telemetry.AttributeKV{Key: "cluster_id", Value: cluster.ID},
 	)
-	cloudProvider, err := p.getCloudProviderEnum(cluster.CloudProvider)
-	if err != nil {
-		err = telemetry.Error(ctx, span, err, "error getting cloud provider enum")
-		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
-	}
+	cloudProvider := p.getCloudProviderEnum(cluster.CloudProvider)
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "cloud_provider", Value: cloudProvider.String()})
 
 	request := connect.NewRequest(&porterv1.SystemStatusHistoryRequest{
@@ -70,15 +64,16 @@ func (p *SystemStatusHistoryHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 	p.WriteResult(w, r, systemStatusHistory)
 }
 
-func (p *SystemStatusHistoryHandler) getCloudProviderEnum(cloudProvider string) (porterv1.EnumCloudProvider, error) {
+func (p *HistoryHandler) getCloudProviderEnum(cloudProvider string) porterv1.EnumCloudProvider {
 	switch cloudProvider {
 	case "AWS":
-		return porterv1.EnumCloudProvider_ENUM_CLOUD_PROVIDER_AWS, nil
+		return porterv1.EnumCloudProvider_ENUM_CLOUD_PROVIDER_AWS
 	case "AZURE":
-		return porterv1.EnumCloudProvider_ENUM_CLOUD_PROVIDER_AZURE, nil
+		return porterv1.EnumCloudProvider_ENUM_CLOUD_PROVIDER_AZURE
 	case "GCP":
-		return porterv1.EnumCloudProvider_ENUM_CLOUD_PROVIDER_GCP, nil
+		return porterv1.EnumCloudProvider_ENUM_CLOUD_PROVIDER_GCP
 	default:
-		return porterv1.EnumCloudProvider_ENUM_CLOUD_PROVIDER_UNSPECIFIED, fmt.Errorf("unknown could provider")
+		// We use unspecified to mean local kind cluster which is used in testing
+		return porterv1.EnumCloudProvider_ENUM_CLOUD_PROVIDER_UNSPECIFIED
 	}
 }

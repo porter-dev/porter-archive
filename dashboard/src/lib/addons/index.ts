@@ -230,7 +230,9 @@ export function clientAddonToProto(addon: ClientAddon): Addon {
     .with({ type: "tailscale" }, (data) => ({
       value: new Tailscale({
         authKey: data.authKey,
-        subnetRoutes: data.subnetRoutes,
+        subnetRoutes: data.subnetRoutes
+          .map((r) => r.route)
+          .filter((r) => r !== ""),
       }),
       case: "tailscale" as const,
     }))
@@ -343,7 +345,7 @@ export function clientAddonFromProto({
     .with({ case: "tailscale" }, (data) => ({
       type: "tailscale" as const,
       authKey: data.value.authKey ?? "",
-      subnetRoutes: data.value.subnetRoutes,
+      subnetRoutes: data.value.subnetRoutes.map((r) => ({ route: r })),
     }))
     .exhaustive();
 

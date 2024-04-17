@@ -20,10 +20,15 @@ const BillingModal = ({
   back?: (value: React.SetStateAction<boolean>) => void;
   onCreate: () => Promise<void>;
   trialExpired?: boolean;
-}) => {
+}): JSX.Element => {
   const { currentProject } = useContext(Context);
   const { publishableKey } = usePublishableKey();
-  const stripePromise = loadStripe(publishableKey);
+
+  let stripePromise;
+  if (publishableKey) {
+    stripePromise = loadStripe(publishableKey);
+
+  }
 
   const appearance = {
     variables: {
@@ -81,13 +86,16 @@ const BillingModal = ({
           </Text>
         )}
         <Spacer y={1} />
-        <Elements
-          stripe={stripePromise}
-          options={options}
-          appearance={appearance}
-        >
-          <PaymentSetupForm onCreate={onCreate}></PaymentSetupForm>
-        </Elements>
+        {
+          publishableKey ? <Elements
+            stripe={stripePromise}
+            options={options}
+            appearance={appearance}
+          >
+            <PaymentSetupForm onCreate={onCreate}></PaymentSetupForm>
+          </Elements> : null
+        }
+
       </div>
     </Modal>
   );

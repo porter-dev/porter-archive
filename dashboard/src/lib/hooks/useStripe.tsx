@@ -241,7 +241,7 @@ export const usePublishableKey = (): TGetPublishableKey => {
     ["getPublishableKey", currentProject?.id],
     async () => {
       if (!currentProject?.id || currentProject.id === -1) {
-        return;
+        return null;
       }
       const res = await api.getPublishableKey(
         "<token>",

@@ -30,6 +30,7 @@ import {
   type ProjectListType,
   type ProjectType,
 } from "shared/types";
+import { relativeDate, timeFrom } from "shared/string_utils";
 
 import AddOnDashboard from "./add-on-dashboard/AddOnDashboard";
 import NewAddOnFlow from "./add-on-dashboard/NewAddOnFlow";
@@ -367,15 +368,25 @@ const Home: React.FC<Props> = (props) => {
     pushFiltered(props, "/dashboard", []);
   };
 
-  const showCardBanner = true;
-  const trialExpired = true;
-
   const { cluster, baseRoute } = props.match.params as any;
   const { hasPaymentEnabled } = checkIfProjectHasPayment();
   const { plan } = useCustomerPlan();
 
-  console.log(plan)
-  console.log("hasbillingenabled?", hasPaymentEnabled);
+  const isTrialExpired = (timestamp: string): boolean => {
+    if (timestamp === "") {
+      return true;
+    }
+
+    const diff = timeFrom("2024-04-17T00:00:00.000Z");
+    if (diff.when === "future") {
+      return false;
+    }
+
+    return true;
+  }
+
+  const showCardBanner = !hasPaymentEnabled;
+  const trialExpired = plan && isTrialExpired(plan.trial_info.ending_before);
 
   return (
     <ThemeProvider
@@ -383,22 +394,24 @@ const Home: React.FC<Props> = (props) => {
     >
       <DeploymentTargetProvider>
         <StyledHome showCardBanner={showCardBanner}>
-          {!currentProject?.sandbox_enabled && showCardBanner && (
+          {!currentProject?.sandbox_enabled && showCardBanner && plan && (
             <>
-              <GlobalBanner>
-                <i className="material-icons-round">warning</i>
-                Please
-                <Spacer width="5px" inline />
-                <Link
-                  hasunderline
-                  onClick={() => {
-                    setShowBillingModal(true);
-                  }}
-                >
-                  connect a valid payment method
-                </Link>
-                . Your project has 127 free days remaining.
-              </GlobalBanner>
+              {!trialExpired && (
+                <GlobalBanner>
+                  <i className="material-icons-round">warning</i>
+                  Please
+                  <Spacer width="5px" inline />
+                  <Link
+                    hasunderline
+                    onClick={() => {
+                      setShowBillingModal(true);
+                    }}
+                  >
+                    connect a valid payment method
+                  </Link>
+                  . Your free trial is ending in {relativeDate(plan.trial_info.ending_before, true)}.
+                </GlobalBanner>
+              )}
               {!trialExpired && showBillingModal && (
                 <BillingModal
                   back={() => {

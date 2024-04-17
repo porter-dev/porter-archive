@@ -27,7 +27,6 @@ import {
   useDeploymentTargetList,
   type DeploymentTarget,
 } from "lib/hooks/useDeploymentTarget";
-import { checkIfProjectHasPayment } from "lib/hooks/useStripe";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
@@ -59,7 +58,6 @@ const Apps: React.FC = () => {
   const [deploymentTargetIdFilter, setDeploymentTargetIdFilter] =
     useState<string>("all");
 
-  const { hasPaymentEnabled } = checkIfProjectHasPayment();
   const history = useHistory();
 
   const [searchValue, setSearchValue] = useState("");

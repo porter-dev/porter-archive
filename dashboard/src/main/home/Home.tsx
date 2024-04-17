@@ -61,6 +61,7 @@ import { NewProjectFC } from "./new-project/NewProject";
 import Onboarding from "./onboarding/Onboarding";
 import ProjectSettings from "./project-settings/ProjectSettings";
 import Sidebar from "./sidebar/Sidebar";
+import { checkIfProjectHasPayment, useCustomerPlan } from "lib/hooks/useStripe";
 
 // Guarded components
 const GuardedProjectSettings = fakeGuardedRoute("settings", "", [
@@ -210,7 +211,7 @@ const Home: React.FC<Props> = (props) => {
       } else {
         setHasFinishedOnboarding(true);
       }
-    } catch (error) {}
+    } catch (error) { }
   };
 
   useEffect(() => {
@@ -364,6 +365,12 @@ const Home: React.FC<Props> = (props) => {
   };
 
   const { cluster, baseRoute } = props.match.params as any;
+  const { hasPaymentEnabled } = checkIfProjectHasPayment();
+  const { plan } = useCustomerPlan();
+
+  console.log(plan)
+  console.log("hasbillingenabled?", hasPaymentEnabled);
+
   return (
     <ThemeProvider
       theme={currentProject?.simplified_view_enabled ? midnight : standard}

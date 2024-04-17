@@ -16,6 +16,7 @@ import Link from "components/porter/Link";
 import Modal from "components/porter/Modal";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
+import { checkIfProjectHasPayment, useCustomerPlan } from "lib/hooks/useStripe";
 
 import api from "shared/api";
 import { withAuth, type WithAuthProps } from "shared/auth/AuthorizationHoc";
@@ -23,6 +24,7 @@ import { fakeGuardedRoute } from "shared/auth/RouteGuard";
 import { Context } from "shared/Context";
 import DeploymentTargetProvider from "shared/DeploymentTargetContext";
 import { pushFiltered, pushQueryParams, type PorterUrl } from "shared/routing";
+import { relativeDate, timeFrom } from "shared/string_utils";
 import midnight from "shared/themes/midnight";
 import standard from "shared/themes/standard";
 import {
@@ -30,7 +32,6 @@ import {
   type ProjectListType,
   type ProjectType,
 } from "shared/types";
-import { relativeDate, timeFrom } from "shared/string_utils";
 
 import AddOnDashboard from "./add-on-dashboard/AddOnDashboard";
 import NewAddOnFlow from "./add-on-dashboard/NewAddOnFlow";
@@ -64,7 +65,6 @@ import { NewProjectFC } from "./new-project/NewProject";
 import Onboarding from "./onboarding/Onboarding";
 import ProjectSettings from "./project-settings/ProjectSettings";
 import Sidebar from "./sidebar/Sidebar";
-import { checkIfProjectHasPayment, useCustomerPlan } from "lib/hooks/useStripe";
 
 // Guarded components
 const GuardedProjectSettings = fakeGuardedRoute("settings", "", [
@@ -215,7 +215,7 @@ const Home: React.FC<Props> = (props) => {
       } else {
         setHasFinishedOnboarding(true);
       }
-    } catch (error) { }
+    } catch (error) {}
   };
 
   useEffect(() => {
@@ -383,7 +383,7 @@ const Home: React.FC<Props> = (props) => {
     }
 
     return true;
-  }
+  };
 
   const showCardBanner = !hasPaymentEnabled;
   const trialExpired = plan && isTrialExpired(plan.trial_info.ending_before);
@@ -393,7 +393,14 @@ const Home: React.FC<Props> = (props) => {
       theme={currentProject?.simplified_view_enabled ? midnight : standard}
     >
       <DeploymentTargetProvider>
-        <StyledHome showCardBanner={showCardBanner}>
+        <StyledHome
+          padTop={
+            !currentProject?.sandbox_enabled &&
+            showCardBanner &&
+            plan &&
+            !trialExpired
+          }
+        >
           {!currentProject?.sandbox_enabled && showCardBanner && plan && (
             <>
               {!trialExpired && (
@@ -409,7 +416,8 @@ const Home: React.FC<Props> = (props) => {
                   >
                     connect a valid payment method
                   </Link>
-                  . Your free trial is ending in {relativeDate(plan.trial_info.ending_before, true)}.
+                  . Your free trial is ending in{" "}
+                  {relativeDate(plan.trial_info.ending_before, true)}.
                 </GlobalBanner>
               )}
               {!trialExpired && showBillingModal && (
@@ -727,7 +735,7 @@ const DashboardWrapper = styled.div`
 `;
 
 const StyledHome = styled.div<{
-  showCardBanner: boolean;
+  padTop: boolean | null | undefined;
 }>`
   width: 100vw;
   height: 100vh;
@@ -735,7 +743,7 @@ const StyledHome = styled.div<{
   top: 0;
   left: 0;
   margin: 0;
-  padding-top: ${(props) => (props.showCardBanner ? "35px" : "0")};
+  padding-top: ${(props) => (props.padTop ? "35px" : "0")};
   user-select: none;
   display: flex;
   justify-content: center;

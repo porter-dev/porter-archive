@@ -38,11 +38,21 @@ func registerCommand_Kubectl(cliConf config.CLIConfig) *cobra.Command {
 func runKubectl(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
 	// this will never error because it just ran
 	user, _ := client.AuthCheck(ctx)
-	if !strings.HasSuffix(user.Email, "@porter.run") {
+
+	project, err := client.GetProject(ctx, cliConf.Project)
+	if err != nil {
+		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run: %w", err)
+	}
+
+	if project == nil {
+		return fmt.Errorf("project [%d] not found", cliConf.Project)
+	}
+
+	if !strings.HasSuffix(user.Email, "@porter.run") && project.ValidateApplyV2 {
 		return fmt.Errorf("Forbidden")
 	}
 
-	_, err := exec.LookPath("kubectl")
+	_, err = exec.LookPath("kubectl")
 	if err != nil {
 		return fmt.Errorf("error finding kubectl: %w", err)
 	}

@@ -12,6 +12,7 @@ import ConfirmOverlay from "components/ConfirmOverlay";
 import Loading from "components/Loading";
 import NoClusterPlaceHolder from "components/NoClusterPlaceHolder";
 import Button from "components/porter/Button";
+import Link from "components/porter/Link";
 import Modal from "components/porter/Modal";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
@@ -56,6 +57,7 @@ import CreateClusterForm from "./infrastructure-dashboard/forms/CreateClusterFor
 import Integrations from "./integrations/Integrations";
 import LaunchWrapper from "./launch/LaunchWrapper";
 import ModalHandler from "./ModalHandler";
+import BillingModal from "./modals/BillingModal";
 import Navbar from "./navbar/Navbar";
 import { NewProjectFC } from "./new-project/NewProject";
 import Onboarding from "./onboarding/Onboarding";
@@ -108,6 +110,7 @@ const Home: React.FC<Props> = (props) => {
     setShouldRefreshClusters,
   } = useContext(Context);
 
+  const [showBillingModal, setShowBillingModal] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
   const [forceRefreshClusters, setForceRefreshClusters] = useState(false);
   const [ghRedirect, setGhRedirect] = useState(false);
@@ -363,13 +366,52 @@ const Home: React.FC<Props> = (props) => {
     pushFiltered(props, "/dashboard", []);
   };
 
+  const showCardBanner = true;
+  const trialExpired = true;
+
   const { cluster, baseRoute } = props.match.params as any;
   return (
     <ThemeProvider
       theme={currentProject?.simplified_view_enabled ? midnight : standard}
     >
       <DeploymentTargetProvider>
-        <StyledHome>
+        <StyledHome showCardBanner={showCardBanner}>
+          {!currentProject?.sandbox_enabled && showCardBanner && (
+            <>
+              <GlobalBanner>
+                <i className="material-icons-round">warning</i>
+                Please
+                <Spacer width="5px" inline />
+                <Link
+                  hasunderline
+                  onClick={() => {
+                    setShowBillingModal(true);
+                  }}
+                >
+                  connect a valid payment method
+                </Link>
+                . Your project has 127 free days remaining.
+              </GlobalBanner>
+              {!trialExpired && showBillingModal && (
+                <BillingModal
+                  back={() => {
+                    setShowBillingModal(false);
+                  }}
+                  onCreate={async () => {
+                    setShowBillingModal(false);
+                  }}
+                />
+              )}
+              {trialExpired && (
+                <BillingModal
+                  trialExpired
+                  onCreate={async () => {
+                    setShowBillingModal(false);
+                  }}
+                />
+              )}
+            </>
+          )}
           <ModalHandler setRefreshClusters={setForceRefreshClusters} />
           {currentOverlay &&
             createPortal(
@@ -620,9 +662,10 @@ const GlobalBanner = styled.div`
   z-index: 999;
   position: fixed;
   top: 0;
+  color: #fefefe;
   left: 0;
   height: 35px;
-  background: #263061;
+  background: #4752ba;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -632,6 +675,12 @@ const GlobalBanner = styled.div`
   > img {
     height: 16px;
     margin-right: 10px;
+  }
+
+  > i {
+    margin-right: 10px;
+    font-size: 16px;
+    opacity: 0.8;
   }
 `;
 
@@ -657,13 +706,16 @@ const DashboardWrapper = styled.div`
   height: fit-content;
 `;
 
-const StyledHome = styled.div`
+const StyledHome = styled.div<{
+  showCardBanner: boolean;
+}>`
   width: 100vw;
   height: 100vh;
   position: fixed;
   top: 0;
   left: 0;
   margin: 0;
+  padding-top: ${(props) => (props.showCardBanner ? "35px" : "0")};
   user-select: none;
   display: flex;
   justify-content: center;

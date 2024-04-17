@@ -67,7 +67,7 @@ func (c *CheckPaymentEnabledHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
 	// Get project roles
-	roles, err := c.Repo().Project().ListProjectRoles(proj.ID)
+	roles, err := c.Repo().Project().ListProjectRolesOrdered(proj.ID)
 	if err != nil {
 		err = telemetry.Error(ctx, span, err, "error listing project roles")
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))

@@ -377,7 +377,7 @@ const Home: React.FC<Props> = (props) => {
       return true;
     }
 
-    const diff = timeFrom("2024-04-17T00:00:00.000Z");
+    const diff = timeFrom(timestamp);
     if (diff.when === "future") {
       return false;
     }

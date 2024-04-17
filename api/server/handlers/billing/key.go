@@ -28,7 +28,7 @@ func NewGetPublishableKeyHandler(
 }
 
 func (c *GetPublishableKeyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx, span := telemetry.NewSpan(r.Context(), "get-publishable-key-endpoint")
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-get-publishable-key")
 	defer span.End()
 
 	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)

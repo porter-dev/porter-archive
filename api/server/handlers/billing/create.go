@@ -37,7 +37,7 @@ func NewCreateBillingHandler(
 }
 
 func (c *CreateBillingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx, span := telemetry.NewSpan(r.Context(), "create-billing-endpoint")
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-create-billing-method")
 	defer span.End()
 
 	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
@@ -68,7 +68,7 @@ func NewSetDefaultBillingHandler(
 }
 
 func (c *SetDefaultBillingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx, span := telemetry.NewSpan(r.Context(), "set-default-billing-endpoint")
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-set-default-billing-method")
 	defer span.End()
 
 	user, _ := r.Context().Value(types.UserScope).(*models.User)

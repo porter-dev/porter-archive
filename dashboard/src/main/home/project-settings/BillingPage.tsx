@@ -17,6 +17,7 @@ import {
   usePorterCredits,
   useSetDefaultPaymentMethod,
 } from "lib/hooks/useStripe";
+import { relativeDate } from "shared/string_utils";
 
 import { Context } from "shared/Context";
 import cardIcon from "assets/credit-card.svg";
@@ -79,35 +80,6 @@ function BillingPage(): JSX.Element {
 
   const formatCredits = (credits: number): string => {
     return (credits / 100).toFixed(2);
-  };
-  const monthDiff = (d1: Date, d2: Date): number => {
-    let months;
-    months = (d2.getFullYear() - d1.getFullYear()) * 12;
-    months -= d1.getMonth();
-    months += d2.getMonth();
-    return months <= 0 ? 0 : months;
-  };
-
-  const daysDiff = (d1: Date, d2: Date): number => {
-    const _MS_PER_DAY = 1000 * 60 * 60 * 24;
-    const utc1 = Date.UTC(d1.getFullYear(), d1.getMonth(), d1.getDate());
-    const utc2 = Date.UTC(d2.getFullYear(), d2.getMonth(), d2.getDate());
-
-    return Math.floor((utc2 - utc1) / _MS_PER_DAY);
-  };
-
-  const relativeTime = (timestampUTC: string): string => {
-    const tsDate = new Date(timestampUTC);
-    const now = new Date();
-
-    const remainingMonths = monthDiff(now, tsDate);
-    const remainingDays = daysDiff(now, tsDate);
-
-    const relativeFormat = remainingMonths > 0 ? "months" : "days";
-    const relativeValue = remainingMonths > 0 ? remainingMonths : remainingDays;
-
-    const rt = new Intl.RelativeTimeFormat("en", { style: "short" });
-    return rt.format(relativeValue, relativeFormat);
   };
 
   const readableDate = (s: string): string => new Date(s).toLocaleDateString();
@@ -210,31 +182,34 @@ function BillingPage(): JSX.Element {
       </Button>
       <Spacer y={2} />
 
-      {currentProject?.metronome_enabled ? (
+      {currentProject?.metronome_enabled && (
         <div>
-          <div>
-            <Text size={16}>Porter credit grants</Text>
-            <Spacer y={1} />
-            <Text color="helper">
-              View the amount of Porter credits you have available to spend on
-              resources within this project.
-            </Text>
-            <Spacer y={1} />
 
-            <Container>
-              <Image src={gift} style={{ marginTop: "-2px" }} />
-              <Spacer inline x={1} />
-              <Text size={20}>
-                {creditGrants !== undefined &&
-                creditGrants.remaining_credits > 0
-                  ? `$${formatCredits(
+          {currentProject?.sandbox_enabled && (
+            <div>
+              <Text size={16}>Porter credit grants</Text>
+              <Spacer y={1} />
+              <Text color="helper">
+                View the amount of Porter credits you have available to spend on
+                resources within this project.
+              </Text>
+              <Spacer y={1} />
+
+              <Container>
+                <Image src={gift} style={{ marginTop: "-2px" }} />
+                <Spacer inline x={1} />
+                <Text size={20}>
+                  {creditGrants !== undefined &&
+                    creditGrants.remaining_credits > 0
+                    ? `$${formatCredits(
                       creditGrants.remaining_credits
                     )}/$${formatCredits(creditGrants.granted_credits)}`
-                  : "$ 0.00"}
-              </Text>
-            </Container>
-            <Spacer y={2} />
-          </div>
+                    : "$ 0.00"}
+                </Text>
+              </Container>
+              <Spacer y={2} />
+            </div>
+          )}
 
           <div>
             <Text size={16}>Plan Details</Text>
@@ -244,7 +219,7 @@ function BillingPage(): JSX.Element {
             </Text>
             <Spacer y={1} />
 
-            {plan !== undefined && plan.plan_name !== "" ? (
+            {plan && plan.plan_name !== "" ? (
               <div>
                 <Text>Active Plan</Text>
                 <Spacer y={0.5} />
@@ -255,10 +230,10 @@ function BillingPage(): JSX.Element {
                     </Container>
                     <Container row>
                       {plan.trial_info !== undefined &&
-                      plan.trial_info.ending_before !== "" ? (
+                        plan.trial_info.ending_before !== "" ? (
                         <Text>
                           Free trial ends{" "}
-                          {relativeTime(plan.trial_info.ending_before)}
+                          {relativeDate(plan.trial_info.ending_before, true)}
                         </Text>
                       ) : (
                         <Text>Started on {readableDate(plan.starting_on)}</Text>
@@ -274,8 +249,8 @@ function BillingPage(): JSX.Element {
                 </Text>
                 <Spacer y={1} />
                 {usage?.length &&
-                usage.length > 0 &&
-                usage[0].usage_metrics.length > 0 ? (
+                  usage.length > 0 &&
+                  usage[0].usage_metrics.length > 0 ? (
                   <Flex>
                     <BarWrapper>
                       <Bars
@@ -311,8 +286,6 @@ function BillingPage(): JSX.Element {
             )}
           </div>
         </div>
-      ) : (
-        <div></div>
       )}
     </>
   );

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 
 	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/api/types"
@@ -13,9 +14,15 @@ import (
 )
 
 func registerCommand_Kubectl(cliConf config.CLIConfig) *cobra.Command {
+	depMsg := `This command is no longer available. Please consult documentation of the respective cloud provider to get access to the kubeconfig of the cluster. 
+	Note that any change made directly on the kubernetes cluster under the hood can degrade the performance and reliability of the cluster, and Porter will 
+	automatically reconcile any changes that pose a threat to the uptime of the cluster to its original state. Porter is not responsible for the issues that 
+	arise due to the change implemented directly on the Kubernetes cluster via kubectl.`
+
 	kubectlCmd := &cobra.Command{
-		Use:   "kubectl",
-		Short: "Use kubectl to interact with a Porter cluster",
+		Use:        "kubectl",
+		Short:      "Use kubectl to interact with a Porter cluster",
+		Deprecated: depMsg,
 		Run: func(cmd *cobra.Command, args []string) {
 			err := checkLoginAndRunWithConfig(cmd, cliConf, args, runKubectl)
 			if err != nil {
@@ -29,7 +36,23 @@ func registerCommand_Kubectl(cliConf config.CLIConfig) *cobra.Command {
 }
 
 func runKubectl(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
-	_, err := exec.LookPath("kubectl")
+	// this will never error because it just ran
+	user, _ := client.AuthCheck(ctx)
+
+	project, err := client.GetProject(ctx, cliConf.Project)
+	if err != nil {
+		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run: %w", err)
+	}
+
+	if project == nil {
+		return fmt.Errorf("project [%d] not found", cliConf.Project)
+	}
+
+	if !strings.HasSuffix(user.Email, "@porter.run") && project.ValidateApplyV2 {
+		return fmt.Errorf("Forbidden")
+	}
+
+	_, err = exec.LookPath("kubectl")
 	if err != nil {
 		return fmt.Errorf("error finding kubectl: %w", err)
 	}
@@ -90,7 +113,6 @@ func downloadTempKubeconfig(ctx context.Context, client api.Client, cliConf conf
 	}
 
 	_, err = tmpFile.Write(resp.Kubeconfig)
-
 	if err != nil {
 		return "", fmt.Errorf("error writing kubeconfig to temp file: %w", err)
 	}

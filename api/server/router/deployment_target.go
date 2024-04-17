@@ -233,5 +233,63 @@ func getDeploymentTargetRoutes(
 		Router:   r,
 	})
 
+	// POST /api/projects/{project_id}/targets/{deployment_target_identifier}/apps/{porter_app_name}/app-event-webhooks -> porter_app.NewAppEventWebhooksHandler
+	appEventWebhooks := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/apps/{%s}/app-event-webhooks", relPath, types.URLParamPorterAppName),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.DeploymentTargetScope,
+			},
+		},
+	)
+
+	appEventWebhooksHandler := porter_app.NewAppEventWebhooksHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: appEventWebhooks,
+		Handler:  appEventWebhooksHandler,
+		Router:   r,
+	})
+
+	// POST /api/projects/{project_id}/targets/{deployment_target_identifier}/apps/{porter_app_name}/update-app-event-webhooks-> porter_app.NewUpdateAppEventWebhookHandler
+	updateAppEventWebhooks := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/apps/{%s}/update-app-event-webhooks", relPath, types.URLParamPorterAppName),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.DeploymentTargetScope,
+			},
+		},
+	)
+
+	updateAppEventWebhooksHandler := porter_app.NewUpdateAppEventWebhookHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: updateAppEventWebhooks,
+		Handler:  updateAppEventWebhooksHandler,
+		Router:   r,
+	})
+
 	return routes, newPath
 }

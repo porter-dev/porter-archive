@@ -3,6 +3,8 @@ package router
 import (
 	"fmt"
 
+	"github.com/porter-dev/porter/api/server/handlers/cloud_provider"
+
 	"github.com/porter-dev/porter/api/server/handlers/deployment_target"
 
 	"github.com/go-chi/chi/v5"
@@ -395,7 +397,7 @@ func getProjectRoutes(
 		Router:   r,
 	})
 
-	// GET /api/projects/{project_id}/billing/dashboard -> project.NewGetUsageDashboardHandler
+	// POST /api/projects/{project_id}/billing/dashboard -> project.NewGetUsageDashboardHandler
 	getUsageDashboardEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbCreate,
@@ -420,6 +422,34 @@ func getProjectRoutes(
 	routes = append(routes, &router.Route{
 		Endpoint: getUsageDashboardEndpoint,
 		Handler:  getUsageDashboardHandler,
+		Router:   r,
+	})
+
+	// POST /api/projects/{project_id}/billing/ingest -> project.NewGetUsageDashboardHandler
+	ingestEventsEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/billing/ingest",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	ingestEventsHandler := billing.NewIngestEventsHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: ingestEventsEndpoint,
+		Handler:  ingestEventsHandler,
 		Router:   r,
 	})
 
@@ -1766,6 +1796,34 @@ func getProjectRoutes(
 	routes = append(routes, &router.Route{
 		Endpoint: preflightCheckEndpoint,
 		Handler:  preflightCheckHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/cloud/machines -> apiContract.NewCloudProviderMachineTypesHandler
+	machineTypeEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/cloud/machines", relPath),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	machineTypeHandler := cloud_provider.NewCloudProviderMachineTypesHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: machineTypeEndpoint,
+		Handler:  machineTypeHandler,
 		Router:   r,
 	})
 

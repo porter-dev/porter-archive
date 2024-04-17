@@ -74,6 +74,42 @@ func (p *CreateUpdatePorterAppEventHandler) ServeHTTP(w http.ResponseWriter, r *
 		reportBuildStatus(ctx, request, p.Config(), user, project, appName, validateApplyV2)
 	}
 
+	// if sandbox, reroute the event to the hosted project and cluster ids
+	if p.Config().ServerConf.EnableSandbox {
+		deploymentTarget, err := p.Repo().DeploymentTarget().DeploymentTargetById(request.DeploymentTargetID)
+		if err != nil {
+			e := telemetry.Error(ctx, span, err, "error getting deployment target by id")
+			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusInternalServerError))
+			return
+		}
+
+		telemetry.WithAttributes(span,
+			telemetry.AttributeKV{Key: "deployment-target-id", Value: deploymentTarget.ID},
+			telemetry.AttributeKV{Key: "hosted-project-id", Value: deploymentTarget.ProjectID},
+			telemetry.AttributeKV{Key: "hosted-cluster-id", Value: deploymentTarget.ClusterID},
+		)
+
+		project, err = p.Repo().Project().ReadProject(uint(deploymentTarget.ProjectID))
+		if err != nil {
+			e := telemetry.Error(ctx, span, err, "error reading project")
+			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusInternalServerError))
+			return
+		}
+
+		if !project.EnableSandbox {
+			e := telemetry.Error(ctx, span, nil, "project does not have sandbox enabled")
+			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusBadRequest))
+			return
+		}
+
+		cluster, err = p.Repo().Cluster().ReadCluster(project.ID, uint(deploymentTarget.ClusterID))
+		if err != nil {
+			e := telemetry.Error(ctx, span, err, "error reading cluster")
+			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusInternalServerError))
+			return
+		}
+	}
+
 	var event types.PorterAppEvent
 	var err error
 	if request.ID == "" { // no event id provided, so create a new event/notification
@@ -138,7 +174,7 @@ func reportBuildStatus(ctx context.Context, request *types.CreateOrUpdatePorterA
 }
 
 // createNewAppEvent will create a new app event for the given porter app name. If the app event is an agent event, then it will be created only if there is no existing event which has the agent ID. In the case that an existing event is found, that will be returned instead
-func (p *CreateUpdatePorterAppEventHandler) createNewAppEvent(ctx context.Context, project models.Project, cluster models.Cluster, porterAppName string, deploymentTargetID string, status types.PorterAppEventStatus, eventType string, externalSource string, requestMetadata map[string]any) (types.PorterAppEvent, error) {
+func (p *CreateUpdatePorterAppEventHandler) createNewAppEvent(ctx context.Context, _ models.Project, cluster models.Cluster, porterAppName string, deploymentTargetID string, status types.PorterAppEventStatus, eventType string, externalSource string, requestMetadata map[string]any) (types.PorterAppEvent, error) {
 	ctx, span := telemetry.NewSpan(ctx, "create-porter-app-event")
 	defer span.End()
 
@@ -442,72 +478,6 @@ func (p *CreateUpdatePorterAppEventHandler) updateDeployEventV1(ctx context.Cont
 	}
 
 	return types.PorterAppEvent{}, nil
-}
-
-type updateDeployEventV2Input struct {
-	projectID             uint
-	appName               string
-	appID                 uint
-	deploymentTargetID    string
-	updatedStatusMetadata map[string]any
-}
-
-func (p *CreateUpdatePorterAppEventHandler) updateDeployEventV2(
-	ctx context.Context,
-	inp updateDeployEventV2Input,
-) error {
-	ctx, span := telemetry.NewSpan(ctx, "update-deploy-event-v2")
-	defer span.End()
-
-	telemetry.WithAttributes(span,
-		telemetry.AttributeKV{Key: "app-name", Value: inp.appName},
-		telemetry.AttributeKV{Key: "app-id", Value: inp.appID},
-		telemetry.AttributeKV{Key: "deployment-target-id", Value: inp.deploymentTargetID},
-		telemetry.AttributeKV{Key: "project-id", Value: int(inp.projectID)},
-	)
-
-	agentEventMetadata, err := notifications.ParseAgentEventMetadata(inp.updatedStatusMetadata)
-	if err != nil {
-		return telemetry.Error(ctx, span, err, "failed to unmarshal agent event metadata")
-	}
-	if agentEventMetadata == nil {
-		return telemetry.Error(ctx, span, nil, "agent event metadata is nil")
-	}
-
-	telemetry.WithAttributes(span,
-		telemetry.AttributeKV{Key: "app-revision-id", Value: agentEventMetadata.AppRevisionID},
-		telemetry.AttributeKV{Key: "service-name", Value: agentEventMetadata.ServiceName},
-		telemetry.AttributeKV{Key: "deployment-status", Value: agentEventMetadata.DeployStatus},
-	)
-	var deploymentStatus porterv1.EnumServiceDeploymentStatus
-	switch agentEventMetadata.DeployStatus {
-	case types.PorterAppEventStatus_Success:
-		deploymentStatus = porterv1.EnumServiceDeploymentStatus_ENUM_SERVICE_DEPLOYMENT_STATUS_SUCCESS
-	case types.PorterAppEventStatus_Failed:
-		deploymentStatus = porterv1.EnumServiceDeploymentStatus_ENUM_SERVICE_DEPLOYMENT_STATUS_FAILED
-	case types.PorterAppEventStatus_Progressing:
-		deploymentStatus = porterv1.EnumServiceDeploymentStatus_ENUM_SERVICE_DEPLOYMENT_STATUS_PROGRESSING
-	default:
-		return telemetry.Error(ctx, span, nil, "deployment status not valid")
-	}
-
-	updateRequest := connect.NewRequest(&porterv1.UpdateServiceDeploymentStatusRequest{
-		ProjectId: int64(inp.projectID),
-		DeploymentTargetIdentifier: &porterv1.DeploymentTargetIdentifier{
-			Id: inp.deploymentTargetID,
-		},
-		AppName:       inp.appName,
-		AppRevisionId: agentEventMetadata.AppRevisionID,
-		ServiceName:   agentEventMetadata.ServiceName,
-		Status:        deploymentStatus,
-	})
-
-	_, err = p.Config().ClusterControlPlaneClient.UpdateServiceDeploymentStatus(ctx, updateRequest)
-	if err != nil {
-		return telemetry.Error(ctx, span, err, "error updating service deployment status")
-	}
-
-	return nil
 }
 
 func getServiceNameFromPodName(podName, porterAppName string) string {

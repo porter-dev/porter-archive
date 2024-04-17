@@ -37,7 +37,8 @@ func (c *ListPlansHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		c.WriteResult(w, r, "")
 
 		telemetry.WithAttributes(span,
-			telemetry.AttributeKV{Key: "metronome-enabled", Value: false},
+			telemetry.AttributeKV{Key: "metronome-config-exists", Value: c.Config().BillingManager.MetronomeEnabled},
+			telemetry.AttributeKV{Key: "metronome-enabled", Value: proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient)},
 		)
 		return
 	}
@@ -82,7 +83,8 @@ func (c *ListCreditsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		c.WriteResult(w, r, "")
 
 		telemetry.WithAttributes(span,
-			telemetry.AttributeKV{Key: "metronome-enabled", Value: false},
+			telemetry.AttributeKV{Key: "metronome-config-exists", Value: c.Config().BillingManager.MetronomeEnabled},
+			telemetry.AttributeKV{Key: "metronome-enabled", Value: proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient)},
 		)
 		return
 	}
@@ -119,7 +121,7 @@ func NewGetUsageDashboardHandler(
 }
 
 func (c *GetUsageDashboardHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx, span := telemetry.NewSpan(r.Context(), "get-usage-dashboard-endpoint")
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-usage-dashboard")
 	defer span.End()
 
 	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
@@ -128,7 +130,8 @@ func (c *GetUsageDashboardHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		c.WriteResult(w, r, "")
 
 		telemetry.WithAttributes(span,
-			telemetry.AttributeKV{Key: "metronome-enabled", Value: false},
+			telemetry.AttributeKV{Key: "metronome-config-exists", Value: c.Config().BillingManager.MetronomeEnabled},
+			telemetry.AttributeKV{Key: "metronome-enabled", Value: proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient)},
 		)
 		return
 	}

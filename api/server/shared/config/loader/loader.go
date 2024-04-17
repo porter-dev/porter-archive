@@ -340,6 +340,7 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 	)
 	if sc.StripeSecretKey != "" {
 		stripeClient = billing.NewStripeClient(InstanceEnvConf.ServerConf.StripeSecretKey, InstanceEnvConf.ServerConf.StripePublishableKey)
+		res.Logger.Info().Msg("Stripe configuration loaded")
 	} else {
 		res.Logger.Info().Msg("STRIPE_SECRET_KEY not set, all Stripe functionality will be disabled")
 	}
@@ -350,6 +351,7 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 			return nil, fmt.Errorf("unable to create metronome client: %w", err)
 		}
 		metronomeEnabled = true
+		res.Logger.Info().Msg("Metronome configuration loaded")
 	} else {
 		res.Logger.Info().Msg("METRONOME_API_KEY, PORTER_CLOUD_PLAN_ID, or PORTER_STANDARD_PLAN_ID not set, all Metronome functionality will be disabled")
 	}

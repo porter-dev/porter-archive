@@ -69,33 +69,37 @@ const groupServicesByNamespace = (services: Service[]): GroupedServices => {
 };
 
 const SystemStatus: React.FC<Props> = () => {
-  const { projectId, cluster, isClusterUpdating } = useClusterContext();
+  const { projectId, cluster } = useClusterContext();
 
   const [statusData, setStatusData] = useState<StatusData>(initialState);
 
   useEffect(() => {
-    api.systemStatusHistory(
-      "<token>",
-      {},
-      {
-        projectId: projectId,
-        clusterId: cluster.id,
-      },
-    )
-    .then(({ data }) => {
-      console.log(data.cluster_status_history);
-      console.log(data.system_service_status_histories)
-      const groupedServices = groupServicesByNamespace(data.system_service_status_histories);
-      setStatusData({
-        cluster_responsive: data.cluster_status_history,
-        services: groupedServices,
-      });
+    if (!projectId || !cluster) {
+      return;
     }
-    )
-    .catch((err) => {
-      console.error(err);
-    });
-  }, []);
+
+    api
+      .systemStatusHistory(
+        "<token>",
+        {},
+        {
+          projectId,
+          clusterId: cluster.id,
+        }
+      )
+      .then(({ data }) => {
+        const groupedServices = groupServicesByNamespace(
+          data.system_service_status_histories
+        );
+        setStatusData({
+          cluster_responsive: data.cluster_status_history,
+          services: groupedServices,
+        });
+      })
+      .catch((err) => {
+        console.error(err);
+      });
+  }, [projectId, cluster]);
 
   return (
     <>
@@ -113,7 +117,7 @@ const SystemStatus: React.FC<Props> = () => {
         <StatusBars>
           {Array.from({ length: 90 }).map((_, i) => {
             const statusIndex = 89 - i;
-              const responsive =
+            const responsive =
               statusData?.cluster_responsive[statusIndex]?.responsive || true; // Provide "true" as the default value
             return (
               <Bar
@@ -134,7 +138,7 @@ const SystemStatus: React.FC<Props> = () => {
       {statusData?.services &&
         Object.keys(statusData?.services).map((key) => {
           return (
-            <>
+            <React.Fragment key={key}>
               <Spacer y={1} />
               <Expandable
                 alt
@@ -149,7 +153,7 @@ const SystemStatus: React.FC<Props> = () => {
               >
                 {statusData.services[key].map((service: Service) => {
                   return (
-                    <>
+                    <React.Fragment key={service.system_service.name}>
                       <Text color="helper">{service.system_service.name}</Text>
                       <Spacer y={0.25} />
                       <StatusBars>
@@ -161,14 +165,15 @@ const SystemStatus: React.FC<Props> = () => {
                               isFirst={i === 0}
                               isLast={i === 89}
                               status={
-                                service.status_history[statusIndex]?.status || "healthy"
+                                service.status_history[statusIndex]?.status ||
+                                "healthy"
                               }
                             />
                           );
                         })}
                       </StatusBars>
                       <Spacer y={0.25} />
-                    </>
+                    </React.Fragment>
                   );
                 })}
                 <Spacer y={0.25} />
@@ -177,7 +182,7 @@ const SystemStatus: React.FC<Props> = () => {
                   <Text color="helper">Today</Text>
                 </Container>
               </Expandable>
-            </>
+            </React.Fragment>
           );
         })}
     </>

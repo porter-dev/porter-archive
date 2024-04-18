@@ -46,8 +46,7 @@ export default Tooltip;
 
 const TooltipContainer = styled.div`
   position: relative;
-  width: 100%;
-  height: 100%;
+  display: inline-flex;
 `;
 
 const TooltipContent = styled.div<{ position: string; width?: string }>`

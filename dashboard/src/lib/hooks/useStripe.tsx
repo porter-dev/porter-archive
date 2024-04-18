@@ -37,7 +37,7 @@ type TSetDefaultPaymentMethod = {
 };
 
 type TCheckHasPaymentEnabled = {
-  hasPaymentEnabled: boolean;
+  hasPaymentEnabled: boolean | null;
   refetchPaymentEnabled: (options: {
     throwOnError: boolean;
     cancelRefetch: boolean;
@@ -45,33 +45,19 @@ type TCheckHasPaymentEnabled = {
 };
 
 type TGetPublishableKey = {
-  publishableKey: string;
-};
-
-type TGetUsageDashboard = {
-  url: string;
+  publishableKey: string | null;
 };
 
 type TGetCredits = {
-  creditGrants: CreditGrants | undefined;
+  creditGrants: CreditGrants | null;
 };
 
 type TGetPlan = {
-  plan: Plan | undefined;
+  plan: Plan | null;
 };
 
 type TGetUsage = {
-  usage: UsageList | undefined;
-};
-
-const embeddableDashboardColors = {
-  grayDark: "Gray_dark",
-  grayMedium: "Gray_medium",
-  grayLight: "Gray_light",
-  grayExtraLigth: "Gray_extralight",
-  white: "White",
-  primaryMedium: "Primary_medium",
-  primaryLight: "Primary_light",
+  usage: UsageList | null;
 };
 
 export const usePaymentMethods = (): TUsePaymentMethod => {
@@ -87,20 +73,28 @@ export const usePaymentMethods = (): TUsePaymentMethod => {
   // Fetch list of payment methods
   const paymentMethodReq = useQuery(
     ["getPaymentMethods", currentProject?.id],
-    async (): Promise<PaymentMethod[]> => {
-      if (!currentProject?.id || currentProject.id === -1) {
-        return [];
+    async (): Promise<PaymentMethod[] | null> => {
+      if (!currentProject?.billing_enabled) {
+        return null;
       }
-      const listResponse = await api.listPaymentMethod(
-        "<token>",
-        {},
-        { project_id: currentProject?.id }
-      );
 
-      const data = PaymentMethodValidator.array().parse(listResponse.data);
-      setPaymentMethodList(data);
+      if (!currentProject?.id || currentProject.id === -1) {
+        return null;
+      }
 
-      return data;
+      try {
+        const listResponse = await api.listPaymentMethod(
+          "<token>",
+          {},
+          { project_id: currentProject?.id }
+        );
+
+        const data = PaymentMethodValidator.array().parse(listResponse.data);
+        setPaymentMethodList(data);
+        return data;
+      } catch (error) {
+        return null
+      }
     }
   );
 
@@ -146,6 +140,10 @@ export const usePaymentMethods = (): TUsePaymentMethod => {
 export const useCreatePaymentMethod = (): TCreatePaymentMethod => {
   const { currentProject } = useContext(Context);
 
+  if (!currentProject?.billing_enabled) {
+    return { createPaymentMethod: async () => "" };
+  }
+
   const createPaymentMethod = async (): Promise<string> => {
     const resp = await api.addPaymentMethod(
       "<token>",
@@ -163,188 +161,12 @@ export const useCreatePaymentMethod = (): TCreatePaymentMethod => {
   };
 };
 
-export const checkIfProjectHasPayment = (): TCheckHasPaymentEnabled => {
-  const { currentProject } = useContext(Context);
-
-  // Check if payment is enabled for the project
-  const paymentEnabledReq = useQuery(
-    currentProject?.id ? ["checkPaymentEnabled", currentProject.id] : ["checkPaymentEnabled", null],
-    currentProject?.id
-      ? async (): Promise<boolean> => {
-        const res = await api.getHasBilling(
-          "<token>",
-          {},
-          { project_id: currentProject.id }
-        );
-
-        const data = z.boolean().parse(res.data);
-        return data;
-      }
-      : async () => false
-  );
-
-  return {
-    hasPaymentEnabled: paymentEnabledReq.data ?? false,
-    refetchPaymentEnabled: paymentEnabledReq.refetch,
-  };
-};
-
-export const useCustomeUsageDashboard = (
-  dashboard: string
-): TGetUsageDashboard => {
-  const { currentProject } = useContext(Context);
-
-  const colorOverrides = [
-    { name: embeddableDashboardColors.grayDark, value: "#121212" },
-    { name: embeddableDashboardColors.grayMedium, value: "#DFDFE1" },
-    { name: embeddableDashboardColors.grayLight, value: "#DFDFE1" },
-    { name: embeddableDashboardColors.grayExtraLigth, value: "#DFDFE1" },
-    { name: embeddableDashboardColors.white, value: "#121212" },
-    { name: embeddableDashboardColors.primaryLight, value: "#121212" },
-    { name: embeddableDashboardColors.primaryMedium, value: "#DFDFE1" },
-  ];
-
-  // Return an embeddable dashboard for the customer
-  const dashboardReq = useQuery(
-    ["getUsageDashboard", currentProject?.id, dashboard],
-    async () => {
-      if (!currentProject?.id || currentProject.id === -1) {
-        return;
-      }
-      const res = await api.getUsageDashboard(
-        "<token>",
-        {
-          dashboard,
-          color_overrides: colorOverrides,
-        },
-        {
-          project_id: currentProject?.id,
-        }
-      );
-      return res.data;
-    },
-    {
-      staleTime: Infinity,
-    }
-  );
-
-  return {
-    url: dashboardReq.data,
-  };
-};
-
-export const usePublishableKey = (): TGetPublishableKey => {
-  const { currentProject } = useContext(Context);
-
-  // Fetch list of payment methods
-  const keyReq = useQuery(
-    ["getPublishableKey", currentProject?.id],
-    async () => {
-      if (!currentProject?.id || currentProject.id === -1) {
-        return null;
-      }
-      const res = await api.getPublishableKey(
-        "<token>",
-        {},
-        {
-          project_id: currentProject?.id,
-        }
-      );
-      return res.data;
-    }
-  );
-
-  return {
-    publishableKey: keyReq.data,
-  };
-};
-
-export const usePorterCredits = (): TGetCredits => {
-  const { currentProject } = useContext(Context);
-
-  // Fetch available credits
-  const creditsReq = useQuery(
-    ["getPorterCredits", currentProject?.id],
-    async () => {
-      if (!currentProject?.id || currentProject.id === -1) {
-        return;
-      }
-      const res = await api.getPorterCredits(
-        "<token>",
-        {},
-        {
-          project_id: currentProject?.id,
-        }
-      );
-      return CreditGrantsValidator.parse(res.data);
-    }
-  );
-
-  return {
-    creditGrants: creditsReq.data,
-  };
-};
-
-export const useCustomerPlan = (): TGetPlan => {
-  const { currentProject } = useContext(Context);
-
-  // Fetch current plan
-  const planReq = useQuery(
-    currentProject?.id ? ["getCustomerPlan", currentProject.id] : ["getCustomerPlan", null],
-    currentProject?.id
-      ? async (): Promise<PlanType> => {
-        const res = await api.getCustomerPlan(
-          "<token>",
-          {},
-          { project_id: currentProject.id }
-        );
-
-        const plan = PlanValidator.parse(res.data);
-        return plan;
-      }
-      : async () => null
-  );
-
-  return {
-    plan: planReq.data,
-  };
-};
-
-export const useCustomerUsage = (
-  windowSize: string,
-  currentPeriod: boolean
-): TGetUsage => {
-  const { currentProject } = useContext(Context);
-
-  // Fetch customer usage
-  const usageReq = useQuery(
-    ["listCustomerUsage", currentProject?.id],
-    async () => {
-      if (!currentProject?.id || currentProject.id === -1) {
-        return;
-      }
-      const res = await api.getCustomerUsage(
-        "<token>",
-        {
-          window_size: windowSize,
-          current_period: currentPeriod,
-        },
-        {
-          project_id: currentProject?.id,
-        }
-      );
-      const usage = UsageValidator.array().parse(res.data);
-      return usage;
-    }
-  );
-
-  return {
-    usage: usageReq.data,
-  };
-};
-
 export const useSetDefaultPaymentMethod = (): TSetDefaultPaymentMethod => {
   const { currentProject } = useContext(Context);
+
+  if (!currentProject?.billing_enabled) {
+    return { setDefaultPaymentMethod: async () => { } };
+  }
 
   const setDefaultPaymentMethod = async (
     paymentMethodId: string
@@ -363,5 +185,185 @@ export const useSetDefaultPaymentMethod = (): TSetDefaultPaymentMethod => {
 
   return {
     setDefaultPaymentMethod,
+  };
+};
+
+export const checkIfProjectHasPayment = (): TCheckHasPaymentEnabled => {
+  const { currentProject } = useContext(Context);
+
+
+  // Check if payment is enabled for the project
+  const paymentEnabledReq = useQuery(
+    ["checkPaymentEnabled", currentProject?.id],
+    async (): Promise<boolean | null> => {
+      if (!currentProject?.billing_enabled) {
+        return null;
+      }
+
+      if (!currentProject?.id) {
+        return null;
+      }
+
+      try {
+        const res = await api.getHasBilling(
+          "<token>",
+          {},
+          { project_id: currentProject.id }
+        );
+
+        const data = z.boolean().parse(res.data);
+        return data;
+      } catch (error) {
+        return null
+      }
+    });
+
+  return {
+    hasPaymentEnabled: paymentEnabledReq.data ?? null,
+    refetchPaymentEnabled: paymentEnabledReq.refetch,
+  };
+};
+export const usePublishableKey = (): TGetPublishableKey => {
+  const { currentProject } = useContext(Context);
+
+  // Fetch list of payment methods
+  const keyReq = useQuery(
+    ["getPublishableKey", currentProject?.id],
+    async (): Promise<string | null> => {
+      if (!currentProject?.billing_enabled) {
+        return null;
+      }
+
+      if (!currentProject?.id || currentProject.id === -1) {
+        return null;
+      }
+
+      try {
+        const res = await api.getPublishableKey(
+          "<token>",
+          {},
+          {
+            project_id: currentProject?.id,
+          }
+        );
+        return res.data;
+      } catch (error) {
+        return null
+      }
+    });
+
+  return {
+    publishableKey: keyReq.data ?? null,
+  };
+};
+
+export const usePorterCredits = (): TGetCredits => {
+  const { currentProject } = useContext(Context);
+
+  // Fetch available credits
+  const creditsReq = useQuery(
+    ["getPorterCredits", currentProject?.id],
+    async (): Promise<CreditGrants | null> => {
+      if (!currentProject?.metronome_enabled) {
+        return null;
+      }
+
+      if (!currentProject?.id || currentProject.id === -1) {
+        return null;
+      }
+
+      try {
+        const res = await api.getPorterCredits(
+          "<token>",
+          {},
+          {
+            project_id: currentProject?.id,
+          }
+        );
+        const creditGrants = CreditGrantsValidator.parse(res.data);
+        return creditGrants;
+      } catch (error) {
+        return null
+      }
+    }
+  );
+
+  return {
+    creditGrants: creditsReq.data ?? null,
+  };
+};
+
+export const useCustomerPlan = (): TGetPlan => {
+  const { currentProject } = useContext(Context);
+
+  // Fetch current plan
+  const planReq = useQuery(
+    ["getCustomerPlan", currentProject?.id],
+    async (): Promise<Plan | null> => {
+      if (!currentProject?.metronome_enabled) {
+        return null;
+      }
+
+      if (!currentProject?.id) {
+        return null;
+      }
+
+      try {
+        const res = await api.getCustomerPlan(
+          "<token>",
+          {},
+          { project_id: currentProject.id }
+        );
+
+        const plan = PlanValidator.parse(res.data);
+        return plan;
+      } catch (error) {
+        return null
+      }
+    });
+
+  return {
+    plan: planReq.data ?? null,
+  };
+};
+
+export const useCustomerUsage = (
+  windowSize: string,
+  currentPeriod: boolean
+): TGetUsage => {
+  const { currentProject } = useContext(Context);
+
+  // Fetch customer usage
+  const usageReq = useQuery(
+    ["listCustomerUsage", currentProject?.id],
+    async (): Promise<UsageList | null> => {
+      if (!currentProject?.metronome_enabled) {
+        return null;
+      }
+
+      if (!currentProject?.id || currentProject.id === -1) {
+        return null;
+      }
+
+      try {
+        const res = await api.getCustomerUsage(
+          "<token>",
+          {
+            window_size: windowSize,
+            current_period: currentPeriod,
+          },
+          {
+            project_id: currentProject?.id,
+          }
+        );
+        const usage = UsageValidator.array().parse(res.data);
+        return usage;
+      } catch (error) {
+        return null;
+      }
+    });
+
+  return {
+    usage: usageReq.data ?? null,
   };
 };

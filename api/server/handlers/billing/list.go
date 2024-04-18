@@ -98,11 +98,15 @@ func (c *CheckPaymentEnabledHandler) ensureBillingSetup(ctx context.Context, pro
 	ctx, span := telemetry.NewSpan(ctx, "ensure-billing-setup")
 	defer span.End()
 
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "billing-id", Value: proj.BillingID},
+		telemetry.AttributeKV{Key: "usage-id", Value: proj.UsageID},
+	)
+
 	if proj.BillingID == "" || proj.UsageID == uuid.Nil {
 		adminUser, err := c.getAdminUser(ctx, proj.ID)
 		if err != nil {
-			err = telemetry.Error(ctx, span, err, "error getting admin user")
-			return err
+			return telemetry.Error(ctx, span, err, "error getting admin user")
 		}
 
 		// If the admin user is not found, use the current user as last resort
@@ -113,23 +117,22 @@ func (c *CheckPaymentEnabledHandler) ensureBillingSetup(ctx context.Context, pro
 		// Create billing customer for project and set the billing ID if it doesn't exist
 		shouldUpdateBilling, err := c.ensureStripeCustomerExists(ctx, adminUser.Email, proj)
 		if err != nil {
-			err = telemetry.Error(ctx, span, err, "error ensuring Stripe customer exists")
-			return err
+			return telemetry.Error(ctx, span, err, "error ensuring Stripe customer exists")
 		}
 
 		// Create usage customer for project and set the usage ID if it doesn't exist
 		shouldUpdateUsage, err := c.ensureMetronomeCustomerExists(ctx, adminUser.Email, proj)
 		if err != nil {
-			err = telemetry.Error(ctx, span, err, "error ensuring Metronome customer exists")
-			return err
+			return telemetry.Error(ctx, span, err, "error ensuring Metronome customer exists")
 		}
 
-		if shouldUpdateBilling || shouldUpdateUsage {
-			_, err := c.Repo().Project().UpdateProject(proj)
-			if err != nil {
-				err = telemetry.Error(ctx, span, err, "error updating project")
-				return err
-			}
+		if !shouldUpdateBilling && !shouldUpdateUsage {
+			return nil
+		}
+
+		_, err = c.Repo().Project().UpdateProject(proj)
+		if err != nil {
+			return telemetry.Error(ctx, span, err, "error updating project")
 		}
 	}
 
@@ -143,8 +146,7 @@ func (c *CheckPaymentEnabledHandler) getAdminUser(ctx context.Context, projectID
 	// Get project roles
 	roles, err := c.Repo().Project().ListProjectRolesOrdered(projectID)
 	if err != nil {
-		err = telemetry.Error(ctx, span, err, "error listing project roles")
-		return adminUser, err
+		return adminUser, telemetry.Error(ctx, span, err, "error listing project roles")
 	}
 
 	// Get the project admin user
@@ -177,8 +179,7 @@ func (c *CheckPaymentEnabledHandler) ensureStripeCustomerExists(ctx context.Cont
 
 	billingID, err := c.Config().BillingManager.StripeClient.CreateCustomer(ctx, adminUserEmail, proj.ID, proj.Name)
 	if err != nil {
-		err = telemetry.Error(ctx, span, err, "error creating billing customer")
-		return false, err
+		return false, telemetry.Error(ctx, span, err, "error creating billing customer")
 	}
 
 	telemetry.WithAttributes(span,
@@ -200,8 +201,7 @@ func (c *CheckPaymentEnabledHandler) ensureMetronomeCustomerExists(ctx context.C
 	if c.Config().BillingManager.MetronomeEnabled && proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient) && proj.UsageID == uuid.Nil {
 		customerID, customerPlanID, err := c.Config().BillingManager.MetronomeClient.CreateCustomerWithPlan(ctx, adminUserEmail, proj.Name, proj.ID, proj.BillingID, proj.EnableSandbox)
 		if err != nil {
-			err = telemetry.Error(ctx, span, err, "error creating Metronome customer")
-			return false, err
+			return false, telemetry.Error(ctx, span, err, "error creating Metronome customer")
 		}
 
 		telemetry.WithAttributes(span,

@@ -228,36 +228,6 @@ func (m MetronomeClient) ListCustomerCredits(ctx context.Context, customerID uui
 	return response, nil
 }
 
-// GetCustomerDashboard will return an embeddable Metronome dashboard
-func (m MetronomeClient) GetCustomerDashboard(ctx context.Context, customerID uuid.UUID, dashboardType string, options []types.DashboardOption, colorOverrides []types.ColorOverride) (url string, err error) {
-	ctx, span := telemetry.NewSpan(ctx, "get-customer-usage-dashboard")
-	defer span.End()
-
-	if customerID == uuid.Nil {
-		return url, telemetry.Error(ctx, span, err, "customer id empty")
-	}
-
-	path := "dashboards/getEmbeddableUrl"
-
-	req := types.EmbeddableDashboardRequest{
-		CustomerID:     customerID,
-		Options:        options,
-		DashboardType:  dashboardType,
-		ColorOverrides: colorOverrides,
-	}
-
-	var result struct {
-		Data map[string]string `json:"data"`
-	}
-
-	_, err = m.do(http.MethodPost, path, req, &result)
-	if err != nil {
-		return url, telemetry.Error(ctx, span, err, "failed to get embeddable dashboard")
-	}
-
-	return result.Data["url"], nil
-}
-
 // ListCustomerUsage will return the aggregated usage for a customer
 func (m MetronomeClient) ListCustomerUsage(ctx context.Context, customerID uuid.UUID, startingOn string, endingBefore string, windowsSize string, currentPeriod bool) (usage []types.Usage, err error) {
 	ctx, span := telemetry.NewSpan(ctx, "list-customer-usage")

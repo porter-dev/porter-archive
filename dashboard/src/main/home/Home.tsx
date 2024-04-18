@@ -401,9 +401,9 @@ const Home: React.FC<Props> = (props) => {
             !trialExpired
           }
         >
-          {!currentProject?.sandbox_enabled && showCardBanner && plan && (
+          {!currentProject?.sandbox_enabled && showCardBanner && currentProject?.billing_enabled && currentProject?.metronome_enabled && (
             <>
-              {!trialExpired && (
+              {!trialExpired && plan && (
                 <GlobalBanner>
                   <i className="material-icons-round">warning</i>
                   Please

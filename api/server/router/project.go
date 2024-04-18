@@ -397,34 +397,6 @@ func getProjectRoutes(
 		Router:   r,
 	})
 
-	// POST /api/projects/{project_id}/billing/dashboard -> project.NewGetUsageDashboardHandler
-	getUsageDashboardEndpoint := factory.NewAPIEndpoint(
-		&types.APIRequestMetadata{
-			Verb:   types.APIVerbCreate,
-			Method: types.HTTPVerbPost,
-			Path: &types.Path{
-				Parent:       basePath,
-				RelativePath: relPath + "/billing/dashboard",
-			},
-			Scopes: []types.PermissionScope{
-				types.UserScope,
-				types.ProjectScope,
-			},
-		},
-	)
-
-	getUsageDashboardHandler := billing.NewGetUsageDashboardHandler(
-		config,
-		factory.GetDecoderValidator(),
-		factory.GetResultWriter(),
-	)
-
-	routes = append(routes, &router.Route{
-		Endpoint: getUsageDashboardEndpoint,
-		Handler:  getUsageDashboardHandler,
-		Router:   r,
-	})
-
 	// POST /api/projects/{project_id}/billing/usage -> project.NewListCustomerUsageHandler
 	listCustomerUsageEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

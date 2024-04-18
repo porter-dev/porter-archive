@@ -12,9 +12,11 @@ import ConfirmOverlay from "components/ConfirmOverlay";
 import Loading from "components/Loading";
 import NoClusterPlaceHolder from "components/NoClusterPlaceHolder";
 import Button from "components/porter/Button";
+import Link from "components/porter/Link";
 import Modal from "components/porter/Modal";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
+import { checkIfProjectHasPayment, useCustomerPlan } from "lib/hooks/useStripe";
 
 import api from "shared/api";
 import { withAuth, type WithAuthProps } from "shared/auth/AuthorizationHoc";
@@ -22,6 +24,7 @@ import { fakeGuardedRoute } from "shared/auth/RouteGuard";
 import { Context } from "shared/Context";
 import DeploymentTargetProvider from "shared/DeploymentTargetContext";
 import { pushFiltered, pushQueryParams, type PorterUrl } from "shared/routing";
+import { relativeDate, timeFrom } from "shared/string_utils";
 import midnight from "shared/themes/midnight";
 import standard from "shared/themes/standard";
 import {
@@ -59,6 +62,7 @@ import CreateClusterForm from "./infrastructure-dashboard/forms/CreateClusterFor
 import Integrations from "./integrations/Integrations";
 import LaunchWrapper from "./launch/LaunchWrapper";
 import ModalHandler from "./ModalHandler";
+import BillingModal from "./modals/BillingModal";
 import Navbar from "./navbar/Navbar";
 import { NewProjectFC } from "./new-project/NewProject";
 import Onboarding from "./onboarding/Onboarding";
@@ -111,6 +115,7 @@ const Home: React.FC<Props> = (props) => {
     setShouldRefreshClusters,
   } = useContext(Context);
 
+  const [showBillingModal, setShowBillingModal] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
   const [forceRefreshClusters, setForceRefreshClusters] = useState(false);
   const [ghRedirect, setGhRedirect] = useState(false);
@@ -213,7 +218,7 @@ const Home: React.FC<Props> = (props) => {
       } else {
         setHasFinishedOnboarding(true);
       }
-    } catch (error) {}
+    } catch (error) { }
   };
 
   useEffect(() => {
@@ -367,12 +372,79 @@ const Home: React.FC<Props> = (props) => {
   };
 
   const { cluster, baseRoute } = props.match.params as any;
+  const { hasPaymentEnabled, refetchPaymentEnabled } = checkIfProjectHasPayment();
+  const { plan } = useCustomerPlan();
+
+  const isTrialExpired = (timestamp: string): boolean => {
+    if (timestamp === "") {
+      return true;
+    }
+
+    const diff = timeFrom(timestamp);
+    if (diff.when === "future") {
+      return false;
+    }
+
+    return true;
+  };
+
+  const showCardBanner = !hasPaymentEnabled;
+  const trialExpired = plan && isTrialExpired(plan.trial_info.ending_before);
+
   return (
     <ThemeProvider
       theme={currentProject?.simplified_view_enabled ? midnight : standard}
     >
       <DeploymentTargetProvider>
-        <StyledHome>
+        <StyledHome
+          padTop={
+            !currentProject?.sandbox_enabled &&
+            showCardBanner &&
+            plan &&
+            !trialExpired
+          }
+        >
+          {!currentProject?.sandbox_enabled && showCardBanner && plan && (
+            <>
+              {!trialExpired && (
+                <GlobalBanner>
+                  <i className="material-icons-round">warning</i>
+                  Please
+                  <Spacer width="5px" inline />
+                  <Link
+                    hasunderline
+                    onClick={() => {
+                      setShowBillingModal(true);
+                    }}
+                  >
+                    connect a valid payment method
+                  </Link>
+                  . Your free trial is ending in{" "}
+                  {relativeDate(plan.trial_info.ending_before, true)}.
+                </GlobalBanner>
+              )}
+              {!trialExpired && showBillingModal && (
+                <BillingModal
+                  back={() => {
+                    setShowBillingModal(false);
+                  }}
+                  onCreate={async () => {
+                    await refetchPaymentEnabled({ throwOnError: false, cancelRefetch: false });
+                    setShowBillingModal(false);
+                  }}
+                />
+              )}
+              {trialExpired && (
+                <BillingModal
+                  trialExpired
+                  onCreate={async () => {
+                    await refetchPaymentEnabled({ throwOnError: false, cancelRefetch: false });
+                    setShowBillingModal(false);
+                  }}
+                />
+              )}
+            </>
+          )}
           <ModalHandler setRefreshClusters={setForceRefreshClusters} />
           {currentOverlay &&
             createPortal(
@@ -637,9 +709,10 @@ const GlobalBanner = styled.div`
   z-index: 999;
   position: fixed;
   top: 0;
+  color: #fefefe;
   left: 0;
   height: 35px;
-  background: #263061;
+  background: #4752ba;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -649,6 +722,12 @@ const GlobalBanner = styled.div`
   > img {
     height: 16px;
     margin-right: 10px;
+  }
+
+  > i {
+    margin-right: 10px;
+    font-size: 16px;
+    opacity: 0.8;
   }
 `;
 
@@ -674,13 +753,16 @@ const DashboardWrapper = styled.div`
   height: fit-content;
 `;
 
-const StyledHome = styled.div`
+const StyledHome = styled.div<{
+  padTop: boolean | null | undefined;
+}>`
   width: 100vw;
   height: 100vh;
   position: fixed;
   top: 0;
   left: 0;
   margin: 0;
+  padding-top: ${(props) => (props.padTop ? "35px" : "0")};
   user-select: none;
   display: flex;
   justify-content: center;

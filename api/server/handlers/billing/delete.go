@@ -31,7 +31,7 @@ func NewDeleteBillingHandler(
 }
 
 func (c *DeleteBillingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx, span := telemetry.NewSpan(r.Context(), "delete-billing-endpoint")
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-delete-billing-method")
 	defer span.End()
 
 	user, _ := r.Context().Value(types.UserScope).(*models.User)

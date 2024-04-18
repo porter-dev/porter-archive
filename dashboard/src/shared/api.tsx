@@ -3648,6 +3648,13 @@ const updateAppEventWebhooks = baseApi<
   return `/api/projects/${pathParams.projectId}/targets/${pathParams.deploymentTargetId}/apps/${pathParams.appName}/update-app-event-webhooks`;
 });
 
+const systemStatusHistory = baseApi<
+{},
+{
+  projectId: number; clusterId: number;
+}>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.projectId}/clusters/${pathParams.clusterId}/system-status-history`;
+});
 
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {
@@ -3962,5 +3969,8 @@ export default {
 
   // Webhooks
   appEventWebhooks,
-  updateAppEventWebhooks
+  updateAppEventWebhooks,
+
+  // system status
+  systemStatusHistory
 };

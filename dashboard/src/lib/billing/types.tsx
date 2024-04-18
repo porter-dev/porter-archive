@@ -23,7 +23,7 @@ export const PlanValidator = z.object({
   plan_description: z.string(),
   starting_on: z.string(),
   trial_info: TrialValidator,
-});
+}).nullable();
 
 export type UsageMetric = z.infer<typeof UsageMetricValidator>;
 export const UsageMetricValidator = z.object({

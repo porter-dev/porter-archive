@@ -151,14 +151,16 @@ func (c *CheckPaymentEnabledHandler) getAdminUser(ctx context.Context, projectID
 
 	// Get the project admin user
 	for _, role := range roles {
-		if role.Kind == types.RoleAdmin {
-			adminUser, err = c.Repo().User().ReadUser(role.UserID)
-			if err != nil {
-				// If the user is not found, continue to the next role
-				continue
-			}
-			break
+		if role.Kind != types.RoleAdmin {
+			continue
 		}
+
+		adminUser, err = c.Repo().User().ReadUser(role.UserID)
+		if err != nil {
+			// If the user is not found, continue to the next role
+			continue
+		}
+		break
 	}
 
 	telemetry.WithAttributes(span,
@@ -198,21 +200,21 @@ func (c *CheckPaymentEnabledHandler) ensureMetronomeCustomerExists(ctx context.C
 		return false, nil
 	}
 
-	if c.Config().BillingManager.MetronomeEnabled && proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient) && proj.UsageID == uuid.Nil {
-		customerID, customerPlanID, err := c.Config().BillingManager.MetronomeClient.CreateCustomerWithPlan(ctx, adminUserEmail, proj.Name, proj.ID, proj.BillingID, proj.EnableSandbox)
-		if err != nil {
-			return false, telemetry.Error(ctx, span, err, "error creating Metronome customer")
-		}
-
-		telemetry.WithAttributes(span,
-			telemetry.AttributeKV{Key: "usage-id", Value: proj.UsageID},
-			telemetry.AttributeKV{Key: "usage-plan-id", Value: proj.UsagePlanID},
-		)
-
-		proj.UsageID = customerID
-		proj.UsagePlanID = customerPlanID
-		return true, nil
+	if !c.Config().BillingManager.MetronomeEnabled || !proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient) || proj.UsageID != uuid.Nil {
+		return false, nil
 	}
 
-	return false, nil
+	customerID, customerPlanID, err := c.Config().BillingManager.MetronomeClient.CreateCustomerWithPlan(ctx, adminUserEmail, proj.Name, proj.ID, proj.BillingID, proj.EnableSandbox)
+	if err != nil {
+		return false, telemetry.Error(ctx, span, err, "error creating Metronome customer")
+	}
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "usage-id", Value: proj.UsageID},
+		telemetry.AttributeKV{Key: "usage-plan-id", Value: proj.UsagePlanID},
+	)
+
+	proj.UsageID = customerID
+	proj.UsagePlanID = customerPlanID
+	return true, nil
 }

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from "react";
+import React, { useContext, useEffect, useMemo } from "react";
 import { Contract } from "@porter-dev/api-contracts";
 import AnimateHeight from "react-animate-height";
 import { useFormContext } from "react-hook-form";
@@ -11,6 +11,7 @@ import Spacer from "components/porter/Spacer";
 import TabSelector from "components/TabSelector";
 import { type ClientClusterContract } from "lib/clusters/types";
 
+import { Context } from "shared/Context";
 import { valueExists } from "shared/util";
 
 import { useClusterContext } from "./ClusterContextProvider";
@@ -20,8 +21,9 @@ import ClusterSaveButton from "./ClusterSaveButton";
 import AdvancedSettingsTab from "./tabs/AdvancedSettingsTab";
 import ClusterOverview from "./tabs/overview/ClusterOverview";
 import Settings from "./tabs/Settings";
+import SystemStatus from "./tabs/SystemStatus";
 
-const validTabs = ["overview", "settings", "advanced"] as const;
+const validTabs = ["overview", "settings", "advanced", "systemStatus"] as const;
 const DEFAULT_TAB = "overview" as const;
 type ValidTab = (typeof validTabs)[number];
 
@@ -29,6 +31,7 @@ type Props = {
   tabParam?: string;
 };
 const ClusterTabs: React.FC<Props> = ({ tabParam }) => {
+  const { user } = useContext(Context);
   const history = useHistory();
   const { cluster, isClusterUpdating } = useClusterContext();
 
@@ -68,6 +71,13 @@ const ClusterTabs: React.FC<Props> = ({ tabParam }) => {
         value: "settings" as ValidTab,
       },
     ].filter(valueExists);
+
+    if (user?.email?.endsWith("@porter.run")) {
+      tabs.push({
+        label: "System status",
+        value: "systemStatus" as ValidTab,
+      });
+    }
 
     return tabs;
   }, [isAdvancedSettingsEnabled]);
@@ -143,6 +153,7 @@ const ClusterTabs: React.FC<Props> = ({ tabParam }) => {
         .with("overview", () => <ClusterOverview />)
         .with("settings", () => <Settings />)
         .with("advanced", () => <AdvancedSettingsTab />)
+        .with("systemStatus", () => <SystemStatus />)
         .otherwise(() => null)}
     </DashboardWrapper>
   );

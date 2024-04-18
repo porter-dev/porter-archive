@@ -1,18 +1,20 @@
 import React, { Component } from "react";
-import { Route, Redirect, Switch } from "react-router-dom";
+import { Redirect, Route, Switch } from "react-router-dom";
+
+import Loading from "components/Loading";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
-import ResetPasswordInit from "./auth/ResetPasswordInit";
-import ResetPasswordFinalize from "./auth/ResetPasswordFinalize";
+import { PorterUrls, type PorterUrl } from "shared/routing";
+
 import Login from "./auth/Login";
 import Register from "./auth/Register";
-import VerifyEmail from "./auth/VerifyEmail";
+import ResetPasswordFinalize from "./auth/ResetPasswordFinalize";
+import ResetPasswordInit from "./auth/ResetPasswordInit";
 import SetInfo from "./auth/SetInfo";
+import VerifyEmail from "./auth/VerifyEmail";
 import CurrentError from "./CurrentError";
 import Home from "./home/Home";
-import Loading from "components/Loading";
-import { PorterUrl, PorterUrls } from "shared/routing";
 
 type PropsType = {};
 
@@ -40,24 +42,26 @@ export default class Main extends Component<PropsType, StateType> {
   };
 
   componentDidMount() {
-
     // Get capabilities to case on user info requirements
-    api.getMetadata("", {}, {})
+    api
+      .getMetadata("", {}, {})
       .then((res) => {
         this.setState({
           version: res.data?.version,
-        })
+        });
       })
-      .catch((err) => console.log(err));
+      .catch((err) => {
+        console.log(err);
+      });
 
-    let { setUser, setCurrentError } = this.context;
-    let urlParams = new URLSearchParams(window.location.search);
-    let error = urlParams.get("error");
+    const { setUser, setCurrentError } = this.context;
+    const urlParams = new URLSearchParams(window.location.search);
+    const error = urlParams.get("error");
     error && setCurrentError(error);
     api
       .checkAuth("", {}, {})
       .then((res) => {
-        if (res && res?.data) {
+        if (res?.data) {
           setUser(res.data.id, res.data.email);
           this.setState({
             isLoggedIn: true,
@@ -71,16 +75,20 @@ export default class Main extends Component<PropsType, StateType> {
           this.setState({ isLoggedIn: false, loading: false });
         }
       })
-      .catch((err) => this.setState({ isLoggedIn: false, loading: false }));
+      .catch((err) => {
+        this.setState({ isLoggedIn: false, loading: false });
+      });
 
     api
       .getMetadata("", {}, {})
       .then((res) => {
         this.context.setEdition(res.data?.version);
         this.setState({ local: !res.data?.provisioner });
-        this.context.setEnableGitlab(res.data?.gitlab ? true : false);
+        this.context.setEnableGitlab(!!res.data?.gitlab);
       })
-      .catch((err) => console.log(err));
+      .catch((err) => {
+        console.log(err);
+      });
   }
 
   initialize = () => {
@@ -92,7 +100,7 @@ export default class Main extends Component<PropsType, StateType> {
     api
       .checkAuth("", {}, {})
       .then((res) => {
-        if (res && res?.data) {
+        if (res?.data) {
           this.context.setUser(res?.data?.id, res?.data?.email);
           this.setState({
             isLoggedIn: true,
@@ -106,7 +114,9 @@ export default class Main extends Component<PropsType, StateType> {
           this.setState({ isLoggedIn: false, loading: false });
         }
       })
-      .catch((err) => this.setState({ isLoggedIn: false, loading: false }));
+      .catch((err) => {
+        this.setState({ isLoggedIn: false, loading: false });
+      });
   };
 
   handleLogOut = () => {
@@ -150,7 +160,7 @@ export default class Main extends Component<PropsType, StateType> {
     // Handle case where new user signs up via OAuth and has not set name and company
     if (
       this.state.version === "production" &&
-      !this.state.hasInfo && 
+      !this.state.hasInfo &&
       this.state.userId > 9312 &&
       this.state.isLoggedIn
     ) {
@@ -160,7 +170,7 @@ export default class Main extends Component<PropsType, StateType> {
             path="/"
             render={() => {
               return (
-                <SetInfo 
+                <SetInfo
                   handleLogOut={this.handleLogOut}
                   authenticate={this.authenticate}
                 />
@@ -168,7 +178,7 @@ export default class Main extends Component<PropsType, StateType> {
             }}
           />
         </Switch>
-      )
+      );
     }
 
     return (

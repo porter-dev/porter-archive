@@ -104,7 +104,18 @@ func (repo *ProjectRepository) ListProjectsByUserID(userID uint) ([]*models.Proj
 	return projects, nil
 }
 
-// ReadProject gets a projects specified by a unique id
+// ListProjectRolesOrdered returns a list of roles for a project ordered by creation date
+func (repo *ProjectRepository) ListProjectRolesOrdered(projID uint) ([]models.Role, error) {
+	project := &models.Project{}
+
+	if err := repo.db.Preload("Roles").Where("id = ?", projID).Order("created_at").First(&project).Error; err != nil {
+		return nil, err
+	}
+
+	return project.Roles, nil
+}
+
+// ListProjectRoles returns a list of roles for the project
 func (repo *ProjectRepository) ListProjectRoles(projID uint) ([]models.Role, error) {
 	project := &models.Project{}
 

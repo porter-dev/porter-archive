@@ -51,7 +51,6 @@ func (c *GetControllersHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 
 	// get current status of each controller
 	for _, controller := range controllers {
-		controller.Namespace = helmRelease.Namespace
 		rc, _, err := getController(controller, agent)
 
 		if targetErr := kubernetes.IsNotFoundError; errors.Is(err, targetErr) {

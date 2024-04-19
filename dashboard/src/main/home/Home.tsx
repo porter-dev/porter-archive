@@ -215,7 +215,7 @@ const Home: React.FC<Props> = (props) => {
       } else {
         setHasFinishedOnboarding(true);
       }
-    } catch (error) { }
+    } catch (error) {}
   };
 
   useEffect(() => {
@@ -369,7 +369,8 @@ const Home: React.FC<Props> = (props) => {
   };
 
   const { cluster, baseRoute } = props.match.params as any;
-  const { hasPaymentEnabled, refetchPaymentEnabled } = checkIfProjectHasPayment();
+  const { hasPaymentEnabled, refetchPaymentEnabled } =
+    checkIfProjectHasPayment();
   const { plan } = useCustomerPlan();
 
   const isTrialExpired = (timestamp: string): boolean => {
@@ -397,51 +398,63 @@ const Home: React.FC<Props> = (props) => {
           padTop={
             !currentProject?.sandbox_enabled &&
             showCardBanner &&
+            currentProject?.billing_enabled &&
+            currentProject?.metronome_enabled &&
+            !trialExpired &&
             plan &&
-            !trialExpired
+            true
           }
         >
-          {!currentProject?.sandbox_enabled && showCardBanner && currentProject?.billing_enabled && currentProject?.metronome_enabled && (
-            <>
-              {!trialExpired && plan && (
-                <GlobalBanner>
-                  <i className="material-icons-round">warning</i>
-                  Please
-                  <Spacer width="5px" inline />
-                  <Link
-                    hasunderline
-                    onClick={() => {
-                      setShowBillingModal(true);
+          {!currentProject?.sandbox_enabled &&
+            showCardBanner &&
+            currentProject?.billing_enabled &&
+            currentProject?.metronome_enabled && (
+              <>
+                {!trialExpired && plan && (
+                  <GlobalBanner>
+                    <i className="material-icons-round">warning</i>
+                    Please
+                    <Spacer width="5px" inline />
+                    <Link
+                      hasunderline
+                      onClick={() => {
+                        setShowBillingModal(true);
+                      }}
+                    >
+                      connect a valid payment method
+                    </Link>
+                    . Your free trial is ending in{" "}
+                    {relativeDate(plan.trial_info.ending_before, true)}.
+                  </GlobalBanner>
+                )}
+                {!trialExpired && showBillingModal && (
+                  <BillingModal
+                    back={() => {
+                      setShowBillingModal(false);
                     }}
-                  >
-                    connect a valid payment method
-                  </Link>
-                  . Your free trial is ending in{" "}
-                  {relativeDate(plan.trial_info.ending_before, true)}.
-                </GlobalBanner>
-              )}
-              {!trialExpired && showBillingModal && (
-                <BillingModal
-                  back={() => {
-                    setShowBillingModal(false);
-                  }}
-                  onCreate={async () => {
-                    await refetchPaymentEnabled({ throwOnError: false, cancelRefetch: false });
-                    setShowBillingModal(false);
-                  }}
-                />
-              )}
-              {trialExpired && (
-                <BillingModal
-                  trialExpired
-                  onCreate={async () => {
-                    await refetchPaymentEnabled({ throwOnError: false, cancelRefetch: false });
-                    setShowBillingModal(false);
-                  }}
-                />
-              )}
-            </>
-          )}
+                    onCreate={async () => {
+                      await refetchPaymentEnabled({
+                        throwOnError: false,
+                        cancelRefetch: false,
+                      });
+                      setShowBillingModal(false);
+                    }}
+                  />
+                )}
+                {trialExpired && (
+                  <BillingModal
+                    trialExpired
+                    onCreate={async () => {
+                      await refetchPaymentEnabled({
+                        throwOnError: false,
+                        cancelRefetch: false,
+                      });
+                      setShowBillingModal(false);
+                    }}
+                  />
+                )}
+              </>
+            )}
           <ModalHandler setRefreshClusters={setForceRefreshClusters} />
           {currentOverlay &&
             createPortal(

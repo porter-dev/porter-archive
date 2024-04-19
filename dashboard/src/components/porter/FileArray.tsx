@@ -24,7 +24,7 @@ type PropsType = {
   disabled?: boolean;
 };
 
-const EnvFileArray = ({
+const FileArray = ({
   files,
   setFiles,
   disabled,
@@ -220,7 +220,7 @@ const EnvFileArray = ({
   );
 };
 
-export default EnvFileArray;
+export default FileArray;
 
 const Holder = styled.div`
   .ace_scrollbar {

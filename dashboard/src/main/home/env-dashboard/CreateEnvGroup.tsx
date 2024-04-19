@@ -9,6 +9,7 @@ import Back from "components/porter/Back";
 import Button from "components/porter/Button";
 import { ControlledInput } from "components/porter/ControlledInput";
 import Error from "components/porter/Error";
+import FileArray from "components/porter/FileArray";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import VerticalSteps from "components/porter/VerticalSteps";
@@ -42,6 +43,7 @@ const CreateEnvGroup: React.FC<RouteComponentProps> = ({ history }) => {
           deleted: false,
         },
       ],
+      envFiles: [],
     },
   });
 
@@ -58,15 +60,16 @@ const CreateEnvGroup: React.FC<RouteComponentProps> = ({ history }) => {
   const [step, setStep] = React.useState(0);
   const name = watch("name");
   const envVariables = watch("envVariables");
+  const envFiles = watch("envFiles");
 
   useEffect(() => {
     const validate = async (): Promise<void> => {
       const isNameValid = await trigger("name");
       const isEnvVariablesValid = await trigger("envVariables");
       if (isNameValid && isEnvVariablesValid) {
-        setStep(2);
+        setStep(3);
       } else if (isNameValid) {
-        setStep(1);
+        setStep(2);
       } else {
         setStep(0);
       }
@@ -110,12 +113,24 @@ const CreateEnvGroup: React.FC<RouteComponentProps> = ({ history }) => {
           }
         });
 
+      const envFileMap = envFiles.reduce(
+        (
+          acc: Record<string, string>,
+          file: { name: string; content: string }
+        ) => {
+          acc[file.name] = file.content;
+          return acc;
+        },
+        {}
+      );
+
       await api.createEnvironmentGroups(
         "<token>",
         {
           name: data.name,
           variables: apiEnvVariables,
           secret_variables: secretEnvVariables,
+          files: envFileMap,
           is_env_override: true,
         },
         {
@@ -195,6 +210,21 @@ const CreateEnvGroup: React.FC<RouteComponentProps> = ({ history }) => {
                       }}
                       fileUpload={true}
                       secretOption={true}
+                    />
+                  </>,
+                  <>
+                    <Text size={16}>Environment files</Text>
+                    <Spacer y={0.5} />
+                    <Text color="helper">
+                      Files containing sensitive data that will be injected into
+                      your app's root directory.
+                    </Text>
+                    <Spacer y={1} />
+                    <FileArray
+                      files={envFiles}
+                      setFiles={(x) => {
+                        setValue("envFiles", x);
+                      }}
                     />
                   </>,
                   <Button

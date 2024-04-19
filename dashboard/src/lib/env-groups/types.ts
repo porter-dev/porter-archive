@@ -19,7 +19,7 @@ export const envGroupFormValidator = z.object({
   ),
   envFiles: z.array(
     z.object({
-      file_name: z.string().min(1, { message: "File name cannot be empty" }),
+      name: z.string().min(1, { message: "File name cannot be empty" }),
       content: z.string().min(1, { message: "File cannot be empty" }),
     })
   ),

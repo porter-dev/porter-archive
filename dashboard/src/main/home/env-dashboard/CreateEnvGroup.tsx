@@ -197,23 +197,6 @@ const CreateEnvGroup: React.FC<RouteComponentProps> = ({ history }) => {
                       secretOption={true}
                     />
                   </>,
-                  <>
-                    <Text size={16}>Environment files</Text>
-                    <Spacer y={0.5} />
-                    <Text color="helper">
-                      Set environment-specific configuration including
-                      evironment variables and secrets.
-                    </Text>
-                    <Spacer height="15px" />
-                    <EnvGroupArray
-                      values={envVariables}
-                      setValues={(x) => {
-                        setValue("envVariables", x);
-                      }}
-                      fileUpload={true}
-                      secretOption={true}
-                    />
-                  </>,
                   <Button
                     key={2}
                     type="submit"

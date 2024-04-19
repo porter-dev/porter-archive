@@ -65,30 +65,30 @@ const AddonHeader: React.FC = () => {
           <StatusBars>
             {status.pods.map((p, i) => {
               return (
-                <div key={p.name} style={{ width: "20px" }}>
-                  <Tooltip
-                    key={p.name}
-                    content={
-                      <Container>
-                        <Container row>
-                          <Text>{`Pod: ${p.name}`}</Text>
-                        </Container>
-                        <Spacer y={0.5} />
-                        <Container row>
-                          <Text color="gray">{p.status}</Text>
-                        </Container>
+                <Tooltip
+                  key={p.name}
+                  content={
+                    <Container>
+                      <Container row>
+                        <Text>{`Pod: ${p.name}`}</Text>
                       </Container>
-                    }
-                    position="right"
-                  >
+                      <Spacer y={0.5} />
+                      <Container row>
+                        <Text color="gray">{p.status}</Text>
+                      </Container>
+                    </Container>
+                  }
+                  position="right"
+                >
+                  <div style={{ width: "20px" }}>
                     <Bar
                       isFirst={i === 0}
                       isLast={i === status.pods.length - 1}
                       status={p.status}
                       animate={p.status === "pending"}
                     />
-                  </Tooltip>
-                </div>
+                  </div>
+                </Tooltip>
               );
             })}
           </StatusBars>
@@ -104,53 +104,53 @@ const HeaderWrapper = styled.div`
   position: relative;
 `;
 
-const InfoWrapper = styled.div`
-  display: flex;
-  align-items: center;
-  margin-left: 3px;
-  margin-top: 22px;
-`;
+// const InfoWrapper = styled.div`
+//   display: flex;
+//   align-items: center;
+//   margin-left: 3px;
+//   margin-top: 22px;
+// `;
 
-const StyledDeployStatusSection = styled.div<{ isExpanded?: boolean }>`
-  font-size: 13px;
-  height: 30px;
-  border-radius: 5px;
-  padding: 0 9px;
-  padding-left: 7px;
-  display: flex;
-  margin-left: -1px;
-  align-items: center;
-  ${(props) =>
-    props.isExpanded &&
-    `
-  background: #26292e;
-  border: 1px solid #494b4f;
-  border: 1px solid #7a7b80;
-  margin-left: -2px;
-  margin-right: -1px;
-  `}
-  justify-content: center;
-`;
+// const StyledDeployStatusSection = styled.div<{ isExpanded?: boolean }>`
+//   font-size: 13px;
+//   height: 30px;
+//   border-radius: 5px;
+//   padding: 0 9px;
+//   padding-left: 7px;
+//   display: flex;
+//   margin-left: -1px;
+//   align-items: center;
+//   ${(props) =>
+//     props.isExpanded &&
+//     `
+//   background: #26292e;
+//   border: 1px solid #494b4f;
+//   border: 1px solid #7a7b80;
+//   margin-left: -2px;
+//   margin-right: -1px;
+//   `}
+//   justify-content: center;
+// `;
 
-const StatusWrapper = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
-`;
+// const StatusWrapper = styled.div`
+//   display: flex;
+//   justify-content: space-between;
+//   align-items: center;
+//   gap: 8px;
+// `;
 
-const StatusCircle = styled.div<{ percentage: number }>`
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  margin-right: 10px;
-  background: ${(props) =>
-    `conic-gradient(
-      from 0deg,
-      #4797ff ${props.percentage}%,
-      #ffffffaa 0% ${props.percentage}%
-    )`};
-`;
+// const StatusCircle = styled.div<{ percentage: number }>`
+//   width: 16px;
+//   height: 16px;
+//   border-radius: 50%;
+//   margin-right: 10px;
+//   background: ${(props) =>
+//     `conic-gradient(
+//       from 0deg,
+//       #4797ff ${props.percentage}%,
+//       #ffffffaa 0% ${props.percentage}%
+//     )`};
+// `;
 
 const getBackgroundGradient = (status: string): string => {
   switch (status) {

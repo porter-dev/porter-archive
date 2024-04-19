@@ -18,7 +18,7 @@ import { Context } from "shared/Context";
 
 import DashboardHeader from "../cluster-dashboard/DashboardHeader";
 import ClusterContextProvider from "../infrastructure-dashboard/ClusterContextProvider";
-import Configuration from "./tabs/Configuration";
+import Configuration from "./common/Configuration";
 
 type Props = {
   template: AddonTemplate;
@@ -80,7 +80,7 @@ const AddonForm: React.FC<Props> = ({ template }) => {
             />
             <DashboardHeader
               prefix={<Icon src={template.icon} />}
-              title={`Configure new "${template.displayName}" instance`}
+              title={`Configure new ${template.displayName} instance`}
               capitalize={false}
               disableLineBreak
             />

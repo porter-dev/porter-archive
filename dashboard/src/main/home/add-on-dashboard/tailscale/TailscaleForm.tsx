@@ -85,6 +85,7 @@ const TailscaleForm: React.FC = () => {
         );
       })}
       <Button
+        alt
         onClick={() => {
           append({
             route: "",

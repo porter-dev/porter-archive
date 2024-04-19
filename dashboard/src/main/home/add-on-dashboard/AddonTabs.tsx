@@ -12,8 +12,8 @@ import { type ClientAddon } from "lib/addons";
 
 import { useAddonContext } from "./AddonContextProvider";
 import AddonSaveButton from "./AddonSaveButton";
-import Configuration from "./tabs/Configuration";
-import Settings from "./tabs/Settings";
+import Configuration from "./common/Configuration";
+import Settings from "./common/Settings";
 
 const validTabs = ["configuration", "settings", "advanced"] as const;
 const DEFAULT_TAB = "configuration" as const;

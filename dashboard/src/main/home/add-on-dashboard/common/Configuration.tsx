@@ -3,11 +3,11 @@ import { match } from "ts-pattern";
 
 import { type ClientAddon } from "lib/addons";
 
-import DatadogForm from "../forms/DatadogForm";
-import MetabaseForm from "../forms/MetabaseForm";
-import MezmoForm from "../forms/MezmoForm";
-import NewRelicForm from "../forms/NewRelicForm";
-import TailscaleForm from "../forms/TailscaleForm";
+import DatadogForm from "../datadog/DatadogForm";
+import MetabaseForm from "../metabase/MetabaseForm";
+import MezmoForm from "../mezmo/MezmoForm";
+import NewRelicForm from "../newrelic/NewRelicForm";
+import TailscaleForm from "../tailscale/TailscaleForm";
 
 type Props = {
   type: ClientAddon["config"]["type"];

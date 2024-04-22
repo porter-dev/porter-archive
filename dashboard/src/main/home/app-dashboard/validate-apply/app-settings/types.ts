@@ -6,6 +6,18 @@ export const populatedEnvGroup = z.object({
   latest_version: z.coerce.bigint(),
   variables: z.record(z.string()).optional().default({}),
   secret_variables: z.record(z.string()).optional().default({}),
+  files: z
+    .array(
+      z
+        .object({
+          name: z.string(),
+          contents: z.string(),
+        })
+        .optional()
+        .default({ name: "", contents: "" })
+    )
+    .optional()
+    .default([]),
   linked_applications: z.array(z.string()).optional(),
   created_at: z.string(),
 });

@@ -2,6 +2,7 @@ package environment_groups
 
 import (
 	"encoding/base64"
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -100,6 +101,7 @@ func (c *ListEnvironmentGroupsHandler) ServeHTTP(w http.ResponseWriter, r *http.
 
 		var envGroups []EnvironmentGroupListItem
 		for _, envGroup := range listEnvGroupResp.Msg.EnvGroups {
+			fmt.Printf("here are the env groups files: %+v\n", envGroup.Files)
 			var files []EnvironmentGroupFile
 			for _, file := range envGroup.Files {
 				decoded, err := base64.StdEncoding.DecodeString(file.B64Contents)

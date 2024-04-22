@@ -206,7 +206,7 @@ const CreateEnvGroup: React.FC<RouteComponentProps> = ({ history }) => {
                     <Spacer y={0.5} />
                     <Text color="helper">
                       Files containing sensitive data that will be injected into
-                      your app's root directory.
+                      your app&apos;s root directory.
                     </Text>
                     <Spacer y={1} />
                     <FileArray

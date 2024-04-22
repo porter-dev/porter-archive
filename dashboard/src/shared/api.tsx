@@ -2308,7 +2308,7 @@ const createEnvironmentGroups = baseApi<
     secret_variables?: Record<string, string>;
     files?: Array<{
       name: string;
-      content: string;
+      contents: string;
     }>;
     type?: string;
     auth_token?: string;

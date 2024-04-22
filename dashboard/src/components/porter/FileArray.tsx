@@ -15,7 +15,7 @@ import fileIcon from "assets/file.svg";
 
 type File = {
   name: string;
-  content: string;
+  contents: string;
 };
 
 type PropsType = {
@@ -37,7 +37,7 @@ const FileArray = ({
   useEffect(() => {
     if (expandedFile) {
       setExpandedFileName(expandedFile.name);
-      setExpandedFileContent(expandedFile.content);
+      setExpandedFileContent(expandedFile.contents);
     }
   }, [expandedFile]);
 
@@ -66,7 +66,7 @@ const FileArray = ({
         // reader.result contains the contents of the file as a text string
         const fileContent = reader.result;
         const _files = [...files];
-        _files.push({ name: file.name, content: fileContent as string });
+        _files.push({ name: file.name, contents: fileContent as string });
         setFiles(_files);
       };
 
@@ -143,7 +143,7 @@ const FileArray = ({
               onClick={() => {
                 setExpandedFile({
                   name: "",
-                  content: "",
+                  contents: "",
                 });
                 setShowDropdown(false);
               }}
@@ -197,7 +197,7 @@ const FileArray = ({
               _files.forEach((f) => {
                 if (f.name === expandedFile.name) {
                   f.name = expandedFileName;
-                  f.content = expandedFileContent;
+                  f.contents = expandedFileContent;
                   found = true;
                 }
               });
@@ -205,7 +205,7 @@ const FileArray = ({
               if (!found) {
                 _files.push({
                   name: expandedFileName,
-                  content: expandedFileContent,
+                  contents: expandedFileContent,
                 });
               }
               setFiles(_files);

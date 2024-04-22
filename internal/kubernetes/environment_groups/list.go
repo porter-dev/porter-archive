@@ -2,6 +2,7 @@ package environment_groups
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"strconv"
 	"strings"
@@ -25,6 +26,8 @@ const (
 	LabelKey_DefaultAppEnvironment = "porter.run/default-app-environment"
 	// LabelKey_DefaultAddonEnvironment is the label key signifying the resource is the default addon environment
 	LabelKey_DefaultAddonEnvironment = "porter.run/default-addon-environment"
+	// LabelKey_FileSecret is the label key for a secret which contains files belonging to an env group
+	LabelKey_FileSecret = "porter.run/file-secret"
 
 	// Namespace_EnvironmentGroups is the base namespace for storing all environment groups.
 	// The configmaps and secrets here should be considered the source's of truth for a given version
@@ -33,6 +36,14 @@ const (
 	// LabelKey_AppName is the label key for the app name
 	LabelKey_AppName = "porter.run/app-name"
 )
+
+// EnvGroupFile is a struct that contains information about a file associated with the env group
+type EnvGroupFile struct {
+	// Name is the name of the file
+	Name string `json:"name"`
+	// B64Contents is the base64 encoded contents of the file
+	B64Contents string `json:"contents"`
+}
 
 // EnvironmentGroup represents a ConfigMap in the porter-env-group namespace
 type EnvironmentGroup struct {
@@ -46,6 +57,8 @@ type EnvironmentGroup struct {
 	Variables map[string]string `json:"variables,omitempty"`
 	// SecretVariables are secret values for the EnvironmentGroup. This usually will be a Secret on the kubernetes cluster
 	SecretVariables map[string]string `json:"secret_variables,omitempty"`
+	// Files is a list of files associated with the env group
+	Files []EnvGroupFile `json:"files,omitempty"`
 	// CreatedAt is only used for display purposes and is in UTC Unix time
 	CreatedAtUTC time.Time `json:"created_at,omitempty"`
 	// DefaultAppEnvironment is a boolean value that determines whether or not this environment group is the default environment group for an app
@@ -216,17 +229,43 @@ func listEnvironmentGroups(ctx context.Context, a *kubernetes.Agent, listOpts ..
 			}
 		}
 
-		if _, ok := envGroupSet[secret.Name]; !ok {
-			envGroupSet[secret.Name] = EnvironmentGroup{}
+		versionedName := fmt.Sprintf("%s.%d", name, version)
+		if _, ok := envGroupSet[versionedName]; !ok {
+			envGroupSet[versionedName] = EnvironmentGroup{}
 		}
-		envGroupSet[secret.Name] = EnvironmentGroup{
-			Type:                  secret.Labels[LabelKey_EnvironmentGroupType],
-			Name:                  name,
-			Version:               version,
-			SecretVariables:       stringSecret,
-			Variables:             envGroupSet[secret.Name].Variables,
-			CreatedAtUTC:          secret.CreationTimestamp.Time.UTC(),
-			DefaultAppEnvironment: secret.Labels[LabelKey_DefaultAppEnvironment] == "true",
+
+		isFileSecret, ok := secret.Labels[LabelKey_FileSecret]
+		// we handle file secrets differently - they are stored in the Files field of the EnvGroup rather than SecretVariables
+		if ok && isFileSecret == "true" {
+			var files []EnvGroupFile
+			for k, v := range secret.Data {
+				encodedContents := base64.StdEncoding.EncodeToString(v)
+				files = append(files, EnvGroupFile{
+					Name:        k,
+					B64Contents: encodedContents,
+				})
+			}
+			envGroupSet[versionedName] = EnvironmentGroup{
+				Type:                  secret.Labels[LabelKey_EnvironmentGroupType],
+				Name:                  name,
+				Version:               version,
+				SecretVariables:       envGroupSet[versionedName].SecretVariables,
+				Variables:             envGroupSet[versionedName].Variables,
+				Files:                 files,
+				CreatedAtUTC:          secret.CreationTimestamp.Time.UTC(),
+				DefaultAppEnvironment: secret.Labels[LabelKey_DefaultAppEnvironment] == "true",
+			}
+		} else {
+			envGroupSet[versionedName] = EnvironmentGroup{
+				Type:                  secret.Labels[LabelKey_EnvironmentGroupType],
+				Name:                  name,
+				Version:               version,
+				SecretVariables:       stringSecret,
+				Variables:             envGroupSet[versionedName].Variables,
+				Files:                 envGroupSet[versionedName].Files,
+				CreatedAtUTC:          secret.CreationTimestamp.Time.UTC(),
+				DefaultAppEnvironment: secret.Labels[LabelKey_DefaultAppEnvironment] == "true",
+			}
 		}
 	}
 

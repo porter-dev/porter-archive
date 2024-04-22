@@ -2,6 +2,7 @@ package environment_groups
 
 import (
 	"encoding/base64"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -123,6 +124,8 @@ func (c *UpdateEnvironmentGroupHandler) ServeHTTP(w http.ResponseWriter, r *http
 				B64Contents: encoded,
 			})
 		}
+
+		fmt.Printf("here are the files: %v\n", files)
 
 		_, err := c.Config().ClusterControlPlaneClient.CreateOrUpdateEnvGroup(ctx, connect.NewRequest(&porterv1.CreateOrUpdateEnvGroupRequest{
 			ProjectId:            int64(cluster.ProjectID),

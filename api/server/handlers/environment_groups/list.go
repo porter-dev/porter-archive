@@ -2,7 +2,6 @@ package environment_groups
 
 import (
 	"encoding/base64"
-	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -48,11 +47,13 @@ type ListEnvironmentGroupsResponse struct {
 	EnvironmentGroups []EnvironmentGroupListItem `json:"environment_groups,omitempty"`
 }
 
+// EnvironmentGroupFile represents a file in an environment group
 type EnvironmentGroupFile struct {
 	Name     string `json:"name"`
 	Contents string `json:"contents"`
 }
 
+// EnvironmentGroupListItem represents an environment group in the list response
 type EnvironmentGroupListItem struct {
 	Name               string                 `json:"name"`
 	Type               string                 `json:"type"`
@@ -101,7 +102,6 @@ func (c *ListEnvironmentGroupsHandler) ServeHTTP(w http.ResponseWriter, r *http.
 
 		var envGroups []EnvironmentGroupListItem
 		for _, envGroup := range listEnvGroupResp.Msg.EnvGroups {
-			fmt.Printf("here are the env groups files: %+v\n", envGroup.Files)
 			var files []EnvironmentGroupFile
 			for _, file := range envGroup.Files {
 				decoded, err := base64.StdEncoding.DecodeString(file.B64Contents)

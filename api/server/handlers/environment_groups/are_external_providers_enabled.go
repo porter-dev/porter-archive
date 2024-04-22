@@ -34,14 +34,31 @@ func NewAreExternalProvidersEnabledHandler(
 	}
 }
 
-// AreExternalProvidersEnabledResponse is the response object for the /environment-group/are-external-providers-enabled endpoint
-type AreExternalProvidersEnabledResponse struct {
+// ExternalEnvGroupOperator is the type of external env group operator, which syncs secrets from external sources
+type ExternalEnvGroupOperator string
+
+const (
+	// ExternalEnvGroupOperator_ExternalSecrets is the external secrets operator
+	ExternalEnvGroupOperator_ExternalSecrets ExternalEnvGroupOperator = "external-secrets"
+	// ExternalEnvGroupOperator_Infisical is the infisical secrets operator
+	ExternalEnvGroupOperator_Infisical ExternalEnvGroupOperator = "infisical"
+)
+
+// ExternalEnvGroupOperatorEnabledStatus is the status of an external env group operator
+type ExternalEnvGroupOperatorEnabledStatus struct {
+	// Type is the type of external provider
+	Type ExternalEnvGroupOperator `json:"type"`
 	// Enabled is true if external providers are enabled
 	Enabled bool `json:"enabled"`
 	// ReprovisionRequired is true if the cluster needs to be reprovisioned to enable external providers
 	ReprovisionRequired bool `json:"reprovision_required"`
 	// K8SUpgradeRequired is true if the cluster needs to be upgraded to v1.27 to enable external providers
 	K8SUpgradeRequired bool `json:"k8s_upgrade_required"`
+}
+
+// AreExternalProvidersEnabledResponse is the response object for the /environment-group/are-external-providers-enabled endpoint
+type AreExternalProvidersEnabledResponse struct {
+	Operators []ExternalEnvGroupOperatorEnabledStatus `json:"operators"`
 }
 
 // ServeHTTP checks if external providers are enabled
@@ -62,9 +79,27 @@ func (c *AreExternalProvidersEnabledHandler) ServeHTTP(w http.ResponseWriter, r 
 		return
 	}
 
+	var operators []ExternalEnvGroupOperatorEnabledStatus
+	for _, operator := range resp.Msg.Operators {
+		var operatorType ExternalEnvGroupOperator
+		switch operator.Operator {
+		case porterv1.EnumExternalEnvGroupOperatorType_ENUM_EXTERNAL_ENV_GROUP_OPERATOR_TYPE_EXTERNAL_SECRETS:
+			operatorType = ExternalEnvGroupOperator_ExternalSecrets
+		case porterv1.EnumExternalEnvGroupOperatorType_ENUM_EXTERNAL_ENV_GROUP_OPERATOR_TYPE_INFISICAL:
+			operatorType = ExternalEnvGroupOperator_Infisical
+		default:
+			continue
+		}
+
+		operators = append(operators, ExternalEnvGroupOperatorEnabledStatus{
+			Type:                operatorType,
+			Enabled:             operator.Enabled,
+			ReprovisionRequired: operator.ReprovisionRequired,
+			K8SUpgradeRequired:  operator.K8SUpgradeRequired,
+		})
+	}
+
 	c.WriteResult(w, r, &AreExternalProvidersEnabledResponse{
-		Enabled:             resp.Msg.Enabled,
-		ReprovisionRequired: resp.Msg.ReprovisionRequired,
-		K8SUpgradeRequired:  resp.Msg.K8SUpgradeRequired,
+		Operators: operators,
 	})
 }

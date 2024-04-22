@@ -47,7 +47,7 @@ const SettingsTab: React.FC<Props> = ({ envGroup }) => {
   };
 
   const handleDeletionSubmit = async (): Promise<void> => {
-    if (envGroup?.linked_applications) {
+    if (envGroup?.linked_applications.length) {
       setButtonStatus(
         <Error message="Remove this env group from all synced applications to delete." />
       );

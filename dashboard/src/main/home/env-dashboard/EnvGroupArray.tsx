@@ -1,14 +1,14 @@
-import EnvEditorModal from "main/home/modals/EnvEditorModal";
-import Modal from "main/home/modals/Modal";
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
-
-import upload from "assets/upload.svg";
-import { dotenv_parse } from "shared/string_utils";
 
 import Button from "components/porter/Button";
 import Image from "components/porter/Image";
 import Spacer from "components/porter/Spacer";
+import EnvEditorModal from "main/home/modals/EnvEditorModal";
+import Modal from "main/home/modals/Modal";
+
+import { dotenv_parse } from "shared/string_utils";
+import upload from "assets/upload.svg";
 
 export type KeyValueType = {
   key: string;
@@ -21,22 +21,22 @@ export type KeyValueType = {
 type PropsType = {
   label?: string;
   values: KeyValueType[];
-  setValues: (x: KeyValueType[]) => void;
+  setValues?: (x: KeyValueType[]) => void;
   disabled?: boolean;
   fileUpload?: boolean;
   secretOption?: boolean;
   setButtonDisabled?: (x: boolean) => void;
 };
 
-const EnvGroupArray = ({
+const EnvGroupArray: React.FC<PropsType> = ({
   label,
   values,
-  setValues=()=>{},
+  setValues = () => {},
   disabled,
   fileUpload,
   secretOption,
   setButtonDisabled,
-}: PropsType): React.ReactNode => {
+}) => {
   const [showEditorModal, setShowEditorModal] = useState(false);
   const blankValues = (): void => {
     const isAnyEnvVariableBlank = values.some(
@@ -48,15 +48,15 @@ const EnvGroupArray = ({
   };
   const blankValue = (key: string): boolean => {
     if (key === "" && setButtonDisabled) {
-      return true
+      return true;
     }
-    return false
+    return false;
   };
 
   const incorrectRegex = (key: string) => {
     const pattern = /^[a-zA-Z0-9._-]+$/;
     if (setButtonDisabled) {
-      setButtonDisabled(!pattern.test(key))
+      setButtonDisabled(!pattern.test(key));
       blankValues();
     }
     if (key) {
@@ -145,7 +145,11 @@ const EnvGroupArray = ({
                   />
                 ) : (
                   <MultiLineInputer
-                    placeholder={blankValue(entry.value) ? "value cannot be blank" : "ex: value"}
+                    placeholder={
+                      blankValue(entry.value)
+                        ? "value cannot be blank"
+                        : "ex: value"
+                    }
                     width="270px"
                     value={entry.value}
                     onChange={(e: any) => {
@@ -193,7 +197,7 @@ const EnvGroupArray = ({
         })}
       {!disabled && (
         <>
-          {values.length > 0 && <Spacer y={.5} />}
+          {values.length > 0 && <Spacer y={0.5} />}
           <InputWrapper>
             <Button
               alt
@@ -213,7 +217,7 @@ const EnvGroupArray = ({
             >
               <I className="material-icons">add</I> Add row
             </Button>
-            <Spacer inline x={.5} />
+            <Spacer inline x={0.5} />
             {fileUpload && (
               <Button
                 alt
@@ -231,13 +235,19 @@ const EnvGroupArray = ({
       )}
       {showEditorModal && (
         <Modal
-          onRequestClose={() => { setShowEditorModal(false); }}
+          onRequestClose={() => {
+            setShowEditorModal(false);
+          }}
           width="60%"
           height="650px"
         >
           <EnvEditorModal
-            closeModal={() => { setShowEditorModal(false); }}
-            setEnvVariables={(envFile: string) => { readFile(envFile); }}
+            closeModal={() => {
+              setShowEditorModal(false);
+            }}
+            setEnvVariables={(envFile: string) => {
+              readFile(envFile);
+            }}
           />
         </Modal>
       )}
@@ -279,10 +289,10 @@ const HideButton = styled(DeleteButton)`
   > i {
     font-size: 19px;
     cursor: ${(props: { disabled: boolean }) =>
-    props.disabled ? "default" : "pointer"};
+      props.disabled ? "default" : "pointer"};
     :hover {
       color: ${(props: { disabled: boolean }) =>
-    props.disabled ? "#ffffff44" : "#ffffff88"};
+        props.disabled ? "#ffffff44" : "#ffffff88"};
     }
   }
 `;
@@ -296,15 +306,16 @@ const InputWrapper = styled.div`
 const Input = styled.input<{ flex?: boolean; override?: boolean }>`
   outline: none;
   display: ${(props) => (props.flex ? "flex" : "block")};
-  ${(props) => (props.flex && 'flex: 1;')}
+  ${(props) => props.flex && "flex: 1;"}
   border: none;
   margin-bottom: 5px;
   font-size: 13px;
   background: ${(props) => props.theme.fg};
-  border: ${(props) => (props.override ? '2px solid #f4cb42' : ' 1px solid #494b4f')};
+  border: ${(props) =>
+    props.override ? "2px solid #f4cb42" : " 1px solid #494b4f"};
   border-radius: 5px;
-  width: ${(props) => props.width ? props.width : "270px"};
-  color: ${(props) => props.disabled ? "#ffffff44" : "#fefefe"};
+  width: ${(props) => (props.width ? props.width : "270px")};
+  color: ${(props) => (props.disabled ? "#ffffff44" : "#fefefe")};
   padding: 5px 10px;
   height: 35px;
 `;
@@ -322,7 +333,8 @@ export const MultiLineInputer = styled.textarea<InputProps>`
   margin-bottom: 5px;
   font-size: 13px;
   background: ${(props) => props.theme.fg};
-  border: ${(props) => (props.override ? '2px solid #f4cb42' : ' 1px solid #494b4f')};
+  border: ${(props) =>
+    props.override ? "2px solid #f4cb42" : " 1px solid #494b4f"};
   border-radius: 5px;
   color: ${(props) => (props.disabled ? "#ffffff44" : "#fefefe")};
   padding: 8px 10px 5px 10px;

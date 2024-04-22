@@ -4,6 +4,7 @@ import gcp from "../assets/gcp.png";
 import github from "../assets/github.png";
 import azure from "assets/azure.png";
 import doppler from "assets/doppler.png";
+import infisical from "assets/infisical.svg";
 
 export const infraNames: any = {
   ecr: "Elastic Container Registry (ECR)",
@@ -19,6 +20,11 @@ export const integrationList: any = {
     icon: doppler,
     label: "Doppler",
     buttonText: "Add a service token",
+  },
+  infisical: {
+    icon: infisical,
+    label: "Infisical",
+    buttonText: "Add an API key",
   },
   kubernetes: {
     icon:

@@ -613,7 +613,7 @@ export const ExpandedEnvGroupFC = ({
 
           const linkedApp: string[] = currentEnvGroup?.linked_applications;
           // doppler env groups update themselves, and we don't want to increment the version
-          if (currentEnvGroup?.type !== "doppler") {
+          if (currentEnvGroup?.type !== "doppler" && currentEnvGroup.type !== "infisical") {
             await api.createEnvironmentGroups(
                 "<token>",
                 {

@@ -1,18 +1,22 @@
-import React, { useEffect, useState, useMemo, useContext } from "react";
-import { FormProvider, useForm } from "react-hook-form";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
+import { FormProvider, useForm } from "react-hook-form";
 import styled from "styled-components";
+
+import Button from "components/porter/Button";
+import Error from "components/porter/Error";
+import Spacer from "components/porter/Spacer";
+import Text from "components/porter/Text";
+import {
+  envGroupFormValidator,
+  type EnvGroupFormData,
+} from "lib/env-groups/types";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
-import { type EnvGroupFormData, envGroupFormValidator } from "lib/env-groups/types";
 
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import EnvGroupArray from "../EnvGroupArray";
-import Button from "components/porter/Button";
-import Error from "components/porter/Error";
+import EnvGroupArray, { type KeyValueType } from "../EnvGroupArray";
 
 type Props = {
   envGroup: {
@@ -22,29 +26,25 @@ type Props = {
     type?: string;
   };
   fetchEnvGroup: () => void;
-}
+};
 
 const EnvVarsTab: React.FC<Props> = ({ envGroup, fetchEnvGroup }) => {
   const { currentProject, currentCluster } = useContext(Context);
-  const [buttonStatus, setButtonStatus] = useState<string | React.ReactNode>("");
+  const [buttonStatus, setButtonStatus] = useState<string | React.ReactNode>(
+    ""
+  );
   const [wasCreated, setWasCreated] = useState(false);
 
   useEffect(() => {
-    const created = new URLSearchParams(window.location.search).get("created")
+    const created = new URLSearchParams(window.location.search).get("created");
     setWasCreated(created === "true");
-  }, [])
+  }, []);
 
   const envGroupFormMethods = useForm<EnvGroupFormData>({
     resolver: zodResolver(envGroupFormValidator),
     reValidateMode: "onSubmit",
   });
-  const { 
-    formState: { isValidating, isSubmitting },
-    watch,
-    trigger,
-    handleSubmit,
-    setValue,
-  } = envGroupFormMethods;
+  const { watch, trigger, handleSubmit, setValue } = envGroupFormMethods;
 
   const [submitErrorMessage, setSubmitErrorMessage] = useState<string>("");
   const [isValid, setIsValid] = useState<boolean>(false);
@@ -66,28 +66,45 @@ const EnvVarsTab: React.FC<Props> = ({ envGroup, fetchEnvGroup }) => {
   }, [envVariables]);
 
   useEffect(() => {
-    const normalVariables = Object.entries(
-      envGroup.variables || {}
-    ).map(([key, value]) => ({
-      key,
-      value,
-      hidden: (value ).includes("PORTERSECRET"),
-      locked: (value ).includes("PORTERSECRET"),
-      deleted: false,
-    }));
-    const secretVariables = Object.entries(
-      envGroup.secret_variables || {}
-    ).map(([key, value]) => ({
-      key,
-      value,
-      hidden: true,
-      locked: true,
-      deleted: false,
-    }));
+    const normalVariables = Object.entries(envGroup.variables || {}).map(
+      ([key, value]) => ({
+        key,
+        value,
+        hidden: value.includes("PORTERSECRET"),
+        locked: value.includes("PORTERSECRET"),
+        deleted: false,
+      })
+    );
+    const secretVariables = Object.entries(envGroup.secret_variables || {}).map(
+      ([key, value]) => ({
+        key,
+        value,
+        hidden: true,
+        locked: true,
+        deleted: false,
+      })
+    );
     const variables = [...normalVariables, ...secretVariables];
-    setValue("envVariables", variables as Array<{ key: string; value: string; hidden: boolean; locked: boolean; deleted: boolean }>);
+    setValue(
+      "envVariables",
+      variables as Array<{
+        key: string;
+        value: string;
+        hidden: boolean;
+        locked: boolean;
+        deleted: boolean;
+      }>
+    );
     setValue("name", envGroup.name);
   }, [envGroup]);
+
+  const isUpdatable = useMemo(() => {
+    return (
+      envGroup.type !== "doppler" &&
+      envGroup.type !== "datastore" &&
+      envGroup.type !== "infisical"
+    );
+  }, [envGroup.type]);
 
   const onSubmit = handleSubmit(async (data) => {
     setButtonStatus("loading");
@@ -97,42 +114,40 @@ const EnvVarsTab: React.FC<Props> = ({ envGroup, fetchEnvGroup }) => {
     const envVariables = data.envVariables;
     try {
       // Old env var create logic
-      const filtered = envVariables.filter((
-        envVar: KeyValueType, 
-        index: number,
-        self: KeyValueType[]
-      ) => {
-        // remove any collisions that are marked as deleted and are duplicates
-        const numCollisions = self.reduce((n, _envVar: KeyValueType) => {
-          return n + (_envVar.key === envVar.key ? 1 : 0);
-        }, 0);
+      const filtered = envVariables.filter(
+        (envVar: KeyValueType, index: number, self: KeyValueType[]) => {
+          // remove any collisions that are marked as deleted and are duplicates
+          const numCollisions = self.reduce((n, _envVar: KeyValueType) => {
+            return n + (_envVar.key === envVar.key ? 1 : 0);
+          }, 0);
 
-        if (numCollisions === 1) {
-          return true;
-        } else {
-          return (
-            index ===
-            self.findIndex(
-              (_envVar: KeyValueType) =>
-                _envVar.key === envVar.key && !_envVar.deleted
-            )
-          );
+          if (numCollisions === 1) {
+            return true;
+          } else {
+            return (
+              index ===
+              self.findIndex(
+                (_envVar: KeyValueType) =>
+                  _envVar.key === envVar.key && !_envVar.deleted
+              )
+            );
+          }
         }
-      })
-        
+      );
+
       filtered
         .filter((envVar) => !envVar.deleted && envVar.hidden)
         .forEach((envVar) => {
           secretEnvVariables[envVar.key] = envVar.value;
         });
-      
+
       filtered
         .filter((envVar) => !envVar.deleted && !envVar.hidden)
         .forEach((envVar) => {
           apiEnvVariables[envVar.key] = envVar.value;
         });
 
-      if (envGroup?.type !== "doppler") {
+      if (envGroup?.type !== "doppler" && envGroup?.type !== "infisical") {
         await api.createEnvironmentGroups(
           "<token>",
           {
@@ -146,8 +161,8 @@ const EnvVarsTab: React.FC<Props> = ({ envGroup, fetchEnvGroup }) => {
             cluster_id: currentCluster?.id ?? -1,
           }
         );
-      };
-     
+      }
+
       fetchEnvGroup();
       setButtonStatus("success");
     } catch (err) {
@@ -160,27 +175,19 @@ const EnvVarsTab: React.FC<Props> = ({ envGroup, fetchEnvGroup }) => {
     }
   });
 
-  const submitButtonStatus = useMemo(() => {
-    if (isSubmitting || isValidating) {
-      return "loading";
-    }
-    if (submitErrorMessage) {
-      return <Error message={submitErrorMessage} />;
-    }
-    return undefined;
-  }, [isSubmitting, submitErrorMessage, isValidating]);
-
   return (
     <>
       <Text size={16}>Environment variables</Text>
       <Spacer y={0.5} />
-      {envGroup.type === "doppler" ? (
+      {envGroup.type === "doppler" || envGroup.type === "infisical" ? (
         <Text color="helper">
-          Doppler environment variables can only be updated from the Doppler dashboard.
+          {envGroup.type === "doppler" ? "Doppler" : "Infisical"} environment
+          variables can only be updated from the Doppler dashboard.
         </Text>
       ) : (
         <Text color="helper">
-          Set secret values and environment-specific configuration for your applications.
+          Set secret values and environment-specific configuration for your
+          applications.
         </Text>
       )}
       <Spacer height="15px" />
@@ -196,9 +203,9 @@ const EnvVarsTab: React.FC<Props> = ({ envGroup, fetchEnvGroup }) => {
             }}
             fileUpload={true}
             secretOption={true}
-            disabled={envGroup.type === "doppler"}
+            disabled={!isUpdatable}
           />
-          {envGroup.type !== "doppler" && envGroup.type !== "datastore" && (
+          {isUpdatable ? (
             <>
               <Spacer y={1} />
               <Button
@@ -209,15 +216,20 @@ const EnvVarsTab: React.FC<Props> = ({ envGroup, fetchEnvGroup }) => {
                       <i className="material-icons">done</i>
                       Successfully created
                     </StatusWrapper>
-                  ) : buttonStatus
+                  ) : submitErrorMessage ? (
+                    "error"
+                  ) : (
+                    buttonStatus
+                  )
                 }
+                errorText={submitErrorMessage}
                 loadingText="Updating env group . . ."
                 disabled={!isValid}
               >
                 Update
               </Button>
             </>
-          )}
+          ) : null}
         </form>
       </FormProvider>
     </>

@@ -41,21 +41,16 @@ const CloudProviderSelect: React.FC<Props> = ({ onComplete }) => {
         <BlockList>
           {[CloudProviderAWS, CloudProviderAzure, CloudProviderGCP].map(
             (provider: ClientCloudProvider, i: number) => {
-              const disabled = provider === CloudProviderGCP;
               return (
                 <Block
                   key={i}
                   onClick={() => {
-                    if (disabled) {
-                      return;
-                    }
                     if (user?.isPorterUser) {
                       onComplete(provider);
                     } else {
                       setCloudProvider(provider);
                     }
                   }}
-                  disabled={disabled}
                 >
                   <Icon src={provider.icon} />
                   <BlockTitle>{provider.name}</BlockTitle>

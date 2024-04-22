@@ -46,14 +46,20 @@ type ListEnvironmentGroupsResponse struct {
 	EnvironmentGroups []EnvironmentGroupListItem `json:"environment_groups,omitempty"`
 }
 
+type EnvironmentGroupFile struct {
+	Name     string `json:"name"`
+	Contents string `json:"contents"`
+}
+
 type EnvironmentGroupListItem struct {
-	Name               string            `json:"name"`
-	Type               string            `json:"type"`
-	LatestVersion      int               `json:"latest_version"`
-	Variables          map[string]string `json:"variables,omitempty"`
-	SecretVariables    map[string]string `json:"secret_variables,omitempty"`
-	CreatedAtUTC       time.Time         `json:"created_at"`
-	LinkedApplications []string          `json:"linked_applications,omitempty"`
+	Name               string                 `json:"name"`
+	Type               string                 `json:"type"`
+	LatestVersion      int                    `json:"latest_version"`
+	Variables          map[string]string      `json:"variables,omitempty"`
+	SecretVariables    map[string]string      `json:"secret_variables,omitempty"`
+	CreatedAtUTC       time.Time              `json:"created_at"`
+	LinkedApplications []string               `json:"linked_applications,omitempty"`
+	Files              []EnvironmentGroupFile `json:"files,omitempty"`
 }
 
 func (c *ListEnvironmentGroupsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {

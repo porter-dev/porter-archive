@@ -46,7 +46,7 @@ func (c *GetControllersHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	}
 
 	yamlArr := grapher.ImportMultiDocYAML([]byte(helmRelease.Manifest))
-	controllers := grapher.ParseControllers(yamlArr)
+	controllers := grapher.ParseControllers(yamlArr, helmRelease.Namespace)
 	retrievedControllers := []interface{}{}
 
 	// get current status of each controller

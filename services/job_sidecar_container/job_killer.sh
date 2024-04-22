@@ -88,7 +88,7 @@ graceful_shutdown() {
     echo "Exit Gracefully (0)" && exit 0
 }
 
-trap 'graceful_shutdown $grace_period_seconds $target' SIGTERM SIGINT SIGHUP
+trap 'graceful_shutdown $grace_period_seconds $target' TERM INT HUP
 
 sleep 2
 

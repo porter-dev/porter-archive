@@ -72,7 +72,7 @@ func GetPodsForRelease(ctx context.Context, helmRelease *release.Release, k8sAge
 	defer span.End()
 
 	yamlArr := grapher.ImportMultiDocYAML([]byte(helmRelease.Manifest))
-	controllers := grapher.ParseControllers(yamlArr)
+	controllers := grapher.ParseControllers(yamlArr, helmRelease.Namespace)
 	pods := make([]v1.Pod, 0)
 
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "num-controllers", Value: len(controllers)})

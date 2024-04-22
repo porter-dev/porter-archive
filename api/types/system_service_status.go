@@ -134,27 +134,23 @@ func toSystemService(apiSystemService *porterv1.SystemService) (SystemService, e
 	if apiSystemService == nil {
 		return SystemService{}, errors.New("unexpected nil: SystemService")
 	}
-	involvedObjectType, err := toInternalInvolvedObjectType(apiSystemService.InvolvedObjectType)
-	if err != nil {
-		return SystemService{}, err
-	}
 	return SystemService{
 		Name:               apiSystemService.Name,
 		Namespace:          apiSystemService.Namespace,
-		InvolvedObjectType: involvedObjectType,
+		InvolvedObjectType: toInternalInvolvedObjectType(apiSystemService.InvolvedObjectType),
 	}, nil
 }
 
-func toInternalInvolvedObjectType(apiType porterv1.InvolvedObjectType) (InvolvedObjectType, error) {
+func toInternalInvolvedObjectType(apiType porterv1.InvolvedObjectType) InvolvedObjectType {
 	switch apiType {
 	case porterv1.InvolvedObjectType_INVOLVED_OBJECT_TYPE_DEPLOYMENT:
-		return ServiceDeployment, nil
+		return ServiceDeployment
 	case porterv1.InvolvedObjectType_INVOLVED_OBJECT_TYPE_STATEFULSET:
-		return ServiceStatefulSet, nil
+		return ServiceStatefulSet
 	case porterv1.InvolvedObjectType_INVOLVED_OBJECT_TYPE_DAEMONSET:
-		return ServiceDaemonSet, nil
+		return ServiceDaemonSet
 	default:
-		return "", fmt.Errorf("unknown involved object type")
+		return ""
 	}
 }
 

@@ -1,6 +1,7 @@
 package environment_groups
 
 import (
+	"encoding/base64"
 	"net/http"
 	"strings"
 	"time"
@@ -99,12 +100,26 @@ func (c *ListEnvironmentGroupsHandler) ServeHTTP(w http.ResponseWriter, r *http.
 
 		var envGroups []EnvironmentGroupListItem
 		for _, envGroup := range listEnvGroupResp.Msg.EnvGroups {
+			var files []EnvironmentGroupFile
+			for _, file := range envGroup.Files {
+				decoded, err := base64.StdEncoding.DecodeString(file.B64Contents)
+				if err != nil {
+					err = telemetry.Error(ctx, span, err, "unable to decode base64 contents")
+					c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+					return
+				}
+				files = append(files, EnvironmentGroupFile{
+					Name:     file.Name,
+					Contents: string(decoded),
+				})
+			}
 			envGroups = append(envGroups, EnvironmentGroupListItem{
 				Name:               envGroup.Name,
 				Type:               translateProtoTypeToEnvGroupType[envGroup.Type],
 				LatestVersion:      int(envGroup.Version),
 				Variables:          envGroup.Variables,
 				SecretVariables:    envGroup.SecretVariables,
+				Files:              files,
 				CreatedAtUTC:       envGroup.CreatedAt.AsTime(),
 				LinkedApplications: envGroup.LinkedApplications,
 			})

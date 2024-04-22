@@ -113,24 +113,13 @@ const CreateEnvGroup: React.FC<RouteComponentProps> = ({ history }) => {
           }
         });
 
-      const envFileMap = envFiles.reduce(
-        (
-          acc: Record<string, string>,
-          file: { name: string; content: string }
-        ) => {
-          acc[file.name] = file.content;
-          return acc;
-        },
-        {}
-      );
-
       await api.createEnvironmentGroups(
         "<token>",
         {
           name: data.name,
           variables: apiEnvVariables,
           secret_variables: secretEnvVariables,
-          files: envFileMap,
+          files: envFiles,
           is_env_override: true,
         },
         {

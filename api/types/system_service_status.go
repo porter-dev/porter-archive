@@ -184,8 +184,6 @@ func ToSystemStatusHistory(apiResp *porterv1.SystemStatusHistoryResponse) (Syste
 		ClusterStatusHistories:       map[ClusterHealthType]map[int32]DailyHealthStatus{},
 		SystemServiceStatusHistories: []SystemServiceStatusHistory{},
 	}
-	fmt.Printf("system status histories responses count %d\n", len(apiResp.SystemServiceStatusHistories))
-	fmt.Printf("cluter status histories responses count %d\n", len(apiResp.ClusterStatusHistories))
 	for _, clusterHealthHistory := range apiResp.ClusterStatusHistories {
 		clusterHealthType, err := toClusterHealthType(clusterHealthHistory.ClusterHealthType)
 		if err != nil {

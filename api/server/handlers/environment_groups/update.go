@@ -34,6 +34,22 @@ func NewUpdateEnvironmentGroupHandler(
 	}
 }
 
+// EnvironmentGroupType is the env_groups-level environment group type
+type EnvironmentGroupType string
+
+const (
+	// EnvironmentGroupType_Unspecified is the nil environment group type
+	EnvironmentGroupType_Unspecified EnvironmentGroupType = ""
+	// EnvironmentGroupType_Doppler is the doppler environment group type
+	EnvironmentGroupType_Doppler EnvironmentGroupType = "doppler"
+	// EnvironmentGroupType_Porter is the porter environment group type
+	EnvironmentGroupType_Porter EnvironmentGroupType = "porter"
+	// EnvironmentGroupType_Datastore is the datastore environment group type
+	EnvironmentGroupType_Datastore EnvironmentGroupType = "datastore"
+	// EnvironmentGroupType_Infisical is the infisical environment group type
+	EnvironmentGroupType_Infisical EnvironmentGroupType = "infisical"
+)
+
 // EnvVariableDeletions is the set of keys to delete from the environment group
 type EnvVariableDeletions struct {
 	// Variables is a set of variable keys to delete from the environment group
@@ -42,12 +58,20 @@ type EnvVariableDeletions struct {
 	Secrets []string `json:"secrets"`
 }
 
+// InfisicalEnv is the Infisical environment to pull secret values from, only required for the Infisical external provider type
+type InfisicalEnv struct {
+	// Slug is the slug referring to the Infisical environment to pull secret values from
+	Slug string `json:"slug"`
+	// Path is the relative path in the Infisical environment to pull secret values from
+	Path string `json:"path"`
+}
+
 type UpdateEnvironmentGroupRequest struct {
 	// Name of the env group to create or update
 	Name string `json:"name"`
 
 	// Type of the env group to create or update
-	Type string `json:"type"`
+	Type EnvironmentGroupType `json:"type"`
 
 	// AuthToken for the env group
 	AuthToken string `json:"auth_token"`
@@ -69,6 +93,9 @@ type UpdateEnvironmentGroupRequest struct {
 
 	// SkipAppAutoDeploy is a flag to determine if the app should be auto deployed
 	SkipAppAutoDeploy bool `json:"skip_app_auto_deploy"`
+
+	// InfisicalEnv is the Infisical environment to pull secret values from, only required for the Infisical external provider type
+	InfisicalEnv InfisicalEnv `json:"infisical_env"`
 }
 type UpdateEnvironmentGroupResponse struct {
 	// Name of the env group to create or update
@@ -99,13 +126,38 @@ func (c *UpdateEnvironmentGroupHandler) ServeHTTP(w http.ResponseWriter, r *http
 	)
 
 	switch request.Type {
-	case "doppler":
+	case EnvironmentGroupType_Doppler, EnvironmentGroupType_Infisical:
+		var provider porterv1.EnumEnvGroupProviderType
+		var infisicalEnv *porterv1.InfisicalEnv
+		if request.Type == EnvironmentGroupType_Doppler {
+			provider = porterv1.EnumEnvGroupProviderType_ENUM_ENV_GROUP_PROVIDER_TYPE_DOPPLER
+		}
+		if request.Type == EnvironmentGroupType_Infisical {
+			if request.InfisicalEnv.Slug == "" {
+				err := telemetry.Error(ctx, span, nil, "infisical env slug is required")
+				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+				return
+			}
+			if request.InfisicalEnv.Path == "" {
+				err := telemetry.Error(ctx, span, nil, "infisical env path is required")
+				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+				return
+			}
+
+			provider = porterv1.EnumEnvGroupProviderType_ENUM_ENV_GROUP_PROVIDER_TYPE_INFISICAL
+			infisicalEnv = &porterv1.InfisicalEnv{
+				EnvironmentSlug: request.InfisicalEnv.Slug,
+				EnvironmentPath: request.InfisicalEnv.Path,
+			}
+		}
+
 		_, err := c.Config().ClusterControlPlaneClient.CreateOrUpdateEnvGroup(ctx, connect.NewRequest(&porterv1.CreateOrUpdateEnvGroupRequest{
 			ProjectId:            int64(cluster.ProjectID),
 			ClusterId:            int64(cluster.ID),
-			EnvGroupProviderType: porterv1.EnumEnvGroupProviderType_ENUM_ENV_GROUP_PROVIDER_TYPE_DOPPLER,
+			EnvGroupProviderType: provider,
 			EnvGroupName:         request.Name,
 			EnvGroupAuthToken:    request.AuthToken,
+			InfisicalEnv:         infisicalEnv,
 		}))
 		if err != nil {
 			err := telemetry.Error(ctx, span, err, "unable to create environment group")

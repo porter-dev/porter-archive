@@ -43,6 +43,10 @@ const DopplerIntegrationList: React.FC = (_) => {
       currentCluster?.id,
     ],
     async () => {
+      if (!currentProject || !currentCluster) {
+        return;
+      }
+
       const res = await api.areExternalEnvGroupProvidersEnabled(
         "<token>",
         {},
@@ -50,13 +54,26 @@ const DopplerIntegrationList: React.FC = (_) => {
       );
       const externalEnvGroupProviderStatus = await z
         .object({
-          enabled: z.boolean(),
-          reprovision_required: z.boolean(),
-          k8s_upgrade_required: z.boolean(),
+          operators: z.array(
+            z.object({
+              type: z.enum(["infisical", "external-secrets"]),
+              enabled: z.boolean(),
+              reprovision_required: z.boolean(),
+              k8s_upgrade_required: z.boolean(),
+            })
+          ),
         })
         .parseAsync(res.data);
 
-      return externalEnvGroupProviderStatus;
+      return (
+        externalEnvGroupProviderStatus.operators.find(
+          (o) => o.type === "external-secrets"
+        ) || {
+          enabled: false,
+          reprovision_required: true,
+          k8s_upgrade_required: false,
+        }
+      );
     },
     {
       enabled: !!currentProject && !!currentCluster,
@@ -114,7 +131,7 @@ const DopplerIntegrationList: React.FC = (_) => {
       )
       .then(() => {
         setShowServiceTokenModal(false);
-        history.push("/env-groups");
+        history.push("/environment-groups");
       })
       .catch((err) => {
         let message =
@@ -148,7 +165,14 @@ const DopplerIntegrationList: React.FC = (_) => {
         ) : externalProviderStatus?.reprovision_required ? (
           <Placeholder>
             To enable integration with Doppler, <Spacer inline x={0.5} />
-            <Link to={`/cluster-dashboard`} hasunderline>
+            <Link
+              to={
+                currentCluster?.id
+                  ? `/infrastructure/${currentCluster.id}`
+                  : "/infrastructure"
+              }
+              hasunderline
+            >
               re-provision your cluster
             </Link>
             .

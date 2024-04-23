@@ -14,6 +14,7 @@ import TitleSection from "components/TitleSection";
 import GitlabIntegrationList from "./GitlabIntegrationList";
 import leftArrow from "assets/left-arrow.svg";
 import Spacer from "components/porter/Spacer";
+import InfisicalIntegrationList from "./infisical/InfisicalIntegrationList";
 
 type Props = RouteComponentProps & {
   category: string;
@@ -103,7 +104,7 @@ const IntegrationCategories: React.FC<Props> = (props) => {
 
   useEffect(() => {
     getIntegrationsForCategory(props.category);
-    if (props.category === "doppler") {
+    if (props.category === "doppler" || props.category === "infisical") {
       setLoading(false);
     }
   }, [props.category]);
@@ -131,14 +132,14 @@ const IntegrationCategories: React.FC<Props> = (props) => {
         <TitleSection icon={icon} iconWidth="32px">
           {label}
         </TitleSection>
-        {props.category === "doppler" ? null : (
+        {props.category === "doppler" || props.category === "infisical" ? null : (
           <Button
             onClick={() => {
               if (props.category === "gitlab") {
                 pushFiltered(props, `/integrations/gitlab/create/gitlab`, [
                   "project_id",
                 ]);
-              } else if (props.category === "doppler") {
+              } else if (props.category === "doppler" || props.category === "infisical") {
                 // ret2
               } else if (props.category !== "slack") {
                 setCurrentModal("IntegrationsModal", {
@@ -175,6 +176,8 @@ const IntegrationCategories: React.FC<Props> = (props) => {
         <SlackIntegrationList slackData={slackData} />
       ) : props.category === "doppler" ? (
         <DopplerIntegrationList />
+      ) : props.category === "infisical" ? (
+        <InfisicalIntegrationList />
       ) : (
         <IntegrationList
           currentCategory={props.category}

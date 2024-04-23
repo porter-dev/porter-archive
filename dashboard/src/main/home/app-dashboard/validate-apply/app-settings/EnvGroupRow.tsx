@@ -14,6 +14,7 @@ import { Context } from "shared/Context";
 import { envGroupPath } from "shared/util";
 import database from "assets/database.svg";
 import doppler from "assets/doppler.png";
+import infisical from "assets/infisical.svg";
 import key from "assets/key.svg";
 
 type Props = {
@@ -65,22 +66,26 @@ const EnvGroupRow: React.FC<Props> = ({
     return [...normalVariables, ...secretVariables];
   }, [envGroup]);
 
+  const envGroupIcon = useMemo(() => {
+    if (envGroup.type === "doppler") {
+      return doppler;
+    }
+    if (envGroup.type === "datastore") {
+      return database;
+    }
+    if (envGroup.type === "infisical") {
+      return infisical;
+    }
+    return key;
+  }, [envGroup.type]);
+
   return (
     <Expandable
       maxHeight={maxHeight}
       header={
         <Container row spaced>
           <Container row>
-            <Image
-              size={20}
-              src={
-                envGroup.type === "doppler"
-                  ? doppler
-                  : envGroup.type === "datastore"
-                  ? database
-                  : key
-              }
-            />
+            <Image size={20} src={envGroupIcon} />
             <Spacer inline x={1} />
             <Text size={14}>{envGroup.name}</Text>
           </Container>

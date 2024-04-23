@@ -1,7 +1,9 @@
-import React, { useContext, useEffect, useMemo, useState } from "react";
+import React, { useContext, useEffect, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useHistory, useParams } from "react-router";
 import styled from "styled-components";
 import { match } from "ts-pattern";
+import { z } from "zod";
 
 import Loading from "components/Loading";
 import Back from "components/porter/Back";
@@ -11,11 +13,13 @@ import Link from "components/porter/Link";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import TabSelector from "components/TabSelector";
+import { envGroupValidator } from "lib/env-groups/types";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
 import database from "assets/database.svg";
 import doppler from "assets/doppler.png";
+import infisical from "assets/infisical.svg";
 import key from "assets/key.svg";
 import notFound from "assets/not-found.png";
 import time from "assets/time.png";
@@ -43,9 +47,6 @@ const ExpandedEnv: React.FC = () => {
   }>();
   const history = useHistory();
 
-  const [isLoading, setIsLoading] = useState(true);
-  const [envGroup, setEnvGroup] = useState(null);
-
   const tabs = useMemo(() => {
     return [
       { label: "Environment variables", value: "env-vars" },
@@ -54,36 +55,53 @@ const ExpandedEnv: React.FC = () => {
     ];
   }, []);
 
-  const fetchEnvGroup = async () => {
-    try {
+  const {
+    data: envGroup,
+    isLoading,
+    refetch,
+  } = useQuery(
+    ["envGroups", currentProject?.id, currentCluster?.id, envGroupName],
+    async () => {
+      if (!currentProject || !currentCluster) {
+        return null;
+      }
       const res = await api.getAllEnvGroups(
         "<token>",
         {},
         {
-          id: currentProject?.id ?? -1,
-          cluster_id: currentCluster?.id ?? -1,
+          id: currentProject?.id || -1,
+          cluster_id: currentCluster?.id || -1,
         }
       );
-      const matchedEnvGroup = res.data.environment_groups.find((x) => {
-        return x.name === envGroupName;
-      });
-      setIsLoading(false);
-      setEnvGroup(matchedEnvGroup);
-    } catch (err) {
-      setIsLoading(false);
-    }
-  };
 
-  useEffect(() => {
-    setIsLoading(true);
-    void fetchEnvGroup();
-  }, [currentProject, currentCluster, envGroupName]);
+      const data = await z
+        .object({
+          environment_groups: z.array(envGroupValidator),
+        })
+        .parseAsync(res.data);
+
+      return data.environment_groups.find((eg) => eg.name === envGroupName);
+    }
+  );
 
   useEffect(() => {
     if (!tab) {
       history.push(envGroupPath(currentProject, `/${envGroupName}/env-vars`));
     }
   }, [tab]);
+
+  const envGroupIcon = useMemo(() => {
+    if (envGroup?.type === "doppler") {
+      return doppler;
+    }
+    if (envGroup?.type === "datastore") {
+      return database;
+    }
+    if (envGroup?.type === "infisical") {
+      return infisical;
+    }
+    return key;
+  }, [envGroup?.type]);
 
   return (
     <>
@@ -108,16 +126,7 @@ const ExpandedEnv: React.FC = () => {
           <Back to={envGroupPath(currentProject, "")} />
 
           <Container row>
-            <Image
-              src={
-                envGroup.type === "doppler"
-                  ? doppler
-                  : envGroup.type === "datastore"
-                  ? database
-                  : key
-              }
-              size={28}
-            />
+            <Image src={envGroupIcon} size={28} />
             <Spacer inline x={1} />
             <Text size={21}>{envGroupName}</Text>
           </Container>
@@ -145,9 +154,7 @@ const ExpandedEnv: React.FC = () => {
           <Spacer y={1} />
           {match(tab)
             .with("env-vars", () => {
-              return (
-                <EnvVarsTab envGroup={envGroup} fetchEnvGroup={fetchEnvGroup} />
-              );
+              return <EnvVarsTab envGroup={envGroup} fetchEnvGroup={refetch} />;
             })
             .with("synced-apps", () => <SyncedAppsTab envGroup={envGroup} />)
             .with("settings", () => <SettingsTab envGroup={envGroup} />)

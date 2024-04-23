@@ -33,6 +33,15 @@ export const envGroupValidator = z.object({
   secret_variables: z.record(z.string()).optional().default({}),
   created_at: z.string(),
   linked_applications: z.array(z.string()).optional().default([]),
+  files: z
+    .array(
+      z.object({
+        name: z.string(),
+        contents: z.string(),
+      })
+    )
+    .optional()
+    .default([]),
   type: z
     .string()
     .pipe(

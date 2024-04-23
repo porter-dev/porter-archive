@@ -34,15 +34,7 @@ const CreateEnvGroup: React.FC<RouteComponentProps> = ({ history }) => {
     reValidateMode: "onSubmit",
     defaultValues: {
       name: "",
-      envVariables: [
-        {
-          key: "",
-          value: "",
-          hidden: false,
-          locked: false,
-          deleted: false,
-        },
-      ],
+      envVariables: [],
       envFiles: [],
     },
   });
@@ -66,7 +58,11 @@ const CreateEnvGroup: React.FC<RouteComponentProps> = ({ history }) => {
     const validate = async (): Promise<void> => {
       const isNameValid = await trigger("name");
       const isEnvVariablesValid = await trigger("envVariables");
-      if (isNameValid && isEnvVariablesValid) {
+      if (
+        isNameValid &&
+        ((isEnvVariablesValid && envVariables.length > 0) ||
+          envFiles.length > 0)
+      ) {
         setStep(3);
       } else if (isNameValid) {
         setStep(2);
@@ -75,7 +71,7 @@ const CreateEnvGroup: React.FC<RouteComponentProps> = ({ history }) => {
       }
     };
     void validate();
-  }, [name, envVariables]);
+  }, [name, envVariables, envFiles]);
 
   const onSubmit = handleSubmit(async (data) => {
     setSubmitErrorMessage("");
@@ -206,7 +202,8 @@ const CreateEnvGroup: React.FC<RouteComponentProps> = ({ history }) => {
                     <Spacer y={0.5} />
                     <Text color="helper">
                       Files containing sensitive data that will be injected into
-                      your app&apos;s root directory.
+                      your app&apos;s root directory, at the path{" "}
+                      <Code>{`/etc/secrets/${name}`}</Code>.
                     </Text>
                     <Spacer y={1} />
                     <FileArray
@@ -274,4 +271,8 @@ const CenterWrapper = styled.div`
 const DarkMatter = styled.div<{ antiHeight?: string }>`
   width: 100%;
   margin-top: ${(props) => props.antiHeight || "-5px"};
+`;
+
+const Code = styled.span`
+  font-family: monospace;
 `;

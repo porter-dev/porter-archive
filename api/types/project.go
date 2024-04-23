@@ -40,6 +40,7 @@ type Project struct {
 	CapiProvisionerEnabled          bool    `json:"capi_provisioner_enabled"`
 	BillingEnabled                  bool    `json:"billing_enabled"`
 	MetronomeEnabled                bool    `json:"metronome_enabled"`
+	InfisicalEnabled                bool    `json:"infisical_enabled"`
 	DBEnabled                       bool    `json:"db_enabled"`
 	EFSEnabled                      bool    `json:"efs_enabled"`
 	EnableReprovision               bool    `json:"enable_reprovision"`

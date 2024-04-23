@@ -2,7 +2,6 @@ package environment_groups
 
 import (
 	"context"
-	"encoding/base64"
 	"fmt"
 	"strconv"
 	"strings"
@@ -41,8 +40,8 @@ const (
 type EnvGroupFile struct {
 	// Name is the name of the file
 	Name string `json:"name"`
-	// B64Contents is the base64 encoded contents of the file
-	B64Contents string `json:"contents"`
+	// Contents is the contents of the file
+	Contents string `json:"contents"`
 }
 
 // EnvironmentGroup represents a ConfigMap in the porter-env-group namespace
@@ -239,10 +238,9 @@ func listEnvironmentGroups(ctx context.Context, a *kubernetes.Agent, listOpts ..
 		if ok && isFileSecret == "true" {
 			var files []EnvGroupFile
 			for k, v := range secret.Data {
-				encodedContents := base64.StdEncoding.EncodeToString(v)
 				files = append(files, EnvGroupFile{
-					Name:        k,
-					B64Contents: encodedContents,
+					Name:     k,
+					Contents: string(v),
 				})
 			}
 			envGroupSet[versionedName] = EnvironmentGroup{

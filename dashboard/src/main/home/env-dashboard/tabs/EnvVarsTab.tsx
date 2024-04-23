@@ -215,7 +215,8 @@ const EnvVarsTab: React.FC<Props> = ({ envGroup, fetchEnvGroup }) => {
           <Spacer y={0.5} />
           <Text color="helper">
             Files containing sensitive data that will be injected into your
-            app&apos;s root directory.
+            app&apos;s root directory, at the path{" "}
+            <Code>{`/etc/secrets/${envGroup.name}`}</Code>.
           </Text>
           <Spacer y={1} />
           <FileArray
@@ -274,4 +275,8 @@ const StatusWrapper = styled.div<{
     float: left;
     color: ${(props) => (props.success ? "#4797ff" : "#fcba03")};
   }
+`;
+
+const Code = styled.span`
+  font-family: monospace;
 `;

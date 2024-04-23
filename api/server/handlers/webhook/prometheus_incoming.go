@@ -85,16 +85,16 @@ func (p *PrometheusAlertWebhookHandler) handlePrometheusAlert(ctx context.Contex
 		if alert.Labels["alertname"] == "NoopAlert" {
 			continue
 		}
-		startTime, err := time.Parse(alert.StartsAt, time.RFC3339Nano)
+		startTime, err := time.Parse(time.RFC3339, alert.StartsAt)
 		if err != nil {
 			return telemetry.Error(ctx, span, err, "error parsing alert start time")
 		}
-		endTime, err := time.Parse(alert.EndsAt, time.RFC3339Nano)
+		endTime, err := time.Parse(time.RFC3339, alert.EndsAt)
 		if err != nil {
 			return telemetry.Error(ctx, span, err, "error parsing alert end time")
 		}
 		var endTimestamp *timestamppb.Timestamp = nil
-		if endTime.Before(startTime) {
+		if endTime.After(startTime) {
 			endTimestamp = timestamppb.New(endTime)
 		}
 		recordPrometheusAlertRequest.Msg.Alerts = append(recordPrometheusAlertRequest.Msg.Alerts, &porterv1.Alert{

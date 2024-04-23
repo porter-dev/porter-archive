@@ -1,6 +1,7 @@
 package models
 
 import (
+	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
@@ -19,17 +20,27 @@ type SystemServiceStatus struct {
 	// UpdatedAt is the time (UTC) that the status was last updated.
 	UpdatedAt time.Time `json:"updated_at"`
 
-	ProjectID uint `json:"project_id"`
+	// StartTime is the time at which the status was first observed
+	StartTime sql.NullTime `db:"start_time"`
 
-	ClusterID uint `json:"cluster_id"`
+	// EndTime is the time at which the status was last observed
+	// If null, this means the status might not have been resolved yet
+	EndTime sql.NullTime `db:"end_time"`
 
-	// InvolvedObjectType is the type of k8s object that the service runs
-	// this is currently expected to be "Deployment", "StatefulSet" or "DaemonSet"
-	InvolvedObjectType string `json:"involved_object_type"`
+	// ProjectID is the ID of the project that this app belongs to
+	ProjectID uint `db:"project_id"`
 
-	Name string `json:"name"`
+	// ClusterID is the ID of the cluster that this app belongs to
+	ClusterID uint `db:"cluster_id"`
 
-	Namespace string `json:"namespace"`
+	// the type of kubernetes object this service is
+	InvolvedObjectType string `db:"involved_object_type"`
+
+	Name string `db:"name"`
+
+	Namespace string `db:"namespace"`
+
+	Severity string `db:"severity"`
 
 	// Any other relevant metadata. This field allows us to be flexible in the future.
 	Metadata JSONB `json:"metadata" sql:"type:jsonb" gorm:"type:jsonb"`
@@ -37,5 +48,5 @@ type SystemServiceStatus struct {
 
 // TableName overrides the table name
 func (SystemServiceStatus) TableName() string {
-	return "system_service_status"
+	return "system_service_status_v2"
 }

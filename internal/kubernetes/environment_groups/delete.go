@@ -68,7 +68,7 @@ func DeleteEnvironmentGroup(ctx context.Context, a *kubernetes.Agent, name strin
 		}
 
 		err = a.Clientset.CoreV1().Secrets(val.Namespace).Delete(ctx,
-			fmt.Sprintf("%s-files", labelName),
+			envGroupFileSecretName(val.Labels[LabelKey_EnvironmentGroupName], val.Labels[LabelKey_EnvironmentGroupVersion]),
 			metav1.DeleteOptions{},
 		)
 		if err != nil {
@@ -79,4 +79,8 @@ func DeleteEnvironmentGroup(ctx context.Context, a *kubernetes.Agent, name strin
 	}
 
 	return nil
+}
+
+func envGroupFileSecretName(envGroupName, version string) string {
+	return fmt.Sprintf("%s-files.%s", envGroupName, version)
 }

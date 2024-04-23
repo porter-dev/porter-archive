@@ -12,8 +12,8 @@ import {
 
 import { type PolicyDocType } from "./auth/types";
 import { baseApi } from "./baseApi";
-import { type AppEventWebhook } from "./types";
 import {
+  type AppEventWebhook,
   type BuildConfig,
   type CreateUpdatePorterAppOptions,
   type FullActionConfigType,
@@ -2327,6 +2327,10 @@ const createEnvironmentGroups = baseApi<
     name: string;
     variables?: Record<string, string>;
     secret_variables?: Record<string, string>;
+    files?: Array<{
+      name: string;
+      contents: string;
+    }>;
     type?: string;
     auth_token?: string;
     is_env_override?: boolean;
@@ -3497,17 +3501,6 @@ const getCustomerUsage = baseApi<
   }
 >("POST", ({ project_id }) => `/api/projects/${project_id}/billing/usage`);
 
-const getUsageDashboard = baseApi<
-  {
-    dashboard: string;
-    dashboard_options?: Array<{ key: string; value: string }>;
-    color_overrides?: Array<{ name: string; value: string }>;
-  },
-  {
-    project_id?: number;
-  }
->("POST", ({ project_id }) => `/api/projects/${project_id}/billing/dashboard`);
-
 const getCustomerPlan = baseApi<
   {},
   {
@@ -3631,7 +3624,9 @@ const createCloudSqlSecret = baseApi<
 const appEventWebhooks = baseApi<
   {},
   {
-    projectId: number; deploymentTargetId: string; appName: string
+    projectId: number;
+    deploymentTargetId: string;
+    appName: string;
   }
 >("GET", (pathParams) => {
   return `/api/projects/${pathParams.projectId}/targets/${pathParams.deploymentTargetId}/apps/${pathParams.appName}/app-event-webhooks`;
@@ -3642,17 +3637,21 @@ const updateAppEventWebhooks = baseApi<
     app_event_webhooks: AppEventWebhook[];
   },
   {
-    projectId: number; deploymentTargetId: string; appName: string
+    projectId: number;
+    deploymentTargetId: string;
+    appName: string;
   }
 >("POST", (pathParams) => {
   return `/api/projects/${pathParams.projectId}/targets/${pathParams.deploymentTargetId}/apps/${pathParams.appName}/update-app-event-webhooks`;
 });
 
 const systemStatusHistory = baseApi<
-{},
-{
-  projectId: number; clusterId: number;
-}>("GET", (pathParams) => {
+  {},
+  {
+    projectId: number;
+    clusterId: number;
+  }
+>("GET", (pathParams) => {
   return `/api/projects/${pathParams.projectId}/clusters/${pathParams.clusterId}/system-status-history`;
 });
 
@@ -3952,7 +3951,6 @@ export default {
   getPorterCredits,
   getCustomerPlan,
   getCustomerUsage,
-  getUsageDashboard,
   listPaymentMethod,
   addPaymentMethod,
   setDefaultPaymentMethod,
@@ -3972,5 +3970,5 @@ export default {
   updateAppEventWebhooks,
 
   // system status
-  systemStatusHistory
+  systemStatusHistory,
 };

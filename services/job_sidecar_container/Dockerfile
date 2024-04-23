@@ -1,7 +1,7 @@
-FROM alpine:latest
+FROM debian:bullseye-slim
 
 # fetch procps for ps command, coreutils for tail with -pid flag
-RUN apk --no-cache add procps coreutils
+RUN apt-get update && apt-get install procps coreutils -y
 
 COPY *.sh .
 

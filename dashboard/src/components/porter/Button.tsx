@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import styled, { keyframes } from "styled-components";
 
 import loading from "assets/loading.gif";
+
 import Tooltip from "./Tooltip";
 
 type Props = {
@@ -22,6 +23,7 @@ type Props = {
   type?: React.ButtonHTMLAttributes<HTMLButtonElement>["type"];
   disabledTooltipMessage?: string;
   disabledTooltipPosition?: "top" | "right" | "bottom" | "left";
+  highlight?: boolean;
 };
 
 const Button: React.FC<Props> = ({
@@ -42,6 +44,7 @@ const Button: React.FC<Props> = ({
   type = "button",
   disabledTooltipMessage,
   disabledTooltipPosition = "right",
+  highlight,
 }) => {
   const renderStatus = () => {
     switch (status) {
@@ -78,7 +81,10 @@ const Button: React.FC<Props> = ({
   };
 
   return disabled && disabledTooltipMessage ? (
-    <Tooltip content={disabledTooltipMessage} position={disabledTooltipPosition}>
+    <Tooltip
+      content={disabledTooltipMessage}
+      position={disabledTooltipPosition}
+    >
       <Wrapper>
         <StyledButton
           disabled={disabled}
@@ -94,6 +100,7 @@ const Button: React.FC<Props> = ({
           rounded={rounded || alt}
           alt={alt}
           type={type}
+          highlight={highlight}
         >
           <Text>{children}</Text>
         </StyledButton>
@@ -116,6 +123,7 @@ const Button: React.FC<Props> = ({
         rounded={rounded || alt}
         alt={alt}
         type={type}
+        highlight={highlight}
       >
         <Text>{children}</Text>
       </StyledButton>
@@ -183,6 +191,7 @@ const StyledButton = styled.button<{
   withBorder?: boolean;
   rounded?: boolean;
   alt?: boolean;
+  highlight?: boolean;
 }>`
   height: ${(props) => props.height || "35px"};
   width: ${(props) => props.width || "auto"};
@@ -198,15 +207,14 @@ const StyledButton = styled.button<{
     if (props.alt || props.color === "fg") {
       return props.theme.fg;
     }
-    return props.disabled
-      ? "#aaaabb"
-      : props.color || props.theme.button;
+    return props.disabled ? "#aaaabb" : props.color || props.theme.button;
   }};
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: ${(props) => (props.rounded ? "50px" : "5px")};
   border: ${(props) => (props.withBorder ? "1px solid #494b4f" : "none")};
+  filter: ${(props) => (props.highlight ? "brightness(120%)" : "")};
 
   :hover {
     filter: ${(props) => (props.disabled ? "" : "brightness(120%)")};

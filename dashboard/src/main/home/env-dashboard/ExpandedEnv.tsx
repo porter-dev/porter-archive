@@ -14,8 +14,8 @@ import TabSelector from "components/TabSelector";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
-import doppler from "assets/doppler.png";
 import database from "assets/database.svg";
+import doppler from "assets/doppler.png";
 import key from "assets/key.svg";
 import notFound from "assets/not-found.png";
 import time from "assets/time.png";
@@ -109,7 +109,13 @@ const ExpandedEnv: React.FC = () => {
 
           <Container row>
             <Image
-              src={envGroup.type === "doppler" ? doppler : envGroup.type === "datastore" ? database : key}
+              src={
+                envGroup.type === "doppler"
+                  ? doppler
+                  : envGroup.type === "datastore"
+                  ? database
+                  : key
+              }
               size={28}
             />
             <Spacer inline x={1} />

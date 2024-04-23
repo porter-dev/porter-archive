@@ -60,8 +60,8 @@ const SettingsTab: React.FC<Props> = ({ envGroup }) => {
     }
 
     try {
-      await deleteEnvGroup();
       setCurrentOverlay(null);
+      await deleteEnvGroup();
       history.push(envGroupPath(currentProject, ""));
     } catch (error) {
       setIsDeleting(false);
@@ -93,7 +93,7 @@ const SettingsTab: React.FC<Props> = ({ envGroup }) => {
           </Container>
           <Spacer y={0.5} />
           <Text color="helper">
-            Please wait while we delete this datastore.
+            Please wait while we delete this env group.
           </Text>
         </>
       )}

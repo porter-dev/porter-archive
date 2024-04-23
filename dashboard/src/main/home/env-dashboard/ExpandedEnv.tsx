@@ -60,7 +60,7 @@ const ExpandedEnv: React.FC = () => {
     isLoading,
     refetch,
   } = useQuery(
-    ["envGroups", currentProject?.id, currentCluster?.id],
+    ["envGroups", currentProject?.id, currentCluster?.id, envGroupName],
     async () => {
       if (!currentProject || !currentCluster) {
         return null;

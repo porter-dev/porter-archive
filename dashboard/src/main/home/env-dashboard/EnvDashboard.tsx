@@ -118,7 +118,11 @@ const EnvDashboard: React.FC<Props> = (props) => {
       return <ClusterProvisioningPlaceholder />;
     }
 
-    if (status === "success" && (!envGroups || envGroups.length === 0)) {
+    if (status === "loading") {
+      return <Loading offset="-150px" />;
+    }
+
+    if (envGroups.length === 0) {
       return (
         <DashboardPlaceholder>
           <Text size={16}>No environment groups found</Text>
@@ -201,8 +205,6 @@ const EnvDashboard: React.FC<Props> = (props) => {
               </Text>
             </Container>
           </Fieldset>
-        ) : status === "loading" ? (
-          <Loading offset="-150px" />
         ) : view === "grid" ? (
           <GridList>
             {(filteredEnvGroups ?? []).map((envGroup, i: number) => {

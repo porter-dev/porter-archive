@@ -59,7 +59,7 @@ type EnvVariableDeletions struct {
 
 // InfisicalEnv is the Infisical environment to pull secret values from, only required for the Infisical external provider type
 type InfisicalEnv struct {
-	// Slug is the slug referring to the Infisisical environment to pull secret values from
+	// Slug is the slug referring to the Infisical environment to pull secret values from
 	Slug string `json:"slug"`
 	// Path is the relative path in the Infisical environment to pull secret values from
 	Path string `json:"path"`

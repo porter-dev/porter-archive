@@ -131,7 +131,7 @@ const DopplerIntegrationList: React.FC = (_) => {
       )
       .then(() => {
         setShowServiceTokenModal(false);
-        history.push("/env-groups");
+        history.push("/environment-groups");
       })
       .catch((err) => {
         let message =
@@ -165,7 +165,14 @@ const DopplerIntegrationList: React.FC = (_) => {
         ) : externalProviderStatus?.reprovision_required ? (
           <Placeholder>
             To enable integration with Doppler, <Spacer inline x={0.5} />
-            <Link to={currentCluster?.id ? `/infrastructure/${currentCluster.id}` : "/infrastructure"} hasunderline>
+            <Link
+              to={
+                currentCluster?.id
+                  ? `/infrastructure/${currentCluster.id}`
+                  : "/infrastructure"
+              }
+              hasunderline
+            >
               re-provision your cluster
             </Link>
             .

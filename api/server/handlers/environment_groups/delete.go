@@ -96,4 +96,6 @@ func (c *DeleteEnvironmentGroupHandler) ServeHTTP(w http.ResponseWriter, r *http
 			return
 		}
 	}
+
+	c.WriteResult(w, r, nil)
 }

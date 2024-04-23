@@ -62,7 +62,6 @@ export const AddInfisicalEnvModal: React.FC<AddInfisicalEnvModalProps> = ({
   const onSubmit = handleSubmit(async (data) => {
     try {
       setInfisicalEnvGroupCreationError("");
-      console.log("data", data);
       if (!currentProject || !currentCluster) {
         return;
       }
@@ -84,7 +83,7 @@ export const AddInfisicalEnvModal: React.FC<AddInfisicalEnvModalProps> = ({
         }
       );
 
-      history.push("/env-groups");
+      history.push("/environment-groups");
     } catch (err) {
       setInfisicalEnvGroupCreationError(
         getErrorMessageFromNetworkCall(err, "Adding Infisical Env Group")

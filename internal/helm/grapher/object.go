@@ -54,7 +54,7 @@ func ParseObjs(objs []map[string]interface{}, releaseNamespace string) []Object 
 
 // ParseControllers parses a k8s object from a single-document yaml
 // and returns an array of controllers.
-func ParseControllers(objs []map[string]interface{}) []Object {
+func ParseControllers(objs []map[string]interface{}, releaseNamespace string) []Object {
 	objArr := []Object{}
 
 	for i, obj := range objs {
@@ -72,7 +72,7 @@ func ParseControllers(objs []map[string]interface{}) []Object {
 			namespace := getField(obj, "metadata", "namespace")
 
 			if namespace == nil {
-				namespace = "default"
+				namespace = releaseNamespace
 			}
 
 			if name == nil {

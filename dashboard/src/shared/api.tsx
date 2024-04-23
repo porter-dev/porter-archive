@@ -2306,6 +2306,10 @@ const createEnvironmentGroups = baseApi<
     name: string;
     variables?: Record<string, string>;
     secret_variables?: Record<string, string>;
+    files?: Array<{
+      name: string;
+      contents: string;
+    }>;
     type?: string;
     auth_token?: string;
     is_env_override?: boolean;

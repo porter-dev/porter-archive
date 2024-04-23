@@ -4,6 +4,7 @@ import styled from "styled-components";
 
 import Container from "components/porter/Container";
 import Expandable from "components/porter/Expandable";
+import FileArray from "components/porter/FileArray";
 import Image from "components/porter/Image";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
@@ -24,6 +25,7 @@ type Props = {
     type: string;
     variables: Record<string, string>;
     secret_variables: Record<string, string>;
+    files: Array<{ name: string; contents: string }>;
   };
   canDelete?: boolean;
   noLink?: boolean;
@@ -134,6 +136,12 @@ const EnvGroupRow: React.FC<Props> = ({
       }
     >
       <EnvGroupArray values={variables} disabled={true} />
+      {envGroup.files?.length > 0 && (
+        <>
+          <Spacer y={0.5} />
+          <FileArray files={envGroup.files} setFiles={() => {}} disabled />
+        </>
+      )}
     </Expandable>
   );
 };

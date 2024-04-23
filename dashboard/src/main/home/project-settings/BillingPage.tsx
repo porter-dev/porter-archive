@@ -199,7 +199,7 @@ function BillingPage(): JSX.Element {
                 <Image src={gift} style={{ marginTop: "-2px" }} />
                 <Spacer inline x={1} />
                 <Text size={20}>
-                  {creditGrants !== undefined &&
+                  {creditGrants &&
                     creditGrants.remaining_credits > 0
                     ? `$${formatCredits(
                       creditGrants.remaining_credits

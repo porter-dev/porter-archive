@@ -6,6 +6,7 @@ import styled from "styled-components";
 
 import Button from "components/porter/Button";
 import Error from "components/porter/Error";
+import FileArray from "components/porter/FileArray";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import {
@@ -23,6 +24,7 @@ type Props = {
     name: string;
     variables: Record<string, string>;
     secret_variables?: Record<string, string>;
+    files?: EnvGroupFormData["envFiles"];
     type?: string;
   };
   fetchEnvGroup: () => void;
@@ -49,6 +51,7 @@ const EnvVarsTab: React.FC<Props> = ({ envGroup, fetchEnvGroup }) => {
   const [submitErrorMessage, setSubmitErrorMessage] = useState<string>("");
   const [isValid, setIsValid] = useState<boolean>(false);
   const envVariables = watch("envVariables");
+  const envFiles = watch("envFiles", []);
 
   useEffect(() => {
     if (buttonStatus === "success") {
@@ -96,6 +99,7 @@ const EnvVarsTab: React.FC<Props> = ({ envGroup, fetchEnvGroup }) => {
       }>
     );
     setValue("name", envGroup.name);
+    setValue("envFiles", envGroup.files || []);
   }, [envGroup]);
 
   const isUpdatable = useMemo(() => {
@@ -154,6 +158,7 @@ const EnvVarsTab: React.FC<Props> = ({ envGroup, fetchEnvGroup }) => {
             name: envGroup.name,
             variables: apiEnvVariables,
             secret_variables: secretEnvVariables,
+            files: data.envFiles,
             is_env_override: true,
           },
           {
@@ -204,6 +209,20 @@ const EnvVarsTab: React.FC<Props> = ({ envGroup, fetchEnvGroup }) => {
             fileUpload={true}
             secretOption={true}
             disabled={!isUpdatable}
+          />
+          <Spacer y={1} />
+          <Text size={16}>Environment files</Text>
+          <Spacer y={0.5} />
+          <Text color="helper">
+            Files containing sensitive data that will be injected into your
+            app&apos;s root directory.
+          </Text>
+          <Spacer y={1} />
+          <FileArray
+            files={envFiles}
+            setFiles={(x) => {
+              setValue("envFiles", x);
+            }}
           />
           {isUpdatable ? (
             <>

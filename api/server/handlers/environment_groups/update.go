@@ -1,6 +1,7 @@
 package environment_groups
 
 import (
+	"encoding/base64"
 	"net/http"
 	"time"
 
@@ -80,6 +81,9 @@ type UpdateEnvironmentGroupRequest struct {
 
 	// SecretVariables are sensitive values. All values must be a string due to a kubernetes limitation.
 	SecretVariables map[string]string `json:"secret_variables"`
+
+	// Files is a list of files associated with the env group
+	Files []EnvironmentGroupFile `json:"files"`
 
 	// IsEnvOverride is a flag to determine if provided variables should override or merge with existing variables
 	IsEnvOverride bool `json:"is_env_override"`
@@ -162,6 +166,16 @@ func (c *UpdateEnvironmentGroupHandler) ServeHTTP(w http.ResponseWriter, r *http
 		}
 
 	default:
+		var files []*porterv1.EnvGroupFile
+		for _, file := range request.Files {
+			contents := file.Contents
+			encoded := base64.StdEncoding.EncodeToString([]byte(contents))
+			files = append(files, &porterv1.EnvGroupFile{
+				Name:        file.Name,
+				B64Contents: encoded,
+			})
+		}
+
 		_, err := c.Config().ClusterControlPlaneClient.CreateOrUpdateEnvGroup(ctx, connect.NewRequest(&porterv1.CreateOrUpdateEnvGroupRequest{
 			ProjectId:            int64(cluster.ProjectID),
 			ClusterId:            int64(cluster.ID),
@@ -170,6 +184,7 @@ func (c *UpdateEnvironmentGroupHandler) ServeHTTP(w http.ResponseWriter, r *http
 			EnvVars: &porterv1.EnvGroupVariables{
 				Normal: request.Variables,
 				Secret: request.SecretVariables,
+				Files:  files,
 			},
 			EnvVariableDeletions: &porterv1.EnvVariableDeletions{
 				Variables: request.Deletions.Variables,

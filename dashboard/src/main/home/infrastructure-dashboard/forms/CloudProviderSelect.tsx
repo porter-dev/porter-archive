@@ -39,7 +39,7 @@ const CloudProviderSelect: React.FC<Props> = ({ onComplete }) => {
       />
       <StyledProvisionerFlow>
         <BlockList>
-          {[CloudProviderAWS, CloudProviderGCP, CloudProviderAzure].map(
+          {[CloudProviderAWS, CloudProviderAzure, CloudProviderGCP].map(
             (provider: ClientCloudProvider, i: number) => {
               return (
                 <Block
@@ -67,7 +67,8 @@ const CloudProviderSelect: React.FC<Props> = ({ onComplete }) => {
         </Text>
         <Spacer y={0.5} />
         <Text color={"helper"}>
-          Get started on the Porter Cloud and eject to your own cloud account later.
+          Get started on the Porter Cloud and eject to your own cloud account
+          later.
         </Text>
         <Spacer y={1} />
         <Link to="https://cloud.porter.run">

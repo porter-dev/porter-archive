@@ -1,6 +1,7 @@
 package environment_groups
 
 import (
+	"encoding/base64"
 	"net/http"
 	"strings"
 	"time"
@@ -46,14 +47,22 @@ type ListEnvironmentGroupsResponse struct {
 	EnvironmentGroups []EnvironmentGroupListItem `json:"environment_groups,omitempty"`
 }
 
+// EnvironmentGroupFile represents a file in an environment group
+type EnvironmentGroupFile struct {
+	Name     string `json:"name"`
+	Contents string `json:"contents"`
+}
+
+// EnvironmentGroupListItem represents an environment group in the list response
 type EnvironmentGroupListItem struct {
-	Name               string            `json:"name"`
-	Type               string            `json:"type"`
-	LatestVersion      int               `json:"latest_version"`
-	Variables          map[string]string `json:"variables,omitempty"`
-	SecretVariables    map[string]string `json:"secret_variables,omitempty"`
-	CreatedAtUTC       time.Time         `json:"created_at"`
-	LinkedApplications []string          `json:"linked_applications,omitempty"`
+	Name               string                 `json:"name"`
+	Type               string                 `json:"type"`
+	LatestVersion      int                    `json:"latest_version"`
+	Variables          map[string]string      `json:"variables,omitempty"`
+	SecretVariables    map[string]string      `json:"secret_variables,omitempty"`
+	CreatedAtUTC       time.Time              `json:"created_at"`
+	LinkedApplications []string               `json:"linked_applications,omitempty"`
+	Files              []EnvironmentGroupFile `json:"files,omitempty"`
 }
 
 func (c *ListEnvironmentGroupsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -93,12 +102,26 @@ func (c *ListEnvironmentGroupsHandler) ServeHTTP(w http.ResponseWriter, r *http.
 
 		var envGroups []EnvironmentGroupListItem
 		for _, envGroup := range listEnvGroupResp.Msg.EnvGroups {
+			var files []EnvironmentGroupFile
+			for _, file := range envGroup.Files {
+				decoded, err := base64.StdEncoding.DecodeString(file.B64Contents)
+				if err != nil {
+					err = telemetry.Error(ctx, span, err, "unable to decode base64 contents")
+					c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+					return
+				}
+				files = append(files, EnvironmentGroupFile{
+					Name:     file.Name,
+					Contents: string(decoded),
+				})
+			}
 			envGroups = append(envGroups, EnvironmentGroupListItem{
 				Name:               envGroup.Name,
 				Type:               translateProtoTypeToEnvGroupType[envGroup.Type],
 				LatestVersion:      int(envGroup.Version),
 				Variables:          envGroup.Variables,
 				SecretVariables:    envGroup.SecretVariables,
+				Files:              files,
 				CreatedAtUTC:       envGroup.CreatedAt.AsTime(),
 				LinkedApplications: envGroup.LinkedApplications,
 			})

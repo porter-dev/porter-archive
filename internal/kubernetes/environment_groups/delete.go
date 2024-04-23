@@ -37,14 +37,14 @@ func DeleteEnvironmentGroup(ctx context.Context, a *kubernetes.Agent, name strin
 		}
 	}
 
-	allConfigMapsInAllNamespaces, err := a.Clientset.CoreV1().ConfigMaps(metav1.NamespaceAll).List(ctx,
+	allSecretsInAllNamespaces, err := a.Clientset.CoreV1().Secrets(metav1.NamespaceAll).List(ctx,
 		metav1.ListOptions{LabelSelector: fmt.Sprintf("%s=%s", LabelKey_EnvironmentGroupName, name)},
 	)
 	if err != nil {
 		return telemetry.Error(ctx, span, err, "unable to list environment group variables")
 	}
 
-	for _, val := range allConfigMapsInAllNamespaces.Items {
+	for _, val := range allSecretsInAllNamespaces.Items {
 		labelName := fmt.Sprintf("%s.%s", val.Labels[LabelKey_EnvironmentGroupName], val.Labels[LabelKey_EnvironmentGroupVersion])
 
 		err := a.Clientset.CoreV1().ConfigMaps(val.Namespace).Delete(ctx,
@@ -66,7 +66,21 @@ func DeleteEnvironmentGroup(ctx context.Context, a *kubernetes.Agent, name strin
 				return telemetry.Error(ctx, span, err, "unable to delete environment group secret variables")
 			}
 		}
+
+		err = a.Clientset.CoreV1().Secrets(val.Namespace).Delete(ctx,
+			envGroupFileSecretName(val.Labels[LabelKey_EnvironmentGroupName], val.Labels[LabelKey_EnvironmentGroupVersion]),
+			metav1.DeleteOptions{},
+		)
+		if err != nil {
+			if !k8serror.IsNotFound(err) {
+				return telemetry.Error(ctx, span, err, "unable to delete environment group files")
+			}
+		}
 	}
 
 	return nil
+}
+
+func envGroupFileSecretName(envGroupName, version string) string {
+	return fmt.Sprintf("%s-files.%s", envGroupName, version)
 }

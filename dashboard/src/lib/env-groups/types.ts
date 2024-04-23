@@ -8,17 +8,21 @@ export const envGroupFormValidator = z.object({
     .regex(/^[a-z0-9-]+$/, {
       message: 'Lowercase letters, numbers, and " - " only.',
     }),
-  envVariables: z
-    .array(
-      z.object({
-        key: z.string().min(1, { message: "Key cannot be empty" }),
-        value: z.string().min(1, { message: "Value cannot be empty" }),
-        deleted: z.boolean(),
-        hidden: z.boolean(),
-        locked: z.boolean(),
-      })
-    )
-    .min(1, { message: "At least one environment variable is required" }),
+  envVariables: z.array(
+    z.object({
+      key: z.string().min(1, { message: "Key cannot be empty" }),
+      value: z.string().min(1, { message: "Value cannot be empty" }),
+      deleted: z.boolean(),
+      hidden: z.boolean(),
+      locked: z.boolean(),
+    })
+  ),
+  envFiles: z.array(
+    z.object({
+      name: z.string().min(1, { message: "File name cannot be empty" }),
+      contents: z.string().min(1, { message: "File cannot be empty" }),
+    })
+  ),
 });
 
 export type EnvGroupFormData = z.infer<typeof envGroupFormValidator>;

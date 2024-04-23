@@ -1,5 +1,6 @@
 import React from "react";
 import styled from "styled-components";
+
 import Container from "./Container";
 
 type Props = {
@@ -12,11 +13,7 @@ type Props = {
   onClick?: () => void;
 };
 
-const Clickable: React.FC<Props> = ({
-  children,
-  style,
-  onClick,
-}) => {
+const Clickable: React.FC<Props> = ({ children, style, onClick }) => {
   return (
     <StyledClickable onClick={onClick} style={style}>
       {children}
@@ -37,4 +34,6 @@ const StyledClickable = styled.div`
   :hover {
     border: 1px solid #7a7b80;
   }
+  display: flex;
+  align-items: center;
 `;

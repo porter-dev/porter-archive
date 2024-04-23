@@ -32,6 +32,9 @@ const (
 	// MetronomeEnabled enables all Metronome business logic
 	MetronomeEnabled FeatureFlagLabel = "metronome_enabled"
 
+	// InfisicalEnabled enables the Infisical secrets operator integration
+	InfisicalEnabled FeatureFlagLabel = "infisical_enabled"
+
 	// DBEnabled enables the "Databases" tab
 	DBEnabled FeatureFlagLabel = "db_enabled"
 
@@ -102,6 +105,7 @@ var ProjectFeatureFlags = map[FeatureFlagLabel]bool{
 	CapiProvisionerEnabled:          true,
 	BillingEnabled:                  false,
 	MetronomeEnabled:                false,
+	InfisicalEnabled:                false,
 	DBEnabled:                       false,
 	EFSEnabled:                      false,
 	EnableReprovision:               false,
@@ -308,6 +312,7 @@ func (p *Project) ToProjectType(launchDarklyClient *features.Client) types.Proje
 		CapiProvisionerEnabled:          p.GetFeatureFlag(CapiProvisionerEnabled, launchDarklyClient),
 		BillingEnabled:                  p.GetFeatureFlag(BillingEnabled, launchDarklyClient),
 		MetronomeEnabled:                p.GetFeatureFlag(MetronomeEnabled, launchDarklyClient),
+		InfisicalEnabled:                p.GetFeatureFlag(InfisicalEnabled, launchDarklyClient),
 		DBEnabled:                       p.GetFeatureFlag(DBEnabled, launchDarklyClient),
 		EFSEnabled:                      p.GetFeatureFlag(EFSEnabled, launchDarklyClient),
 		EnableReprovision:               p.GetFeatureFlag(EnableReprovision, launchDarklyClient),

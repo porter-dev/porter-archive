@@ -1,18 +1,24 @@
 import React, { useContext, useMemo } from "react";
-import { Route, RouteComponentProps, Switch, withRouter } from "react-router";
+import {
+  Route,
+  Switch,
+  withRouter,
+  type RouteComponentProps,
+} from "react-router";
+import styled from "styled-components";
+
+import Spacer from "components/porter/Spacer";
+import TitleSection from "components/TitleSection";
 
 import { integrationList } from "shared/common";
-import styled from "styled-components";
+import { Context } from "shared/Context";
 import { pushFiltered } from "shared/routing";
 import integrationGrad from "assets/integration-grad.svg";
 
+import DashboardHeader from "../cluster-dashboard/DashboardHeader";
 import CreateIntegrationForm from "./create-integration/CreateIntegrationForm";
 import IntegrationCategories from "./IntegrationCategories";
 import IntegrationList from "./IntegrationList";
-import TitleSection from "components/TitleSection";
-import { Context } from "shared/Context";
-import Spacer from "components/porter/Spacer";
-import DashboardHeader from "../cluster-dashboard/DashboardHeader";
 
 type PropsType = RouteComponentProps;
 
@@ -21,11 +27,15 @@ const Integrations: React.FC<PropsType> = (props) => {
 
   const IntegrationCategoryStrings = useMemo(() => {
     if (!enableGitlab) {
-      return ["slack", "doppler", "infisical"];
+      return currentProject?.infisical_enabled
+        ? ["slack", "doppler", "infisical"]
+        : ["slack", "doppler"];
     }
 
-    return ["slack", "doppler", "infisical", "gitlab"];
-  }, [enableGitlab]);
+    return currentProject?.infisical_enabled
+      ? ["slack", "doppler", "infisical", "gitlab"]
+      : ["slack", "doppler", "gitlab"];
+  }, [enableGitlab, currentProject]);
 
   return (
     <StyledIntegrations>
@@ -37,16 +47,15 @@ const Integrations: React.FC<PropsType> = (props) => {
             if (!IntegrationCategoryStrings.includes(category)) {
               pushFiltered(props, "/integrations", ["project_id"]);
             }
-            let icon =
-              integrationList[integration] && integrationList[integration].icon;
+            const icon = integrationList[integration]?.icon;
             return (
               <Flex>
                 <TitleSection
-                  handleNavBack={() =>
+                  handleNavBack={() => {
                     pushFiltered(props, `/integrations/${category}`, [
                       "project_id",
-                    ])
-                  }
+                    ]);
+                  }}
                   icon={icon}
                 >
                   {integrationList[integration].label}
@@ -86,9 +95,9 @@ const Integrations: React.FC<PropsType> = (props) => {
             <IntegrationList
               currentCategory={""}
               integrations={IntegrationCategoryStrings}
-              setCurrent={(x) =>
-                pushFiltered(props, `/integrations/${x}`, ["project_id"])
-              }
+              setCurrent={(x) => {
+                pushFiltered(props, `/integrations/${x}`, ["project_id"]);
+              }}
               isCategory={true}
               updateIntegrationList={() => {}}
             />

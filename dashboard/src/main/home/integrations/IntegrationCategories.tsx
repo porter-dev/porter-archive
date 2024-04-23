@@ -176,7 +176,7 @@ const IntegrationCategories: React.FC<Props> = (props) => {
         <SlackIntegrationList slackData={slackData} />
       ) : props.category === "doppler" ? (
         <DopplerIntegrationList />
-      ) : props.category === "infisical" ? (
+      ) : props.category === "infisical" && currentProject?.infisical_enabled ? (
         <InfisicalIntegrationList />
       ) : (
         <IntegrationList

@@ -4,7 +4,6 @@ import styled from "styled-components";
 
 import Image from "components/porter/Image";
 import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
 import Tooltip from "components/porter/Tooltip";
 import { type KeyValueType } from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
 import { type PorterAppFormData } from "lib/porter-apps";
@@ -111,7 +110,7 @@ const EnvVarRow: React.FC<Props> = ({
               }}
               disabled={entry.locked}
             >
-              <i className="material-icons">lock_open</i>
+              <i className="material-icons">lock</i>
             </HideButton>
           )}
         />
@@ -126,7 +125,7 @@ const EnvVarRow: React.FC<Props> = ({
               }}
               disabled={entry.locked}
             >
-              <i className="material-icons">lock</i>
+              <i className="material-icons">lock_open</i>
             </HideButton>
           )}
         />
@@ -164,7 +163,7 @@ const InputWrapper = styled.div`
 
 type InputProps = {
   disabled?: boolean;
-  width: string;
+  width?: string;
   override?: boolean;
 };
 

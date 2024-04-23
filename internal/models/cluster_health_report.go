@@ -29,6 +29,7 @@ type ClusterHealthReport struct {
 	Metadata types.JSONText `json:"metadata"`
 }
 
+// TableName overrides the table name
 func (ClusterHealthReport) TableName() string {
 	return "cluster_health_report"
 }

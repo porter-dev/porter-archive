@@ -78,6 +78,7 @@ const gcpRegionValidator = z.enum([
   "europe-west1",
   "europe-west2",
   "europe-west6",
+  "europe-west9",
   "asia-south1",
   "us-west1",
   "us-west2",

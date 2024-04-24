@@ -18,37 +18,41 @@ import gradient from "assets/gradient.png";
 
 import api from "shared/api";
 
-import {StatusData, DailyHealthStatus} from "shared/types";
+import { StatusData, DailyHealthStatus } from "shared/types";
 
-type Props = { cluster: ClusterType, projectId: number};
+import PorterLink from "components/porter/Link";
+import Button from "components/porter/Button";
 
-const ClusterStatusSection: React.FC<Props> = ({ cluster, projectId }) => { 
+
+type Props = { cluster: ClusterType, projectId: number };
+
+const ClusterStatusSection: React.FC<Props> = ({ cluster, projectId }) => {
     const [statusData, setStatusData] = useState<StatusData>({} as StatusData);
 
     useEffect(() => {
-      if (!projectId || !cluster) {
-        return;
-      }
-  
-      api
-        .systemStatusHistory(
-          "<token>",
-          {},
-          {
-            projectId,
-            clusterId: cluster.id,
-          }
-        )
-        .then(({ data }) => {
-          console.log(data);
-          setStatusData({
-            cluster_health_histories: data.cluster_status_histories,
-            service_health_histories_grouped: {},
-          });
-        })
-        .catch((err) => {
-          console.error(err);
-        });
+        if (!projectId || !cluster) {
+            return;
+        }
+
+        api
+            .systemStatusHistory(
+                "<token>",
+                {},
+                {
+                    projectId,
+                    clusterId: cluster.id,
+                }
+            )
+            .then(({ data }) => {
+                console.log(data);
+                setStatusData({
+                    cluster_health_histories: data.cluster_status_histories,
+                    service_health_histories_grouped: {},
+                });
+            })
+            .catch((err) => {
+                console.error(err);
+            });
     }, [projectId, cluster]);
     return (
         <>
@@ -62,32 +66,47 @@ const ClusterStatusSection: React.FC<Props> = ({ cluster, projectId }) => {
                         <Text color="#01a05d">Operational</Text>
                     </Container>
                 }
+                preExpanded={true}
             >
-          {
-                statusData?.cluster_health_histories &&
-                Object.keys(statusData?.cluster_health_histories).map((key) => {
-                return (
-                    <React.Fragment key={key}>
-                    <Text color="helper">{key}</Text>
-                    <Spacer y={0.25} />
-                    <StatusBars>
-                        {Array.from({ length: 90 }).map((_, i) => {
-                        const status =
-                            statusData?.cluster_health_histories[key][89 - i] ? "failure" : "healthy";
+                {
+                    statusData?.cluster_health_histories &&
+                    Object.keys(statusData?.cluster_health_histories).map((key) => {
                         return (
-                            <Bar
-                            key={i}
-                            isFirst={i === 0}
-                            isLast={i === 89}
-                            status={status}
-                            />
+                            <React.Fragment key={key}>
+                                <Text color="helper">{key}</Text>
+                                <Spacer y={0.25} />
+                                <StatusBars>
+                                    {Array.from({ length: 90 }).map((_, i) => {
+                                        const status =
+                                            statusData?.cluster_health_histories[key][89 - i] ? "failure" : "healthy";
+                                        return (
+                                            <Bar
+                                                key={i}
+                                                isFirst={i === 0}
+                                                isLast={i === 89}
+                                                status={status}
+                                            />
+                                        );
+                                    })}
+                                </StatusBars>
+                                <Spacer y={0.25} />
+                            </React.Fragment>
                         );
-                        })}
-                    </StatusBars>
-                    <Spacer y={0.25} />
-                    </React.Fragment>
-                );
-                })}
+                    })}
+                <Spacer y={0.25} />
+                <PorterLink to={`/infrastructure/${cluster.id}/systemStatus`}>
+                    <Button
+                        alt
+                        height="20px"
+                    >
+                        More
+                        <Spacer inline x={1} />{" "}
+                        <i className="material-icons" style={{ fontSize: "18px" }}>
+                            east
+                        </i>
+                    </Button>
+                </PorterLink>
+                <Spacer y={0.25} />
             </Expandable>
         </>
     );
@@ -98,53 +117,16 @@ export default ClusterStatusSection;
 
 const getBackgroundGradient = (status: string): string => {
     switch (status) {
-      case "healthy":
-        return "linear-gradient(#01a05d, #0f2527)";
-      case "failure":
-        return "linear-gradient(#E1322E, #25100f)";
-      case "partial_failure":
-        return "linear-gradient(#E49621, #25270f)";
-      default:
-        return "linear-gradient(#76767644, #76767622)"; // Default or unknown status
+        case "healthy":
+            return "linear-gradient(#01a05d, #0f2527)";
+        case "failure":
+            return "linear-gradient(#E1322E, #25100f)";
+        case "partial_failure":
+            return "linear-gradient(#E49621, #25270f)";
+        default:
+            return "linear-gradient(#76767644, #76767622)"; // Default or unknown status
     }
 }
-
-const Badge = styled.div`
-  background: ${(props) => props.theme.clickable.bg};
-  padding: 5px 10px;
-  border: 1px solid ${(props) => props.theme.border};
-  border-radius: 5px;
-  font-size: 13px;
-`;
-
-const Letter = styled.div`
-  height: 100%;
-  width: 100%;
-  position: absolute;
-  padding-bottom: 2px;
-  font-weight: 500;
-  top: 0;
-  left: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-`;
-
-const ProjectImage = styled.img`
-  width: 100%;
-  height: 100%;
-`;
-
-const ProjectIcon = styled.div`
-  width: 26px;
-  min-width: 26px;
-  height: 26px;
-  border-radius: 3px;
-  overflow: hidden;
-  position: relative;
-  margin-right: 10px;
-  font-weight: 400;
-`;
 
 const Bar = styled.div<{ isFirst: boolean; isLast: boolean; status: string }>`
   height: 20px;
@@ -162,20 +144,4 @@ const StatusBars = styled.div`
   display: flex;
   justify-content: space-between;
   gap: 2px;
-`;
-
-const StyledStatusPage = styled.div`
-  width: 100vw;
-  height: 100vh;
-  overflow: auto;
-  padding-top: 50px;
-  display: flex;
-  align-items: center;
-  flex-direction: column;
-`;
-
-const StatusSection = styled.div`
-  width: calc(100% - 40px);
-  padding-bottom: 50px;
-  max-width: 1000px;
 `;

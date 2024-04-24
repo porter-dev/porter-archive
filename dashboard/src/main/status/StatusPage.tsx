@@ -72,61 +72,6 @@ const StatusPage: React.FC<Props> = () => {
 
 export default withRouter(StatusPage);
 
-const Badge = styled.div`
-  background: ${(props) => props.theme.clickable.bg};
-  padding: 5px 10px;
-  border: 1px solid ${(props) => props.theme.border};
-  border-radius: 5px;
-  font-size: 13px;
-`;
-
-const Letter = styled.div`
-  height: 100%;
-  width: 100%;
-  position: absolute;
-  padding-bottom: 2px;
-  font-weight: 500;
-  top: 0;
-  left: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-`;
-
-const ProjectImage = styled.img`
-  width: 100%;
-  height: 100%;
-`;
-
-const ProjectIcon = styled.div`
-  width: 26px;
-  min-width: 26px;
-  height: 26px;
-  border-radius: 3px;
-  overflow: hidden;
-  position: relative;
-  margin-right: 10px;
-  font-weight: 400;
-`;
-
-const Bar = styled.div<{ isFirst: boolean; isLast: boolean }>`
-  height: 20px;
-  display: flex;
-  flex: 1;
-  border-top-left-radius: ${(props) => (props.isFirst ? "5px" : "0")};
-  border-bottom-left-radius: ${(props) => (props.isFirst ? "5px" : "0")};
-  border-top-right-radius: ${(props) => (props.isLast ? "5px" : "0")};
-  border-bottom-right-radius: ${(props) => (props.isLast ? "5px" : "0")};
-  background: linear-gradient(#01a05d, #0f2527);
-`;
-
-const StatusBars = styled.div`
-  width: 100%;
-  display: flex;
-  justify-content: space-between;
-  gap: 2px;
-`;
-
 const StyledStatusPage = styled.div`
   width: 100vw;
   height: 100vh;

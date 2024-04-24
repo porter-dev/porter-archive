@@ -70,7 +70,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
   }>({ detected: false, count: 0 });
   const [showGHAModal, setShowGHAModal] = React.useState(false);
   const isNameValid = (value: string): boolean => {
-    return /^[a-z0-9-]{1,63}$/.test(value);
+    return /^[a-z0-9-]{1,31}$/.test(value);
   };
   const [isNameHighlight, setIsNameHighlight] = React.useState(false);
   const { hasPaymentEnabled } = checkIfProjectHasPayment();
@@ -403,8 +403,6 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     // TODO: create a more unified way of parsing form/apply errors, unified with the logic in AppDataContainer
     const errorKeys = Object.keys(errors);
     if (errorKeys.length > 0) {
-      const stringifiedJson = JSON.stringify(errors);
-
       let errorMessage = "App could not be deployed as defined.";
       if (errorKeys.includes("app")) {
         const appErrors = Object.keys(errors.app ?? {});
@@ -435,6 +433,10 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
         message: "I am running into an issue launching an application.",
       });
 
+      let stringifiedJson = "unable to stringify errors";
+      try {
+        stringifiedJson = JSON.stringify(errors);
+      } catch (e) {}
       void updateAppStep({
         step: "stack-launch-failure",
         errorMessage: `Form validation error (visible to user): ${errorMessage}. Stringified JSON errors (invisible to user): ${stringifiedJson}`,
@@ -549,7 +551,8 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                           : "helper"
                       }
                     >
-                      Lowercase letters, numbers, and &quot;-&quot; only.
+                      Lowercase letters, numbers, and &quot;-&quot; only. 31
+                      character limit.
                     </Text>
                     <Spacer y={0.5} />
                     <ControlledInput
@@ -780,7 +783,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
           back={() => {
             history.push("/apps");
           }}
-          onCreate={() => {
+          onCreate={async () => {
             history.push("/apps/new/app");
           }}
         />

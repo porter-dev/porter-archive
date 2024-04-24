@@ -129,7 +129,7 @@ const ClusterFormContextProvider: React.FC<ClusterFormContextProviderProps> = ({
     }
     if (Object.keys(errors).length > 0) {
       // TODO: remove this and properly handle form validation errors
-      // console.log("errors", errors);
+      console.log("errors", errors);
     }
     if (isHandlingPreflightChecks) {
       props.loadingText = "Running preflight checks...";

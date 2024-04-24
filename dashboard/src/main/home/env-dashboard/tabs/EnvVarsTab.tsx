@@ -210,23 +210,23 @@ const EnvVarsTab: React.FC<Props> = ({ envGroup, fetchEnvGroup }) => {
             secretOption={true}
             disabled={!isUpdatable}
           />
-          <Spacer y={1} />
-          <Text size={16}>Environment files</Text>
-          <Spacer y={0.5} />
-          <Text color="helper">
-            Files containing sensitive data that will be injected into your
-            app&apos;s root directory, at the path{" "}
-            <Code>{`/etc/secrets/${envGroup.name}`}</Code>.
-          </Text>
-          <Spacer y={1} />
-          <FileArray
-            files={envFiles}
-            setFiles={(x) => {
-              setValue("envFiles", x);
-            }}
-          />
           {isUpdatable ? (
             <>
+              <Spacer y={1} />
+              <Text size={16}>Environment files</Text>
+              <Spacer y={0.5} />
+              <Text color="helper">
+                Files containing sensitive data that will be injected into your
+                app&apos;s root directory, at the path{" "}
+                <Code>{`/etc/secrets/${envGroup.name}`}</Code>.
+              </Text>
+              <Spacer y={1} />
+              <FileArray
+                files={envFiles}
+                setFiles={(x) => {
+                  setValue("envFiles", x);
+                }}
+              />
               <Spacer y={1} />
               <Button
                 type="submit"

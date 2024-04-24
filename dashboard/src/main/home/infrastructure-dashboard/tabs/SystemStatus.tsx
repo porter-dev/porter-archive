@@ -55,7 +55,6 @@ const initialState: StatusData = {
 };
 
 const groupServicesByNamespace = (serviceStatusHistories: ServiceStatusHistory[]): GroupedServices => {
-  console.log("serviceStatusHistories ", serviceStatusHistories)
   return serviceStatusHistories.reduce<GroupedServices>((acc, serviceStatusHistory) => {
     const { namespace } = serviceStatusHistory.system_service;
     if (!acc[namespace]) {
@@ -93,7 +92,6 @@ const SystemStatus: React.FC<Props> = () => {
         }
       )
       .then(({ data }) => {
-        console.log(data);
         const groupedServices = groupServicesByNamespace(
           data.system_service_status_histories
         );
@@ -172,7 +170,6 @@ const SystemStatus: React.FC<Props> = () => {
                 }
               >
                 {statusData.service_health_histories_grouped[key].map((serviceStatusHistory: ServiceStatusHistory) => {
-                  console.log(serviceStatusHistory);
                   return (
                     <React.Fragment key={serviceStatusHistory.system_service.name}>
                       <Text color="helper">{serviceStatusHistory.system_service.name}</Text>

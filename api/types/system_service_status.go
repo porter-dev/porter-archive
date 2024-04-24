@@ -34,30 +34,30 @@ func toInternalInvolvedObjectType(apiType porterv1.InvolvedObjectType) InvolvedO
 	}
 }
 
-// Status is the status of a system service
-type Status string
+// ServiceStatus is the status of a system service
+type ServiceStatus string
 
 const (
-	// Healthy is the status of a system service when it is fully healthy
-	Healthy Status = "healthy"
-	// PartialFailure is the status of a system service when it is partially failing
-	PartialFailure Status = "partial_failure"
-	// Failure is the status of a system service when it is critically in failure mode
-	Failure Status = "failure"
-	// Undefined is the status of a system service when it is in an undefined state
-	Undefined Status = "undefined"
+	// ServiceStatus_Healthy is the status of a system service when it is fully healthy
+	ServiceStatus_Healthy ServiceStatus = "healthy"
+	// ServiceStatus_PartialFailure is the status of a system service when it is partially failing
+	ServiceStatus_PartialFailure ServiceStatus = "partial_failure"
+	// ServiceStatus_Failure is the status of a system service when it is critically in failure mode
+	ServiceStatus_Failure ServiceStatus = "failure"
+	// ServiceStatus_Undefined is the status of a system service when it is in an undefined state
+	ServiceStatus_Undefined ServiceStatus = "undefined"
 )
 
-func toStatus(apiStatus porterv1.Status) Status {
+func toServiceStatus(apiStatus porterv1.Status) ServiceStatus {
 	switch apiStatus {
 	case porterv1.Status_STATUS_HEALTHY:
-		return Healthy
+		return ServiceStatus_Healthy
 	case porterv1.Status_STATUS_PARTIAL_FAILURE:
-		return PartialFailure
+		return ServiceStatus_PartialFailure
 	case porterv1.Status_STATUS_FAILURE:
-		return Failure
+		return ServiceStatus_Failure
 	default:
-		return Undefined
+		return ServiceStatus_Undefined
 	}
 }
 
@@ -65,24 +65,24 @@ func toStatus(apiStatus porterv1.Status) Status {
 type ClusterHealthType string
 
 const (
-	// Connected is the health history from for checking if the cluster is connected
-	Connected ClusterHealthType = "connected"
+	// ClusterHealthType_Connected is the health history from for checking if the cluster is connected
+	ClusterHealthType_Connected ClusterHealthType = "connected"
 
-	// Pingable is the health history from for checking if the cluster is pingable
-	Pingable ClusterHealthType = "pingable"
+	// ClusterHealthType_Pingable is the health history from for checking if the cluster is pingable
+	ClusterHealthType_Pingable ClusterHealthType = "pingable"
 
-	// MetricsHealthy is the health history from for checking if the cluster metrics are healthy
-	MetricsHealthy ClusterHealthType = "metrics_healthy"
+	// ClusterHealthType_MetricsHealthy is the health history from for checking if the cluster metrics are healthy
+	ClusterHealthType_MetricsHealthy ClusterHealthType = "metrics_healthy"
 )
 
 func toClusterHealthType(clusterHealthType porterv1.ClusterHealthType) (ClusterHealthType, error) {
 	switch clusterHealthType {
 	case porterv1.ClusterHealthType_CLUSTER_HEALTH_TYPE_CONNECTED:
-		return Connected, nil
+		return ClusterHealthType_Connected, nil
 	case porterv1.ClusterHealthType_CLUSTER_HEALTH_TYPE_PINGABLE:
-		return Pingable, nil
+		return ClusterHealthType_Pingable, nil
 	case porterv1.ClusterHealthType_CLUSTER_HEALTH_TYPE_METRICS_HEALTHY:
-		return MetricsHealthy, nil
+		return ClusterHealthType_MetricsHealthy, nil
 	default:
 		return "", errors.New("unknown cluster health type")
 	}
@@ -108,26 +108,26 @@ func toSystemService(apiSystemService *porterv1.SystemService) (SystemService, e
 
 // HealthStatus is the status over a certain period of time
 type HealthStatus struct {
-	StartTime   time.Time  `json:"start_time"`
-	EndTime     *time.Time `json:"end_time,omitempty"`
-	Status      Status     `json:"status"`
-	Description string     `json:"description,omitempty"`
+	StartTime   time.Time     `json:"start_time"`
+	EndTime     *time.Time    `json:"end_time,omitempty"`
+	Status      ServiceStatus `json:"status"`
+	Description string        `json:"description,omitempty"`
 }
 
 // DailyHealthStatus contains the  health status of a system service or cluster over one day
 type DailyHealthStatus struct {
-	StatusPercentages map[Status]float32 `json:"status_percentages,omitempty"`
-	HealthStatuses    []*HealthStatus    `json:"health_statuses,omitempty"`
+	StatusPercentages map[ServiceStatus]float32 `json:"status_percentages,omitempty"`
+	HealthStatuses    []*HealthStatus           `json:"health_statuses,omitempty"`
 }
 
 // toDailyHealthStatus converts from the proto  DailyHealthStatus to the local DailyHealthStatus
 func toDailyHealthStatus(protoDailyHealthStatus *porterv1.DailyHealthStatus) DailyHealthStatus {
 	dailyHealthStatus := DailyHealthStatus{
-		StatusPercentages: map[Status]float32{},
+		StatusPercentages: map[ServiceStatus]float32{},
 		HealthStatuses:    make([]*HealthStatus, 0),
 	}
 	for _, statusPercentage := range protoDailyHealthStatus.StatusPercentages {
-		dailyHealthStatus.StatusPercentages[toStatus(statusPercentage.Status)] = statusPercentage.Percentage
+		dailyHealthStatus.StatusPercentages[toServiceStatus(statusPercentage.Status)] = statusPercentage.Percentage
 	}
 	for _, healthStatus := range protoDailyHealthStatus.HealthStatuses {
 		var endTime *time.Time = nil
@@ -138,7 +138,7 @@ func toDailyHealthStatus(protoDailyHealthStatus *porterv1.DailyHealthStatus) Dai
 		dailyHealthStatus.HealthStatuses = append(dailyHealthStatus.HealthStatuses, &HealthStatus{
 			StartTime:   healthStatus.StartTime.AsTime(),
 			EndTime:     endTime,
-			Status:      toStatus(healthStatus.Status),
+			Status:      toServiceStatus(healthStatus.Status),
 			Description: healthStatus.Description,
 		})
 	}

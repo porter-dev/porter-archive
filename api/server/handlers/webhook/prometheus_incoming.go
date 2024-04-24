@@ -93,7 +93,7 @@ func (p *PrometheusAlertWebhookHandler) handlePrometheusAlert(ctx context.Contex
 		if err != nil {
 			return telemetry.Error(ctx, span, err, "error parsing alert end time")
 		}
-		var endTimestamp *timestamppb.Timestamp = nil
+		var endTimestamp *timestamppb.Timestamp
 		if endTime.After(startTime) {
 			endTimestamp = timestamppb.New(endTime)
 		}

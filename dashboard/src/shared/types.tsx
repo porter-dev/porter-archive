@@ -781,3 +781,39 @@ export type AppEventWebhook = {
   app_event_status: string;
   payload_encryption_key: string;
 };
+
+export type StatusData = {
+  cluster_health_histories: Record<string, Record<number, DailyHealthStatus>>;
+  service_health_histories_grouped: Record<string, GroupedService[]>;
+};
+
+export type SystemService = {
+  name: string;
+  namespace: string;
+  involved_object_type: string;
+};
+
+export type HealthStatus = {
+  start_time: string;
+  end_time: string;
+  status: "failure" | "healthy" | "partial_failure" | "undefined";
+  description: string;
+};
+
+export type DailyHealthStatus = {
+  status_percentages: Record<string, number>;
+  health_statuses: HealthStatus[];
+}
+
+export type ServiceStatusHistory = {
+  system_service: SystemService;
+  daily_health_history: Record<number, DailyHealthStatus>;
+};
+
+// If you're also grouping services by namespace and want a type for the grouped structure:
+export type GroupedService = {
+  system_service: SystemService;
+  daily_health_history: Record<number, DailyHealthStatus>;
+};
+
+export type GroupedServices = Record<string, GroupedService[]>;

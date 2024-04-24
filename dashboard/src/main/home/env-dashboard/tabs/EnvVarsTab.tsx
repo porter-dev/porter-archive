@@ -17,7 +17,7 @@ import {
 import api from "shared/api";
 import { Context } from "shared/Context";
 
-import EnvGroupArray from "../EnvGroupArray";
+import EnvGroupArray, { type KeyValueType } from "../EnvGroupArray";
 
 type Props = {
   envGroup: {
@@ -46,13 +46,7 @@ const EnvVarsTab: React.FC<Props> = ({ envGroup, fetchEnvGroup }) => {
     resolver: zodResolver(envGroupFormValidator),
     reValidateMode: "onSubmit",
   });
-  const {
-    formState: { isValidating, isSubmitting },
-    watch,
-    trigger,
-    handleSubmit,
-    setValue,
-  } = envGroupFormMethods;
+  const { watch, trigger, handleSubmit, setValue } = envGroupFormMethods;
 
   const [submitErrorMessage, setSubmitErrorMessage] = useState<string>("");
   const [isValid, setIsValid] = useState<boolean>(false);
@@ -108,6 +102,14 @@ const EnvVarsTab: React.FC<Props> = ({ envGroup, fetchEnvGroup }) => {
     setValue("envFiles", envGroup.files || []);
   }, [envGroup]);
 
+  const isUpdatable = useMemo(() => {
+    return (
+      envGroup.type !== "doppler" &&
+      envGroup.type !== "datastore" &&
+      envGroup.type !== "infisical"
+    );
+  }, [envGroup.type]);
+
   const onSubmit = handleSubmit(async (data) => {
     setButtonStatus("loading");
     setSubmitErrorMessage("");
@@ -149,7 +151,7 @@ const EnvVarsTab: React.FC<Props> = ({ envGroup, fetchEnvGroup }) => {
           apiEnvVariables[envVar.key] = envVar.value;
         });
 
-      if (envGroup?.type !== "doppler") {
+      if (envGroup?.type !== "doppler" && envGroup?.type !== "infisical") {
         await api.createEnvironmentGroups(
           "<token>",
           {
@@ -178,24 +180,14 @@ const EnvVarsTab: React.FC<Props> = ({ envGroup, fetchEnvGroup }) => {
     }
   });
 
-  const submitButtonStatus = useMemo(() => {
-    if (isSubmitting || isValidating) {
-      return "loading";
-    }
-    if (submitErrorMessage) {
-      return <Error message={submitErrorMessage} />;
-    }
-    return undefined;
-  }, [isSubmitting, submitErrorMessage, isValidating]);
-
   return (
     <>
       <Text size={16}>Environment variables</Text>
       <Spacer y={0.5} />
-      {envGroup.type === "doppler" ? (
+      {envGroup.type === "doppler" || envGroup.type === "infisical" ? (
         <Text color="helper">
-          Doppler environment variables can only be updated from the Doppler
-          dashboard.
+          {envGroup.type === "doppler" ? "Doppler" : "Infisical"} environment
+          variables can only be updated from the Doppler dashboard.
         </Text>
       ) : (
         <Text color="helper">
@@ -216,14 +208,15 @@ const EnvVarsTab: React.FC<Props> = ({ envGroup, fetchEnvGroup }) => {
             }}
             fileUpload={true}
             secretOption={true}
-            disabled={envGroup.type === "doppler"}
+            disabled={!isUpdatable}
           />
           <Spacer y={1} />
           <Text size={16}>Environment files</Text>
           <Spacer y={0.5} />
           <Text color="helper">
             Files containing sensitive data that will be injected into your
-            app&apos;s root directory.
+            app&apos;s root directory, at the path{" "}
+            <Code>{`/etc/secrets/${envGroup.name}`}</Code>.
           </Text>
           <Spacer y={1} />
           <FileArray
@@ -232,7 +225,7 @@ const EnvVarsTab: React.FC<Props> = ({ envGroup, fetchEnvGroup }) => {
               setValue("envFiles", x);
             }}
           />
-          {envGroup.type !== "doppler" && envGroup.type !== "datastore" && (
+          {isUpdatable ? (
             <>
               <Spacer y={1} />
               <Button
@@ -243,17 +236,20 @@ const EnvVarsTab: React.FC<Props> = ({ envGroup, fetchEnvGroup }) => {
                       <i className="material-icons">done</i>
                       Successfully created
                     </StatusWrapper>
+                  ) : submitErrorMessage ? (
+                    "error"
                   ) : (
                     buttonStatus
                   )
                 }
+                errorText={submitErrorMessage}
                 loadingText="Updating env group . . ."
                 disabled={!isValid}
               >
                 Update
               </Button>
             </>
-          )}
+          ) : null}
         </form>
       </FormProvider>
     </>
@@ -279,4 +275,8 @@ const StatusWrapper = styled.div<{
     float: left;
     color: ${(props) => (props.success ? "#4797ff" : "#fcba03")};
   }
+`;
+
+const Code = styled.span`
+  font-family: monospace;
 `;

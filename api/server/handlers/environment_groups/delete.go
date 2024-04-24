@@ -61,11 +61,19 @@ func (c *DeleteEnvironmentGroupHandler) ServeHTTP(w http.ResponseWriter, r *http
 	)
 
 	switch request.Type {
-	case "doppler":
+	case "doppler", "infisical":
+		var provider porterv1.EnumEnvGroupProviderType
+		switch request.Type {
+		case "doppler":
+			provider = porterv1.EnumEnvGroupProviderType_ENUM_ENV_GROUP_PROVIDER_TYPE_DOPPLER
+		case "infisical":
+			provider = porterv1.EnumEnvGroupProviderType_ENUM_ENV_GROUP_PROVIDER_TYPE_INFISICAL
+		}
+
 		_, err := c.Config().ClusterControlPlaneClient.DeleteEnvGroup(ctx, connect.NewRequest(&porterv1.DeleteEnvGroupRequest{
 			ProjectId:            int64(cluster.ProjectID),
 			ClusterId:            int64(cluster.ID),
-			EnvGroupProviderType: porterv1.EnumEnvGroupProviderType_ENUM_ENV_GROUP_PROVIDER_TYPE_DOPPLER,
+			EnvGroupProviderType: provider,
 			EnvGroupName:         request.Name,
 		}))
 		if err != nil {
@@ -88,4 +96,6 @@ func (c *DeleteEnvironmentGroupHandler) ServeHTTP(w http.ResponseWriter, r *http
 			return
 		}
 	}
+
+	c.WriteResult(w, r, nil)
 }

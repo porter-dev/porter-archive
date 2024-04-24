@@ -2334,6 +2334,10 @@ const createEnvironmentGroups = baseApi<
     type?: string;
     auth_token?: string;
     is_env_override?: boolean;
+    infisical_env?: {
+      slug: string;
+      path: string;
+    }
   },
   {
     id: number;

@@ -1,8 +1,10 @@
-import React, { useContext, useEffect, useMemo, useState } from "react";
+import React, { useContext, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import _ from "lodash";
 import { withRouter, type RouteComponentProps } from "react-router";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
+import { z } from "zod";
 
 import ClusterProvisioningPlaceholder from "components/ClusterProvisioningPlaceholder";
 import Loading from "components/Loading";
@@ -17,6 +19,7 @@ import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import Toggle from "components/porter/Toggle";
 import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
+import { envGroupValidator, type ClientEnvGroup } from "lib/env-groups/types";
 
 import api from "shared/api";
 import { withAuth, type WithAuthProps } from "shared/auth/AuthorizationHoc";
@@ -27,6 +30,7 @@ import database from "assets/database.svg";
 import doppler from "assets/doppler.png";
 import envGroupGrad from "assets/env-group-grad.svg";
 import grid from "assets/grid.png";
+import infisical from "assets/infisical.svg";
 import key from "assets/key.svg";
 import list from "assets/list.png";
 import notFound from "assets/not-found.png";
@@ -40,10 +44,32 @@ const EnvDashboard: React.FC<Props> = (props) => {
   const { currentProject, currentCluster } = useContext(Context);
 
   const [searchValue, setSearchValue] = useState("");
-  const [envGroups, setEnvGroups] = useState<[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [view, setView] = useState<"grid" | "list">("grid");
-  const [hasError, setHasError] = useState<boolean>(false);
+
+  const { data: { environment_groups: envGroups = [] } = {}, status } =
+    useQuery(
+      ["envGroups", currentProject?.id, currentCluster?.id],
+      async () => {
+        if (!currentProject || !currentCluster) {
+          return { environment_groups: [] };
+        }
+        const res = await api.getAllEnvGroups(
+          "<token>",
+          {},
+          {
+            id: currentProject?.id || -1,
+            cluster_id: currentCluster?.id || -1,
+          }
+        );
+
+        const data = await z
+          .object({
+            environment_groups: z.array(envGroupValidator),
+          })
+          .parseAsync(res.data);
+        return data;
+      }
+    );
 
   const filteredEnvGroups = useMemo(() => {
     const filteredBySearch = search(envGroups, searchValue, {
@@ -55,30 +81,17 @@ const EnvDashboard: React.FC<Props> = (props) => {
     return sortedFilteredBySearch;
   }, [envGroups, searchValue]);
 
-  const updateEnvGroups = async (): Promise<void> => {
-    try {
-      const res = await api.getAllEnvGroups(
-        "<token>",
-        {},
-        {
-          id: currentProject?.id || -1,
-          cluster_id: currentCluster?.id || -1,
-        }
-      );
-      setEnvGroups(res.data.environment_groups);
-      setIsLoading(false);
-    } catch (err) {
-      setHasError(true);
-      setIsLoading(false);
+  const getIconFromType = (type: ClientEnvGroup["type"]): string => {
+    if (type === "doppler") {
+      return doppler;
+    } else if (type === "datastore") {
+      return database;
+    } else if (type === "infisical") {
+      return infisical;
+    } else {
+      return key;
     }
   };
-
-  useEffect(() => {
-    setIsLoading(true);
-    if ((currentProject?.id ?? -1) > -1 && (currentCluster?.id ?? -1) > -1) {
-      void updateEnvGroups();
-    }
-  }, [currentProject, currentCluster]);
 
   const renderContents = (): React.ReactNode => {
     if (currentProject?.sandbox_enabled) {
@@ -105,7 +118,11 @@ const EnvDashboard: React.FC<Props> = (props) => {
       return <ClusterProvisioningPlaceholder />;
     }
 
-    if (!isLoading && (!envGroups || envGroups.length === 0)) {
+    if (status === "loading") {
+      return <Loading offset="-150px" />;
+    }
+
+    if (envGroups.length === 0) {
       return (
         <DashboardPlaceholder>
           <Text size={16}>No environment groups found</Text>
@@ -178,7 +195,7 @@ const EnvDashboard: React.FC<Props> = (props) => {
         </Container>
         <Spacer y={1} />
 
-        {!isLoading && filteredEnvGroups.length === 0 ? (
+        {status === "success" && filteredEnvGroups.length === 0 ? (
           <Fieldset>
             <Container row>
               <Image src={notFound} size={13} opacity={0.65} />
@@ -188,8 +205,6 @@ const EnvDashboard: React.FC<Props> = (props) => {
               </Text>
             </Container>
           </Fieldset>
-        ) : isLoading ? (
-          <Loading offset="-150px" />
         ) : view === "grid" ? (
           <GridList>
             {(filteredEnvGroups ?? []).map((envGroup, i: number) => {
@@ -199,16 +214,7 @@ const EnvDashboard: React.FC<Props> = (props) => {
                   key={i}
                 >
                   <Container row>
-                    <Image
-                      src={
-                        envGroup.type === "doppler"
-                          ? doppler
-                          : envGroup.type === "datastore"
-                          ? database
-                          : key
-                      }
-                      size={20}
-                    />
+                    <Image src={getIconFromType(envGroup.type)} size={20} />
                     <Spacer inline x={0.7} />
                     <Text size={14}>{envGroup.name}</Text>
                   </Container>
@@ -225,22 +231,14 @@ const EnvDashboard: React.FC<Props> = (props) => {
           </GridList>
         ) : (
           <List>
-            {(filteredEnvGroups ?? []).map((envGroup: any, i: number) => {
+            {(filteredEnvGroups ?? []).map((envGroup, i) => {
               return (
                 <Row
                   to={envGroupPath(currentProject, `/${envGroup.name}`)}
                   key={i}
                 >
                   <Container row>
-                    <Image
-                      src={
-                        envGroup.type === "doppler"
-                          ? doppler
-                          : envGroup.type === "datastore"
-                          ? database
-                          : key
-                      }
-                    />
+                    <Image src={getIconFromType(envGroup.type)} />
                     <Spacer inline x={0.7} />
                     <Text size={14}>{envGroup.name}</Text>
                   </Container>

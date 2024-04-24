@@ -21,14 +21,14 @@ export type KeyValueType = {
 type PropsType = {
   label?: string;
   values: KeyValueType[];
-  setValues: (x: KeyValueType[]) => void;
+  setValues?: (x: KeyValueType[]) => void;
   disabled?: boolean;
   fileUpload?: boolean;
   secretOption?: boolean;
   setButtonDisabled?: (x: boolean) => void;
 };
 
-const EnvGroupArray = ({
+const EnvGroupArray: React.FC<PropsType> = ({
   label,
   values,
   setValues = () => {},
@@ -36,7 +36,7 @@ const EnvGroupArray = ({
   fileUpload,
   secretOption,
   setButtonDisabled,
-}: PropsType): React.ReactElement => {
+}) => {
   const [showEditorModal, setShowEditorModal] = useState(false);
   const blankValues = (): void => {
     const isAnyEnvVariableBlank = values.some(

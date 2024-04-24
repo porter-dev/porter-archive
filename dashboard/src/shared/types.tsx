@@ -317,6 +317,7 @@ export type ProjectType = {
   beta_features_enabled: boolean;
   billing_enabled: boolean;
   metronome_enabled: boolean;
+  infisical_enabled: boolean;
   capi_provisioner_enabled: boolean;
   db_enabled: boolean;
   efs_enabled: boolean;
@@ -779,4 +780,4 @@ export type AppEventWebhook = {
   app_event_type: string;
   app_event_status: string;
   payload_encryption_key: string;
-}
+};

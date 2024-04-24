@@ -237,7 +237,7 @@ export default class Main extends Component<PropsType, StateType> {
           }}
         />
          <Route
-          path={`/:status/:projectId?/:clusterId?`}
+          path={`/status`}
           render={() => {
             if (!this.state.isLoggedIn) {
               return <Redirect to="/login" />;

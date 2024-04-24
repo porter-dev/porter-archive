@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { withRouter, type RouteComponentProps } from "react-router";
 import styled, { ThemeProvider } from "styled-components";
 import { z } from "zod";
@@ -9,16 +9,47 @@ import Expandable from "components/porter/Expandable";
 import Image from "components/porter/Image";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
+import { Context } from "shared/Context";
 
 import midnight from "shared/themes/midnight";
 import gradient from "assets/gradient.png";
 import logo from "assets/logo.png";
 
+import { ProjectListType, ClusterType } from "shared/types";
+import api from "shared/api";
+import ProjectStatusSection from "./ProjectStatusSection";
+
+
 
 type Props = RouteComponentProps;
 
-const StatusPage: React.FC<Props> = ({ match }) => {
-  const projects = [{id: 0,  name: "project-1" }, {id: 1, name: "project-2" }];
+
+const StatusPage: React.FC<Props> = () => {
+  const {user} = useContext(Context);
+
+  const [projects, setProjects] = useState<ProjectListType[]>([{id: 0, name: "default"}]);
+
+  useEffect(() => {
+    if (user === undefined || user.userId === 0) {
+      console.log("no user defined")
+      return;
+    }
+    api
+    .getProjects(
+      "<token>",
+      {},
+      {id: user.userId},
+    )
+    .then((res) => res.data as ProjectListType[])
+    .then((projectList) => {
+      console.log(projectList);
+      setProjects(projectList);
+    })
+    .catch((err) => {
+      console.log(err);
+    });
+  }, [user]);
+
   return (
     <ThemeProvider theme={midnight}>
       <StyledStatusPage>
@@ -28,57 +59,7 @@ const StatusPage: React.FC<Props> = ({ match }) => {
             <>
               {projects.map((project, _) => (
                 <>
-                  <Expandable
-                    key={project.id}
-                    alt
-                    header={
-                      <Container row>
-                        <Text size={16}> { project.name } </Text>
-                        <Spacer x={1} inline />
-                        <Text color="#01a05d">Operational</Text>
-                      </Container>
-                    }
-                  >
-                    <Spacer y={0.25} />
-                    <Container row spaced>
-                      <Text color="helper">cluster-1</Text>
-                      <Text color="#01a05d">Operational</Text>
-                    </Container>
-                    <Spacer y={0.25} />
-                    <StatusBars>
-                      {Array.from({ length: 90 }).map((_, i) => (
-                        <Bar key={i} isFirst={i === 0} isLast={i === 89} />
-                      ))}
-                    </StatusBars>
-                    <Spacer y={0.5} />
-                    <Container row spaced>
-                      <Text color="helper">cluster-2</Text>
-                      <Text color="#01a05d">Operational</Text>
-                    </Container>
-                    <Spacer y={0.25} />
-                    <StatusBars>
-                      {Array.from({ length: 90 }).map((_, i) => (
-                        <Bar key={i} isFirst={i === 0} isLast={i === 89} />
-                      ))}
-                    </StatusBars>
-                    <Spacer y={0.5} />
-                    <Container row spaced>
-                      <Text color="helper">cluster-3</Text>
-                      <Text color="#01a05d">Operational</Text>
-                    </Container>
-                    <Spacer y={0.25} />
-                    <StatusBars>
-                      {Array.from({ length: 90 }).map((_, i) => (
-                        <Bar key={i} isFirst={i === 0} isLast={i === 89} />
-                      ))}
-                    </StatusBars>
-                    <Spacer y={0.5} />
-                    <Container row spaced>
-                      <Text color="helper">90 days ago</Text>
-                      <Text color="helper">Today</Text>
-                    </Container>
-                    <Spacer y={0.5} />
-                  </Expandable>
+                  <ProjectStatusSection project={project} />
                   <Spacer y={1} />
                 </>
               ))}

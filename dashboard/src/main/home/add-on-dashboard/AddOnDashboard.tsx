@@ -14,16 +14,19 @@ import SearchBar from "components/porter/SearchBar";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import Toggle from "components/porter/Toggle";
-import { type ClientAddon } from "lib/addons";
+import { type ClientAddon, type LegacyClientAddon } from "lib/addons";
 import { useAddonList } from "lib/hooks/useAddon";
 import { useDefaultDeploymentTarget } from "lib/hooks/useDeploymentTarget";
 
 import { Context } from "shared/Context";
+import { hardcodedIcons } from "shared/hardcodedNameDict";
+import { readableDate } from "shared/string_utils";
 import addOnGrad from "assets/add-on-grad.svg";
 import grid from "assets/grid.png";
 import list from "assets/list.png";
 import notFound from "assets/not-found.png";
 import healthy from "assets/status-healthy.png";
+import time from "assets/time.png";
 
 import DashboardHeader from "../cluster-dashboard/DashboardHeader";
 
@@ -40,14 +43,30 @@ const AddonDashboard: React.FC = () => {
   const [searchValue, setSearchValue] = useState("");
   const [view, setView] = useState("grid");
 
-  const { addons, isLoading: isAddonListLoading } = useAddonList({
+  const {
+    addons,
+    legacyAddons,
+    isLoading: isAddonListLoading,
+    isLegacyAddonsLoading,
+  } = useAddonList({
     projectId: currentProject?.id,
+    clusterId: currentCluster?.id,
     deploymentTargetId: defaultDeploymentTarget.id,
   });
 
-  const filteredAddons = useMemo(() => {
-    return addons.filter(isDisplayableAddon);
-  }, [addons]);
+  // const filteredAddons = useMemo(() => {
+  //   return addons.filter(isDisplayableAddon);
+  // }, [addons]);
+
+  const filteredAddons: Array<ClientAddon | LegacyClientAddon> = useMemo(() => {
+    const displayableAddons = addons.filter(isDisplayableAddon);
+    const legacyDisplayableAddons = legacyAddons.filter((a) => {
+      return !["web", "worker", "job", "umbrella"].includes(
+        a.chart?.metadata?.name ?? ""
+      );
+    });
+    return [...displayableAddons, ...legacyDisplayableAddons];
+  }, [addons, legacyAddons, defaultDeploymentTarget]);
 
   return (
     <StyledAppDashboard>
@@ -76,7 +95,8 @@ const AddonDashboard: React.FC = () => {
         </DashboardPlaceholder>
       ) : filteredAddons.length === 0 ||
         (filteredAddons.length === 0 && searchValue === "") ? (
-        isDefaultDeploymentTargetLoading || isAddonListLoading ? (
+        isDefaultDeploymentTargetLoading ||
+        (isAddonListLoading && isLegacyAddonsLoading) ? (
           <Loading offset="-150px" />
         ) : (
           <DashboardPlaceholder>
@@ -134,11 +154,39 @@ const AddonDashboard: React.FC = () => {
                 </Text>
               </Container>
             </Fieldset>
-          ) : isDefaultDeploymentTargetLoading || isAddonListLoading ? (
+          ) : isDefaultDeploymentTargetLoading ||
+            (isAddonListLoading && isLegacyAddonsLoading) ? (
             <Loading offset="-150px" />
           ) : view === "grid" ? (
             <GridList>
-              {filteredAddons.map((addon: ClientAddon) => {
+              {filteredAddons.map((addon: ClientAddon | LegacyClientAddon) => {
+                const isLegacyAddon = "chart" in addon;
+                if (isLegacyAddon) {
+                  return (
+                    <Block
+                      to={`/applications/${currentCluster?.name}/${addon.namespace}/${addon.name}`}
+                      key={addon.name}
+                    >
+                      <Container row>
+                        <Icon
+                          src={
+                            hardcodedIcons[addon.chart?.metadata?.name ?? ""] ||
+                            addon.chart?.metadata?.icon
+                          }
+                        />
+                        <Text size={14}>{addon.name}</Text>
+                        <Spacer inline x={2} />
+                      </Container>
+                      <StatusIcon src={healthy} />
+                      <Container row>
+                        <SmallIcon opacity="0.4" src={time} />
+                        <Text size={13} color="#ffffff44">
+                          {readableDate(addon.info.last_deployed)}
+                        </Text>
+                      </Container>
+                    </Block>
+                  );
+                }
                 return (
                   <Block
                     to={`/addons/${addon.name.value}`}
@@ -156,7 +204,35 @@ const AddonDashboard: React.FC = () => {
             </GridList>
           ) : (
             <List>
-              {filteredAddons.map((addon: ClientAddon) => {
+              {filteredAddons.map((addon: ClientAddon | LegacyClientAddon) => {
+                const isLegacyAddon = "chart" in addon;
+                if (isLegacyAddon) {
+                  return (
+                    <Row
+                      to={`/applications/${currentCluster?.name}/${addon.namespace}/${addon.name}`}
+                      key={addon.name}
+                    >
+                      <Container row>
+                        <MidIcon
+                          src={
+                            hardcodedIcons[addon.chart?.metadata?.name ?? ""] ||
+                            addon.chart?.metadata?.icon
+                          }
+                        />
+                        <Text size={14}>{addon.name}</Text>
+                        <Spacer inline x={1} />
+                        <MidIcon src={healthy} height="16px" />
+                      </Container>
+                      <Spacer height="15px" />
+                      <Container row>
+                        <SmallIcon opacity="0.4" src={time} />
+                        <Text size={13} color="#ffffff44">
+                          {readableDate(addon.info.last_deployed)}
+                        </Text>
+                      </Container>
+                    </Row>
+                  );
+                }
                 return (
                   <Row
                     to={`/addons/${addon.name.value}`}
@@ -275,4 +351,11 @@ const I = styled.i`
 const StyledAppDashboard = styled.div`
   width: 100%;
   height: 100%;
+`;
+
+const SmallIcon = styled.img<{ opacity?: string }>`
+  margin-left: 2px;
+  height: 14px;
+  opacity: ${(props) => props.opacity || 1};
+  margin-right: 10px;
 `;

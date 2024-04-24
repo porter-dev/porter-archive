@@ -7,7 +7,9 @@ import { z } from "zod";
 import {
   clientAddonFromProto,
   clientAddonToProto,
+  legacyAddonValidator,
   type ClientAddon,
+  type LegacyClientAddon,
 } from "lib/addons";
 
 import api from "shared/api";
@@ -21,13 +23,17 @@ import { type DeploymentTarget } from "./useDeploymentTarget";
 
 export const useAddonList = ({
   projectId,
+  clusterId,
   deploymentTargetId,
 }: {
   projectId?: number;
+  clusterId?: number;
   deploymentTargetId?: string;
 }): {
   addons: ClientAddon[];
+  legacyAddons: LegacyClientAddon[];
   isLoading: boolean;
+  isLegacyAddonsLoading: boolean;
   isError: boolean;
 } => {
   const {
@@ -79,9 +85,54 @@ export const useAddonList = ({
     }
   );
 
+  const { data: legacyAddons = [], isLoading: isLegacyAddonsLoading } =
+    useQuery(
+      ["listLegacyAddons", projectId, clusterId],
+      async () => {
+        if (!projectId || projectId === -1 || !clusterId || clusterId === -1) {
+          return;
+        }
+
+        const res = await api.getCharts(
+          "<token>",
+          {
+            limit: 50,
+            skip: 0,
+            byDate: false,
+            statusFilter: [
+              "deployed",
+              "uninstalled",
+              "pending",
+              "pending-install",
+              "pending-upgrade",
+              "pending-rollback",
+              "failed",
+            ],
+          },
+          {
+            id: projectId,
+            cluster_id: clusterId,
+            namespace: "all",
+          }
+        );
+
+        const parsed = await z.array(legacyAddonValidator).parseAsync(res.data);
+
+        return parsed;
+      },
+      {
+        enabled:
+          !!projectId && projectId !== -1 && !!clusterId && clusterId !== -1,
+        refetchOnWindowFocus: false,
+        refetchInterval: 5000,
+      }
+    );
+
   return {
     addons,
+    legacyAddons,
     isLoading,
+    isLegacyAddonsLoading,
     isError,
   };
 };

@@ -60,9 +60,22 @@ export const clientAddonValidator = z.object({
 export type ClientAddon = z.infer<typeof clientAddonValidator> & {
   template: AddonTemplate;
 };
-export type ClientDatadogAddon = ClientAddon & {
-  config: z.infer<typeof datadogConfigValidator>;
-};
+export const legacyAddonValidator = z.object({
+  name: z.string(),
+  namespace: z.string(),
+  info: z.object({
+    last_deployed: z.string(),
+  }),
+  chart: z.object({
+    metadata: z
+      .object({
+        name: z.string().optional(),
+        icon: z.string().optional(),
+      })
+      .optional(),
+  }),
+});
+export type LegacyClientAddon = z.infer<typeof legacyAddonValidator>;
 
 export function defaultClientAddon(
   type: ClientAddon["config"]["type"]

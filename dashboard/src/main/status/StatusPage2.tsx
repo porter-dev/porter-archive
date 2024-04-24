@@ -18,6 +18,7 @@ import logo from "assets/logo.png";
 type Props = RouteComponentProps;
 
 const StatusPage: React.FC<Props> = ({ match }) => {
+  const projects = [{id: 0,  name: "project-1" }, {id: 1, name: "project-2" }];
   return (
     <ThemeProvider theme={midnight}>
       <StyledStatusPage>
@@ -25,14 +26,14 @@ const StatusPage: React.FC<Props> = ({ match }) => {
           <Image src={logo} size={30} />
           <Spacer y={1.5} />
             <>
-              {Array.from({ length: 100 }).map((_, j) => (
+              {projects.map((project, _) => (
                 <>
                   <Expandable
-                    key={j}
+                    key={project.id}
                     alt
                     header={
                       <Container row>
-                        <Text size={16}>project-{j}</Text>
+                        <Text size={16}> { project.name } </Text>
                         <Spacer x={1} inline />
                         <Text color="#01a05d">Operational</Text>
                       </Container>

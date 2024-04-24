@@ -16,6 +16,8 @@ import VerifyEmail from "./auth/VerifyEmail";
 import CurrentError from "./CurrentError";
 import Home from "./home/Home";
 
+import StatusPage from "./status/StatusPage";
+
 type PropsType = {};
 
 type StateType = {
@@ -232,6 +234,17 @@ export default class Main extends Component<PropsType, StateType> {
             } else {
               return <Redirect to="/login" />;
             }
+          }}
+        />
+         <Route
+          path={`/:status/:projectId?/:clusterId?`}
+          render={() => {
+            if (!this.state.isLoggedIn) {
+              return <Redirect to="/login" />;
+            } else if (!this.context.user?.email?.includes("@porter.run")) {
+              return <Redirect to="/dashboard" />;
+            }
+            return <StatusPage />;
           }}
         />
         <Route

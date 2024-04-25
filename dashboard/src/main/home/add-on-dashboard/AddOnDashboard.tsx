@@ -50,8 +50,7 @@ const AddonDashboard: React.FC = () => {
     isLegacyAddonsLoading,
   } = useAddonList({
     projectId: currentProject?.id,
-    clusterId: currentCluster?.id,
-    deploymentTargetId: defaultDeploymentTarget.id,
+    deploymentTarget: defaultDeploymentTarget,
   });
 
   // const filteredAddons = useMemo(() => {
@@ -60,12 +59,19 @@ const AddonDashboard: React.FC = () => {
 
   const filteredAddons: Array<ClientAddon | LegacyClientAddon> = useMemo(() => {
     const displayableAddons = addons.filter(isDisplayableAddon);
-    const legacyDisplayableAddons = legacyAddons.filter((a) => {
-      return !["web", "worker", "job", "umbrella"].includes(
-        a.chart?.metadata?.name ?? ""
-      );
+    const legacyDisplayableAddons = legacyAddons.sort((a, b) => {
+      return a.info.last_deployed > b.info.last_deployed ? -1 : 1;
     });
-    return [...displayableAddons, ...legacyDisplayableAddons];
+
+    // If an addon name exists in both the legacy and new addon lists, show the new addon
+    const uniqueAddons: Array<ClientAddon | LegacyClientAddon> = [
+      ...displayableAddons,
+      ...legacyDisplayableAddons.filter(
+        (a) => !displayableAddons.some((b) => b.name.value === a.name)
+      ),
+    ];
+
+    return uniqueAddons;
   }, [addons, legacyAddons, defaultDeploymentTarget]);
 
   return (

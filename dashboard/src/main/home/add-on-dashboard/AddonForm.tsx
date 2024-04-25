@@ -29,9 +29,14 @@ const AddonForm: React.FC<Props> = ({ template }) => {
     useDefaultDeploymentTarget();
 
   const history = useHistory();
-  const { addons, isLoading: isAddonListLoading } = useAddonList({
+  const {
+    addons,
+    isLoading: isAddonListLoading,
+    isLegacyAddonsLoading,
+    legacyAddons,
+  } = useAddonList({
     projectId: currentProject?.id,
-    deploymentTargetId: defaultDeploymentTarget.id,
+    deploymentTarget: defaultDeploymentTarget,
   });
 
   const {
@@ -55,7 +60,10 @@ const AddonForm: React.FC<Props> = ({ template }) => {
   }, [template]);
 
   useEffect(() => {
-    if (addons.map((a) => a.name.value).includes(watchName)) {
+    if (
+      addons.some((a) => a.name.value === watchName) ||
+      legacyAddons.some((a) => a.name === watchName)
+    ) {
       setError("name.value", {
         message: "An addon with this name already exists",
       });
@@ -64,7 +72,11 @@ const AddonForm: React.FC<Props> = ({ template }) => {
     }
   }, [watchName]);
 
-  if (isDefaultDeploymentTargetLoading || isAddonListLoading) {
+  if (
+    isDefaultDeploymentTargetLoading ||
+    isAddonListLoading ||
+    isLegacyAddonsLoading
+  ) {
     return <Loading />;
   }
 

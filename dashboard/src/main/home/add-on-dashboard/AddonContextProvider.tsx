@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useContext, useMemo } from "react";
+import React, { createContext, useCallback, useContext } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import styled from "styled-components";
 
@@ -10,7 +10,6 @@ import Text from "components/porter/Text";
 import { type ClientAddon } from "lib/addons";
 import {
   useAddon,
-  useAddonList,
   useAddonStatus,
   type ClientAddonStatus,
 } from "lib/hooks/useAddon";
@@ -54,21 +53,17 @@ export const AddonContextProvider: React.FC<AddonContextProviderProps> = ({
   const { currentProject } = useContext(Context);
   const { defaultDeploymentTarget, isDefaultDeploymentTargetLoading } =
     useDefaultDeploymentTarget();
+  const { getAddon, deleteAddon } = useAddon();
   const {
-    addons,
-    isLoading: isAddonListLoading,
+    addon,
+    isLoading: isAddonLoading,
     isError,
-  } = useAddonList({
+  } = getAddon({
     projectId: currentProject?.id,
     deploymentTargetId: defaultDeploymentTarget.id,
+    addonName,
   });
-  const { deleteAddon } = useAddon();
   const queryClient = useQueryClient();
-
-  // TODO: add getAddon call to backend
-  const addon = useMemo(() => {
-    return addons.find((a) => a.name.value === addonName);
-  }, [addons]);
 
   const status = useAddonStatus({
     projectId: currentProject?.id,
@@ -96,7 +91,7 @@ export const AddonContextProvider: React.FC<AddonContextProviderProps> = ({
     await queryClient.invalidateQueries(["listAddons"]);
   }, [paramsExist]);
 
-  if (isDefaultDeploymentTargetLoading || isAddonListLoading || !paramsExist) {
+  if (isDefaultDeploymentTargetLoading || isAddonLoading || !paramsExist) {
     return <Loading />;
   }
 

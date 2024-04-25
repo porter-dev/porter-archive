@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { AddonWithEnvVars } from "@porter-dev/api-contracts";
+import { Addon, AddonWithEnvVars } from "@porter-dev/api-contracts";
 import { useQuery } from "@tanstack/react-query";
 import { match } from "ts-pattern";
 import { z } from "zod";
@@ -23,12 +23,10 @@ import { type DeploymentTarget } from "./useDeploymentTarget";
 
 export const useAddonList = ({
   projectId,
-  clusterId,
-  deploymentTargetId,
+  deploymentTarget,
 }: {
   projectId?: number;
-  clusterId?: number;
-  deploymentTargetId?: string;
+  deploymentTarget?: DeploymentTarget;
 }): {
   addons: ClientAddon[];
   legacyAddons: LegacyClientAddon[];
@@ -41,9 +39,9 @@ export const useAddonList = ({
     isLoading,
     isError,
   } = useQuery(
-    ["listAddons", projectId, deploymentTargetId],
+    ["listAddons", projectId, deploymentTarget],
     async () => {
-      if (!projectId || projectId === -1 || !deploymentTargetId) {
+      if (!projectId || projectId === -1 || !deploymentTarget) {
         return;
       }
 
@@ -52,7 +50,7 @@ export const useAddonList = ({
         {},
         {
           projectId,
-          deploymentTargetId,
+          deploymentTargetId: deploymentTarget.id,
         }
       );
 
@@ -79,7 +77,7 @@ export const useAddonList = ({
       return clientAddons;
     },
     {
-      enabled: !!projectId && projectId !== -1 && !!deploymentTargetId,
+      enabled: !!projectId && projectId !== -1 && !!deploymentTarget,
       refetchOnWindowFocus: false,
       refetchInterval: 5000,
     }
@@ -87,9 +85,9 @@ export const useAddonList = ({
 
   const { data: legacyAddons = [], isLoading: isLegacyAddonsLoading } =
     useQuery(
-      ["listLegacyAddons", projectId, clusterId],
+      ["listLegacyAddons", projectId, deploymentTarget],
       async () => {
-        if (!projectId || projectId === -1 || !clusterId || clusterId === -1) {
+        if (!projectId || projectId === -1 || !deploymentTarget) {
           return;
         }
 
@@ -111,18 +109,40 @@ export const useAddonList = ({
           },
           {
             id: projectId,
-            cluster_id: clusterId,
+            cluster_id: deploymentTarget.cluster_id,
             namespace: "all",
           }
         );
 
         const parsed = await z.array(legacyAddonValidator).parseAsync(res.data);
 
-        return parsed;
+        return parsed
+          .filter((a) => {
+            return ![
+              "web",
+              "worker",
+              "job",
+              "umbrella",
+              "postgresql-managed", // managed in datastores tab
+              "redis-managed", // managed in datastores tab
+            ].includes(a.chart?.metadata?.name ?? "");
+          })
+          .filter((a) => {
+            return ![
+              "ack-system",
+              "cert-manager",
+              "ingress-nginx",
+              "kube-node-lease",
+              "kube-public",
+              "kube-system",
+              "monitoring",
+              "porter-agent-system",
+              "external-secrets",
+            ].includes(a.namespace ?? "");
+          });
       },
       {
-        enabled:
-          !!projectId && projectId !== -1 && !!clusterId && clusterId !== -1,
+        enabled: !!projectId && projectId !== -1 && !!deploymentTarget,
         refetchOnWindowFocus: false,
         refetchInterval: 5000,
       }
@@ -156,6 +176,19 @@ export const useAddon = (): {
     deploymentTargetId: string;
     addon: ClientAddon;
   }) => Promise<void>;
+  getAddon: ({
+    projectId,
+    deploymentTargetId,
+    addonName,
+  }: {
+    projectId?: number;
+    deploymentTargetId: string;
+    addonName?: string;
+  }) => {
+    addon: ClientAddon | undefined;
+    isLoading: boolean;
+    isError: boolean;
+  };
 } => {
   const updateAddon = async ({
     projectId,
@@ -200,9 +233,71 @@ export const useAddon = (): {
     );
   };
 
+  const getAddon = ({
+    projectId,
+    deploymentTargetId,
+    addonName,
+  }: {
+    projectId?: number;
+    deploymentTargetId: string;
+    addonName?: string;
+  }): {
+    addon: ClientAddon | undefined;
+    isLoading: boolean;
+    isError: boolean;
+  } => {
+    const { data, isLoading, isError } = useQuery(
+      ["getAddon", projectId, deploymentTargetId, addonName],
+      async () => {
+        if (!projectId || projectId === -1 || !addonName) {
+          return undefined;
+        }
+
+        const res = await api.getAddon(
+          "<token>",
+          {},
+          {
+            projectId,
+            deploymentTargetId,
+            addonName,
+          }
+        );
+
+        const parsed = await z
+          .object({
+            addon: z.string(),
+          })
+          .parseAsync(res.data);
+
+        const proto = Addon.fromJsonString(atob(parsed.addon), {
+          ignoreUnknownFields: true,
+        });
+
+        if (!proto) {
+          return undefined;
+        }
+
+        return clientAddonFromProto({
+          addon: proto,
+        });
+      },
+      {
+        enabled: !!projectId && projectId !== -1 && !!addonName,
+        retryDelay: 5000,
+      }
+    );
+
+    return {
+      addon: data,
+      isLoading,
+      isError,
+    };
+  };
+
   return {
     updateAddon,
     deleteAddon,
+    getAddon,
   };
 };
 

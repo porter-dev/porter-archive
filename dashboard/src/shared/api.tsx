@@ -1312,6 +1312,17 @@ const listAddons = baseApi<
   return `/api/projects/${projectId}/targets/${deploymentTargetId}/addons`;
 });
 
+const getAddon = baseApi<
+  {},
+  {
+    projectId: number;
+    deploymentTargetId: string;
+    addonName: string;
+  }
+>("GET", ({ projectId, deploymentTargetId, addonName }) => {
+  return `/api/projects/${projectId}/targets/${deploymentTargetId}/addons/${addonName}`;
+});
+
 const updateAddon = baseApi<
   {
     b64_addon: string;
@@ -2337,7 +2348,7 @@ const createEnvironmentGroups = baseApi<
     infisical_env?: {
       slug: string;
       path: string;
-    }
+    };
   },
   {
     id: number;
@@ -3819,6 +3830,7 @@ export default {
   getDeploymentTarget,
   getAppTemplate,
   listAddons,
+  getAddon,
   updateAddon,
   deleteAddon,
   getGitlabProcfileContents,

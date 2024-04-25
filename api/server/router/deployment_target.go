@@ -175,6 +175,35 @@ func getDeploymentTargetRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/targets/{deployment_target_identifier}/addons/{addon_name} -> addons.AddonHandler
+	addonEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/addons/{%s}", relPath, types.URLParamAddonName),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.DeploymentTargetScope,
+			},
+		},
+	)
+
+	addonHandler := addons.NewAddonHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: addonEndpoint,
+		Handler:  addonHandler,
+		Router:   r,
+	})
+
 	// POST /api/projects/{project_id}/targets/{deployment_target_identifier}/addons/update -> addons.UpdateAddonHandler
 	updateAddonEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

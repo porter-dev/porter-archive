@@ -62,6 +62,7 @@ export const AddonContextProvider: React.FC<AddonContextProviderProps> = ({
     projectId: currentProject?.id,
     deploymentTargetId: defaultDeploymentTarget.id,
     addonName,
+    refreshIntervalSeconds: 5,
   });
   const queryClient = useQueryClient();
 

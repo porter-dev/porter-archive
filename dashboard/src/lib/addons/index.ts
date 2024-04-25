@@ -385,3 +385,10 @@ export function clientAddonFromProto({
 
   return clientAddon;
 }
+
+export const tailscaleServiceValidator = z.object({
+  name: z.string(),
+  ip: z.string(),
+  port: z.number(),
+});
+export type ClientTailscaleService = z.infer<typeof tailscaleServiceValidator>;

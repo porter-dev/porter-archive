@@ -4,6 +4,7 @@ import MetabaseForm from "main/home/add-on-dashboard/metabase/MetabaseForm";
 import MezmoForm from "main/home/add-on-dashboard/mezmo/MezmoForm";
 import NewRelicForm from "main/home/add-on-dashboard/newrelic/NewRelicForm";
 import TailscaleForm from "main/home/add-on-dashboard/tailscale/TailscaleForm";
+import TailscaleOverview from "main/home/add-on-dashboard/tailscale/TailscaleOverview";
 
 import { type ClientAddon } from ".";
 
@@ -151,6 +152,11 @@ export const ADDON_TEMPLATE_TAILSCALE: AddonTemplate = {
   icon: "https://play-lh.googleusercontent.com/wczDL05-AOb39FcL58L32h6j_TrzzGTXDLlOrOmJ-aNsnoGsT1Gkk2vU4qyTb7tGxRw=w240-h480-rw",
   tags: ["Networking"],
   tabs: [
+    {
+      name: "overview",
+      displayName: "Overview",
+      component: TailscaleOverview,
+    },
     {
       name: "configuration",
       displayName: "Configuration",

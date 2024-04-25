@@ -180,10 +180,12 @@ export const useAddon = (): {
     projectId,
     deploymentTargetId,
     addonName,
+    refreshIntervalSeconds,
   }: {
     projectId?: number;
     deploymentTargetId: string;
     addonName?: string;
+    refreshIntervalSeconds?: number;
   }) => {
     addon: ClientAddon | undefined;
     isLoading: boolean;
@@ -237,10 +239,12 @@ export const useAddon = (): {
     projectId,
     deploymentTargetId,
     addonName,
+    refreshIntervalSeconds = 0,
   }: {
     projectId?: number;
     deploymentTargetId: string;
     addonName?: string;
+    refreshIntervalSeconds?: number;
   }): {
     addon: ClientAddon | undefined;
     isLoading: boolean;
@@ -284,6 +288,7 @@ export const useAddon = (): {
       {
         enabled: !!projectId && projectId !== -1 && !!addonName,
         retryDelay: 5000,
+        refetchInterval: refreshIntervalSeconds * 1000,
       }
     );
 

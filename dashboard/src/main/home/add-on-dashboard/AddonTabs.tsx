@@ -9,19 +9,18 @@ import Banner from "components/porter/Banner";
 import Spacer from "components/porter/Spacer";
 import TabSelector from "components/TabSelector";
 import { type ClientAddon } from "lib/addons";
+import {
+  DEFAULT_ADDON_TAB,
+  SUPPORTED_ADDON_TEMPLATES,
+} from "lib/addons/template";
 
 import { useAddonContext } from "./AddonContextProvider";
 import AddonSaveButton from "./AddonSaveButton";
-import Configuration from "./common/Configuration";
-import Settings from "./common/Settings";
-
-const validTabs = ["configuration", "settings", "advanced"] as const;
-const DEFAULT_TAB = "configuration" as const;
-type ValidTab = (typeof validTabs)[number];
 
 type Props = {
   tabParam?: string;
 };
+
 const AddonTabs: React.FC<Props> = ({ tabParam }) => {
   const history = useHistory();
   const { addon } = useAddonContext();
@@ -35,28 +34,33 @@ const AddonTabs: React.FC<Props> = ({ tabParam }) => {
     reset(addon);
   }, [addon]);
 
+  const addonTemplate = useMemo(() => {
+    return SUPPORTED_ADDON_TEMPLATES.find(
+      (template) => template.type === addon.config.type
+    );
+  }, [addon]);
+
   const tabs = useMemo(() => {
-    const tabs = [
+    if (addonTemplate) {
+      return addonTemplate.tabs.map((tab) => ({
+        label: tab.displayName,
+        value: tab.name,
+      }));
+    }
+    return [
       {
-        label: "Configuration",
-        value: "configuration" as ValidTab,
-      },
-      {
-        label: "Settings",
-        value: "settings" as ValidTab,
+        label: DEFAULT_ADDON_TAB.displayName,
+        value: DEFAULT_ADDON_TAB.name,
       },
     ];
-
-    return tabs;
-  }, []);
+  }, [addonTemplate]);
 
   const currentTab = useMemo(() => {
-    if (tabParam && validTabs.includes(tabParam as ValidTab)) {
-      return tabParam as ValidTab;
+    if (tabParam && tabs.some((tab) => tab.value === tabParam)) {
+      return tabParam;
     }
-
-    return DEFAULT_TAB;
-  }, [tabParam]);
+    return tabs[0].value;
+  }, [tabParam, tabs]);
 
   return (
     <DashboardWrapper>
@@ -83,10 +87,11 @@ const AddonTabs: React.FC<Props> = ({ tabParam }) => {
         }}
       />
       <Spacer y={1} />
-      {match(currentTab)
-        .with("configuration", () => <Configuration type={addon.config.type} />)
-        .with("settings", () => <Settings />)
-        .otherwise(() => null)}
+      {addonTemplate?.tabs.map((tab) =>
+        match(currentTab)
+          .with(tab.name, () => <tab.component key={tab.name} />)
+          .otherwise(() => null)
+      )}
     </DashboardWrapper>
   );
 };

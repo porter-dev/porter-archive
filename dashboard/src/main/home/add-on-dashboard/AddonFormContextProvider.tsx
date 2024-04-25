@@ -69,7 +69,7 @@ const AddonFormContextProvider: React.FC<AddonFormContextProviderProps> = ({
         addon: data,
       });
 
-      await queryClient.invalidateQueries(["listAddons"]);
+      await queryClient.invalidateQueries(["getAddon"]);
 
       if (redirectOnSubmit) {
         history.push(`/addons/${data.name.value}`);

@@ -1323,6 +1323,16 @@ const getAddon = baseApi<
   return `/api/projects/${projectId}/targets/${deploymentTargetId}/addons/${addonName}`;
 });
 
+const getTailscaleServices = baseApi<
+  {},
+  {
+    projectId: number;
+    deploymentTargetId: string;
+  }
+>("GET", ({ projectId, deploymentTargetId }) => {
+  return `/api/projects/${projectId}/targets/${deploymentTargetId}/addons/tailscale-services`;
+});
+
 const updateAddon = baseApi<
   {
     b64_addon: string;
@@ -3831,6 +3841,7 @@ export default {
   getAppTemplate,
   listAddons,
   getAddon,
+  getTailscaleServices,
   updateAddon,
   deleteAddon,
   getGitlabProcfileContents,

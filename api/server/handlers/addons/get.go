@@ -1,10 +1,12 @@
 package addons
 
 import (
+	"encoding/base64"
 	"net/http"
 
 	"connectrpc.com/connect"
 	"github.com/google/uuid"
+	"github.com/porter-dev/api-contracts/generated/go/helpers"
 	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
@@ -34,7 +36,7 @@ func NewAddonHandler(
 
 // AddonResponse represents the response from the /addons/{addon_name} endpoints
 type AddonResponse struct {
-	Addon *porterv1.Addon `json:"addon"`
+	Addon string `json:"addon"`
 }
 
 func (c *AddonHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -50,6 +52,8 @@ func (c *AddonHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
+
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "addon-name", Value: addonName})
 
 	var deploymentTargetIdentifier *porterv1.DeploymentTargetIdentifier
 	if deploymentTarget.ID != uuid.Nil {
@@ -83,8 +87,17 @@ func (c *AddonHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	by, err := helpers.MarshalContractObject(ctx, resp.Msg.Addon)
+	if err != nil {
+		err = telemetry.Error(ctx, span, err, "error marshaling addon")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+
+	encoded := base64.StdEncoding.EncodeToString(by)
+
 	res := &AddonResponse{
-		Addon: resp.Msg.Addon,
+		Addon: encoded,
 	}
 
 	c.WriteResult(w, r, res)

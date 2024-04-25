@@ -587,6 +587,16 @@ func (a *Agent) GetSecret(name string, namespace string) (*v1.Secret, error) {
 	)
 }
 
+// ListServices lists services in a namespace
+func (a *Agent) ListServices(ctx context.Context, namespace string, labelSelector string) (*v1.ServiceList, error) {
+	return a.Clientset.CoreV1().Services(namespace).List(
+		ctx,
+		metav1.ListOptions{
+			LabelSelector: labelSelector,
+		},
+	)
+}
+
 // CreateSecret creates the secret given its name and namespace
 func (a *Agent) CreateSecret(secret *v1.Secret, namespace string) (*v1.Secret, error) {
 	_, err := a.Clientset.CoreV1().Secrets(namespace).Get(
@@ -1924,7 +1934,6 @@ func (a *Agent) StreamPorterAgentLokiLog(
 				Stdout: rw,
 				Stderr: rw,
 			})
-
 			if err != nil {
 				errorchan <- err
 				return
@@ -1984,7 +1993,6 @@ func (a *Agent) CreateImagePullSecrets(
 				},
 				metav1.CreateOptions{},
 			)
-
 			if err != nil {
 				return nil, err
 			}

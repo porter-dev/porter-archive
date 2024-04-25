@@ -53,10 +53,6 @@ const AddonDashboard: React.FC = () => {
     deploymentTarget: defaultDeploymentTarget,
   });
 
-  // const filteredAddons = useMemo(() => {
-  //   return addons.filter(isDisplayableAddon);
-  // }, [addons]);
-
   const filteredAddons: Array<ClientAddon | LegacyClientAddon> = useMemo(() => {
     const displayableAddons = addons.filter(isDisplayableAddon);
     const legacyDisplayableAddons = legacyAddons.sort((a, b) => {

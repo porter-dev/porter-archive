@@ -87,5 +87,6 @@ func AutoMigrate(db *gorm.DB, debug bool) error {
 		&ints.SlackIntegration{},
 		&models.Ipam{},
 		&models.AppEventWebhooks{},
+		&models.ClusterHealthReport{},
 	)
 }

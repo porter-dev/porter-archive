@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"time"
 
 	"connectrpc.com/connect"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
 	"github.com/porter-dev/porter/api/server/authz"
@@ -83,10 +85,25 @@ func (p *PrometheusAlertWebhookHandler) handlePrometheusAlert(ctx context.Contex
 		if alert.Labels["alertname"] == "NoopAlert" {
 			continue
 		}
+		startTime, err := time.Parse(time.RFC3339, alert.StartsAt)
+		if err != nil {
+			return telemetry.Error(ctx, span, err, "error parsing alert start time")
+		}
+		endTime, err := time.Parse(time.RFC3339, alert.EndsAt)
+		if err != nil {
+			return telemetry.Error(ctx, span, err, "error parsing alert end time")
+		}
+		var endTimestamp *timestamppb.Timestamp
+		if endTime.After(startTime) {
+			endTimestamp = timestamppb.New(endTime)
+		}
 		recordPrometheusAlertRequest.Msg.Alerts = append(recordPrometheusAlertRequest.Msg.Alerts, &porterv1.Alert{
 			Name:      alert.Labels["name"],
 			Namespace: alert.Labels["namespace"],
 			Type:      p.getType(alert),
+			Severity:  alert.Labels["severity"],
+			StartTime: timestamppb.New(startTime),
+			EndTime:   endTimestamp,
 		})
 	}
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "porter-app-alert-labels", Value: labelKeyValues})

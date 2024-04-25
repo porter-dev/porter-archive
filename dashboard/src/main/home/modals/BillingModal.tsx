@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useContext } from "react";
 import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 
@@ -25,21 +25,11 @@ const BillingModal = ({
   const { currentProject } = useContext(Context);
   const { publishableKey } = usePublishableKey();
 
-  const [showIntercom, setShowIntercom] = useState(false);
   const { showIntercomWithMessage } = useIntercom();
-
-  if (showIntercom) {
-    showIntercomWithMessage({
-      message: "I have already redeemed my startup deal.",
-      delaySeconds: 0,
-    });
-    setShowIntercom(false);
-  }
 
   let stripePromise;
   if (publishableKey) {
     stripePromise = loadStripe(publishableKey);
-
   }
 
   const appearance = {
@@ -91,14 +81,16 @@ const BillingModal = ({
                 <div>
                   Your applications will continue to run but you will not be able to access your project until you link a payment method.
                   {" "}
-                  <Text style={{ cursor: "pointer" }} onClick={() => setShowIntercom(true)}>
+                  <Text style={{ cursor: "pointer" }} onClick={() => showIntercomWithMessage({
+                    message: "I have already redeemed my startup deal.",
+                    delaySeconds: 0,
+                  })}>
                     Already redeemed your startup deal?
                   </Text>
                 </div>
               )
               : "Link a payment method to your Porter project."}
-            <br />
-            <br />
+            <Spacer y={0.5} />
             {`You can learn more about our pricing under "For Businesses" `}
             <Link target="_blank" to="https://porter.run/pricing">
               here
@@ -107,17 +99,18 @@ const BillingModal = ({
         )}
         <Spacer y={1} />
         {
-          publishableKey ? <Elements
-            stripe={stripePromise}
-            options={options}
-            appearance={appearance}
-          >
-            <PaymentSetupForm onCreate={onCreate}></PaymentSetupForm>
-          </Elements> : null
+          publishableKey ? (
+            <Elements
+              stripe={stripePromise || null}
+              options={options}
+              appearance={appearance}
+            >
+              <PaymentSetupForm onCreate={onCreate}></PaymentSetupForm>
+            </Elements>
+          ) : null
         }
-
       </div>
-    </Modal>
+    </Modal >
   );
 };
 

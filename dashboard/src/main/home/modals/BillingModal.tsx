@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { useContext, useState } from "react";
 import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 
@@ -7,6 +7,7 @@ import Modal from "components/porter/Modal";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import { usePublishableKey } from "lib/hooks/useStripe";
+import { useIntercom } from "lib/hooks/useIntercom";
 
 import { Context } from "shared/Context";
 
@@ -23,6 +24,17 @@ const BillingModal = ({
 }): JSX.Element => {
   const { currentProject } = useContext(Context);
   const { publishableKey } = usePublishableKey();
+
+  const [showIntercom, setShowIntercom] = useState(false);
+  const { showIntercomWithMessage } = useIntercom();
+
+  if (showIntercom) {
+    showIntercomWithMessage({
+      message: "I have already redeemed my startup deal and need help linking my payment method.",
+      delaySeconds: 0,
+    });
+    setShowIntercom(false);
+  }
 
   let stripePromise;
   if (publishableKey) {
@@ -75,7 +87,15 @@ const BillingModal = ({
         ) : (
           <Text color="helper">
             {trialExpired
-              ? `Your applications will continue to run but you will not be able to access your project until you link a payment method. `
+              ? (
+                <div>
+                  Your applications will continue to run but you will not be able to access your project until you link a payment method.
+                  {" "}
+                  <Text style={{ cursor: "pointer" }} onClick={() => setShowIntercom(true)}>
+                    Already redeemed your startup deal?
+                  </Text>
+                </div>
+              )
               : "Link a payment method to your Porter project."}
             <br />
             <br />

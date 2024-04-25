@@ -387,7 +387,8 @@ const Home: React.FC<Props> = (props) => {
   };
 
   const showCardBanner = !hasPaymentEnabled;
-  const trialExpired = plan && isTrialExpired(plan.trial_info.ending_before);
+  // const trialExpired = plan && isTrialExpired(plan.trial_info.ending_before);
+  const trialExpired = true;
 
   return (
     <ThemeProvider

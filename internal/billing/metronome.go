@@ -54,11 +54,15 @@ func (m MetronomeClient) CreateCustomerWithPlan(ctx context.Context, userEmail s
 	defer span.End()
 
 	planID := m.PorterStandardPlanID
+	projID := strconv.FormatUint(uint64(projectID), 10)
 	if sandboxEnabled {
 		planID = m.PorterCloudPlanID
+
+		// This is necessary to avoid conflicts with Porter standard projects
+		projID = fmt.Sprintf("porter-cloud-%s", projID)
 	}
 
-	customerID, err = m.createCustomer(ctx, userEmail, projectName, projectID, billingID)
+	customerID, err = m.createCustomer(ctx, userEmail, projectName, projID, billingID)
 	if err != nil {
 		return customerID, customerPlanID, telemetry.Error(ctx, span, err, fmt.Sprintf("error while creating customer with plan %s", planID))
 	}
@@ -69,17 +73,16 @@ func (m MetronomeClient) CreateCustomerWithPlan(ctx context.Context, userEmail s
 }
 
 // createCustomer will create the customer in Metronome
-func (m MetronomeClient) createCustomer(ctx context.Context, userEmail string, projectName string, projectID uint, billingID string) (customerID uuid.UUID, err error) {
+func (m MetronomeClient) createCustomer(ctx context.Context, userEmail string, projectName string, projectID string, billingID string) (customerID uuid.UUID, err error) {
 	ctx, span := telemetry.NewSpan(ctx, "create-metronome-customer")
 	defer span.End()
 
 	path := "customers"
-	projIDStr := strconv.FormatUint(uint64(projectID), 10)
 
 	customer := types.Customer{
 		Name: projectName,
 		Aliases: []string{
-			projIDStr,
+			projectID,
 		},
 		BillingConfig: types.BillingConfig{
 			BillingProviderType:       "stripe",
@@ -87,7 +90,7 @@ func (m MetronomeClient) createCustomer(ctx context.Context, userEmail string, p
 			StripeCollectionMethod:    defaultCollectionMethod,
 		},
 		CustomFields: map[string]string{
-			"project_id": projIDStr,
+			"project_id": projectID,
 			"user_email": userEmail,
 		},
 	}

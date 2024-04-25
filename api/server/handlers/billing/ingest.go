@@ -2,6 +2,7 @@
 package billing
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -35,12 +36,13 @@ func (c *IngestEventsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 
 	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
-	if !c.Config().BillingManager.MetronomeEnabled || !proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient) {
+	if !c.Config().BillingManager.MetronomeConfigLoaded || !proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient) {
 		c.WriteResult(w, r, "")
 
 		telemetry.WithAttributes(span,
-			telemetry.AttributeKV{Key: "metronome-config-exists", Value: c.Config().BillingManager.MetronomeEnabled},
+			telemetry.AttributeKV{Key: "metronome-config-exists", Value: c.Config().BillingManager.MetronomeConfigLoaded},
 			telemetry.AttributeKV{Key: "metronome-enabled", Value: proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient)},
+			telemetry.AttributeKV{Key: "porter-cloud-enabled", Value: proj.EnableSandbox},
 		)
 		return
 	}
@@ -63,6 +65,13 @@ func (c *IngestEventsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	telemetry.WithAttributes(span,
 		telemetry.AttributeKV{Key: "usage-events-count", Value: len(ingestEventsRequest.Events)},
 	)
+
+	// For Porter Cloud events, we apend a prefix to avoid collisions before sending to Metronome
+	if proj.EnableSandbox {
+		for i := range ingestEventsRequest.Events {
+			ingestEventsRequest.Events[i].CustomerID = fmt.Sprintf("porter-cloud-%s", ingestEventsRequest.Events[i].CustomerID)
+		}
+	}
 
 	err := c.Config().BillingManager.MetronomeClient.IngestEvents(ctx, ingestEventsRequest.Events)
 	if err != nil {

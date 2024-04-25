@@ -215,7 +215,7 @@ const Home: React.FC<Props> = (props) => {
       } else {
         setHasFinishedOnboarding(true);
       }
-    } catch (error) {}
+    } catch (error) { }
   };
 
   useEffect(() => {
@@ -423,7 +423,7 @@ const Home: React.FC<Props> = (props) => {
                     >
                       connect a valid payment method
                     </Link>
-                    . Your free trial is ending in{" "}
+                    . Your free trial is ending {" "}
                     {relativeDate(plan.trial_info.ending_before, true)}.
                   </GlobalBanner>
                 )}

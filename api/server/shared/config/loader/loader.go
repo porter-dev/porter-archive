@@ -360,10 +360,10 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 
 	res.Logger.Info().Msg("Creating billing manager")
 	res.BillingManager = billing.Manager{
-		StripeClient:     stripeClient,
-		StripeEnabled:    stripeEnabled,
-		MetronomeClient:  metronomeClient,
-		MetronomeEnabled: metronomeEnabled,
+		StripeClient:          stripeClient,
+		StripeConfigLoaded:    stripeEnabled,
+		MetronomeClient:       metronomeClient,
+		MetronomeConfigLoaded: metronomeEnabled,
 	}
 	res.Logger.Info().Msg("Created billing manager")
 

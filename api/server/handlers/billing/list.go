@@ -166,7 +166,7 @@ func (c *CheckPaymentEnabledHandler) ensureStripeCustomerExists(ctx context.Cont
 	ctx, span := telemetry.NewSpan(ctx, "ensure-stripe-customer-exists")
 	defer span.End()
 
-	if !c.Config().BillingManager.StripeEnabled || !proj.GetFeatureFlag(models.BillingEnabled, c.Config().LaunchDarklyClient) || proj.BillingID != "" {
+	if !c.Config().BillingManager.StripeConfigLoaded || !proj.GetFeatureFlag(models.BillingEnabled, c.Config().LaunchDarklyClient) || proj.BillingID != "" {
 		return nil
 	}
 
@@ -193,7 +193,7 @@ func (c *CheckPaymentEnabledHandler) ensureMetronomeCustomerExists(ctx context.C
 	ctx, span := telemetry.NewSpan(ctx, "ensure-metronome-customer-exists")
 	defer span.End()
 
-	if !c.Config().BillingManager.MetronomeEnabled || !proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient) || proj.UsageID != uuid.Nil {
+	if !c.Config().BillingManager.MetronomeConfigLoaded || !proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient) || proj.UsageID != uuid.Nil {
 		return nil
 	}
 

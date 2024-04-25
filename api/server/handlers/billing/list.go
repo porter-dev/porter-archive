@@ -115,24 +115,15 @@ func (c *CheckPaymentEnabledHandler) ensureBillingSetup(ctx context.Context, pro
 		}
 
 		// Create billing customer for project and set the billing ID if it doesn't exist
-		shouldUpdateBilling, err := c.ensureStripeCustomerExists(ctx, adminUser.Email, proj)
+		err = c.ensureStripeCustomerExists(ctx, adminUser.Email, proj)
 		if err != nil {
 			return telemetry.Error(ctx, span, err, "error ensuring Stripe customer exists")
 		}
 
 		// Create usage customer for project and set the usage ID if it doesn't exist
-		shouldUpdateUsage, err := c.ensureMetronomeCustomerExists(ctx, adminUser.Email, proj)
+		err = c.ensureMetronomeCustomerExists(ctx, adminUser.Email, proj)
 		if err != nil {
 			return telemetry.Error(ctx, span, err, "error ensuring Metronome customer exists")
-		}
-
-		if !shouldUpdateBilling && !shouldUpdateUsage {
-			return nil
-		}
-
-		_, err = c.Repo().Project().UpdateProject(proj)
-		if err != nil {
-			return telemetry.Error(ctx, span, err, "error updating project")
 		}
 	}
 
@@ -171,17 +162,17 @@ func (c *CheckPaymentEnabledHandler) getAdminUser(ctx context.Context, projectID
 	return adminUser, nil
 }
 
-func (c *CheckPaymentEnabledHandler) ensureStripeCustomerExists(ctx context.Context, adminUserEmail string, proj *models.Project) (shouldUpdate bool, err error) {
+func (c *CheckPaymentEnabledHandler) ensureStripeCustomerExists(ctx context.Context, adminUserEmail string, proj *models.Project) (err error) {
 	ctx, span := telemetry.NewSpan(ctx, "ensure-stripe-customer-exists")
 	defer span.End()
 
-	if proj.BillingID != "" {
-		return false, nil
+	if !c.Config().BillingManager.StripeEnabled || !proj.GetFeatureFlag(models.BillingEnabled, c.Config().LaunchDarklyClient) || proj.BillingID != "" {
+		return nil
 	}
 
 	billingID, err := c.Config().BillingManager.StripeClient.CreateCustomer(ctx, adminUserEmail, proj.ID, proj.Name)
 	if err != nil {
-		return false, telemetry.Error(ctx, span, err, "error creating billing customer")
+		return telemetry.Error(ctx, span, err, "error creating billing customer")
 	}
 
 	telemetry.WithAttributes(span,
@@ -189,24 +180,26 @@ func (c *CheckPaymentEnabledHandler) ensureStripeCustomerExists(ctx context.Cont
 	)
 
 	proj.BillingID = billingID
-	return true, nil
+
+	_, err = c.Repo().Project().UpdateProject(proj)
+	if err != nil {
+		return telemetry.Error(ctx, span, err, "error updating project")
+	}
+
+	return nil
 }
 
-func (c *CheckPaymentEnabledHandler) ensureMetronomeCustomerExists(ctx context.Context, adminUserEmail string, proj *models.Project) (shouldUpdate bool, err error) {
+func (c *CheckPaymentEnabledHandler) ensureMetronomeCustomerExists(ctx context.Context, adminUserEmail string, proj *models.Project) (err error) {
 	ctx, span := telemetry.NewSpan(ctx, "ensure-metronome-customer-exists")
 	defer span.End()
 
-	if proj.UsageID != uuid.Nil {
-		return false, nil
-	}
-
 	if !c.Config().BillingManager.MetronomeEnabled || !proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient) || proj.UsageID != uuid.Nil {
-		return false, nil
+		return nil
 	}
 
 	customerID, customerPlanID, err := c.Config().BillingManager.MetronomeClient.CreateCustomerWithPlan(ctx, adminUserEmail, proj.Name, proj.ID, proj.BillingID, proj.EnableSandbox)
 	if err != nil {
-		return false, telemetry.Error(ctx, span, err, "error creating Metronome customer")
+		return telemetry.Error(ctx, span, err, "error creating Metronome customer")
 	}
 
 	telemetry.WithAttributes(span,
@@ -216,5 +209,11 @@ func (c *CheckPaymentEnabledHandler) ensureMetronomeCustomerExists(ctx context.C
 
 	proj.UsageID = customerID
 	proj.UsagePlanID = customerPlanID
-	return true, nil
+
+	_, err = c.Repo().Project().UpdateProject(proj)
+	if err != nil {
+		return telemetry.Error(ctx, span, err, "error updating project")
+	}
+
+	return nil
 }

@@ -30,7 +30,7 @@ const BillingModal = ({
 
   if (showIntercom) {
     showIntercomWithMessage({
-      message: "I have already redeemed my startup deal and need help linking my payment method.",
+      message: "I have already redeemed my startup deal.",
       delaySeconds: 0,
     });
     setShowIntercom(false);

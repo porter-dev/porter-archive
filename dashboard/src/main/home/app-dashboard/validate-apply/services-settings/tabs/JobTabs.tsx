@@ -18,19 +18,19 @@ type Props = {
   index: number;
   service: ClientService & {
     config: {
-      type: "job" | "predeploy";
+      type: "job" | "predeploy" | "initdeploy";
     };
   };
-  isPredeploy?: boolean;
+  lifecycleJobType?: "predeploy" | "initdeploy";
 };
 
-const JobTabs: React.FC<Props> = ({ index, service, isPredeploy }) => {
+const JobTabs: React.FC<Props> = ({ index, service, lifecycleJobType }) => {
   const { control, register } = useFormContext<PorterAppFormData>();
   const [currentTab, setCurrentTab] = React.useState<
     "main" | "resources" | "advanced"
   >("main");
 
-  const tabs = isPredeploy
+  const tabs = lifecycleJobType
     ? [
         { label: "Main", value: "main" as const },
         { label: "Resources", value: "resources" as const },
@@ -50,13 +50,17 @@ const JobTabs: React.FC<Props> = ({ index, service, isPredeploy }) => {
       />
       {match(currentTab)
         .with("main", () => (
-          <MainTab index={index} service={service} isPredeploy={isPredeploy} />
+          <MainTab
+            index={index}
+            service={service}
+            lifecycleJobType={lifecycleJobType}
+          />
         ))
         .with("resources", () => (
           <Resources
             index={index}
             service={service}
-            isPredeploy={isPredeploy}
+            lifecycleJobType={lifecycleJobType}
           />
         ))
         .with(

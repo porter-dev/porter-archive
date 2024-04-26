@@ -23,13 +23,13 @@ import IntelligentSlider from "./IntelligentSlider";
 type ResourcesProps = {
   index: number;
   service: ClientService;
-  isPredeploy?: boolean;
+  lifecycleJobType?: "predeploy" | "initdeploy";
 };
 
 const Resources: React.FC<ResourcesProps> = ({
   index,
   service,
-  isPredeploy = false,
+  lifecycleJobType,
 }) => {
   const { control, register, watch } = useFormContext<PorterAppFormData>();
   const { currentProject } = useContext(Context);
@@ -69,8 +69,10 @@ const Resources: React.FC<ResourcesProps> = ({
       )}
       <Controller
         name={
-          isPredeploy
+          lifecycleJobType === "predeploy"
             ? `app.predeploy.${index}.cpuCores`
+            : lifecycleJobType === "initdeploy"
+            ? `app.initialDeploy.${index}.cpuCores`
             : `app.services.${index}.cpuCores`
         }
         control={control}
@@ -102,8 +104,10 @@ const Resources: React.FC<ResourcesProps> = ({
       <Spacer y={1} />
       <Controller
         name={
-          isPredeploy
+          lifecycleJobType === "predeploy"
             ? `app.predeploy.${index}.ramMegabytes`
+            : lifecycleJobType === "initdeploy"
+            ? `app.initialDeploy.${index}.ramMegabytes`
             : `app.services.${index}.ramMegabytes`
         }
         control={control}
@@ -168,6 +172,7 @@ const Resources: React.FC<ResourcesProps> = ({
       {match(service.config)
         .with({ type: "job" }, () => null)
         .with({ type: "predeploy" }, () => null)
+        .with({ type: "initdeploy" }, () => null)
         .otherwise((config) => (
           <>
             <Spacer y={1} />

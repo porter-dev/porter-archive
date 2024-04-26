@@ -7,7 +7,7 @@ import {
   PorterApp,
   Service,
 } from "@porter-dev/api-contracts";
-import { match } from "ts-pattern";
+import { match, P } from "ts-pattern";
 import { z } from "zod";
 
 import { BUILDPACK_TO_NAME } from "main/home/app-dashboard/types/buildpack";
@@ -64,6 +64,11 @@ export const deletionValidator = z.object({
       name: z.string(),
     })
     .array(),
+  initialDeploy: z
+    .object({
+      name: z.string(),
+    })
+    .array(),
   envGroupNames: z
     .object({
       name: z.string(),
@@ -106,6 +111,7 @@ export const clientAppValidator = z.object({
     .default([]),
   services: serviceValidator.array(),
   predeploy: serviceValidator.array().optional(),
+  initialDeploy: serviceValidator.array().optional(),
   env: z
     .object({
       key: z.string(),
@@ -236,41 +242,100 @@ export function serviceOverrides({
     };
   }
 
-  if (useDefaults) {
-    return {
-      build: validatedBuild,
-      services,
-      predeploy: deserializeService({
-        service: defaultSerialized({
-          name: "pre-deploy",
-          type: "predeploy",
-          defaultCPU,
-          defaultRAM,
-        }),
-        override: serializedServiceFromProto({
+  const predeploy = match({
+    overrides: overrides.predeploy,
+    useDefaults,
+  })
+    .with(
+      {
+        overrides: P.nullish,
+      },
+      () => undefined
+    )
+    .with(
+      {
+        useDefaults: true,
+      },
+      () =>
+        deserializeService({
+          service: defaultSerialized({
+            name: "pre-deploy",
+            type: "predeploy",
+            defaultCPU,
+            defaultRAM,
+          }),
+          override: serializedServiceFromProto({
+            service: new Service({
+              ...overrides.predeploy,
+              name: "pre-deploy",
+            }),
+            isPredeploy: true,
+          }),
+          expanded: true,
+        })
+    )
+    .otherwise(() =>
+      deserializeService({
+        service: serializedServiceFromProto({
           service: new Service({
-            ...overrides.predeploy,
+            ...(overrides.predeploy ?? {}),
             name: "pre-deploy",
           }),
           isPredeploy: true,
         }),
-        expanded: true,
-      }),
-    };
-  }
+      })
+    );
+
+  const initialDeploy = match({
+    overrides: overrides.initialDeploy,
+    useDefaults,
+  })
+    .with(
+      {
+        overrides: P.nullish,
+      },
+      () => undefined
+    )
+    .with(
+      {
+        useDefaults: true,
+      },
+      () =>
+        deserializeService({
+          service: defaultSerialized({
+            name: "initdeploy",
+            type: "initdeploy",
+            defaultCPU,
+            defaultRAM,
+          }),
+          override: serializedServiceFromProto({
+            service: new Service({
+              ...(overrides.initialDeploy ?? {}),
+              name: "initdeploy",
+            }),
+            isPredeploy: false,
+            isInitdeploy: true,
+          }),
+          expanded: true,
+        })
+    )
+    .otherwise(() =>
+      deserializeService({
+        service: serializedServiceFromProto({
+          service: new Service({
+            ...(overrides.initialDeploy ?? {}),
+            name: "initdeploy",
+          }),
+          isInitdeploy: true,
+        }),
+      })
+    );
 
   return {
     build: validatedBuild,
     services,
-    predeploy: deserializeService({
-      service: serializedServiceFromProto({
-        service: new Service({
-          ...overrides.predeploy,
-          name: "pre-deploy",
-        }),
-        isPredeploy: true,
-      }),
-    }),
+    predeploy,
+    initialDeploy,
   };
 }
 
@@ -312,6 +377,9 @@ export function clientAppToProto(data: PorterAppFormData): PorterApp {
   const predeploy = app.predeploy?.[0]?.run.value
     ? app.predeploy[0]
     : undefined;
+  const initialDeploy = app.initialDeploy?.[0]?.run.value
+    ? app.initialDeploy[0]
+    : undefined;
 
   const proto = match(source)
     .with(
@@ -328,6 +396,9 @@ export function clientAppToProto(data: PorterAppFormData): PorterApp {
           build: clientBuildToProto(app.build),
           ...(predeploy && {
             predeploy: serviceProto(serializeService(predeploy)),
+          }),
+          ...(initialDeploy && {
+            initialDeploy: serviceProto(serializeService(initialDeploy)),
           }),
           helmOverrides:
             app.helmOverrides != null
@@ -477,7 +548,35 @@ export function clientAppFromProto({
       });
     });
 
-  const predeployList = [];
+  const predeployList = (proto.predeploy ? [proto.predeploy] : [])
+    .map((service) =>
+      serializedServiceFromProto({ service, isPredeploy: true })
+    )
+    .map((svc) => {
+      const override = overrides?.predeploy;
+      if (override) {
+        return deserializeService({
+          service: svc,
+          override: serializeService(override),
+        });
+      }
+
+      return deserializeService({
+        service: svc,
+        lockDeletions: lockServiceDeletions,
+      });
+    });
+  const initialDeployList = (proto.initialDeploy ? [proto.initialDeploy] : [])
+    .map((service) =>
+      serializedServiceFromProto({ service, isInitdeploy: true })
+    )
+    .map((svc) => {
+      return deserializeService({
+        service: svc,
+        lockDeletions: lockServiceDeletions,
+      });
+    });
+
   const parsedEnv: KeyValueType[] = [
     ...Object.entries(variables).map(([key, value]) => ({
       key,
@@ -498,83 +597,14 @@ export function clientAppFromProto({
   const helmOverrides =
     proto.helmOverrides == null ? "" : atob(proto.helmOverrides.b64Values);
 
-  if (proto.predeploy) {
-    predeployList.push(
-      deserializeService({
-        service: serializedServiceFromProto({
-          service: new Service({
-            ...proto.predeploy,
-            name: "pre-deploy",
-          }),
-          isPredeploy: true,
-        }),
-        lockDeletions: lockServiceDeletions,
-      })
-    );
-  }
-  if (!overrides?.predeploy) {
-    return {
-      name: {
-        readOnly: true,
-        value: proto.name,
-      },
-      services,
-      predeploy: predeployList,
-      env: parsedEnv,
-      envGroups: proto.envGroups.map((eg) => ({
-        name: eg.name,
-        version: eg.version,
-      })),
-      build: clientBuildFromProto(proto.build) ?? {
-        method: "pack",
-        context: "./",
-        buildpacks: [],
-        builder: "",
-      },
-      helmOverrides,
-      efsStorage: new EFS({
-        enabled: proto.efsStorage?.enabled ?? false,
-      }),
-      cloudSql: {
-        enabled: proto.cloudSql?.enabled ?? false,
-        connectionName: proto.cloudSql?.connectionName ?? "",
-        serviceAccountJsonSecret:
-          proto.cloudSql?.serviceAccountJsonSecret ?? "",
-        dbPort: proto.cloudSql?.dbPort ?? 5432,
-      },
-      requiredApps: proto.requiredApps.map((app) => ({
-        name: app.name,
-      })),
-      autoRollback: {
-        enabled: proto.autoRollback?.enabled ?? true, // enabled by default if not found in proto
-        readOnly: false, // TODO: detect autorollback from porter.yaml
-      },
-    };
-  }
-
-  const predeployOverrides = serializeService(overrides.predeploy);
-  const predeploy = proto.predeploy
-    ? [
-        deserializeService({
-          service: serializedServiceFromProto({
-            service: new Service({
-              ...proto.predeploy,
-              name: "pre-deploy",
-            }),
-            isPredeploy: true,
-          }),
-          override: predeployOverrides,
-        }),
-      ]
-    : undefined;
-
   return {
     name: {
       readOnly: true,
       value: proto.name,
     },
     services,
-    predeploy,
+    predeploy: predeployList.length ? predeployList : undefined,
+    initialDeploy: initialDeployList.length ? initialDeployList : undefined,
     env: parsedEnv,
     envGroups: proto.envGroups.map((eg) => ({
       name: eg.name,

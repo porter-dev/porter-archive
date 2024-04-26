@@ -118,6 +118,7 @@ export const PreviewAppDataContainer: React.FC<Props> = ({
         serviceNames: [],
         envGroupNames: [],
         predeploy: [],
+        initialDeploy: [],
       },
       addons: [],
     },
@@ -281,6 +282,7 @@ export const PreviewAppDataContainer: React.FC<Props> = ({
         serviceNames: [],
         envGroupNames: [],
         predeploy: [],
+        initialDeploy: [],
       },
       addons: existingAddonsWithEnv,
     });
@@ -315,12 +317,7 @@ export const PreviewAppDataContainer: React.FC<Props> = ({
           .with("services", () => (
             <ServiceSettings buttonStatus={buttonStatus} />
           ))
-          .with("variables", () => (
-            <Environment
-              latestSource={latestSource}
-              buttonStatus={buttonStatus}
-            />
-          ))
+          .with("variables", () => <Environment buttonStatus={buttonStatus} />)
           .with("required-apps", () => (
             <RequiredApps buttonStatus={buttonStatus} />
           ))

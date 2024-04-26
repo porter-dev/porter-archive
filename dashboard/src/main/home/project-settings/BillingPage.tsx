@@ -17,7 +17,7 @@ import {
   usePorterCredits,
   useSetDefaultPaymentMethod,
 } from "lib/hooks/useStripe";
-import { relativeDate } from "shared/string_utils";
+import { intlFormat, intlFormatDistance } from "date-fns";
 
 import { Context } from "shared/Context";
 import cardIcon from "assets/credit-card.svg";
@@ -81,8 +81,6 @@ function BillingPage(): JSX.Element {
   const formatCredits = (credits: number): string => {
     return (credits / 100).toFixed(2);
   };
-
-  const readableDate = (s: string): string => new Date(s).toLocaleDateString();
 
   const onCreate = async (): Promise<void> => {
     await refetchPaymentMethods({ throwOnError: false, cancelRefetch: false });
@@ -233,10 +231,10 @@ function BillingPage(): JSX.Element {
                         plan.trial_info.ending_before !== "" ? (
                         <Text>
                           Free trial ends{" "}
-                          {relativeDate(plan.trial_info.ending_before, true)}
+                          {intlFormatDistance(Date.parse(plan.trial_info.ending_before), new Date())}
                         </Text>
                       ) : (
-                        <Text>Started on {readableDate(plan.starting_on)}</Text>
+                        <Text>Started on {intlFormat(Date.parse(plan.starting_on))}</Text>
                       )}
                     </Container>
                   </Container>

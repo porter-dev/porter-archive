@@ -24,7 +24,7 @@ import { fakeGuardedRoute } from "shared/auth/RouteGuard";
 import { Context } from "shared/Context";
 import DeploymentTargetProvider from "shared/DeploymentTargetContext";
 import { pushFiltered, pushQueryParams, type PorterUrl } from "shared/routing";
-import { relativeDate, timeFrom } from "shared/string_utils";
+import { intlFormatDistance, isPast } from "date-fns";
 import midnight from "shared/themes/midnight";
 import standard from "shared/themes/standard";
 import {
@@ -377,13 +377,7 @@ const Home: React.FC<Props> = (props) => {
     if (timestamp === "") {
       return true;
     }
-
-    const diff = timeFrom(timestamp);
-    if (diff.when === "future") {
-      return false;
-    }
-
-    return true;
+    return isPast(new Date(timestamp)) ? true : false;
   };
 
   const showCardBanner = !hasPaymentEnabled;
@@ -424,7 +418,7 @@ const Home: React.FC<Props> = (props) => {
                       connect a valid payment method
                     </Link>
                     . Your free trial is ending {" "}
-                    {relativeDate(plan.trial_info.ending_before, true)}.
+                    {intlFormatDistance(Date.parse(plan.trial_info.ending_before), new Date())}.
                   </GlobalBanner>
                 )}
                 {!trialExpired && showBillingModal && (

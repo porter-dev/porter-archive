@@ -17,7 +17,8 @@ import {
   usePorterCredits,
   useSetDefaultPaymentMethod,
 } from "lib/hooks/useStripe";
-import { relativeDate } from "shared/string_utils";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
 
 import { Context } from "shared/Context";
 import cardIcon from "assets/credit-card.svg";
@@ -26,6 +27,8 @@ import trashIcon from "assets/trash.png";
 
 import BillingModal from "../modals/BillingModal";
 import Bars from "./Bars";
+
+dayjs.extend(relativeTime);
 
 function BillingPage(): JSX.Element {
   const { setCurrentOverlay } = useContext(Context);
@@ -233,7 +236,8 @@ function BillingPage(): JSX.Element {
                         plan.trial_info.ending_before !== "" ? (
                         <Text>
                           Free trial ends{" "}
-                          {relativeDate(plan.trial_info.ending_before, true)}
+                          {dayjs().to(dayjs(plan.trial_info.ending_before))}
+                          {/* {intlFormatDistance(Date.parse(plan.trial_info.ending_before), new Date())} */}
                         </Text>
                       ) : (
                         <Text>Started on {readableDate(plan.starting_on)}</Text>

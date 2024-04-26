@@ -24,7 +24,9 @@ import { fakeGuardedRoute } from "shared/auth/RouteGuard";
 import { Context } from "shared/Context";
 import DeploymentTargetProvider from "shared/DeploymentTargetContext";
 import { pushFiltered, pushQueryParams, type PorterUrl } from "shared/routing";
-import { relativeDate, timeFrom } from "shared/string_utils";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+
 import midnight from "shared/themes/midnight";
 import standard from "shared/themes/standard";
 import {
@@ -65,6 +67,8 @@ import { NewProjectFC } from "./new-project/NewProject";
 import Onboarding from "./onboarding/Onboarding";
 import ProjectSettings from "./project-settings/ProjectSettings";
 import Sidebar from "./sidebar/Sidebar";
+
+dayjs.extend(relativeTime);
 
 // Guarded components
 const GuardedProjectSettings = fakeGuardedRoute("settings", "", [
@@ -377,13 +381,8 @@ const Home: React.FC<Props> = (props) => {
     if (timestamp === "") {
       return true;
     }
-
-    const diff = timeFrom(timestamp);
-    if (diff.when === "future") {
-      return false;
-    }
-
-    return true;
+    const timestampDate = dayjs(timestamp);
+    return timestampDate.isBefore(dayjs(new Date()));
   };
 
   const showCardBanner = !hasPaymentEnabled;
@@ -424,7 +423,8 @@ const Home: React.FC<Props> = (props) => {
                       connect a valid payment method
                     </Link>
                     . Your free trial is ending {" "}
-                    {relativeDate(plan.trial_info.ending_before, true)}.
+                    {dayjs().to(dayjs(plan.trial_info.ending_before))}
+                    {/* {intlFormatDistance(Date.parse(plan.trial_info.ending_before), new Date())}. */}
                   </GlobalBanner>
                 )}
                 {!trialExpired && showBillingModal && (

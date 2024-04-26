@@ -19,6 +19,7 @@ const (
 	metronomeBaseUrl        = "https://api.metronome.com/v1/"
 	defaultCollectionMethod = "charge_automatically"
 	defaultMaxRetries       = 10
+	porterStandardTrialDays = 15
 )
 
 // MetronomeClient is the client used to call the Metronome API
@@ -53,13 +54,17 @@ func (m MetronomeClient) CreateCustomerWithPlan(ctx context.Context, userEmail s
 	ctx, span := telemetry.NewSpan(ctx, "add-metronome-customer-plan")
 	defer span.End()
 
+	var trialDays uint
 	planID := m.PorterStandardPlanID
 	projID := strconv.FormatUint(uint64(projectID), 10)
+
 	if sandboxEnabled {
 		planID = m.PorterCloudPlanID
 
 		// This is necessary to avoid conflicts with Porter standard projects
 		projID = fmt.Sprintf("porter-cloud-%s", projID)
+	} else {
+		trialDays = porterStandardTrialDays
 	}
 
 	customerID, err = m.createCustomer(ctx, userEmail, projectName, projID, billingID)
@@ -67,7 +72,7 @@ func (m MetronomeClient) CreateCustomerWithPlan(ctx context.Context, userEmail s
 		return customerID, customerPlanID, telemetry.Error(ctx, span, err, fmt.Sprintf("error while creating customer with plan %s", planID))
 	}
 
-	customerPlanID, err = m.addCustomerPlan(ctx, customerID, planID)
+	customerPlanID, err = m.addCustomerPlan(ctx, customerID, planID, trialDays)
 
 	return customerID, customerPlanID, err
 }
@@ -107,7 +112,7 @@ func (m MetronomeClient) createCustomer(ctx context.Context, userEmail string, p
 }
 
 // addCustomerPlan will start the customer on the given plan
-func (m MetronomeClient) addCustomerPlan(ctx context.Context, customerID uuid.UUID, planID uuid.UUID) (customerPlanID uuid.UUID, err error) {
+func (m MetronomeClient) addCustomerPlan(ctx context.Context, customerID uuid.UUID, planID uuid.UUID, trialDays uint) (customerPlanID uuid.UUID, err error) {
 	ctx, span := telemetry.NewSpan(ctx, "add-metronome-customer-plan")
 	defer span.End()
 
@@ -125,6 +130,12 @@ func (m MetronomeClient) addCustomerPlan(ctx context.Context, customerID uuid.UU
 	req := types.AddCustomerPlanRequest{
 		PlanID:        planID,
 		StartingOnUTC: startOn,
+	}
+
+	if trialDays != 0 {
+		req.Trial = types.TrialSpec{
+			LengthInDays: int64(trialDays),
+		}
 	}
 
 	var result struct {

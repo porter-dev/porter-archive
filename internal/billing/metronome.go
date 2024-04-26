@@ -54,7 +54,7 @@ func (m MetronomeClient) CreateCustomerWithPlan(ctx context.Context, userEmail s
 	ctx, span := telemetry.NewSpan(ctx, "add-metronome-customer-plan")
 	defer span.End()
 
-	var trialDays int
+	var trialDays uint
 	planID := m.PorterStandardPlanID
 	projID := strconv.FormatUint(uint64(projectID), 10)
 
@@ -112,7 +112,7 @@ func (m MetronomeClient) createCustomer(ctx context.Context, userEmail string, p
 }
 
 // addCustomerPlan will start the customer on the given plan
-func (m MetronomeClient) addCustomerPlan(ctx context.Context, customerID uuid.UUID, planID uuid.UUID, trialDays int) (customerPlanID uuid.UUID, err error) {
+func (m MetronomeClient) addCustomerPlan(ctx context.Context, customerID uuid.UUID, planID uuid.UUID, trialDays uint) (customerPlanID uuid.UUID, err error) {
 	ctx, span := telemetry.NewSpan(ctx, "add-metronome-customer-plan")
 	defer span.End()
 
@@ -132,7 +132,7 @@ func (m MetronomeClient) addCustomerPlan(ctx context.Context, customerID uuid.UU
 		StartingOnUTC: startOn,
 	}
 
-	if trialDays > 0 {
+	if trialDays != 0 {
 		req.Trial = types.TrialSpec{
 			LengthInDays: int64(trialDays),
 		}

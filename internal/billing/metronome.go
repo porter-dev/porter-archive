@@ -57,6 +57,7 @@ func (m MetronomeClient) CreateCustomerWithPlan(ctx context.Context, userEmail s
 	var trialDays int
 	planID := m.PorterStandardPlanID
 	projID := strconv.FormatUint(uint64(projectID), 10)
+
 	if sandboxEnabled {
 		planID = m.PorterCloudPlanID
 

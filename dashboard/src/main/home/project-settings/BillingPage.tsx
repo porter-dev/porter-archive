@@ -237,7 +237,6 @@ function BillingPage(): JSX.Element {
                         <Text>
                           Free trial ends{" "}
                           {dayjs().to(dayjs(plan.trial_info.ending_before))}
-                          {/* {intlFormatDistance(Date.parse(plan.trial_info.ending_before), new Date())} */}
                         </Text>
                       ) : (
                         <Text>Started on {readableDate(plan.starting_on)}</Text>

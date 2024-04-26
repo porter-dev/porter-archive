@@ -424,7 +424,6 @@ const Home: React.FC<Props> = (props) => {
                     </Link>
                     . Your free trial is ending {" "}
                     {dayjs().to(dayjs(plan.trial_info.ending_before))}
-                    {/* {intlFormatDistance(Date.parse(plan.trial_info.ending_before), new Date())}. */}
                   </GlobalBanner>
                 )}
                 {!trialExpired && showBillingModal && (

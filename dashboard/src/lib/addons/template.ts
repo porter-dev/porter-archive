@@ -1,3 +1,4 @@
+import Logs from "main/home/add-on-dashboard/common/Logs";
 import Settings from "main/home/add-on-dashboard/common/Settings";
 import DatadogForm from "main/home/add-on-dashboard/datadog/DatadogForm";
 import MetabaseForm from "main/home/add-on-dashboard/metabase/MetabaseForm";
@@ -78,6 +79,11 @@ export const ADDON_TEMPLATE_DATADOG: AddonTemplate = {
       component: DatadogForm,
     },
     {
+      name: "logs",
+      displayName: "Logs",
+      component: Logs,
+    },
+    {
       name: "settings",
       displayName: "Settings",
       component: Settings,
@@ -118,6 +124,11 @@ export const ADDON_TEMPLATE_METABASE: AddonTemplate = {
       component: MetabaseForm,
     },
     {
+      name: "logs",
+      displayName: "Logs",
+      component: Logs,
+    },
+    {
       name: "settings",
       displayName: "Settings",
       component: Settings,
@@ -148,7 +159,7 @@ export const ADDON_TEMPLATE_NEWRELIC: AddonTemplate = {
 export const ADDON_TEMPLATE_TAILSCALE: AddonTemplate = {
   type: "tailscale",
   displayName: "Tailscale",
-  description: "A secure network for teams.",
+  description: "A VPN for your applications and datastores.",
   icon: "https://play-lh.googleusercontent.com/wczDL05-AOb39FcL58L32h6j_TrzzGTXDLlOrOmJ-aNsnoGsT1Gkk2vU4qyTb7tGxRw=w240-h480-rw",
   tags: ["Networking"],
   tabs: [

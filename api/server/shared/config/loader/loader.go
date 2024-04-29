@@ -335,11 +335,13 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 
 	var (
 		stripeClient     billing.StripeClient
+		stripeEnabled    bool
 		metronomeClient  billing.MetronomeClient
 		metronomeEnabled bool
 	)
 	if sc.StripeSecretKey != "" {
 		stripeClient = billing.NewStripeClient(InstanceEnvConf.ServerConf.StripeSecretKey, InstanceEnvConf.ServerConf.StripePublishableKey)
+		stripeEnabled = true
 		res.Logger.Info().Msg("Stripe configuration loaded")
 	} else {
 		res.Logger.Info().Msg("STRIPE_SECRET_KEY not set, all Stripe functionality will be disabled")
@@ -358,9 +360,10 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 
 	res.Logger.Info().Msg("Creating billing manager")
 	res.BillingManager = billing.Manager{
-		StripeClient:     stripeClient,
-		MetronomeClient:  metronomeClient,
-		MetronomeEnabled: metronomeEnabled,
+		StripeClient:          stripeClient,
+		StripeConfigLoaded:    stripeEnabled,
+		MetronomeClient:       metronomeClient,
+		MetronomeConfigLoaded: metronomeEnabled,
 	}
 	res.Logger.Info().Msg("Created billing manager")
 

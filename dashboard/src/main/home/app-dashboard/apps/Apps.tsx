@@ -257,7 +257,7 @@ const Apps: React.FC = () => {
               Get started by creating an application.
             </Text>
             <Spacer y={1} />
-            {currentProject?.billing_enabled && !hasPaymentEnabled ? (
+            {currentProject?.sandbox_enabled && currentProject?.billing_enabled && !hasPaymentEnabled ? (
               <Button
                 alt
                 onClick={() => {
@@ -288,7 +288,7 @@ const Apps: React.FC = () => {
                 </Button>
               </PorterLink>
             )}
-            {showBillingModal && (
+            {currentProject?.sandbox_enabled && showBillingModal && (
               <BillingModal
                 back={() => {
                   setShowBillingModal(false);

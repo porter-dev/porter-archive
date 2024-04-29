@@ -81,7 +81,7 @@ func (p *ProjectCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	}
 
 	// Create Stripe Customer
-	if p.Config().ServerConf.StripeSecretKey != "" && p.Config().ServerConf.StripePublishableKey != "" {
+	if p.Config().BillingManager.StripeConfigLoaded && proj.GetFeatureFlag(models.BillingEnabled, p.Config().LaunchDarklyClient) {
 		// Create billing customer for project and set the billing ID
 		billingID, err := p.Config().BillingManager.StripeClient.CreateCustomer(ctx, user.Email, proj.ID, proj.Name)
 		if err != nil {
@@ -98,7 +98,7 @@ func (p *ProjectCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	}
 
 	// Create Metronome customer and add to starter plan
-	if p.Config().BillingManager.MetronomeEnabled && proj.GetFeatureFlag(models.MetronomeEnabled, p.Config().LaunchDarklyClient) {
+	if p.Config().BillingManager.MetronomeConfigLoaded && proj.GetFeatureFlag(models.MetronomeEnabled, p.Config().LaunchDarklyClient) {
 		customerID, customerPlanID, err := p.Config().BillingManager.MetronomeClient.CreateCustomerWithPlan(ctx, user.Email, proj.Name, proj.ID, proj.BillingID, proj.EnableSandbox)
 		if err != nil {
 			err = telemetry.Error(ctx, span, err, "error creating Metronome customer")

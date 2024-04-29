@@ -45,6 +45,10 @@ func AddKnownContextVariablesToSpan(ctx context.Context, span trace.Span) {
 	if project, ok := ctx.Value(types.ProjectScope).(*models.Project); ok {
 		WithAttributes(span, AttributeKV{Key: "project-id", Value: project.ID})
 	}
+
+	if deploymentTarget, ok := ctx.Value(types.DeploymentTargetScope).(types.DeploymentTarget); ok {
+		WithAttributes(span, AttributeKV{Key: "deployment-target-id", Value: deploymentTarget.ID})
+	}
 }
 
 // AttributeKV is a wrapper for otel attributes KV

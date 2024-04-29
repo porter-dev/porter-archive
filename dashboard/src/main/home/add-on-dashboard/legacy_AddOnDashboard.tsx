@@ -1,4 +1,10 @@
-import React, { useContext, useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import _ from "lodash";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
@@ -11,15 +17,17 @@ import DashboardPlaceholder from "components/porter/DashboardPlaceholder";
 import Fieldset from "components/porter/Fieldset";
 import PorterLink from "components/porter/Link";
 import SearchBar from "components/porter/SearchBar";
+import ShowIntercomButton from "components/porter/ShowIntercomButton";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import Toggle from "components/porter/Toggle";
-import { type ClientAddon, type LegacyClientAddon } from "lib/addons";
-import { useAddonList } from "lib/hooks/useAddon";
+import { useAuthState } from "main/auth/context";
 import { useDefaultDeploymentTarget } from "lib/hooks/useDeploymentTarget";
 
+import api from "shared/api";
 import { Context } from "shared/Context";
 import { hardcodedIcons } from "shared/hardcodedNameDict";
+import { search } from "shared/search";
 import { readableDate } from "shared/string_utils";
 import addOnGrad from "assets/add-on-grad.svg";
 import grid from "assets/grid.png";
@@ -30,45 +38,105 @@ import time from "assets/time.png";
 
 import DashboardHeader from "../cluster-dashboard/DashboardHeader";
 
-// filter out postgres and redis addons because those are managed in the datastores tab now
-const isDisplayableAddon = (addon: ClientAddon): boolean => {
-  return addon.config.type !== "postgres" && addon.config.type !== "redis";
-};
+type Props = {};
 
-const AddonDashboard: React.FC = () => {
+export const RestrictedNamespaces = [
+  "ack-system",
+  "cert-manager",
+  "ingress-nginx",
+  "kube-node-lease",
+  "kube-public",
+  "kube-system",
+  "monitoring",
+  "porter-agent-system",
+  "external-secrets",
+];
+
+const templateBlacklist = ["web", "worker", "job", "umbrella"];
+
+const LegacyAddOnDashboard: React.FC<Props> = ({}) => {
+  const { defaultDeploymentTarget } = useDefaultDeploymentTarget();
   const { currentProject, currentCluster } = useContext(Context);
-  const { defaultDeploymentTarget, isDefaultDeploymentTargetLoading } =
-    useDefaultDeploymentTarget();
-
+  const [addOns, setAddOns] = useState([]);
   const [searchValue, setSearchValue] = useState("");
   const [view, setView] = useState("grid");
+  const [isLoading, setIsLoading] = useState(true);
 
-  const {
-    addons,
-    legacyAddons,
-    isLoading: isAddonListLoading,
-    isLegacyAddonsLoading,
-  } = useAddonList({
-    projectId: currentProject?.id,
-    deploymentTarget: defaultDeploymentTarget,
-  });
-
-  const filteredAddons: Array<ClientAddon | LegacyClientAddon> = useMemo(() => {
-    const displayableAddons = addons.filter(isDisplayableAddon);
-    const legacyDisplayableAddons = legacyAddons.sort((a, b) => {
-      return a.info.last_deployed > b.info.last_deployed ? -1 : 1;
+  const filteredAddOns = useMemo(() => {
+    const filtered = addOns.filter((app) => {
+      return (
+        app.namespace === defaultDeploymentTarget.namespace &&
+        !templateBlacklist.includes(app.chart.metadata.name)
+      );
     });
 
-    // If an addon name exists in both the legacy and new addon lists, show the new addon
-    const uniqueAddons: Array<ClientAddon | LegacyClientAddon> = [
-      ...displayableAddons,
-      ...legacyDisplayableAddons.filter(
-        (a) => !displayableAddons.some((b) => b.name.value === a.name)
-      ),
-    ];
+    const filteredBySearch = search(filtered ?? [], searchValue, {
+      keys: ["name", "chart.metadata.name"],
+      isCaseSensitive: false,
+    });
 
-    return uniqueAddons;
-  }, [addons, legacyAddons, defaultDeploymentTarget]);
+    return _.sortBy(filteredBySearch);
+  }, [addOns, searchValue]);
+
+  const getAddOns = async () => {
+    try {
+      setIsLoading(true);
+      const res = await api.getCharts(
+        "<token>",
+        {
+          limit: 50,
+          skip: 0,
+          byDate: false,
+          statusFilter: [
+            "deployed",
+            "uninstalled",
+            "pending",
+            "pending-install",
+            "pending-upgrade",
+            "pending-rollback",
+            "failed",
+          ],
+        },
+        {
+          id: currentProject.id,
+          cluster_id: currentCluster.id,
+          namespace: "all",
+        }
+      );
+      setIsLoading(false);
+      const charts = res.data || [];
+      setAddOns(charts);
+    } catch (err) {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    // currentCluster sometimes returns as -1 and passes null check
+    if (currentProject?.id >= 0 && currentCluster?.id >= 0) {
+      getAddOns();
+    }
+  }, [currentCluster, currentProject]);
+
+  const getExpandedChartLinkURL = useCallback(
+    (x: any) => {
+      const params = new Proxy(new URLSearchParams(window.location.search), {
+        get: (searchParams, prop: string) => searchParams.get(prop),
+      });
+      const cluster = currentCluster?.name;
+      const route = `/applications/${cluster}/${x.namespace}/${x.name}`;
+      const newParams = {
+        // @ts-expect-error
+        project_id: params.project_id,
+        closeChartRedirectUrl: "/addons",
+      };
+      const newURLSearchParams = new URLSearchParams(
+        _.omitBy(newParams, _.isNil)
+      );
+      return `${route}?${newURLSearchParams.toString()}`;
+    },
+    [currentCluster]
+  );
 
   return (
     <StyledAppDashboard>
@@ -95,10 +163,9 @@ const AddonDashboard: React.FC = () => {
             </Button>
           </PorterLink>
         </DashboardPlaceholder>
-      ) : filteredAddons.length === 0 ||
-        (filteredAddons.length === 0 && searchValue === "") ? (
-        isDefaultDeploymentTargetLoading ||
-        (isAddonListLoading && isLegacyAddonsLoading) ? (
+      ) : addOns.length === 0 ||
+        (filteredAddOns.length === 0 && searchValue === "") ? (
+        isLoading ? (
           <Loading offset="-150px" />
         ) : (
           <DashboardPlaceholder>
@@ -145,7 +212,7 @@ const AddonDashboard: React.FC = () => {
           </Container>
           <Spacer y={1} />
 
-          {filteredAddons.length === 0 ? (
+          {filteredAddOns.length === 0 ? (
             <Fieldset>
               <Container row>
                 <PlaceholderIcon src={notFound} />
@@ -156,95 +223,56 @@ const AddonDashboard: React.FC = () => {
                 </Text>
               </Container>
             </Fieldset>
-          ) : isDefaultDeploymentTargetLoading ||
-            (isAddonListLoading && isLegacyAddonsLoading) ? (
+          ) : isLoading ? (
             <Loading offset="-150px" />
           ) : view === "grid" ? (
             <GridList>
-              {filteredAddons.map((addon: ClientAddon | LegacyClientAddon) => {
-                const isLegacyAddon = "chart" in addon;
-                if (isLegacyAddon) {
-                  return (
-                    <Block
-                      to={`/applications/${currentCluster?.name}/${addon.namespace}/${addon.name}`}
-                      key={addon.name}
-                    >
-                      <Container row>
-                        <Icon
-                          src={
-                            hardcodedIcons[addon.chart?.metadata?.name ?? ""] ||
-                            addon.chart?.metadata?.icon
-                          }
-                        />
-                        <Text size={14}>{addon.name}</Text>
-                        <Spacer inline x={2} />
-                      </Container>
-                      <StatusIcon src={healthy} />
-                      <Container row>
-                        <SmallIcon opacity="0.4" src={time} />
-                        <Text size={13} color="#ffffff44">
-                          {readableDate(addon.info.last_deployed)}
-                        </Text>
-                      </Container>
-                    </Block>
-                  );
-                }
+              {(filteredAddOns ?? []).map((app: any, i: number) => {
                 return (
-                  <Block
-                    to={`/addons/${addon.name.value}`}
-                    key={addon.name.value}
-                  >
+                  <Block to={getExpandedChartLinkURL(app)} key={i}>
                     <Container row>
-                      <Icon src={addon.template.icon} />
-                      <Text size={14}>{addon.name.value}</Text>
+                      <Icon
+                        src={
+                          hardcodedIcons[app.chart.metadata.name] ||
+                          app.chart.metadata.icon
+                        }
+                      />
+                      <Text size={14}>{app.name}</Text>
                       <Spacer inline x={2} />
                     </Container>
                     <StatusIcon src={healthy} />
+                    <Container row>
+                      <SmallIcon opacity="0.4" src={time} />
+                      <Text size={13} color="#ffffff44">
+                        {readableDate(app.info.last_deployed)}
+                      </Text>
+                    </Container>
                   </Block>
                 );
               })}
             </GridList>
           ) : (
             <List>
-              {filteredAddons.map((addon: ClientAddon | LegacyClientAddon) => {
-                const isLegacyAddon = "chart" in addon;
-                if (isLegacyAddon) {
-                  return (
-                    <Row
-                      to={`/applications/${currentCluster?.name}/${addon.namespace}/${addon.name}`}
-                      key={addon.name}
-                    >
-                      <Container row>
-                        <MidIcon
-                          src={
-                            hardcodedIcons[addon.chart?.metadata?.name ?? ""] ||
-                            addon.chart?.metadata?.icon
-                          }
-                        />
-                        <Text size={14}>{addon.name}</Text>
-                        <Spacer inline x={1} />
-                        <MidIcon src={healthy} height="16px" />
-                      </Container>
-                      <Spacer height="15px" />
-                      <Container row>
-                        <SmallIcon opacity="0.4" src={time} />
-                        <Text size={13} color="#ffffff44">
-                          {readableDate(addon.info.last_deployed)}
-                        </Text>
-                      </Container>
-                    </Row>
-                  );
-                }
+              {(filteredAddOns ?? []).map((app: any, i: number) => {
                 return (
-                  <Row
-                    to={`/addons/${addon.name.value}`}
-                    key={addon.name.value}
-                  >
+                  <Row to={getExpandedChartLinkURL(app)} key={i}>
                     <Container row>
-                      <MidIcon src={addon.template.icon} />
-                      <Text size={14}>{addon.name.value}</Text>
+                      <MidIcon
+                        src={
+                          hardcodedIcons[app.chart.metadata.name] ||
+                          app.chart.metadata.icon
+                        }
+                      />
+                      <Text size={14}>{app.name}</Text>
                       <Spacer inline x={1} />
                       <MidIcon src={healthy} height="16px" />
+                    </Container>
+                    <Spacer height="15px" />
+                    <Container row>
+                      <SmallIcon opacity="0.4" src={time} />
+                      <Text size={13} color="#ffffff44">
+                        {readableDate(app.info.last_deployed)}
+                      </Text>
                     </Container>
                   </Row>
                 );
@@ -258,7 +286,7 @@ const AddonDashboard: React.FC = () => {
   );
 };
 
-export default AddonDashboard;
+export default LegacyAddOnDashboard;
 
 const PlaceholderIcon = styled.img`
   height: 13px;
@@ -307,8 +335,15 @@ const MidIcon = styled.img<{ height?: string }>`
   margin-right: 11px;
 `;
 
+const SmallIcon = styled.img<{ opacity?: string }>`
+  margin-left: 2px;
+  height: 14px;
+  opacity: ${(props) => props.opacity || 1};
+  margin-right: 10px;
+`;
+
 const Block = styled(Link)`
-  height: 75px;
+  height: 110px;
   flex-direction: column;
   display: flex;
   justify-content: space-between;
@@ -355,9 +390,9 @@ const StyledAppDashboard = styled.div`
   height: 100%;
 `;
 
-const SmallIcon = styled.img<{ opacity?: string }>`
-  margin-left: 2px;
-  height: 14px;
-  opacity: ${(props) => props.opacity || 1};
-  margin-right: 10px;
+const CentralContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  justify-content: left;
+  align-items: left;
 `;

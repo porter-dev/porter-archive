@@ -144,12 +144,13 @@ const Apps: React.FC = () => {
             return;
           }
 
-          const res = await api.listLatestAddons(
+          const res = await api.listAddons(
             "<token>",
+            {},
             {
-              deployment_target_id: currentDeploymentTarget.id,
-            },
-            { clusterId: currentCluster.id, projectId: currentProject.id }
+              deploymentTargetId: currentDeploymentTarget.id,
+              projectId: currentProject.id,
+            }
           );
 
           const parsed = await z
@@ -292,7 +293,7 @@ const Apps: React.FC = () => {
                 back={() => {
                   setShowBillingModal(false);
                 }}
-                onCreate={() => {
+                onCreate={async () => {
                   history.push("/apps/new/app");
                 }}
               />

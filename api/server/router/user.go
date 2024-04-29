@@ -472,14 +472,14 @@ func getUserRoutes(
 		Router:   r,
 	})
 
-	// GET /api/users/referrals -> user.NewListUserReferralsHandler
+	// GET /api/referrals -> user.NewListUserReferralsHandler
 	listReferralsEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbGet,
 			Method: types.HTTPVerbGet,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: "/users/referrals",
+				RelativePath: "/referrals",
 			},
 			Scopes: []types.PermissionScope{types.UserScope},
 		},
@@ -493,6 +493,30 @@ func getUserRoutes(
 	routes = append(routes, &router.Route{
 		Endpoint: listReferralsEndpoint,
 		Handler:  listReferralsHandler,
+		Router:   r,
+	})
+
+	// GET /api/referrals/details -> user.NewGetUserReferralDetailsHandler
+	getReferralDetailsEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: "/referrals/details",
+			},
+			Scopes: []types.PermissionScope{types.UserScope},
+		},
+	)
+
+	getReferralDetailsHandler := user.NewGetUserReferralDetailsHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: getReferralDetailsEndpoint,
+		Handler:  getReferralDetailsHandler,
 		Router:   r,
 	})
 

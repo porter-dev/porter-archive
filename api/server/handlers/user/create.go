@@ -108,7 +108,7 @@ func (u *UserCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			ReferredUserID: user.ID,
 		}
 
-		_, err := u.Repo().Referral().CreateReferral(referral)
+		_, err = u.Repo().Referral().CreateReferral(referral)
 		if err != nil {
 			u.HandleAPIErrorNoWrite(w, r, apierrors.NewErrInternal(err))
 		}

@@ -37,3 +37,11 @@ func (repo *ReferralRepository) CreateReferral(referral *models.Referral) (*mode
 
 	return referral, nil
 }
+
+func (repo *ReferralRepository) GetReferralCountByUserID(userID uint) (int, error) {
+	referrals := []models.Referral{}
+	if err := repo.db.Where("user_id = ?", userID).Find(&referrals).Error; err != nil {
+		return 0, err
+	}
+	return len(referrals), nil
+}

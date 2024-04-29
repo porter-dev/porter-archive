@@ -10,6 +10,9 @@ type User struct {
 
 	// ReferralCode is a unique code that can be shared to referr other users to Porter
 	ReferralCode string `json:"referral_code"`
+	// ReferralRewardClaimed indicates if the user has already received a credits reward
+	// for referring users
+	ReferralRewardClaimed bool `json:"referral_reward_received"`
 }
 
 type CreateUserRequest struct {

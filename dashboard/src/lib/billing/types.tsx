@@ -50,3 +50,13 @@ export const CreditGrantsValidator = z.object({
 });
 
 export const ClientSecretResponse = z.string();
+
+export type ReferralDetails = z.infer<typeof ReferralDetailsValidator>;
+export const ReferralDetailsValidator = z.object({
+  code: z.string(),
+  reward_claimed: z.boolean(),
+}).nullable();
+
+export const ReferralsValidator = z.object({
+  count: z.number(),
+}).nullable();

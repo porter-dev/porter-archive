@@ -7,6 +7,7 @@ import (
 // ReferralRepository represents the set of queries on the Referral model
 type ReferralRepository interface {
 	CreateReferral(referral *models.Referral) (*models.Referral, error)
+	GetReferralCountByUserID(userID uint) (int, error)
 	// ReadReferral(referralID uint) (*models.Referral, error)
 	// ReadReferralByUserID(userID, referralID string) (*models.Referral, error)
 	// ListReferralsByUserID(userID uint) ([]*models.Referral, error)

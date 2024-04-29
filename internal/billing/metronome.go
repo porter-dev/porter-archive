@@ -242,6 +242,44 @@ func (m MetronomeClient) ListCustomerCredits(ctx context.Context, customerID uui
 	return response, nil
 }
 
+func (m MetronomeClient) CreateCreditsGrant(ctx context.Context, customerID uuid.UUID, grantAmount float64, paidAmount float64) (err error) {
+	ctx, span := telemetry.NewSpan(ctx, "create-credits-grant")
+	defer span.End()
+
+	if customerID == uuid.Nil {
+		return telemetry.Error(ctx, span, err, "customer id empty")
+	}
+
+	path := "credits/createGrant"
+
+	req := types.CreateCreditsGrantRequest{
+		CustomerID:    customerID,
+		UniquenessKey: "porter-credits",
+		GrantAmount: types.GrantAmount{
+			Amount:     grantAmount,
+			CreditType: types.CreditType{},
+		},
+		PaidAmount: types.PaidAmount{
+			Amount:       paidAmount,
+			CreditTypeID: uuid.UUID{},
+		},
+		Name:      "Porter Credits",
+		ExpiresAt: "", // never expires
+		Priority:  1,
+	}
+
+	var result struct {
+		Data []types.CreditGrant `json:"data"`
+	}
+
+	_, err = m.do(http.MethodPost, path, req, &result)
+	if err != nil {
+		return telemetry.Error(ctx, span, err, "failed to create credits grant")
+	}
+
+	return nil
+}
+
 // ListCustomerUsage will return the aggregated usage for a customer
 func (m MetronomeClient) ListCustomerUsage(ctx context.Context, customerID uuid.UUID, startingOn string, endingBefore string, windowsSize string, currentPeriod bool) (usage []types.Usage, err error) {
 	ctx, span := telemetry.NewSpan(ctx, "list-customer-usage")

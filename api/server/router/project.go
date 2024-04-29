@@ -397,6 +397,33 @@ func getProjectRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/billing/credits/claim_referral -> project.NewGetCreditsHandler
+	claimReferralRewardEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/billing/credits/claim_referral",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	claimReferralRewardHandler := billing.NewClaimReferralReward(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: claimReferralRewardEndpoint,
+		Handler:  claimReferralRewardHandler,
+		Router:   r,
+	})
+
 	// POST /api/projects/{project_id}/billing/usage -> project.NewListCustomerUsageHandler
 	listCustomerUsageEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

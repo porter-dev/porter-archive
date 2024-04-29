@@ -109,7 +109,14 @@ func (c *ClaimReferralRewardHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 		telemetry.AttributeKV{Key: "referral-reward-received", Value: user.ReferralRewardClaimed},
 	)
 
-	if !user.ReferralRewardClaimed {
+	// Check if the user is eligible for the referral reward
+	referralCount, err := c.Repo().Referral().GetReferralCountByUserID(user.ID)
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+
+	if !user.ReferralRewardClaimed && referralCount >= referralRewardRequirement {
 		err := c.Config().BillingManager.MetronomeClient.CreateCreditsGrant(ctx, proj.UsageID, defaultRewardAmountUSD, defaultPaidAmountUSD)
 		if err != nil {
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))

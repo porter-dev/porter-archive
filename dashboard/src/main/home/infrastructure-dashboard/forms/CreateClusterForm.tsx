@@ -51,9 +51,9 @@ const CreateClusterForm: React.FC = () => {
   return (
     <ClusterFormContextProvider
       projectId={currentProject?.id}
-      redirectOnSubmit={true}
       isAdvancedSettingsEnabled={currentProject?.advanced_infra_enabled}
       isMultiClusterEnabled={currentProject?.multi_cluster}
+      isCreatingCluster
     >
       <CreateClusterFormContainer>
         {match(selectedCloudProvider)

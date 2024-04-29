@@ -68,7 +68,7 @@ type ClusterFormContextProviderProps = {
   projectId?: number;
   isAdvancedSettingsEnabled?: boolean;
   isMultiClusterEnabled?: boolean;
-  redirectOnSubmit?: boolean;
+  isCreatingCluster?: boolean;
   children: JSX.Element;
 };
 
@@ -76,7 +76,7 @@ const ClusterFormContextProvider: React.FC<ClusterFormContextProviderProps> = ({
   projectId,
   isAdvancedSettingsEnabled = false,
   isMultiClusterEnabled = false,
-  redirectOnSubmit,
+  isCreatingCluster,
   children,
 }) => {
   const history = useHistory();
@@ -179,12 +179,6 @@ const ClusterFormContextProvider: React.FC<ClusterFormContextProviderProps> = ({
         setShowFailedPreflightChecksModal(true);
       }
       if (response.createContractResponse) {
-        void reportToAnalytics({
-          projectId,
-          step: "provisioning-started",
-          provider: data.cluster.cloudProvider,
-          region: data.cluster.config.region,
-        });
         await api.saveOnboardingState(
           "<token>",
           { current_step: "clean_up" },
@@ -192,7 +186,13 @@ const ClusterFormContextProvider: React.FC<ClusterFormContextProviderProps> = ({
         );
         await queryClient.invalidateQueries(["getCluster"]);
 
-        if (redirectOnSubmit) {
+        if (isCreatingCluster) {
+          void reportToAnalytics({
+            projectId,
+            step: "provisioning-started",
+            provider: data.cluster.cloudProvider,
+            region: data.cluster.config.region,
+          });
           history.push(
             `/infrastructure/${response.createContractResponse.contract_revision.cluster_id}`
           );
@@ -230,6 +230,9 @@ const ClusterFormContextProvider: React.FC<ClusterFormContextProviderProps> = ({
     cloudProviderCredentialIdentifier: string,
     region: string
   ): Promise<MachineType[]> => {
+    if (!projectId) {
+      return [];
+    }
     const response = await api.cloudProviderMachineTypes(
       "<token>",
       {

@@ -66,6 +66,7 @@ const DatastoreForm: React.FC = () => {
   const watchWorkloadType = watch("workloadType", "unspecified");
   const watchEngine = watch("engine", "UNKNOWN");
   const watchInstanceClass = watch("config.instanceClass", "unspecified");
+  const watchEngineVersion = watch("config.engineVersion", "");
 
   const { updateDatastoreButtonProps } = useDatastoreFormContext();
 
@@ -291,6 +292,26 @@ const DatastoreForm: React.FC = () => {
                       setCurrentStep(4);
                     }}
                   />
+                  {template === DATASTORE_TEMPLATE_AWS_RDS && (
+                    <>
+                      <Spacer y={0.5} />
+                      <Selector<string>
+                        activeValue={watchEngineVersion.toString()}
+                        width="300px"
+                        options={DATASTORE_TEMPLATE_AWS_RDS.supportedEngineVersions.map(
+                          (v) => ({
+                            value: v.name,
+                            label: v.displayName,
+                            key: v.name,
+                          })
+                        )}
+                        setActiveValue={(value: string) => {
+                          setValue("config.engineVersion", value);
+                        }}
+                        label={"Postgres version"}
+                      />
+                    </>
+                  )}
                 </>
               )}
             </>,

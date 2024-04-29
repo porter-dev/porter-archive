@@ -133,7 +133,7 @@ func (m MetronomeClient) addCustomerPlan(ctx context.Context, customerID uuid.UU
 	}
 
 	if trialDays != 0 {
-		req.Trial = types.TrialSpec{
+		req.Trial = &types.TrialSpec{
 			LengthInDays: int64(trialDays),
 		}
 	}

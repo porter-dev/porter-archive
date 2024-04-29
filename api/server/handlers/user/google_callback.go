@@ -88,7 +88,6 @@ func (p *UserOAuthGoogleCallbackHandler) ServeHTTP(w http.ResponseWriter, r *htt
 	// non-fatal send email verification
 	if !user.EmailVerified {
 		err = startEmailVerification(p.Config(), w, r, user)
-
 		if err != nil {
 			p.HandleAPIErrorNoWrite(w, r, apierrors.NewErrInternal(err))
 		}
@@ -133,14 +132,15 @@ func upsertGoogleUserFromToken(config *config.Config, tok *oauth2.Token) (*model
 				GoogleUserID:  gInfo.Sub,
 			}
 
-			user, err = config.Repo.User().CreateUser(user)
+			// Generate referral code for user
+			user.ReferralCode = models.NewReferralCode()
 
+			user, err = config.Repo.User().CreateUser(user)
 			if err != nil {
 				return nil, err
 			}
 
 			err = addUserToDefaultProject(config, user)
-
 			if err != nil {
 				return nil, err
 			}

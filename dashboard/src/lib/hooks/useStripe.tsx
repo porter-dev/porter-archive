@@ -367,3 +367,37 @@ export const useCustomerUsage = (
     usage: usageReq.data ?? null,
   };
 };
+
+export const useReferrals = (): TGetPlan => {
+  const { currentProject, user } = useContext(Context);
+
+  // Fetch current plan
+  const planReq = useQuery(
+    ["getReferrals", user?.id],
+    async (): Promise<Plan | null> => {
+      if (!currentProject?.billing_enabled) {
+        return null;
+      }
+
+      if (!user?.id) {
+        return null;
+      }
+
+      try {
+        const res = await api.getReferrals(
+          "<token>",
+          {},
+          { user_id: user.id }
+        );
+
+        const referrals = PlanValidator.parse(res.data);
+        return referrals;
+      } catch (error) {
+        return null
+      }
+    });
+
+  return {
+    plan: planReq.data ?? null,
+  };
+};

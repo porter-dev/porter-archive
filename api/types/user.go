@@ -7,6 +7,9 @@ type User struct {
 	FirstName     string `json:"first_name"`
 	LastName      string `json:"last_name"`
 	CompanyName   string `json:"company_name"`
+
+	// ReferralCode is a unique code that can be shared to referr other users to Porter
+	ReferralCode string `json:"referral_code"`
 }
 
 type CreateUserRequest struct {
@@ -16,6 +19,8 @@ type CreateUserRequest struct {
 	LastName       string `json:"last_name" form:"required,max=255"`
 	CompanyName    string `json:"company_name" form:"required,max=255"`
 	ReferralMethod string `json:"referral_method" form:"max=255"`
+	// ReferredBy is the referral code of the user who referred this user
+	ReferredBy string `json:"referred_by_code" form:"max=255"`
 }
 
 type CreateUserResponse User

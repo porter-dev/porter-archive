@@ -88,5 +88,6 @@ func AutoMigrate(db *gorm.DB, debug bool) error {
 		&models.Ipam{},
 		&models.AppEventWebhooks{},
 		&models.ClusterHealthReport{},
+		&models.Referral{},
 	)
 }

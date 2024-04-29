@@ -35,6 +35,9 @@ const Register: React.FC<Props> = ({ authenticate }) => {
   const [lastName, setLastName] = useState("");
   const [lastNameError, setLastNameError] = useState(false);
   const [companyName, setCompanyName] = useState("");
+  const [referralCode, setReferralCode] = useState("");
+  const [referralCodeError, setReferralCodeError] = useState(false);
+
   const [companyNameError, setCompanyNameError] = useState(false);
   const [email, setEmail] = useState("");
   const [emailError, setEmailError] = useState(false);
@@ -118,6 +121,7 @@ const Register: React.FC<Props> = ({ authenticate }) => {
               chosenReferralOption === "Other"
                 ? `Other: ${referralOtherText}`
                 : chosenReferralOption,
+            referred_by_code: referralCode,
           },
           {}
         )
@@ -178,7 +182,7 @@ const Register: React.FC<Props> = ({ authenticate }) => {
           if (res?.data?.redirect) {
             window.location.href = res.data.redirect;
           } else {
-            setUser(res?.data?.id, res?.data?.email);
+            setUser(res?.data?.id);
             authenticate();
 
             try {
@@ -400,6 +404,21 @@ const Register: React.FC<Props> = ({ authenticate }) => {
               setValue={setChosenReferralOption}
               value={chosenReferralOption}
             />
+            <Spacer y={0.5} />
+            <Input
+              placeholder="Code"
+              label="Referral code"
+              value={referralCode}
+              setValue={(x) => {
+                setReferralCode(x);
+                setReferralCodeError(false);
+              }}
+              width="100%"
+              height="40px"
+              error={referralCodeError && ""}
+            />
+            <Spacer y={0.5} />
+
             {chosenReferralOption === "Other" && (
               <>
                 <Spacer y={0.5} />

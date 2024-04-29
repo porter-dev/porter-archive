@@ -62,6 +62,7 @@ type GormRepository struct {
 	datastore                 repository.DatastoreRepository
 	appInstance               repository.AppInstanceRepository
 	ipam                      repository.IpamRepository
+	referral                  repository.ReferralRepository
 }
 
 func (t *GormRepository) User() repository.UserRepository {
@@ -293,6 +294,10 @@ func (t *GormRepository) Ipam() repository.IpamRepository {
 	return t.ipam
 }
 
+func (t *GormRepository) Referral() repository.ReferralRepository {
+	return t.referral
+}
+
 // NewRepository returns a Repository which persists users in memory
 // and accepts a parameter that can trigger read/write errors
 func NewRepository(db *gorm.DB, key *[32]byte, storageBackend credentials.CredentialStorage) repository.Repository {
@@ -352,5 +357,6 @@ func NewRepository(db *gorm.DB, key *[32]byte, storageBackend credentials.Creden
 		appInstance:               NewAppInstanceRepository(db),
 		ipam:                      NewIpamRepository(db),
 		appEventWebhook:           NewAppEventWebhookRepository(db),
+		referral:                  NewReferralRepository(db),
 	}
 }

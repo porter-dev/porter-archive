@@ -139,7 +139,7 @@ class ContextProvider extends Component<PropsType, StateType> {
     user: null,
     setUser: (userId: number, email: string) => {
       this.setState({
-        user: { userId, email, isPorterUser: email?.endsWith("@porter.run") },
+        user: { userId, email, isPorterUser: email?.endsWith("@porter.run"), referralCode: referralCode },
       });
       if (window.intercomSettings) {
         window.intercomSettings["Porter User ID"] = userId;

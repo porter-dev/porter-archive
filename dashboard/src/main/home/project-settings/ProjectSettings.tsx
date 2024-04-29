@@ -26,6 +26,7 @@ import settingsGrad from "assets/settings-grad.svg";
 import DashboardHeader from "../cluster-dashboard/DashboardHeader";
 import APITokensSection from "./APITokensSection";
 import BillingPage from "./BillingPage";
+import ReferralsPage from "./ReferralsPage";
 import InvitePage from "./InviteList";
 import Metadata from "./Metadata";
 import ProjectDeleteConsent from "./ProjectDeleteConsent";
@@ -94,6 +95,11 @@ function ProjectSettings(props: any) {
           label: "Billing",
         });
       }
+
+      tabOpts.push({
+        value: "referrals",
+        label: "Referrals",
+      });
 
       tabOpts.push({
         value: "additional-settings",
@@ -172,6 +178,8 @@ function ProjectSettings(props: any) {
       return <APITokensSection />;
     } else if (currentTab === "billing") {
       return <BillingPage></BillingPage>;
+    } else if (currentTab === "referrals") {
+      return <ReferralsPage></ReferralsPage>
     } else {
       return (
         <>

@@ -20,7 +20,7 @@ type TailscaleServicesHandler struct {
 	authz.KubernetesAgentGetter
 }
 
-// NewAddonHandler returns a new AddonHandler
+// NewTailscaleServicesHandler returns a new TailscaleServicesHandler
 func NewTailscaleServicesHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,

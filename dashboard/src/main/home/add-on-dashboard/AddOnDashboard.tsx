@@ -20,13 +20,11 @@ import { useDefaultDeploymentTarget } from "lib/hooks/useDeploymentTarget";
 
 import { Context } from "shared/Context";
 import { hardcodedIcons } from "shared/hardcodedNameDict";
-import { readableDate } from "shared/string_utils";
 import addOnGrad from "assets/add-on-grad.svg";
 import grid from "assets/grid.png";
 import list from "assets/list.png";
 import notFound from "assets/not-found.png";
 import healthy from "assets/status-healthy.png";
-import time from "assets/time.png";
 
 import DashboardHeader from "../cluster-dashboard/DashboardHeader";
 
@@ -180,12 +178,6 @@ const AddonDashboard: React.FC = () => {
                         <Spacer inline x={2} />
                       </Container>
                       <StatusIcon src={healthy} />
-                      <Container row>
-                        <SmallIcon opacity="0.4" src={time} />
-                        <Text size={13} color="#ffffff44">
-                          {readableDate(addon.info.last_deployed)}
-                        </Text>
-                      </Container>
                     </Block>
                   );
                 }
@@ -224,13 +216,6 @@ const AddonDashboard: React.FC = () => {
                         <Text size={14}>{addon.name}</Text>
                         <Spacer inline x={1} />
                         <MidIcon src={healthy} height="16px" />
-                      </Container>
-                      <Spacer height="15px" />
-                      <Container row>
-                        <SmallIcon opacity="0.4" src={time} />
-                        <Text size={13} color="#ffffff44">
-                          {readableDate(addon.info.last_deployed)}
-                        </Text>
                       </Container>
                     </Row>
                   );
@@ -353,11 +338,4 @@ const I = styled.i`
 const StyledAppDashboard = styled.div`
   width: 100%;
   height: 100%;
-`;
-
-const SmallIcon = styled.img<{ opacity?: string }>`
-  margin-left: 2px;
-  height: 14px;
-  opacity: ${(props) => props.opacity || 1};
-  margin-right: 10px;
 `;

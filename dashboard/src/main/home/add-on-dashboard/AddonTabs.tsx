@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from "react";
+import React, { useContext, useEffect, useMemo } from "react";
 import AnimateHeight from "react-animate-height";
 import { useFormContext } from "react-hook-form";
 import { useHistory } from "react-router";
@@ -14,6 +14,8 @@ import {
   SUPPORTED_ADDON_TEMPLATES,
 } from "lib/addons/template";
 
+import { Context } from "shared/Context";
+
 import { useAddonContext } from "./AddonContextProvider";
 import AddonSaveButton from "./AddonSaveButton";
 
@@ -24,6 +26,7 @@ type Props = {
 const AddonTabs: React.FC<Props> = ({ tabParam }) => {
   const history = useHistory();
   const { addon } = useAddonContext();
+  const { user } = useContext(Context);
 
   const {
     reset,
@@ -42,10 +45,16 @@ const AddonTabs: React.FC<Props> = ({ tabParam }) => {
 
   const tabs = useMemo(() => {
     if (addonTemplate) {
-      return addonTemplate.tabs.map((tab) => ({
-        label: tab.displayName,
-        value: tab.name,
-      }));
+      return addonTemplate.tabs
+        .filter(
+          (t) =>
+            !t.isOnlyForPorterOperators ||
+            (t.isOnlyForPorterOperators && user.isPorterUser)
+        )
+        .map((tab) => ({
+          label: tab.displayName,
+          value: tab.name,
+        }));
     }
     return [
       {
@@ -87,11 +96,17 @@ const AddonTabs: React.FC<Props> = ({ tabParam }) => {
         }}
       />
       <Spacer y={1} />
-      {addonTemplate?.tabs.map((tab) =>
-        match(currentTab)
-          .with(tab.name, () => <tab.component key={tab.name} />)
-          .otherwise(() => null)
-      )}
+      {addonTemplate?.tabs
+        .filter(
+          (t) =>
+            !t.isOnlyForPorterOperators ||
+            (t.isOnlyForPorterOperators && user.isPorterUser)
+        )
+        .map((tab) =>
+          match(currentTab)
+            .with(tab.name, () => <tab.component key={tab.name} />)
+            .otherwise(() => null)
+        )}
     </DashboardWrapper>
   );
 };

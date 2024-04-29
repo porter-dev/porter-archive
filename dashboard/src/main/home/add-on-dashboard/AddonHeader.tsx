@@ -1,12 +1,13 @@
 import React, { useMemo } from "react";
 import styled from "styled-components";
-import { match } from "ts-pattern";
+import { match, P } from "ts-pattern";
 
 import Container from "components/porter/Container";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import Tooltip from "components/porter/Tooltip";
 import TitleSection from "components/TitleSection";
+import { type ClientAddonPod } from "lib/hooks/useAddon";
 import { prefixSubdomain } from "lib/porter-apps/services";
 
 import { useAddonContext } from "./AddonContextProvider";
@@ -48,15 +49,33 @@ const AddonHeader: React.FC = () => {
         <Container row>
           <Text size={16}>Deploy status</Text>
           <Spacer x={1} inline />
-          {status.isLoading ? (
-            <Text color="helper">Initializing...</Text>
-          ) : status.pods.every((p) => p.status === "running") ? (
-            <Text color="#01a05d">Deployed</Text>
-          ) : status.pods.some((p) => p.status === "failed") ? (
-            <Text color="#E1322E">Failed</Text>
-          ) : (
-            <Text color="#E49621">Deploying</Text>
-          )}
+          {match(status)
+            .with({ isLoading: true }, () => (
+              <Text color="helper">Initializing...</Text>
+            ))
+            .with(
+              {
+                pods: P.when((pods: ClientAddonPod[]) =>
+                  pods.every((p) => p.status === "running")
+                ),
+              },
+              () => <Text color="#01a05d">Deployed</Text>
+            )
+            .with(
+              {
+                pods: P.when((pods) => pods.some((p) => p.status === "failed")),
+              },
+              () => <Text color="#E1322E">Failed</Text>
+            )
+            .with(
+              {
+                pods: P.when((pods) =>
+                  pods.some((p) => p.status === "pending")
+                ),
+              },
+              () => <Text color="#E49621">Deploying</Text>
+            )
+            .otherwise(() => null)}
         </Container>
         <Spacer y={0.5} />
         {status.isLoading ? (

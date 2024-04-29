@@ -307,10 +307,11 @@ export const useAddon = (): {
   };
 };
 
-const addonControllerValidator = z.array(
+const addonControllersValidator = z.array(
   z.object({
     metadata: z.object({
       uid: z.string(),
+      name: z.string(),
     }),
     spec: z.object({
       selector: z.object({
@@ -375,7 +376,7 @@ export const useAddonStatus = ({
           id: projectId,
         }
       );
-      const parsed = await addonControllerValidator.parseAsync(resp.data);
+      const parsed = await addonControllersValidator.parseAsync(resp.data);
 
       return parsed;
     },
@@ -550,10 +551,91 @@ export const useAddonLogs = ({
   projectId?: number;
   deploymentTarget: DeploymentTarget;
   addon?: ClientAddon;
-}): { logs: Log[]; refresh: () => void } => {
+}): { logs: Log[]; refresh: () => void; isInitializing: boolean } => {
   const [logs, setLogs] = useState<Log[]>([]);
   const logsBufferRef = useRef<Log[]>([]);
   const { newWebsocket, openWebsocket, closeAllWebsockets } = useWebsockets();
+  const [isInitializing, setIsInitializing] = useState<boolean>(true);
+
+  const fetchControllers = async (): Promise<
+    z.infer<typeof addonControllersValidator>
+  > => {
+    if (!projectId || projectId === -1 || !addon) {
+      throw new Error("Invalid parameters");
+    }
+
+    const resp = await api.getChartControllers(
+      "<token>",
+      {},
+      {
+        name: addon.name.value,
+        namespace: deploymentTarget.namespace,
+        cluster_id: deploymentTarget.cluster_id,
+        revision: 0,
+        id: projectId,
+      }
+    );
+    const parsed = await addonControllersValidator.parseAsync(resp.data);
+
+    return parsed;
+  };
+
+  const controllersQuery = useQuery(
+    ["listControllers", projectId, addon],
+    fetchControllers,
+    {
+      retryDelay: 5000,
+      enabled: !!projectId && projectId !== -1 && !!addon,
+    }
+  );
+
+  useEffect(() => {
+    const fetchPodsAndSetUpWebsockets = async (
+      controllers: z.infer<typeof addonControllersValidator>
+    ): Promise<void> => {
+      closeAllWebsockets();
+      for (const controller of controllers) {
+        const selectors = Object.keys(controller.spec.selector.matchLabels)
+          .map((key) => `${key}=${controller.spec.selector.matchLabels[key]}`)
+          .join(",");
+
+        const pods = await fetchPodsForSelectors(selectors);
+
+        for (const pod of pods) {
+          setupWebsocket(pod.metadata.name, controller.metadata.name);
+        }
+      }
+      setIsInitializing(false);
+    };
+    if (controllersQuery.isSuccess && controllersQuery.data) {
+      void fetchPodsAndSetUpWebsockets(controllersQuery.data);
+    }
+  }, [controllersQuery.data, controllersQuery.isSuccess]);
+
+  const fetchPodsForSelectors = async (
+    selectors: string
+  ): Promise<Array<z.infer<typeof addonPodValidator>>> => {
+    if (!projectId || projectId === -1 || !deploymentTarget) {
+      return [];
+    }
+    try {
+      const res = await api.getMatchingPods(
+        "<token>",
+        {
+          namespace: deploymentTarget.namespace,
+          selectors: [selectors],
+        },
+        {
+          id: projectId,
+          cluster_id: deploymentTarget.cluster_id,
+        }
+      );
+      const parsed = await z.array(addonPodValidator).parseAsync(res.data);
+      return parsed;
+    } catch (err) {
+      return [];
+    }
+  };
 
   const parseLogs = (
     logs: string[] = [],
@@ -647,11 +729,10 @@ export const useAddonLogs = ({
           return;
         }
         const newLogs = parseLogs(
-          evt?.data?.split("}\n").map((line: string) => line + "}"),
+          evt.data.trim().split("\n"),
           controllerName,
           podName
         );
-
         pushLogs(newLogs);
       },
       onclose: () => {
@@ -669,76 +750,10 @@ export const useAddonLogs = ({
     }
     setLogs([]);
     flushLogsBuffer();
-    closeAllWebsockets();
-
-    try {
-      const resp = await api.getChartControllers(
-        "<token>",
-        {},
-        {
-          name: addon.name.value,
-          namespace: deploymentTarget.namespace,
-          cluster_id: deploymentTarget.cluster_id,
-          revision: 0,
-          id: projectId,
-        }
-      );
-
-      const controllers = await z
-        .array(
-          z.object({
-            metadata: z.object({
-              uid: z.string(),
-              name: z.string(),
-            }),
-            spec: z.object({
-              selector: z.object({
-                matchLabels: z.record(z.string()),
-              }),
-            }),
-          })
-        )
-        .parseAsync(resp.data);
-
-      for (const controller of controllers) {
-        const selectors = Object.keys(controller.spec.selector.matchLabels)
-          .map((key) => `${key}=${controller.spec.selector.matchLabels[key]}`)
-          .join(",");
-
-        const pods = await getPodsForSelectors(selectors);
-
-        for (const pod of pods) {
-          setupWebsocket(pod.metadata.name, controller.metadata.name);
-        }
-      }
-    } catch (err) {
-      // console.err(err);
-    }
+    setIsInitializing(true);
+    await controllersQuery.refetch();
   };
-  const getPodsForSelectors = async (
-    selectors: string
-  ): Promise<Array<z.infer<typeof addonPodValidator>>> => {
-    if (!projectId || projectId === -1 || !deploymentTarget) {
-      return [];
-    }
-    try {
-      const res = await api.getMatchingPods(
-        "<token>",
-        {
-          namespace: deploymentTarget.namespace,
-          selectors: [selectors],
-        },
-        {
-          id: projectId,
-          cluster_id: deploymentTarget.cluster_id,
-        }
-      );
-      const parsed = await z.array(addonPodValidator).parseAsync(res.data);
-      return parsed;
-    } catch (err) {
-      return [];
-    }
-  };
+
   useEffect(() => {
     setTimeout(flushLogsBuffer, 500);
     const flushLogsBufferInterval = setInterval(flushLogsBuffer, 3000);
@@ -746,16 +761,16 @@ export const useAddonLogs = ({
       clearInterval(flushLogsBufferInterval);
     };
   }, []);
-  useEffect(() => {
-    void refresh();
-  }, [projectId, deploymentTarget, addon]);
+
   useEffect(() => {
     return () => {
       closeAllWebsockets();
     };
   }, []);
+
   return {
     logs,
     refresh,
+    isInitializing,
   };
 };

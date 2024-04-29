@@ -30,6 +30,7 @@ export type AddonTab = {
   name: string;
   displayName: string;
   component: React.FC;
+  isOnlyForPorterOperators?: boolean;
 };
 
 export const DEFAULT_ADDON_TAB = {
@@ -82,6 +83,7 @@ export const ADDON_TEMPLATE_DATADOG: AddonTemplate = {
       name: "logs",
       displayName: "Logs",
       component: Logs,
+      isOnlyForPorterOperators: true,
     },
     {
       name: "settings",
@@ -102,6 +104,12 @@ export const ADDON_TEMPLATE_MEZMO: AddonTemplate = {
       name: "configuration",
       displayName: "Configuration",
       component: MezmoForm,
+    },
+    {
+      name: "logs",
+      displayName: "Logs",
+      component: Logs,
+      isOnlyForPorterOperators: true,
     },
     {
       name: "settings",
@@ -149,6 +157,12 @@ export const ADDON_TEMPLATE_NEWRELIC: AddonTemplate = {
       component: NewRelicForm,
     },
     {
+      name: "logs",
+      displayName: "Logs",
+      component: Logs,
+      isOnlyForPorterOperators: true,
+    },
+    {
       name: "settings",
       displayName: "Settings",
       component: Settings,
@@ -172,6 +186,12 @@ export const ADDON_TEMPLATE_TAILSCALE: AddonTemplate = {
       name: "configuration",
       displayName: "Configuration",
       component: TailscaleForm,
+    },
+    {
+      name: "logs",
+      displayName: "Logs",
+      component: Logs,
+      isOnlyForPorterOperators: true,
     },
     {
       name: "settings",

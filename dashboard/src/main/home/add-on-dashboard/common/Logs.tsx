@@ -1,70 +1,137 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import type Anser from "anser";
 import dayjs from "dayjs";
 import styled from "styled-components";
+import { match, P } from "ts-pattern";
 
+import Spacer from "components/porter/Spacer";
+import Text from "components/porter/Text";
 import { useAddonLogs } from "lib/hooks/useAddon";
 
 import { useAddonContext } from "../AddonContextProvider";
 
+const getPodNameColor = (podName: string): string => {
+  const colors = ["#7B61FF", "#FF7B61", "#61FF7B", "#FF61FF", "#61FFFF"];
+
+  const numericalValue = podName
+    .split("")
+    .reduce((acc, char) => acc + char.charCodeAt(0), 0);
+
+  const colorIndex = numericalValue % colors.length;
+
+  return colors[colorIndex];
+};
+
 const Logs: React.FC = () => {
   const { projectId, deploymentTarget, addon } = useAddonContext();
-  const { logs } = useAddonLogs({
+  const logsResp = useAddonLogs({
     projectId,
     deploymentTarget,
     addon,
   });
+  const scrollToBottomRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (scrollToBottomRef.current) {
+      scrollToBottomRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [logsResp.logs]);
 
   return (
-    <StyledLogsSection>
-      <StyledLogsTable>
-        <StyledLogsTableBody>
-          {logs.map((log, i) => {
-            return (
-              <StyledLogsTableRow key={[log.lineNumber, i].join(".")}>
-                <StyledLogsTableData width={"120px"}>
-                  <LineTimestamp className="line-timestamp">
-                    {log.timestamp
+    <div>
+      <Text color="warner">
+        This tab is a work in development and is only available to Porter
+        operators.
+      </Text>
+      <Spacer y={0.5} />
+      <StyledLogsSection>
+        <StyledLogsTable>
+          <StyledLogsTableBody>
+            {match(logsResp)
+              .with({ isInitializing: true }, () => <LoadingLogLine />)
+              .with({ logs: P.when((logs) => logs.length === 0) }, () => (
+                <StyledLogsTableRow>
+                  <StyledLogsTableData width={"120px"}>
+                    <LineTimestamp className="line-timestamp">
+                      No logs found. Waiting for logs...
+                    </LineTimestamp>
+                  </StyledLogsTableData>
+                </StyledLogsTableRow>
+              ))
+              .otherwise(() => (
+                <>
+                  {logsResp.logs.map((log, i) => {
+                    const timestampStr = log.timestamp
                       ? dayjs(log.timestamp).format("MM/DD HH:mm:ss")
-                      : "-"}
-                  </LineTimestamp>
-                </StyledLogsTableData>
-                <StyledLogsTableData width={"100px"}>
-                  <LogInnerPill color={"#7B61FF"}>
-                    {log.controllerName}
-                  </LogInnerPill>
-                </StyledLogsTableData>
-                <StyledLogsTableData width={"100px"}>
-                  <LogInnerPill color={"#FF7B61"}>{log.podName}</LogInnerPill>
-                </StyledLogsTableData>
-                <StyledLogsTableData>
-                  <LogOuter key={[log.lineNumber, i].join(".")}>
-                    {log.line?.map((ansi, j) => {
-                      if (ansi.clearLine) {
-                        return null;
-                      }
+                      : "-";
+                    return (
+                      <StyledLogsTableRow key={[log.lineNumber, i].join(".")}>
+                        <StyledLogsTableData width={"120px"}>
+                          <LineTimestamp className="line-timestamp">
+                            {timestampStr}
+                          </LineTimestamp>
+                        </StyledLogsTableData>
+                        <StyledLogsTableData width={"100px"}>
+                          <LogInnerPill color={"#7B61FF"}>
+                            {log.controllerName}
+                          </LogInnerPill>
+                        </StyledLogsTableData>
+                        <StyledLogsTableData width={"100px"}>
+                          <LogInnerPill color={getPodNameColor(log.podName)}>
+                            {log.podName}
+                          </LogInnerPill>
+                        </StyledLogsTableData>
+                        <StyledLogsTableData>
+                          <LogOuter key={[log.lineNumber, i].join(".")}>
+                            {log.line?.map((ansi, j) => {
+                              if (ansi.clearLine) {
+                                return null;
+                              }
 
-                      return (
-                        <LogInnerSpan
-                          key={[log.lineNumber, i, j].join(".")}
-                          ansi={ansi}
-                        >
-                          {ansi.content.replace(/ /g, "\u00a0")}
-                        </LogInnerSpan>
-                      );
-                    })}
-                  </LogOuter>
-                </StyledLogsTableData>
-              </StyledLogsTableRow>
-            );
-          })}
-        </StyledLogsTableBody>
-      </StyledLogsTable>
-    </StyledLogsSection>
+                              return (
+                                <LogInnerSpan
+                                  key={[log.lineNumber, i, j].join(".")}
+                                  ansi={ansi}
+                                >
+                                  {ansi.content.replace(/ /g, "\u00a0")}
+                                </LogInnerSpan>
+                              );
+                            })}
+                          </LogOuter>
+                        </StyledLogsTableData>
+                      </StyledLogsTableRow>
+                    );
+                  })}
+                </>
+              ))}
+          </StyledLogsTableBody>
+        </StyledLogsTable>
+        <div ref={scrollToBottomRef} />
+      </StyledLogsSection>
+    </div>
   );
 };
 
 export default Logs;
+
+const LoadingLogLine: React.FC = () => {
+  return (
+    <StyledLogsTableRow>
+      <StyledLogsTableData width={"120px"}>
+        <CellLoadingAnimation color="#767676" />
+      </StyledLogsTableData>
+      <StyledLogsTableData width={"100px"}>
+        <CellLoadingAnimation color="#767676" />
+      </StyledLogsTableData>
+      <StyledLogsTableData width={"100px"}>
+        <CellLoadingAnimation color="#767676" />
+      </StyledLogsTableData>
+      <StyledLogsTableData>
+        <CellLoadingAnimation color="#767676" />
+      </StyledLogsTableData>
+    </StyledLogsTableRow>
+  );
+};
 
 const StyledLogsTable = styled.table`
   border-collapse: collapse;
@@ -151,6 +218,26 @@ const StyledLogsSection = styled.div`
     to {
       opacity: 1;
       transform: translateY(0px);
+    }
+  }
+`;
+
+const CellLoadingAnimation = styled(LogInnerPill)`
+  background: linear-gradient(
+    270deg,
+    ${(props) => props.color}22,
+    ${(props) => props.color}55,
+    ${(props) => props.color}22
+  );
+  background-size: 200% 200%;
+  animation: loadingEffect 1.5s infinite;
+
+  @keyframes loadingEffect {
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
     }
   }
 `;

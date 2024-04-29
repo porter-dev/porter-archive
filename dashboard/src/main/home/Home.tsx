@@ -34,7 +34,7 @@ import {
   type ProjectType,
 } from "shared/types";
 
-import AddonDashboard from "./add-on-dashboard/AddonDashboard";
+import AddonDashboard from "./add-on-dashboard/AddOnDashboard";
 import AddonTemplates from "./add-on-dashboard/AddonTemplates";
 import AddonView from "./add-on-dashboard/AddonView";
 import LegacyAddOnDashboard from "./add-on-dashboard/legacy_AddOnDashboard";

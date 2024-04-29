@@ -1,4 +1,6 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
 import { createPortal } from "react-dom";
 import {
   Route,
@@ -24,9 +26,6 @@ import { fakeGuardedRoute } from "shared/auth/RouteGuard";
 import { Context } from "shared/Context";
 import DeploymentTargetProvider from "shared/DeploymentTargetContext";
 import { pushFiltered, pushQueryParams, type PorterUrl } from "shared/routing";
-import dayjs from "dayjs";
-import relativeTime from "dayjs/plugin/relativeTime";
-
 import midnight from "shared/themes/midnight";
 import standard from "shared/themes/standard";
 import {
@@ -222,7 +221,7 @@ const Home: React.FC<Props> = (props) => {
       } else {
         setHasFinishedOnboarding(true);
       }
-    } catch (error) { }
+    } catch (error) {}
   };
 
   useEffect(() => {
@@ -425,7 +424,7 @@ const Home: React.FC<Props> = (props) => {
                     >
                       connect a valid payment method
                     </Link>
-                    . Your free trial is ending {" "}
+                    . Your free trial is ending{" "}
                     {dayjs().to(dayjs(plan.trial_info.ending_before))}
                   </GlobalBanner>
                 )}
@@ -550,7 +549,9 @@ const Home: React.FC<Props> = (props) => {
               </Route>
 
               <Route path="/addons/new">
-                {currentProject?.beta_features_enabled ? (
+                {currentProject?.capi_provisioner_enabled &&
+                currentProject?.simplified_view_enabled &&
+                currentProject?.beta_features_enabled ? (
                   <AddonTemplates />
                 ) : (
                   <LegacyNewAddOnFlow />
@@ -563,7 +564,9 @@ const Home: React.FC<Props> = (props) => {
                 <AddonView />
               </Route>
               <Route path="/addons">
-                {currentProject?.beta_features_enabled ? (
+                {currentProject?.capi_provisioner_enabled &&
+                currentProject?.simplified_view_enabled &&
+                currentProject?.beta_features_enabled ? (
                   <AddonDashboard />
                 ) : (
                   <LegacyAddOnDashboard />

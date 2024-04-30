@@ -58,6 +58,7 @@ func (repo *ReferralRepository) GetReferralByReferredID(referredID uint) (*model
 	return referral, nil
 }
 
+// UpdateReferral updates a referral in the database
 func (repo *ReferralRepository) UpdateReferral(referral *models.Referral) (*models.Referral, error) {
 	if err := repo.db.Save(referral).Error; err != nil {
 		return nil, err

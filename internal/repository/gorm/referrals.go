@@ -1,6 +1,8 @@
 package gorm
 
 import (
+	"errors"
+
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
 	"gorm.io/gorm"
@@ -52,7 +54,12 @@ func (repo *ReferralRepository) CountReferralsByProjectID(projectID uint, status
 // GetReferralByReferredID returns a referral by the referred user's ID
 func (repo *ReferralRepository) GetReferralByReferredID(referredID uint) (*models.Referral, error) {
 	referral := &models.Referral{}
-	if err := repo.db.Where("referred_user_id = ?", referredID).First(&referral).Error; err != nil {
+	err := repo.db.Where("referred_user_id = ?", referredID).First(&referral).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+
+	if err != nil {
 		return &models.Referral{}, err
 	}
 	return referral, nil

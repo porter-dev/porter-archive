@@ -136,6 +136,10 @@ func (c *CreateBillingHandler) grantRewardIfReferral(ctx context.Context, referr
 		return telemetry.Error(ctx, span, err, "failed to find referral by referred id")
 	}
 
+	if referral == nil {
+		return nil
+	}
+
 	referrerProject, err := c.Repo().Project().ReadProject(referral.ProjectID)
 	if err != nil {
 		return telemetry.Error(ctx, span, err, "failed to find referrer project")

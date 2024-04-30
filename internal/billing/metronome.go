@@ -242,7 +242,8 @@ func (m MetronomeClient) ListCustomerCredits(ctx context.Context, customerID uui
 	return response, nil
 }
 
-func (m MetronomeClient) CreateCreditsGrant(ctx context.Context, customerID uuid.UUID, grantAmount float64, paidAmount float64) (err error) {
+// CreateCreditsGrant will create a new credit grant for the customer with the specified amount
+func (m MetronomeClient) CreateCreditsGrant(ctx context.Context, customerID uuid.UUID, grantAmount float64, paidAmount float64, expiresAt string) (err error) {
 	ctx, span := telemetry.NewSpan(ctx, "create-credits-grant")
 	defer span.End()
 
@@ -251,29 +252,33 @@ func (m MetronomeClient) CreateCreditsGrant(ctx context.Context, customerID uuid
 	}
 
 	path := "credits/createGrant"
+	creditTypeID, err := m.getCreditTypeID(ctx, "USD (cents)")
+	if err != nil {
+		return telemetry.Error(ctx, span, err, "failed to get credit type id")
+	}
+
+	// Uniqueness key is used to prevent duplicate grants
+	uniquenessKey := fmt.Sprintf("%s-referral-reward", customerID)
 
 	req := types.CreateCreditsGrantRequest{
 		CustomerID:    customerID,
-		UniquenessKey: "porter-credits",
-		GrantAmount: types.GrantAmount{
-			Amount:     grantAmount,
-			CreditType: types.CreditType{},
+		UniquenessKey: uniquenessKey,
+		GrantAmount: types.GrantAmountID{
+			Amount:       grantAmount,
+			CreditTypeID: creditTypeID,
 		},
 		PaidAmount: types.PaidAmount{
 			Amount:       paidAmount,
-			CreditTypeID: uuid.UUID{},
+			CreditTypeID: creditTypeID,
 		},
 		Name:      "Porter Credits",
-		ExpiresAt: "", // never expires
+		ExpiresAt: expiresAt,
 		Priority:  1,
 	}
 
-	var result struct {
-		Data []types.CreditGrant `json:"data"`
-	}
-
-	_, err = m.do(http.MethodPost, path, req, &result)
-	if err != nil {
+	statusCode, err := m.do(http.MethodPost, path, req, nil)
+	if err != nil && statusCode != http.StatusConflict {
+		// a conflict response indicates the grant already exists
 		return telemetry.Error(ctx, span, err, "failed to create credits grant")
 	}
 
@@ -395,6 +400,30 @@ func (m MetronomeClient) listBillableMetricIDs(ctx context.Context, customerID u
 	}
 
 	return result.Data, nil
+}
+
+func (m MetronomeClient) getCreditTypeID(ctx context.Context, currencyCode string) (creditTypeID uuid.UUID, err error) {
+	ctx, span := telemetry.NewSpan(ctx, "get-credit-type-id")
+	defer span.End()
+
+	path := "/credit-types/list"
+
+	var result struct {
+		Data []types.PricingUnit `json:"data"`
+	}
+
+	_, err = m.do(http.MethodGet, path, nil, &result)
+	if err != nil {
+		return creditTypeID, telemetry.Error(ctx, span, err, "failed to retrieve billable metrics from metronome")
+	}
+
+	for _, pricingUnit := range result.Data {
+		if pricingUnit.Name == currencyCode {
+			return pricingUnit.ID, nil
+		}
+	}
+
+	return creditTypeID, telemetry.Error(ctx, span, fmt.Errorf("credit type not found for currency code %s", currencyCode), "failed to find credit type")
 }
 
 func (m MetronomeClient) do(method string, path string, body interface{}, data interface{}) (statusCode int, err error) {

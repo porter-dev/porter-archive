@@ -17,7 +17,7 @@ func NewReferralRepository(db *gorm.DB) repository.ReferralRepository {
 	return &ReferralRepository{db}
 }
 
-// CreateInvite creates a new invite
+// CreateReferral creates a new referral in the database
 func (repo *ReferralRepository) CreateReferral(referral *models.Referral) (*models.Referral, error) {
 	user := &models.User{}
 
@@ -38,6 +38,7 @@ func (repo *ReferralRepository) CreateReferral(referral *models.Referral) (*mode
 	return referral, nil
 }
 
+// GetReferralByCode returns the number of referrals a user has made
 func (repo *ReferralRepository) GetReferralCountByUserID(userID uint) (int, error) {
 	referrals := []models.Referral{}
 	if err := repo.db.Where("user_id = ?", userID).Find(&referrals).Error; err != nil {

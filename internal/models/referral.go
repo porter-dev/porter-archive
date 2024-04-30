@@ -20,6 +20,7 @@ type Referral struct {
 	Status string
 }
 
+// NewReferralCode generates a new referral code
 func NewReferralCode() string {
 	return shortuuid.New()
 }

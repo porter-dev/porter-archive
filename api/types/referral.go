@@ -1,5 +1,6 @@
 package types
 
+// Referral is a struct that represents a referral in the Porter API
 type Referral struct {
 	ID uint `json:"id"`
 	// Code is the referral code that is shared with the referred user

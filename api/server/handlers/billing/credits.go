@@ -2,6 +2,7 @@ package billing
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
@@ -18,10 +19,10 @@ const (
 	referralRewardRequirement = 5
 	// defaultRewardAmountUSD is the default amount in USD rewarded to users
 	// who reach the reward requirement
-	defaultRewardAmountUSD = 20
+	defaultRewardAmountCents = 2000
 	// defaultPaidAmountUSD is the amount paid by the user to get the credits
 	// grant, if set to 0 it means they were free
-	defaultPaidAmountUSD = 0
+	defaultPaidAmountCents = 0
 )
 
 // ListCreditsHandler is a handler for getting available credits
@@ -117,7 +118,10 @@ func (c *ClaimReferralRewardHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 	}
 
 	if !user.ReferralRewardClaimed && referralCount >= referralRewardRequirement {
-		err := c.Config().BillingManager.MetronomeClient.CreateCreditsGrant(ctx, proj.UsageID, defaultRewardAmountUSD, defaultPaidAmountUSD)
+		// Metronome requires an expiration to be passed in, so we set it to 5 years which in
+		// practice will mean the credits will run out before expiring
+		expiresAt := time.Now().AddDate(5, 0, 0).Format(time.RFC3339)
+		err := c.Config().BillingManager.MetronomeClient.CreateCreditsGrant(ctx, proj.UsageID, defaultRewardAmountCents, defaultPaidAmountCents, expiresAt)
 		if err != nil {
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 			return

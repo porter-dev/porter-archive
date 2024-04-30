@@ -58,13 +58,13 @@ type EndCustomerPlanRequest struct {
 // CreateCreditsGrantRequest is the request to create a credit grant for a customer
 type CreateCreditsGrantRequest struct {
 	// CustomerID is the id of the customer
-	CustomerID    uuid.UUID   `json:"customer_id"`
-	UniquenessKey string      `json:"uniqueness_key"`
-	GrantAmount   GrantAmount `json:"grant_amount"`
-	PaidAmount    PaidAmount  `json:"paid_amount"`
-	Name          string      `json:"name"`
-	ExpiresAt     string      `json:"expires_at"`
-	Priority      int         `json:"priority"`
+	CustomerID    uuid.UUID     `json:"customer_id"`
+	UniquenessKey string        `json:"uniqueness_key"`
+	GrantAmount   GrantAmountID `json:"grant_amount"`
+	PaidAmount    PaidAmount    `json:"paid_amount"`
+	Name          string        `json:"name"`
+	ExpiresAt     string        `json:"expires_at"`
+	Priority      int           `json:"priority"`
 }
 
 // ListCreditGrantsRequest is the request to list a user's credit grants. Note that only one of
@@ -138,7 +138,15 @@ type CreditType struct {
 	ID   string `json:"id"`
 }
 
-// GrantAmount represents the amount of credits granted
+// GrantAmountID represents the amount of credits granted with the credit type ID
+// for the create credits grant request
+type GrantAmountID struct {
+	Amount       float64   `json:"amount"`
+	CreditTypeID uuid.UUID `json:"credit_type_id"`
+}
+
+// GrantAmount represents the amount of credits granted with the credit type
+// for the list credit grants response
 type GrantAmount struct {
 	Amount     float64    `json:"amount"`
 	CreditType CreditType `json:"credit_type"`
@@ -148,6 +156,12 @@ type GrantAmount struct {
 type PaidAmount struct {
 	Amount       float64   `json:"amount"`
 	CreditTypeID uuid.UUID `json:"credit_type_id"`
+}
+
+type PricingUnit struct {
+	ID         uuid.UUID `json:"id"`
+	Name       string    `json:"name"`
+	IsCurrency bool      `json:"is_currency"`
 }
 
 // Balance represents the effective balance of the grant as of the end of the customer's

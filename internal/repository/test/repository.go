@@ -59,6 +59,7 @@ type TestRepository struct {
 	githubWebhook             repository.GithubWebhookRepository
 	datastore                 repository.DatastoreRepository
 	appInstance               repository.AppInstanceRepository
+	referral                  repository.ReferralRepository
 }
 
 func (t *TestRepository) User() repository.UserRepository {
@@ -283,6 +284,11 @@ func (t *TestRepository) AppInstance() repository.AppInstanceRepository {
 	return t.appInstance
 }
 
+// Referral returns a test Referral
+func (t *TestRepository) Referral() repository.ReferralRepository {
+	return t.referral
+}
+
 // NewRepository returns a Repository which persists users in memory
 // and accepts a parameter that can trigger read/write errors
 func NewRepository(canQuery bool, failingMethods ...string) repository.Repository {
@@ -341,5 +347,6 @@ func NewRepository(canQuery bool, failingMethods ...string) repository.Repositor
 		githubWebhook:             NewGithubWebhookRepository(),
 		datastore:                 NewDatastoreRepository(),
 		appInstance:               NewAppInstanceRepository(),
+		referral:                  NewReferralRepository(),
 	}
 }

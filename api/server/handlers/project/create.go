@@ -103,6 +103,7 @@ func (p *ProjectCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		if err != nil {
 			err = telemetry.Error(ctx, span, err, "error creating Metronome customer")
 			p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
 		}
 		proj.UsageID = customerID
 		proj.UsagePlanID = customerPlanID

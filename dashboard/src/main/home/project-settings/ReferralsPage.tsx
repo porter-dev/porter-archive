@@ -3,12 +3,14 @@ import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import { useClaimReferralReward, useReferralDetails, useReferrals } from "lib/hooks/useStripe";
 import Button from "components/porter/Button";
+import Link from "components/porter/Link";
 
 function ReferralsPage(): JSX.Element {
     const referralRewardRequirement = 5;
     const { referralDetails } = useReferralDetails();
     const { referralsCount } = useReferrals();
     const claimReferralReward = useClaimReferralReward();
+    const baseUrl = window.location.origin;
 
     const eligibleForReward = (): boolean => {
         if (referralsCount === null) {
@@ -65,6 +67,16 @@ function ReferralsPage(): JSX.Element {
             <Text color="helper">
                 Refer people to Porter to earn credits.
             </Text>
+            <Spacer y={1} />
+            {referralDetails !== null && (
+                <>
+                    <Text>
+                        Your referral link is {" "}
+                    </Text>
+                    <Link to={baseUrl + "/register?referral=" + referralDetails.code}>{baseUrl + "/register?referral=" + referralDetails.code}</Link>
+                </>
+
+            )}
             <Spacer y={1} />
             {displayReferral()}
             <Spacer y={1} />

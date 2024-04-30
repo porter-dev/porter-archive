@@ -245,6 +245,6 @@ func TestCreateUserReferralCode(t *testing.T) {
 	// This is the default lenth of a shortuuid
 	desiredLenth := 22
 	assert.NotEmpty(t, gotUser.ReferralCode, "referral code should not be empty")
-	assert.Len(t, gotUser.ReferralCode, desiredLenth, "referral code should be 20 characters long")
+	assert.Len(t, gotUser.ReferralCode, desiredLenth, "referral code should be 22 characters long")
 	assert.Equal(t, gotUser.ReferralRewardClaimed, false, "referral reward claimed should be false for new user")
 }

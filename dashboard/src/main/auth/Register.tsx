@@ -1,5 +1,6 @@
 import React, { useContext, useEffect, useState } from "react";
 import styled from "styled-components";
+import { useLocation } from "react-router-dom";
 
 import Heading from "components/form-components/Heading";
 import Button from "components/porter/Button";
@@ -73,6 +74,16 @@ const Register: React.FC<Props> = ({ authenticate }) => {
     { value: "Porter blog", label: "Porter blog" },
     { value: "Other", label: "Other" },
   ];
+
+  const { search } = useLocation()
+  const searchParams = new URLSearchParams(search)
+  const referralCodeFromUrl = searchParams.get("referral")
+
+  useEffect(() => {
+    if (referralCodeFromUrl) {
+      setReferralCode(referralCodeFromUrl);
+    }
+  }, [referralCodeFromUrl]); // Only re-run the effect if referralCodeFromUrl changes
 
   const handleRegister = (): void => {
     const isHosted = window.location.hostname === "cloud.porter.run";

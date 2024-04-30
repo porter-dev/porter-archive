@@ -35,10 +35,7 @@ func TestCreateUserSuccessful(t *testing.T) {
 
 	handler.ServeHTTP(rr, req)
 
-	// Use a struct that is the same as types.User but without the
-	// referral fields. This is because the referral code is randomly
-	// generated and is tested separately.
-	expUser :=  &types.CreateUserResponse{
+	expUser := &types.CreateUserResponse{
 		ID:            1,
 		FirstName:     "Mister",
 		LastName:      "Porter",
@@ -47,7 +44,7 @@ func TestCreateUserSuccessful(t *testing.T) {
 		EmailVerified: false,
 	}
 
-	gotUser :=  &types.CreateUserResponse{}
+	gotUser := &types.CreateUserResponse{}
 
 	apitest.AssertResponseExpected(t, rr, expUser, gotUser)
 }

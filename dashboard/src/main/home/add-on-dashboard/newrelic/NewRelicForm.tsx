@@ -28,7 +28,7 @@ const NewRelicForm: React.FC = () => {
       <Text>NewRelic License Key</Text>
       <Spacer y={0.5} />
       <ControlledInput
-        type="text"
+        type="password"
         width="300px"
         {...register("config.licenseKey")}
         placeholder="*****"
@@ -38,7 +38,7 @@ const NewRelicForm: React.FC = () => {
       <Text>NewRelic Insights Key</Text>
       <Spacer y={0.5} />
       <ControlledInput
-        type="text"
+        type="password"
         width="300px"
         {...register("config.insightsKey")}
         placeholder="*****"
@@ -48,7 +48,7 @@ const NewRelicForm: React.FC = () => {
       <Text>NewRelic Personal API Key</Text>
       <Spacer y={0.5} />
       <ControlledInput
-        type="text"
+        type="password"
         width="300px"
         {...register("config.personalApiKey")}
         placeholder="*****"

@@ -57,8 +57,11 @@ export const clientAddonValidator = z.object({
     tailscaleConfigValidator,
   ]),
 });
+export type ClientAddonType = z.infer<
+  typeof clientAddonValidator
+>["config"]["type"];
 export type ClientAddon = z.infer<typeof clientAddonValidator> & {
-  template: AddonTemplate;
+  template: AddonTemplate<ClientAddonType>;
 };
 export const legacyAddonValidator = z.object({
   name: z.string(),

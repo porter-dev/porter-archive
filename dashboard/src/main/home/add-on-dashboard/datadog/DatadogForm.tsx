@@ -39,10 +39,10 @@ const DatadogForm: React.FC = () => {
       <Text>DataDog API Key</Text>
       <Spacer y={0.5} />
       <ControlledInput
-        type="text"
+        type="password"
         width="300px"
         {...register("config.apiKey")}
-        placeholder=""
+        placeholder="my-api-key"
         error={errors.config?.apiKey?.message}
       />
       <Spacer y={1} />

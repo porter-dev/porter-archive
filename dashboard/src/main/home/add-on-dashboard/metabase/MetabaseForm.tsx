@@ -133,6 +133,7 @@ const MetabaseDatastoreConnection: React.FC = () => {
               type="text"
               width="600px"
               {...register("config.datastore.host")}
+              placeholder="my-host.com"
               error={errors.config?.datastore?.host?.message}
             />
           </td>
@@ -174,6 +175,7 @@ const MetabaseDatastoreConnection: React.FC = () => {
               type="text"
               width="600px"
               {...register("config.datastore.username")}
+              placeholder="my-username"
               error={errors.config?.datastore?.username?.message}
             />
           </td>
@@ -184,9 +186,10 @@ const MetabaseDatastoreConnection: React.FC = () => {
           </td>
           <td>
             <ControlledInput
-              type="text"
+              type="password"
               width="600px"
               {...register("config.datastore.password")}
+              placeholder="*****"
               error={errors.config?.datastore?.password?.message}
             />
           </td>

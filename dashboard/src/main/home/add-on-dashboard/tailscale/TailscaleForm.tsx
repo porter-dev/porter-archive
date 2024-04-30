@@ -47,7 +47,7 @@ const TailscaleForm: React.FC = () => {
       </Text>
       <Spacer y={0.5} />
       <ControlledInput
-        type="text"
+        type="password"
         width="500px"
         {...register("config.authKey")}
         placeholder="*****"

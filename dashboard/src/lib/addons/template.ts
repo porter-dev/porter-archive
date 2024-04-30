@@ -7,7 +7,7 @@ import NewRelicForm from "main/home/add-on-dashboard/newrelic/NewRelicForm";
 import TailscaleForm from "main/home/add-on-dashboard/tailscale/TailscaleForm";
 import TailscaleOverview from "main/home/add-on-dashboard/tailscale/TailscaleOverview";
 
-import { type ClientAddon } from ".";
+import { type ClientAddon, type ClientAddonType } from ".";
 
 export type AddonTemplateTag =
   | "Monitoring"
@@ -39,34 +39,68 @@ export const DEFAULT_ADDON_TAB = {
   component: () => null,
 };
 
-export type AddonTemplate = {
-  type: ClientAddon["config"]["type"];
+export type AddonTemplate<T extends ClientAddonType> = {
+  type: T;
   displayName: string;
   description: string;
   icon: string;
   tags: AddonTemplateTag[];
   tabs: AddonTab[]; // this what is rendered on the dashboard after the addon is deployed
+  defaultValues: ClientAddon["config"] & { type: T };
 };
 
-export const ADDON_TEMPLATE_REDIS: AddonTemplate = {
+export const ADDON_TEMPLATE_REDIS: AddonTemplate<"redis"> = {
   type: "redis",
   displayName: "Redis",
   description: "An in-memory database that persists on disk.",
   icon: "https://cdn4.iconfinder.com/data/icons/redis-2/1451/Untitled-2-512.png",
   tags: ["Database"],
   tabs: [],
+  defaultValues: {
+    type: "redis",
+    cpuCores: {
+      value: 0.5,
+      readOnly: false,
+    },
+    ramMegabytes: {
+      value: 512,
+      readOnly: false,
+    },
+    storageGigabytes: {
+      value: 1,
+      readOnly: false,
+    },
+    password: "",
+  },
 };
 
-export const ADDON_TEMPLATE_POSTGRES: AddonTemplate = {
+export const ADDON_TEMPLATE_POSTGRES: AddonTemplate<"postgres"> = {
   type: "postgres",
   displayName: "Postgres",
   description: "An object-relational database system.",
   icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postgresql/postgresql-original.svg",
   tags: ["Database"],
   tabs: [],
+  defaultValues: {
+    type: "postgres",
+    cpuCores: {
+      value: 0.5,
+      readOnly: false,
+    },
+    ramMegabytes: {
+      value: 512,
+      readOnly: false,
+    },
+    storageGigabytes: {
+      value: 1,
+      readOnly: false,
+    },
+    username: "postgres",
+    password: "postgres",
+  },
 };
 
-export const ADDON_TEMPLATE_DATADOG: AddonTemplate = {
+export const ADDON_TEMPLATE_DATADOG: AddonTemplate<"datadog"> = {
   type: "datadog",
   displayName: "DataDog",
   description:
@@ -91,9 +125,19 @@ export const ADDON_TEMPLATE_DATADOG: AddonTemplate = {
       component: Settings,
     },
   ],
+  defaultValues: {
+    type: "datadog",
+    cpuCores: 0.5,
+    ramMegabytes: 512,
+    site: "datadoghq.com",
+    apiKey: "",
+    loggingEnabled: false,
+    apmEnabled: false,
+    dogstatsdEnabled: false,
+  },
 };
 
-export const ADDON_TEMPLATE_MEZMO: AddonTemplate = {
+export const ADDON_TEMPLATE_MEZMO: AddonTemplate<"mezmo"> = {
   type: "mezmo",
   displayName: "Mezmo",
   description: "A popular logging management system.",
@@ -117,9 +161,13 @@ export const ADDON_TEMPLATE_MEZMO: AddonTemplate = {
       component: Settings,
     },
   ],
+  defaultValues: {
+    type: "mezmo",
+    ingestionKey: "",
+  },
 };
 
-export const ADDON_TEMPLATE_METABASE: AddonTemplate = {
+export const ADDON_TEMPLATE_METABASE: AddonTemplate<"metabase"> = {
   type: "metabase",
   displayName: "Metabase",
   description: "An open-source business intelligence tool.",
@@ -142,9 +190,22 @@ export const ADDON_TEMPLATE_METABASE: AddonTemplate = {
       component: Settings,
     },
   ],
+  defaultValues: {
+    type: "metabase",
+    exposedToExternalTraffic: true,
+    porterDomain: "",
+    customDomain: "",
+    datastore: {
+      host: "",
+      port: 0,
+      databaseName: "",
+      username: "",
+      password: "",
+    },
+  },
 };
 
-export const ADDON_TEMPLATE_NEWRELIC: AddonTemplate = {
+export const ADDON_TEMPLATE_NEWRELIC: AddonTemplate<"newrelic"> = {
   type: "newrelic",
   displayName: "New Relic",
   description: "Monitor your applications and infrastructure.",
@@ -168,9 +229,21 @@ export const ADDON_TEMPLATE_NEWRELIC: AddonTemplate = {
       component: Settings,
     },
   ],
+  defaultValues: {
+    type: "newrelic",
+    licenseKey: "",
+    insightsKey: "",
+    personalApiKey: "",
+    accountId: "",
+    loggingEnabled: false,
+    kubeEventsEnabled: false,
+    metricsAdapterEnabled: false,
+    prometheusEnabled: false,
+    pixieEnabled: false,
+  },
 };
 
-export const ADDON_TEMPLATE_TAILSCALE: AddonTemplate = {
+export const ADDON_TEMPLATE_TAILSCALE: AddonTemplate<"tailscale"> = {
   type: "tailscale",
   displayName: "Tailscale",
   description: "A VPN for your applications and datastores.",
@@ -199,12 +272,18 @@ export const ADDON_TEMPLATE_TAILSCALE: AddonTemplate = {
       component: Settings,
     },
   ],
+  defaultValues: {
+    type: "tailscale",
+    authKey: "",
+    subnetRoutes: [],
+  },
 };
 
-export const SUPPORTED_ADDON_TEMPLATES: AddonTemplate[] = [
-  ADDON_TEMPLATE_DATADOG,
-  ADDON_TEMPLATE_MEZMO,
-  ADDON_TEMPLATE_METABASE,
-  ADDON_TEMPLATE_NEWRELIC,
-  ADDON_TEMPLATE_TAILSCALE,
-];
+export const SUPPORTED_ADDON_TEMPLATES: Array<AddonTemplate<ClientAddonType>> =
+  [
+    ADDON_TEMPLATE_DATADOG,
+    ADDON_TEMPLATE_MEZMO,
+    ADDON_TEMPLATE_METABASE,
+    ADDON_TEMPLATE_NEWRELIC,
+    ADDON_TEMPLATE_TAILSCALE,
+  ];

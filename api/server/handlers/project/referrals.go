@@ -35,7 +35,7 @@ func (c *GetProjectReferralDetailsHandler) ServeHTTP(w http.ResponseWriter, r *h
 	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
 	if !c.Config().BillingManager.MetronomeConfigLoaded || !proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient) ||
-		proj.UsageID == uuid.Nil || proj.EnableSandbox {
+		proj.UsageID == uuid.Nil || !proj.EnableSandbox {
 		c.WriteResult(w, r, "")
 
 		telemetry.WithAttributes(span,

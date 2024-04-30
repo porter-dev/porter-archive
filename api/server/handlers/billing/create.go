@@ -70,8 +70,9 @@ func (c *CreateBillingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		// Grant a reward to the project that referred this user after linking a payment method
 		err = c.grantRewardIfReferral(ctx, user.ID)
 		if err != nil {
-			// Only log the error in case the reward grant fails, but don't return an error to the fe
-			telemetry.Error(ctx, span, err, "error granting credits reward")
+			err := telemetry.Error(ctx, span, err, "error granting credits reward")
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
 		}
 	}
 

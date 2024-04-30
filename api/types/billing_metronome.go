@@ -159,6 +159,7 @@ type PaidAmount struct {
 	CreditTypeID uuid.UUID `json:"credit_type_id"`
 }
 
+// PricingUnit represents the unit of the pricing (e.g. USD, MXN, CPU hours)
 type PricingUnit struct {
 	ID         uuid.UUID `json:"id"`
 	Name       string    `json:"name"`

@@ -294,6 +294,7 @@ func (t *GormRepository) Ipam() repository.IpamRepository {
 	return t.ipam
 }
 
+// Referral returns the ReferralRepository interface implemented by gorm
 func (t *GormRepository) Referral() repository.ReferralRepository {
 	return t.referral
 }

@@ -49,7 +49,7 @@ func (repo *ReferralRepository) CountReferralsByProjectID(projectID uint, status
 	return count, nil
 }
 
-// GetReferralByCode returns the number of referrals a user has made
+// GetReferralByReferredID returns a referral by the referred user's ID
 func (repo *ReferralRepository) GetReferralByReferredID(referredID uint) (*models.Referral, error) {
 	referral := &models.Referral{}
 	if err := repo.db.Where("referred_user_id = ?", referredID).First(&referral).Error; err != nil {

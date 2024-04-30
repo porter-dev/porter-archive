@@ -96,10 +96,12 @@ function ProjectSettings(props: any) {
         });
       }
 
-      tabOpts.push({
-        value: "referrals",
-        label: "Referrals",
-      });
+      if (currentProject?.sandbox_enabled && currentProject?.billing_enabled) {
+        tabOpts.push({
+          value: "referrals",
+          label: "Referrals",
+        });
+      }
 
       tabOpts.push({
         value: "additional-settings",

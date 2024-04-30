@@ -28,10 +28,10 @@ const MezmoForm: React.FC = () => {
       <Text>Ingestion Key</Text>
       <Spacer y={0.5} />
       <ControlledInput
-        type="text"
+        type="password"
         width="300px"
         {...register("config.ingestionKey")}
-        placeholder="*****"
+        placeholder="my-ingestion-key"
         error={errors.config?.ingestionKey?.message}
       />
       <Spacer y={1} />

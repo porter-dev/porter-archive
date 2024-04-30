@@ -4,6 +4,7 @@ import styled from "styled-components";
 
 import Back from "components/porter/Back";
 import Spacer from "components/porter/Spacer";
+import { type ClientAddonType } from "lib/addons";
 import {
   AddonTemplateTagColor,
   SUPPORTED_ADDON_TEMPLATES,
@@ -47,31 +48,35 @@ const AddonTemplates: React.FC = () => {
         disableLineBreak
       />
       <TemplateListWrapper>
-        {SUPPORTED_ADDON_TEMPLATES.map((template: AddonTemplate) => {
-          return (
-            <TemplateBlock
-              key={template.type}
-              onClick={() => {
-                history.push(`/addons/new?addon_name=${template.type}`);
-              }}
-            >
-              <Icon src={template.icon} />
-              <TemplateTitle>{template.displayName}</TemplateTitle>
-              <TemplateDescription>{template.description}</TemplateDescription>
-              <Spacer y={0.5} />
-              {template.tags.map((t) => (
-                <Tag
-                  bottom="10px"
-                  left="12px"
-                  style={{ background: AddonTemplateTagColor[t] }}
-                  key={t}
-                >
-                  {t}
-                </Tag>
-              ))}
-            </TemplateBlock>
-          );
-        })}
+        {SUPPORTED_ADDON_TEMPLATES.map(
+          (template: AddonTemplate<ClientAddonType>) => {
+            return (
+              <TemplateBlock
+                key={template.type}
+                onClick={() => {
+                  history.push(`/addons/new?addon_name=${template.type}`);
+                }}
+              >
+                <Icon src={template.icon} />
+                <TemplateTitle>{template.displayName}</TemplateTitle>
+                <TemplateDescription>
+                  {template.description}
+                </TemplateDescription>
+                <Spacer y={0.5} />
+                {template.tags.map((t) => (
+                  <Tag
+                    bottom="10px"
+                    left="12px"
+                    style={{ background: AddonTemplateTagColor[t] }}
+                    key={t}
+                  >
+                    {t}
+                  </Tag>
+                ))}
+              </TemplateBlock>
+            );
+          }
+        )}
       </TemplateListWrapper>
     </StyledTemplateComponent>
   );

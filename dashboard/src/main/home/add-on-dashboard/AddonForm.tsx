@@ -9,7 +9,7 @@ import { ControlledInput } from "components/porter/ControlledInput";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import VerticalSteps from "components/porter/VerticalSteps";
-import { defaultClientAddon, type ClientAddon } from "lib/addons";
+import { type ClientAddon, type ClientAddonType } from "lib/addons";
 import { type AddonTemplate } from "lib/addons/template";
 import { useAddonList } from "lib/hooks/useAddon";
 import { useDefaultDeploymentTarget } from "lib/hooks/useDeploymentTarget";
@@ -20,10 +20,12 @@ import DashboardHeader from "../cluster-dashboard/DashboardHeader";
 import ClusterContextProvider from "../infrastructure-dashboard/ClusterContextProvider";
 import Configuration from "./common/Configuration";
 
-type Props = {
-  template: AddonTemplate;
+type Props<T extends ClientAddonType> = {
+  template: AddonTemplate<T>;
 };
-const AddonForm: React.FC<Props> = ({ template }) => {
+const AddonForm = <T extends ClientAddonType>({
+  template,
+}: Props<T>): JSX.Element => {
   const { currentProject, currentCluster } = useContext(Context);
   const { defaultDeploymentTarget, isDefaultDeploymentTargetLoading } =
     useDefaultDeploymentTarget();
@@ -56,7 +58,12 @@ const AddonForm: React.FC<Props> = ({ template }) => {
   }, [watchName]);
 
   useEffect(() => {
-    reset(defaultClientAddon(template.type));
+    reset({
+      expanded: true,
+      name: { readOnly: false, value: template.type },
+      config: template.defaultValues,
+      template,
+    });
   }, [template]);
 
   useEffect(() => {

@@ -8,7 +8,7 @@ export const metabaseConfigValidator = z.object({
   datastore: z
     .object({
       host: z.string().nonempty(),
-      port: z.number(),
+      port: z.coerce.number(),
       databaseName: z.string().nonempty(),
       username: z.string().nonempty(),
       password: z.string().nonempty(),

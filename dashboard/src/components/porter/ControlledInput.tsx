@@ -1,5 +1,12 @@
-import React from "react";
+import React, { useState } from "react";
 import styled from "styled-components";
+
+import eyeOff from "assets/eye-off.svg";
+import eye from "assets/eye.svg";
+
+import Container from "./Container";
+import Icon from "./Icon";
+import Spacer from "./Spacer";
 import Tooltip from "./Tooltip";
 
 /*
@@ -45,6 +52,11 @@ export const ControlledInput = React.forwardRef<
     },
     ref
   ) => {
+    const [isVisible, setIsVisible] = useState(false);
+    const toggleVisibility = (): void => {
+      setIsVisible(!isVisible);
+    };
+
     return disabled && disabledTooltip ? (
       <Tooltip content={disabledTooltip} position="right">
         <Block width={width}>
@@ -72,29 +84,41 @@ export const ControlledInput = React.forwardRef<
         </Block>
       </Tooltip>
     ) : (
-      <Block width={width}>
-        {label && <Label>{label}</Label>}
-        <StyledInput
-          name={name}
-          type={type}
-          autoComplete={autoComplete}
-          placeholder={placeholder}
-          defaultValue={defaultValue}
-          onChange={onChange}
-          onBlur={onBlur}
-          ref={ref}
-          disabled={disabled}
-          width={width}
-          height={height}
-          hasError={(error && true) || error === ""}
-        />
+      <div>
+        <Container row>
+          <Block width={width}>
+            {label && <Label>{label}</Label>}
+            <StyledInput
+              name={name}
+              type={type === "password" && !isVisible ? "password" : "text"}
+              autoComplete={autoComplete}
+              placeholder={placeholder}
+              defaultValue={defaultValue}
+              onChange={onChange}
+              onBlur={onBlur}
+              ref={ref}
+              disabled={disabled}
+              width={width}
+              height={height}
+              hasError={(error && true) || error === ""}
+            />
+          </Block>
+          {type === "password" && (
+            <>
+              <Spacer inline x={0.5} />
+              <div onClick={toggleVisibility} style={{ cursor: "pointer" }}>
+                <Icon src={isVisible ? eyeOff : eye} />
+              </div>
+            </>
+          )}
+        </Container>
         {error && (
           <Error>
             <i className="material-icons">error</i>
             {error}
           </Error>
         )}
-      </Block>
+      </div>
     );
   }
 );

@@ -186,6 +186,7 @@ const Register: React.FC<Props> = ({ authenticate }) => {
               chosenReferralOption === "Other"
                 ? `Other: ${referralOtherText}`
                 : chosenReferralOption,
+            referred_by_code: referralCode,
           },
           {}
         )

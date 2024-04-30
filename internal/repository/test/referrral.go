@@ -19,6 +19,14 @@ func (repo *ReferralRepository) CreateReferral(referral *models.Referral) (*mode
 	return referral, errors.New("cannot read database")
 }
 
-func (repo *ReferralRepository) GetReferralCountByUserID(userID uint) (int, error) {
+func (repo *ReferralRepository) CountReferralsByProjectID(projectID uint, status string) (int64, error) {
 	return 0, errors.New("cannot read database")
+}
+
+func (repo *ReferralRepository) GetReferralByReferredID(referredID uint) (*models.Referral, error) {
+	return &models.Referral{}, errors.New("cannot read database")
+}
+
+func (repo *ReferralRepository) UpdateReferral(referral *models.Referral) (*models.Referral, error) {
+	return referral, errors.New("cannot read database")
 }

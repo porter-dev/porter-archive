@@ -1,5 +1,5 @@
 import { useContext, useState } from "react";
-import { useQuery, useMutation, type UseQueryResult } from "@tanstack/react-query";
+import { useQuery, type UseQueryResult } from "@tanstack/react-query";
 import { z } from "zod";
 
 import {
@@ -13,7 +13,6 @@ import {
   type PaymentMethod,
   type PaymentMethodList,
   type UsageList,
-  ReferralsValidator,
   ReferralDetailsValidator,
   ReferralDetails
 } from "lib/billing/types";
@@ -65,10 +64,6 @@ type TGetUsage = {
 
 type TGetReferralDetails = {
   referralDetails: ReferralDetails
-};
-
-type TGetReferrals = {
-  referralsCount: number | null;
 };
 
 export const usePaymentMethods = (): TUsePaymentMethod => {
@@ -379,36 +374,6 @@ export const useCustomerUsage = (
   };
 };
 
-export const useReferrals = (): TGetReferrals => {
-  const { currentProject } = useContext(Context);
-
-  // Fetch referrals count
-  const referralsReq = useQuery(
-    ["getReferrals", currentProject?.id],
-    async (): Promise<number | null> => {
-      if (!currentProject?.metronome_enabled) {
-        return null;
-      }
-
-      try {
-        const res = await api.getReferrals(
-          "<token>",
-          {},
-          {}
-        );
-
-        const referrals = ReferralsValidator.parse(res.data);
-        return referrals?.count ?? null;
-      } catch (error) {
-        return null
-      }
-    });
-
-  return {
-    referralsCount: referralsReq.data ?? null,
-  };
-};
-
 export const useReferralDetails = (): TGetReferralDetails => {
   const { currentProject } = useContext(Context);
 
@@ -428,7 +393,7 @@ export const useReferralDetails = (): TGetReferralDetails => {
         const res = await api.getReferralDetails(
           "<token>",
           {},
-          {}
+          { project_id: currentProject?.id }
         );
 
         const referraldetails = ReferralDetailsValidator.parse(res.data);
@@ -441,34 +406,4 @@ export const useReferralDetails = (): TGetReferralDetails => {
   return {
     referralDetails: referralsReq.data ?? null,
   };
-};
-
-export const useClaimReferralReward = (): (() => void) => {
-  const { currentProject } = useContext(Context);
-
-  // Apply credits reward to this project
-  const referralsReq = useMutation(
-    ["claimReferralReward", currentProject?.id],
-    async (): Promise<void> => {
-      if (!currentProject?.metronome_enabled) {
-        return;
-      }
-
-      if (!currentProject?.id || currentProject.id === -1) {
-        return;
-      }
-
-      try {
-        await api.claimReferralReward(
-          "<token>",
-          {},
-          { project_id: currentProject?.id }
-        );
-      } catch (error) {
-        return;
-      }
-    });
-
-  // Return a function that can be called to execute the mutation
-  return () => referralsReq.mutate();
 };

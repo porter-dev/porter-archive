@@ -23,26 +23,16 @@ type User struct {
 	// The github user id used for login (optional)
 	GithubUserID int64
 	GoogleUserID string
-
-	// ReferralCode is a unique code that can be shared to referr other users to Porter
-	ReferralCode string
-	// ReferralRewardClaimed indicates if the user has already received a credits reward
-	// for referring users
-	ReferralRewardClaimed bool
-
-	Referrals []Referral `json:"referrals"`
 }
 
 // ToUserType generates an external types.User to be shared over REST
 func (u *User) ToUserType() *types.User {
 	return &types.User{
-		ID:                    u.ID,
-		Email:                 u.Email,
-		EmailVerified:         u.EmailVerified,
-		FirstName:             u.FirstName,
-		LastName:              u.LastName,
-		CompanyName:           u.CompanyName,
-		ReferralCode:          u.ReferralCode,
-		ReferralRewardClaimed: u.ReferralRewardClaimed,
+		ID:            u.ID,
+		Email:         u.Email,
+		EmailVerified: u.EmailVerified,
+		FirstName:     u.FirstName,
+		LastName:      u.LastName,
+		CompanyName:   u.CompanyName,
 	}
 }

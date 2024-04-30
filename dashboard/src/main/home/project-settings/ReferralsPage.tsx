@@ -1,64 +1,12 @@
 import React from "react";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
-import { useClaimReferralReward, useReferralDetails, useReferrals } from "lib/hooks/useStripe";
-import Button from "components/porter/Button";
+import { useReferralDetails } from "lib/hooks/useStripe";
 import Link from "components/porter/Link";
 
 function ReferralsPage(): JSX.Element {
-    const referralRewardRequirement = 5;
     const { referralDetails } = useReferralDetails();
-    const { referralsCount } = useReferrals();
-    const claimReferralReward = useClaimReferralReward();
     const baseUrl = window.location.origin;
-
-    const eligibleForReward = (): boolean => {
-        if (referralsCount === null) {
-            return false;
-        }
-
-        return referralsCount >= referralRewardRequirement;
-    }
-
-    const claimReward = (): void => {
-        claimReferralReward();
-    }
-
-    const displayReferral = (): JSX.Element => {
-        if (referralDetails === null || referralsCount === null) {
-            return <></>
-        }
-
-        if (!eligibleForReward()) {
-            return (
-                <>
-                    <Text>
-                        Refer {referralRewardRequirement - referralsCount} more people to earn a reward.
-                    </Text>
-                    <Spacer y={1} />
-                </>
-            )
-        }
-
-        if (referralDetails?.reward_claimed) {
-            return (
-                <>
-                    <Text>
-                        You have already claimed a reward for referring people to Porter.
-                    </Text>
-                    <Spacer y={1} />
-                </>
-            )
-        }
-
-        return (
-            <>
-                <Text>You are elegible for claiming a reward on this project.</Text>
-                <Spacer y={0.5} />
-                <Button onClick={claimReward}>Claim Reward</Button>
-            </>
-        )
-    }
 
     return (
         <>
@@ -74,11 +22,11 @@ function ReferralsPage(): JSX.Element {
                         Your referral link is {" "}
                     </Text>
                     <Link to={baseUrl + "/register?referral=" + referralDetails.code}>{baseUrl + "/register?referral=" + referralDetails.code}</Link>
+                    <Spacer y={1} />
+                    <Text>You have referred {referralDetails.referral_count} users</Text>
                 </>
 
             )}
-            <Spacer y={1} />
-            {displayReferral()}
             <Spacer y={1} />
         </>
     )

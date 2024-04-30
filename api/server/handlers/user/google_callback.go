@@ -132,9 +132,6 @@ func upsertGoogleUserFromToken(config *config.Config, tok *oauth2.Token) (*model
 				GoogleUserID:  gInfo.Sub,
 			}
 
-			// Generate referral code for user
-			user.ReferralCode = models.NewReferralCode()
-
 			user, err = config.Repo.User().CreateUser(user)
 			if err != nil {
 				return nil, err

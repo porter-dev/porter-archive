@@ -146,9 +146,6 @@ func upsertUserFromToken(config *config.Config, tok *oauth2.Token) (*models.User
 				GithubUserID:  githubUser.GetID(),
 			}
 
-			// Generate referral code for user
-			user.ReferralCode = models.NewReferralCode()
-
 			user, err = config.Repo.User().CreateUser(user)
 			if err != nil {
 				return nil, err

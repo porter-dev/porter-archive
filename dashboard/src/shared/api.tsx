@@ -3577,33 +3577,17 @@ const deletePaymentMethod = baseApi<
     `/api/projects/${project_id}/billing/payment_method/${payment_method_id}`
 );
 
-const getReferrals = baseApi<
-  {},
-  {}
->(
-  "GET",
-  () =>
-    `/api/referrals`
-);
-
 const getReferralDetails = baseApi<
-  {},
-  {}
->(
-  "GET",
-  () =>
-    `/api/referrals/details`
-);
-
-const claimReferralReward = baseApi<
   {},
   {
     project_id?: number;
   }
 >(
-  "POST",
-  ({ project_id }) => `/api/projects/${project_id}/billing/credits/claim_referral`
+  "GET",
+  ({ project_id }) =>
+    `/api/projects/${project_id}/referrals/details`
 );
+
 const getGithubStatus = baseApi<{}, {}>("GET", ({ }) => `/api/status/github`);
 
 const createSecretAndOpenGitHubPullRequest = baseApi<
@@ -3997,9 +3981,7 @@ export default {
   addPaymentMethod,
   setDefaultPaymentMethod,
   deletePaymentMethod,
-  getReferrals,
   getReferralDetails,
-  claimReferralReward,
 
   // STATUS
   getGithubStatus,

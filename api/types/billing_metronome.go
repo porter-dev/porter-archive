@@ -65,6 +65,7 @@ type CreateCreditsGrantRequest struct {
 	Name          string        `json:"name"`
 	ExpiresAt     string        `json:"expires_at"`
 	Priority      int           `json:"priority"`
+	Reason        string        `json:"reason"`
 }
 
 // ListCreditGrantsRequest is the request to list a user's credit grants. Note that only one of

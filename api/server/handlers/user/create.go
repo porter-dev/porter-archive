@@ -70,9 +70,6 @@ func (u *UserCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	user.Password = string(hashedPw)
 
-	// Generate referral code for user
-	user.ReferralCode = models.NewReferralCode()
-
 	// write the user to the db
 	user, err = u.Repo().User().CreateUser(user)
 	if err != nil {
@@ -106,6 +103,7 @@ func (u *UserCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		referral := &models.Referral{
 			Code:           request.ReferredBy,
 			ReferredUserID: user.ID,
+			Status:         models.ReferralStatusSignedUp,
 		}
 
 		_, err = u.Repo().Referral().CreateReferral(referral)

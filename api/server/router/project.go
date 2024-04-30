@@ -397,14 +397,14 @@ func getProjectRoutes(
 		Router:   r,
 	})
 
-	// GET /api/projects/{project_id}/billing/credits/claim_referral -> project.NewGetCreditsHandler
-	claimReferralRewardEndpoint := factory.NewAPIEndpoint(
+	// GET /api/projects/{project_id}/referrals/details -> user.NewGetUserReferralDetailsHandler
+	getReferralDetailsEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
-			Verb:   types.APIVerbCreate,
-			Method: types.HTTPVerbPost,
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: relPath + "/billing/credits/claim_referral",
+				RelativePath: relPath + "/referrals/details",
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
@@ -413,14 +413,14 @@ func getProjectRoutes(
 		},
 	)
 
-	claimReferralRewardHandler := billing.NewClaimReferralReward(
+	getReferralDetailsHandler := project.NewGetProjectReferralDetailsHandler(
 		config,
 		factory.GetResultWriter(),
 	)
 
 	routes = append(routes, &router.Route{
-		Endpoint: claimReferralRewardEndpoint,
-		Handler:  claimReferralRewardHandler,
+		Endpoint: getReferralDetailsEndpoint,
+		Handler:  getReferralDetailsHandler,
 		Router:   r,
 	})
 

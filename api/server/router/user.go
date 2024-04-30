@@ -472,53 +472,5 @@ func getUserRoutes(
 		Router:   r,
 	})
 
-	// GET /api/referrals -> user.NewListUserReferralsHandler
-	listReferralsEndpoint := factory.NewAPIEndpoint(
-		&types.APIRequestMetadata{
-			Verb:   types.APIVerbGet,
-			Method: types.HTTPVerbGet,
-			Path: &types.Path{
-				Parent:       basePath,
-				RelativePath: "/referrals",
-			},
-			Scopes: []types.PermissionScope{types.UserScope},
-		},
-	)
-
-	listReferralsHandler := user.NewListUserReferralsHandler(
-		config,
-		factory.GetResultWriter(),
-	)
-
-	routes = append(routes, &router.Route{
-		Endpoint: listReferralsEndpoint,
-		Handler:  listReferralsHandler,
-		Router:   r,
-	})
-
-	// GET /api/referrals/details -> user.NewGetUserReferralDetailsHandler
-	getReferralDetailsEndpoint := factory.NewAPIEndpoint(
-		&types.APIRequestMetadata{
-			Verb:   types.APIVerbGet,
-			Method: types.HTTPVerbGet,
-			Path: &types.Path{
-				Parent:       basePath,
-				RelativePath: "/referrals/details",
-			},
-			Scopes: []types.PermissionScope{types.UserScope},
-		},
-	)
-
-	getReferralDetailsHandler := user.NewGetUserReferralDetailsHandler(
-		config,
-		factory.GetResultWriter(),
-	)
-
-	routes = append(routes, &router.Route{
-		Endpoint: getReferralDetailsEndpoint,
-		Handler:  getReferralDetailsHandler,
-		Router:   r,
-	})
-
 	return routes
 }

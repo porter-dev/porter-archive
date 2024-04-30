@@ -20,6 +20,16 @@ const (
 	defaultCollectionMethod = "charge_automatically"
 	defaultMaxRetries       = 10
 	porterStandardTrialDays = 15
+
+	// referralRewardRequirement is the number of referred users required to
+	// be granted a credits reward
+	referralRewardRequirement = 5
+	// defaultRewardAmountCents is the default amount in USD cents rewarded to users
+	// who reach the reward requirement
+	defaultRewardAmountCents = 1000
+	// defaultPaidAmountCents is the amount paid by the user to get the credits
+	// grant, if set to 0 it means they were free
+	defaultPaidAmountCents = 0
 )
 
 // MetronomeClient is the client used to call the Metronome API
@@ -243,7 +253,7 @@ func (m MetronomeClient) ListCustomerCredits(ctx context.Context, customerID uui
 }
 
 // CreateCreditsGrant will create a new credit grant for the customer with the specified amount
-func (m MetronomeClient) CreateCreditsGrant(ctx context.Context, customerID uuid.UUID, grantAmount float64, paidAmount float64, expiresAt string) (err error) {
+func (m MetronomeClient) CreateCreditsGrant(ctx context.Context, customerID uuid.UUID, reason string, grantAmount float64, paidAmount float64, expiresAt string) (err error) {
 	ctx, span := telemetry.NewSpan(ctx, "create-credits-grant")
 	defer span.End()
 
@@ -272,6 +282,7 @@ func (m MetronomeClient) CreateCreditsGrant(ctx context.Context, customerID uuid
 			CreditTypeID: creditTypeID,
 		},
 		Name:      "Porter Credits",
+		Reason:    reason,
 		ExpiresAt: expiresAt,
 		Priority:  1,
 	}

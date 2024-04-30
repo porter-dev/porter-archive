@@ -19,13 +19,13 @@ func NewReferralRepository(db *gorm.DB) repository.ReferralRepository {
 
 // CreateReferral creates a new referral in the database
 func (repo *ReferralRepository) CreateReferral(referral *models.Referral) (*models.Referral, error) {
-	user := &models.User{}
+	project := &models.Project{}
 
-	if err := repo.db.Where("referral_code = ?", referral.Code).First(&user).Error; err != nil {
+	if err := repo.db.Where("referral_code = ?", referral.Code).First(&project).Error; err != nil {
 		return nil, err
 	}
 
-	assoc := repo.db.Model(&user).Association("Referrals")
+	assoc := repo.db.Model(&project).Association("Referrals")
 
 	if assoc.Error != nil {
 		return nil, assoc.Error
@@ -38,11 +38,30 @@ func (repo *ReferralRepository) CreateReferral(referral *models.Referral) (*mode
 	return referral, nil
 }
 
-// GetReferralByCode returns the number of referrals a user has made
-func (repo *ReferralRepository) GetReferralCountByUserID(userID uint) (int, error) {
-	referrals := []models.Referral{}
-	if err := repo.db.Where("user_id = ?", userID).Find(&referrals).Error; err != nil {
+// CountReferralsByProjectID returns the number of referrals a user has made
+func (repo *ReferralRepository) CountReferralsByProjectID(projectID uint, status string) (int64, error) {
+	var count int64
+
+	if err := repo.db.Model(&models.Referral{}).Where("project_id = ? AND status = ?", projectID, status).Count(&count).Error; err != nil {
 		return 0, err
 	}
-	return len(referrals), nil
+
+	return count, nil
+}
+
+// GetReferralByCode returns the number of referrals a user has made
+func (repo *ReferralRepository) GetReferralByReferredID(referredID uint) (*models.Referral, error) {
+	referral := &models.Referral{}
+	if err := repo.db.Where("referred_user_id = ?", referredID).First(&referral).Error; err != nil {
+		return &models.Referral{}, err
+	}
+	return referral, nil
+}
+
+func (repo *ReferralRepository) UpdateReferral(referral *models.Referral) (*models.Referral, error) {
+	if err := repo.db.Save(referral).Error; err != nil {
+		return nil, err
+	}
+
+	return referral, nil
 }

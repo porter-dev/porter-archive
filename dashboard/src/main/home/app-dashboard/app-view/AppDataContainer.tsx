@@ -137,6 +137,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         serviceNames: [],
         envGroupNames: [],
         predeploy: [],
+        initialDeploy: [],
       },
     },
   });
@@ -363,6 +364,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         predeploy: [],
         envGroupNames: [],
         serviceNames: [],
+        initialDeploy: [],
       },
       redeployOnSave: false,
     });
@@ -534,6 +536,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         envGroupNames: [],
         serviceNames: [],
         predeploy: [],
+        initialDeploy: [],
       },
       redeployOnSave: false,
     });

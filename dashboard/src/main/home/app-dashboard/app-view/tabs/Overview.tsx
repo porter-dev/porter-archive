@@ -53,7 +53,7 @@ const Overview: React.FC<Props> = ({ buttonStatus }) => {
       <ServiceList
         addNewText={"Add a new pre-deploy job"}
         existingServiceNames={latestProto.predeploy ? ["pre-deploy"] : []}
-        isPredeploy
+        lifecycleJobType="predeploy"
         fieldArrayName={"app.predeploy"}
       />
       <Spacer y={0.5} />

@@ -16,10 +16,13 @@ import (
 )
 
 const (
-	metronomeBaseUrl        = "https://api.metronome.com/v1/"
-	defaultCollectionMethod = "charge_automatically"
-	defaultMaxRetries       = 10
-	porterStandardTrialDays = 15
+	metronomeBaseUrl         = "https://api.metronome.com/v1/"
+	defaultCollectionMethod  = "charge_automatically"
+	defaultMaxRetries        = 10
+	porterStandardTrialDays  = 15
+	defaultRewardAmountCents = 1000
+	defaultPaidAmountCents   = 0
+	maxReferralRewards       = 10
 )
 
 // MetronomeClient is the client used to call the Metronome API
@@ -28,6 +31,15 @@ type MetronomeClient struct {
 	billableMetrics      []types.BillableMetric
 	PorterCloudPlanID    uuid.UUID
 	PorterStandardPlanID uuid.UUID
+
+	// DefaultRewardAmountCents is the default amount in USD cents rewarded to users
+	// who successfully refer a new user
+	DefaultRewardAmountCents float64
+	// DefaultPaidAmountCents is the amount paid by the user to get the credits
+	// grant, if set to 0 it means they are free
+	DefaultPaidAmountCents float64
+	// MaxReferralRewards is the maximum number of referral rewards a user can receive
+	MaxReferralRewards int64
 }
 
 // NewMetronomeClient returns a new Metronome client
@@ -43,9 +55,12 @@ func NewMetronomeClient(metronomeApiKey string, porterCloudPlanID string, porter
 	}
 
 	return MetronomeClient{
-		ApiKey:               metronomeApiKey,
-		PorterCloudPlanID:    porterCloudPlanUUID,
-		PorterStandardPlanID: porterStandardPlanUUID,
+		ApiKey:                   metronomeApiKey,
+		PorterCloudPlanID:        porterCloudPlanUUID,
+		PorterStandardPlanID:     porterStandardPlanUUID,
+		DefaultRewardAmountCents: defaultRewardAmountCents,
+		DefaultPaidAmountCents:   defaultPaidAmountCents,
+		MaxReferralRewards:       maxReferralRewards,
 	}, nil
 }
 

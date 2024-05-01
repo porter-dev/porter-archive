@@ -68,11 +68,13 @@ func (c *GetProjectReferralDetailsHandler) ServeHTTP(w http.ResponseWriter, r *h
 	}
 
 	referralCodeResponse := struct {
-		Code          string `json:"code"`
-		ReferralCount int64  `json:"referral_count"`
+		Code              string `json:"code"`
+		ReferralCount     int64  `json:"referral_count"`
+		MaxAllowedRewards int64  `json:"max_allowed_referrals"`
 	}{
-		Code:          proj.ReferralCode,
-		ReferralCount: referralCount,
+		Code:              proj.ReferralCode,
+		ReferralCount:     referralCount,
+		MaxAllowedRewards: c.Config().BillingManager.MetronomeClient.MaxReferralRewards,
 	}
 
 	c.WriteResult(w, r, referralCodeResponse)

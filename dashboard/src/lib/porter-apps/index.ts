@@ -243,12 +243,12 @@ export function serviceOverrides({
   }
 
   const predeploy = match({
-    overrides: overrides.predeploy,
+    predeployOverride: overrides.predeploy,
     useDefaults,
   })
     .with(
       {
-        overrides: P.nullish,
+        predeployOverride: P.nullish,
       },
       () => undefined
     )
@@ -256,7 +256,7 @@ export function serviceOverrides({
       {
         useDefaults: true,
       },
-      () =>
+      ({ predeployOverride }) =>
         deserializeService({
           service: defaultSerialized({
             name: "pre-deploy",
@@ -266,7 +266,7 @@ export function serviceOverrides({
           }),
           override: serializedServiceFromProto({
             service: new Service({
-              ...overrides.predeploy,
+              ...predeployOverride,
               name: "pre-deploy",
             }),
             isPredeploy: true,
@@ -274,11 +274,11 @@ export function serviceOverrides({
           expanded: true,
         })
     )
-    .otherwise(() =>
+    .otherwise(({ predeployOverride }) =>
       deserializeService({
         service: serializedServiceFromProto({
           service: new Service({
-            ...(overrides.predeploy ?? {}),
+            ...predeployOverride,
             name: "pre-deploy",
           }),
           isPredeploy: true,
@@ -287,20 +287,21 @@ export function serviceOverrides({
     );
 
   const initialDeploy = match({
-    overrides: overrides.initialDeploy,
+    initialDeployOverride: overrides.initialDeploy,
     useDefaults,
   })
     .with(
       {
-        overrides: P.nullish,
+        initialDeployOverride: P.nullish,
       },
       () => undefined
     )
     .with(
       {
         useDefaults: true,
+        initialDeployOverride: P.not(P.nullish),
       },
-      () =>
+      ({ initialDeployOverride }) =>
         deserializeService({
           service: defaultSerialized({
             name: "initdeploy",
@@ -310,7 +311,7 @@ export function serviceOverrides({
           }),
           override: serializedServiceFromProto({
             service: new Service({
-              ...(overrides.initialDeploy ?? {}),
+              ...initialDeployOverride,
               name: "initdeploy",
             }),
             isPredeploy: false,
@@ -319,11 +320,11 @@ export function serviceOverrides({
           expanded: true,
         })
     )
-    .otherwise(() =>
+    .otherwise(({ initialDeployOverride }) =>
       deserializeService({
         service: serializedServiceFromProto({
           service: new Service({
-            ...(overrides.initialDeploy ?? {}),
+            ...(initialDeployOverride ?? {}),
             name: "initdeploy",
           }),
           isInitdeploy: true,

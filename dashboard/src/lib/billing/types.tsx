@@ -51,6 +51,19 @@ export const CreditGrantsValidator = z.object({
   remaining_credits: z.number(),
 });
 
+export type InvoiceList = Invoice[];
+export type Invoice = z.infer<typeof InvoiceValidator>;
+export const InvoiceValidator = z.object({
+  id: z.string(),
+  customer_id: z.string(),
+  credit_type: z.string(),
+  start_timestamp: z.string(),
+  end_timestamp: z.string(),
+  status: z.string(),
+  total: z.number(),
+  type: z.string(),
+});
+
 export const ClientSecretResponse = z.string();
 
 export type ReferralDetails = z.infer<typeof ReferralDetailsValidator>;

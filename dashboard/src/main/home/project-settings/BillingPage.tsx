@@ -17,6 +17,7 @@ import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import {
   checkIfProjectHasPayment,
+  useCustomerInvoices,
   useCustomerPlan,
   useCustomerUsage,
   usePaymentMethods,
@@ -44,6 +45,7 @@ function BillingPage(): JSX.Element {
 
   const { creditGrants } = usePorterCredits();
   const { plan } = useCustomerPlan();
+  const { invoiceList } = useCustomerInvoices();
 
   const {
     paymentMethodList,

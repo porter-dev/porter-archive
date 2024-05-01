@@ -197,6 +197,13 @@ type BillingEvent struct {
 	Timestamp     string                 `json:"timestamp"`
 }
 
+type ListCustomerInvoicesRequest struct {
+	CustomerID   uuid.UUID `json:"customer_id"`
+	Status       string    `json:"status,omitempty"`
+	StartingOn   string    `json:"starting_on,omitempty"`
+	EndingBefore string    `json:"ending_before,omitempty"`
+}
+
 // Invoice represents a Metronome invoice.
 type Invoice struct {
 	ID             uuid.UUID  `json:"id"`

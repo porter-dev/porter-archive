@@ -14,10 +14,12 @@ import (
 	"github.com/porter-dev/porter/internal/oauth"
 )
 
+// ProjectOAuthUpstashHandler is the handler which redirects to the upstash oauth flow
 type ProjectOAuthUpstashHandler struct {
 	handlers.PorterHandlerReadWriter
 }
 
+// NewProjectOAuthUpstashHandler generates a new ProjectOAuthUpstashHandler
 func NewProjectOAuthUpstashHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
@@ -28,6 +30,7 @@ func NewProjectOAuthUpstashHandler(
 	}
 }
 
+// ServeHTTP populates the oauth session with state and project id then redirects the user to the upstash oauth flow
 func (p *ProjectOAuthUpstashHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, span := telemetry.NewSpan(r.Context(), "serve-project-oauth-upstash")
 	defer span.End()

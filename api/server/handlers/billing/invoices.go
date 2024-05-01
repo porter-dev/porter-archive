@@ -18,14 +18,14 @@ type ListCustomerInvoicesHandler struct {
 	handlers.PorterHandlerReadWriter
 }
 
-// NewListBillingHandler will create a new ListBillingHandler
+// NewListCustomerInvoicesHandler will create a new ListCustomerInvoicesHandler
 func NewListCustomerInvoicesHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
 ) *ListCustomerInvoicesHandler {
 	return &ListCustomerInvoicesHandler{
-		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, nil, writer),
+		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
 	}
 }
 
@@ -45,8 +45,8 @@ func (c *ListCustomerInvoicesHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 
 	invoices, err := c.Config().BillingManager.MetronomeClient.ListCustomerInvoices(ctx, proj.UsageID, req.Status, req.StartingOn, req.EndingBefore)
 	if err != nil {
-		err := telemetry.Error(ctx, span, err, "error listing payment method")
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error listing payment method: %w", err)))
+		err := telemetry.Error(ctx, span, err, "error listing customer invoices")
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error listing customer invoices: %w", err)))
 		return
 	}
 

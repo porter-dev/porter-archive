@@ -3536,7 +3536,7 @@ const getCustomerInvoices = baseApi<
   {
     project_id?: number;
   }
->("POST", ({ project_id }) => `/api/projects/${project_id}/billing/invoices`);
+>("GET", ({ project_id }) => `/api/projects/${project_id}/billing/invoices`);
 
 const getCustomerPlan = baseApi<
   {},

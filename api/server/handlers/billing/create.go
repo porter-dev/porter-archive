@@ -17,15 +17,6 @@ import (
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
-const (
-	// defaultRewardAmountCents is the default amount in USD cents rewarded to users
-	// who successfully refer a new user
-	defaultRewardAmountCents = 1000
-	// defaultPaidAmountCents is the amount paid by the user to get the credits
-	// grant, if set to 0 it means they are free
-	defaultPaidAmountCents = 0
-)
-
 // CreateBillingHandler is a handler for creating payment methods
 type CreateBillingHandler struct {
 	handlers.PorterHandlerWriter
@@ -140,6 +131,16 @@ func (c *CreateBillingHandler) grantRewardIfReferral(ctx context.Context, referr
 		return nil
 	}
 
+	referralCount, err := c.Repo().Referral().CountReferralsByProjectID(referral.ProjectID, models.ReferralStatusCompleted)
+	if err != nil {
+		return telemetry.Error(ctx, span, err, "failed to get referral count by referrer id")
+	}
+
+	maxReferralRewards := c.Config().BillingManager.MetronomeClient.MaxReferralRewards
+	if referralCount >= maxReferralRewards {
+		return nil
+	}
+
 	referrerProject, err := c.Repo().Project().ReadProject(referral.ProjectID)
 	if err != nil {
 		return telemetry.Error(ctx, span, err, "failed to find referrer project")
@@ -150,7 +151,9 @@ func (c *CreateBillingHandler) grantRewardIfReferral(ctx context.Context, referr
 		// practice will mean the credits will most likely run out before expiring
 		expiresAt := time.Now().AddDate(5, 0, 0).Format(time.RFC3339)
 		reason := "Referral reward"
-		err := c.Config().BillingManager.MetronomeClient.CreateCreditsGrant(ctx, referrerProject.UsageID, reason, defaultRewardAmountCents, defaultPaidAmountCents, expiresAt)
+		rewardAmount := c.Config().BillingManager.MetronomeClient.DefaultRewardAmountCents
+		paidAmount := c.Config().BillingManager.MetronomeClient.DefaultPaidAmountCents
+		err := c.Config().BillingManager.MetronomeClient.CreateCreditsGrant(ctx, referrerProject.UsageID, reason, rewardAmount, paidAmount, expiresAt)
 		if err != nil {
 			return telemetry.Error(ctx, span, err, "failed to grand credits reward")
 		}

@@ -272,12 +272,9 @@ func (m MetronomeClient) CreateCreditsGrant(ctx context.Context, customerID uuid
 		return telemetry.Error(ctx, span, err, "failed to get credit type id")
 	}
 
-	// Uniqueness key is used to prevent duplicate grants
-	uniquenessKey := fmt.Sprintf("%s-referral-reward", customerID)
-
 	req := types.CreateCreditsGrantRequest{
 		CustomerID:    customerID,
-		UniquenessKey: uniquenessKey,
+		UniquenessKey: uuid.NewString(),
 		GrantAmount: types.GrantAmountID{
 			Amount:       grantAmount,
 			CreditTypeID: creditTypeID,

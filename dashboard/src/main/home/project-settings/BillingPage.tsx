@@ -57,19 +57,6 @@ function BillingPage(): JSX.Element {
 
   const { usage } = useCustomerUsage("day", true);
 
-  const trialEnding = (starting_on: string, ending_before: string): string => {
-    if (ending_before === undefined) {
-      return "";
-    }
-
-    const diff = dayjs(ending_before).diff(dayjs());
-    if (diff <= 0) {
-      return `Started on  ${readableDate(starting_on)}`;
-    }
-
-    return `Free trial ends ${dayjs().to(dayjs(ending_before))}`;
-  };
-
   const processedData = useMemo(() => {
     const before = usage;
     const resultMap = new Map();
@@ -270,8 +257,8 @@ function BillingPage(): JSX.Element {
           </Text>
           <Spacer y={1} />
           {usage?.length &&
-          usage.length > 0 &&
-          usage[0].usage_metrics.length > 0 ? (
+            usage.length > 0 &&
+            usage[0].usage_metrics.length > 0 ? (
             <Flex>
               <BarWrapper>
                 <Bars
@@ -343,7 +330,7 @@ function BillingPage(): JSX.Element {
           <Spacer y={1} />
           <Text color="helper">
             You have referred{" "}
-            {referralDetails ? referralDetails.referral_count : "?"}/10 users.
+            {referralDetails ? referralDetails.referral_count : "?"}/{referralDetails?.max_allowed_referrals} users.
           </Text>
         </Modal>
       )}

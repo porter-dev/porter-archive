@@ -213,6 +213,29 @@ function BillingPage(): JSX.Element {
       </Button>
       <Spacer y={2} />
 
+      <Text size={16}>Invoice history</Text>
+      <Spacer y={1} />
+      <Text color="helper">
+        View all invoices from Porter over the past 12 months.
+      </Text>
+      <Spacer y={1} />
+      {[
+        { date: "04-01-2024", link: "n/a" },
+        { date: "03-01-2024", link: "n/a" },
+        { date: "02-01-2024", link: "n/a" },
+      ].map((invoice, i) => {
+        return (
+          <>
+            <Container row key={i}>
+              <Link target="_blank" to={invoice.link}>
+                {invoice.date}
+              </Link>
+            </Container>
+            <Spacer y={1} />
+          </>
+        );
+      })}
+
       {showReferralModal && (
         <Modal
           closeModal={() => {

@@ -55,6 +55,19 @@ type EndCustomerPlanRequest struct {
 	VoidStripeInvoices bool `json:"void_stripe_invoices"`
 }
 
+// CreateCreditsGrantRequest is the request to create a credit grant for a customer
+type CreateCreditsGrantRequest struct {
+	// CustomerID is the id of the customer
+	CustomerID    uuid.UUID     `json:"customer_id"`
+	UniquenessKey string        `json:"uniqueness_key"`
+	GrantAmount   GrantAmountID `json:"grant_amount"`
+	PaidAmount    PaidAmount    `json:"paid_amount"`
+	Name          string        `json:"name"`
+	ExpiresAt     string        `json:"expires_at"`
+	Priority      int           `json:"priority"`
+	Reason        string        `json:"reason"`
+}
+
 // ListCreditGrantsRequest is the request to list a user's credit grants. Note that only one of
 // CreditTypeIDs, CustomerIDs, or CreditGrantIDs must be specified.
 type ListCreditGrantsRequest struct {
@@ -71,18 +84,6 @@ type ListCreditGrantsRequest struct {
 type ListCreditGrantsResponse struct {
 	RemainingCredits float64 `json:"remaining_credits"`
 	GrantedCredits   float64 `json:"granted_credits"`
-}
-
-// EmbeddableDashboardRequest requests an embeddable customer dashboard to Metronome
-type EmbeddableDashboardRequest struct {
-	// CustomerID is the id of the customer
-	CustomerID uuid.UUID `json:"customer_id,omitempty"`
-	// DashboardType is the type of dashboard to retrieve
-	DashboardType string `json:"dashboard"`
-	// Options are optional dashboard specific options
-	Options []DashboardOption `json:"dashboard_options,omitempty"`
-	//  ColorOverrides is an optional list of colors to override
-	ColorOverrides []ColorOverride `json:"color_overrides,omitempty"`
 }
 
 // ListCustomerUsageRequest is the request to list usage for a customer
@@ -138,10 +139,31 @@ type CreditType struct {
 	ID   string `json:"id"`
 }
 
-// GrantAmount represents the amount of credits granted
+// GrantAmountID represents the amount of credits granted with the credit type ID
+// for the create credits grant request
+type GrantAmountID struct {
+	Amount       float64   `json:"amount"`
+	CreditTypeID uuid.UUID `json:"credit_type_id"`
+}
+
+// GrantAmount represents the amount of credits granted with the credit type
+// for the list credit grants response
 type GrantAmount struct {
 	Amount     float64    `json:"amount"`
 	CreditType CreditType `json:"credit_type"`
+}
+
+// PaidAmount represents the amount paid by the customer
+type PaidAmount struct {
+	Amount       float64   `json:"amount"`
+	CreditTypeID uuid.UUID `json:"credit_type_id"`
+}
+
+// PricingUnit represents the unit of the pricing (e.g. USD, MXN, CPU hours)
+type PricingUnit struct {
+	ID         uuid.UUID `json:"id"`
+	Name       string    `json:"name"`
+	IsCurrency bool      `json:"is_currency"`
 }
 
 // Balance represents the effective balance of the grant as of the end of the customer's
@@ -164,18 +186,6 @@ type CreditGrant struct {
 	Reason      string      `json:"reason"`
 	EffectiveAt string      `json:"effective_at"`
 	ExpiresAt   string      `json:"expires_at"`
-}
-
-// DashboardOption are optional dashboard specific options
-type DashboardOption struct {
-	Key   string `json:"key"`
-	Value string `json:"value"`
-}
-
-// ColorOverride is an optional list of colors to override
-type ColorOverride struct {
-	Name  string `json:"name"`
-	Value string `json:"value"`
 }
 
 // BillingEvent represents a Metronome billing event.

@@ -572,6 +572,14 @@ export function clientAppFromProto({
       serializedServiceFromProto({ service, isInitdeploy: true })
     )
     .map((svc) => {
+      const override = overrides?.initialDeploy;
+      if (override) {
+        return deserializeService({
+          service: svc,
+          override: serializeService(override),
+        });
+      }
+
       return deserializeService({
         service: svc,
         lockDeletions: lockServiceDeletions,
@@ -693,6 +701,18 @@ export function applyPreviewOverrides({
         deserializeService({
           service: serializeService(app.predeploy[0]),
           override: serializeService(predeployOverride),
+        }),
+      ];
+    }
+  }
+
+  if (app.initialDeploy) {
+    const initialDeployOverride = overrides?.initialDeploy;
+    if (initialDeployOverride) {
+      app.initialDeploy = [
+        deserializeService({
+          service: serializeService(app.initialDeploy[0]),
+          override: serializeService(initialDeployOverride),
         }),
       ];
     }

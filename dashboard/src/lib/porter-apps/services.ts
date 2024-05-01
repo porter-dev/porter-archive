@@ -37,6 +37,7 @@ export type DetectedServices = {
   previews?: {
     services: ClientService[];
     predeploy?: ClientService;
+    initialDeploy?: ClientService;
     variables?: Record<string, string>;
   };
 };

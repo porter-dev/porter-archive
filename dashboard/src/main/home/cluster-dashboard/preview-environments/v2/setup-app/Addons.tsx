@@ -5,9 +5,10 @@ import { useFormContext } from "react-hook-form";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import { type ButtonStatus } from "main/home/app-dashboard/app-view/AppDataContainer";
-import AppSaveButton from "main/home/app-dashboard/app-view/AppSaveButton";
 import { AddonsList } from "main/home/managed-addons/AddonsList";
 import { type PorterAppFormData } from "lib/porter-apps";
+
+import PreviewSaveButton from "./PreviewSaveButton";
 
 type Props = {
   buttonStatus: ButtonStatus;
@@ -30,7 +31,7 @@ export const Addons: React.FC<Props> = ({ buttonStatus }) => {
       <Spacer y={0.5} />
       <AddonsList />
       <Spacer y={0.75} />
-      <AppSaveButton
+      <PreviewSaveButton
         status={buttonStatus}
         isDisabled={isSubmitting}
         disabledTooltipMessage={"Please fill out all required fields"}

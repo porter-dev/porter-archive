@@ -16,6 +16,7 @@ import {
 import chip from "assets/computer-chip.svg";
 import job from "assets/job.png";
 import moon from "assets/moon.svg";
+import seed from "assets/seed.svg";
 import web from "assets/web.png";
 import worker from "assets/worker.png";
 
@@ -30,7 +31,7 @@ type ServiceProps = {
   service: ClientService;
   update: UseFieldArrayUpdate<
     PorterAppFormData,
-    "app.services" | "app.predeploy"
+    "app.services" | "app.predeploy" | "app.initialDeploy"
   >;
   remove: (index: number) => void;
   status?: ClientServiceStatus[];
@@ -66,7 +67,10 @@ const ServiceContainer: React.FC<ServiceProps> = ({
         <JobTabs index={index} service={svc} />
       ))
       .with({ config: { type: "predeploy" } }, (svc) => (
-        <JobTabs index={index} service={svc} isPredeploy />
+        <JobTabs index={index} service={svc} lifecycleJobType="predeploy" />
+      ))
+      .with({ config: { type: "initdeploy" } }, (svc) => (
+        <JobTabs index={index} service={svc} lifecycleJobType="initdeploy" />
       ))
       .exhaustive();
   };
@@ -81,6 +85,8 @@ const ServiceContainer: React.FC<ServiceProps> = ({
         return <Icon src={job} />;
       case "predeploy":
         return <Icon src={job} />;
+      case "initdeploy":
+        return <Icon src={seed} />;
     }
   };
 

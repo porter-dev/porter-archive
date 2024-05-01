@@ -5,22 +5,21 @@ import { z } from "zod";
 
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
-import { type PorterAppFormData, type SourceOptions } from "lib/porter-apps";
+import PreviewSaveButton from "main/home/cluster-dashboard/preview-environments/v2/setup-app/PreviewSaveButton";
+import { type PorterAppFormData } from "lib/porter-apps";
 
 import api from "shared/api";
 
 import EnvSettings from "../../validate-apply/app-settings/EnvSettings";
 import { populatedEnvGroup } from "../../validate-apply/app-settings/types";
 import { type ButtonStatus } from "../AppDataContainer";
-import AppSaveButton from "../AppSaveButton";
 import { useLatestRevision } from "../LatestRevisionContext";
 
 type Props = {
-  latestSource: SourceOptions;
   buttonStatus: ButtonStatus;
 };
 
-const Environment: React.FC<Props> = ({ latestSource, buttonStatus }) => {
+const Environment: React.FC<Props> = ({ buttonStatus }) => {
   const {
     latestRevision,
     latestProto,
@@ -67,11 +66,10 @@ const Environment: React.FC<Props> = ({ latestSource, buttonStatus }) => {
         appName={latestProto.name}
         revision={previewRevision || latestRevision} // get versions of env groups attached to preview revision if set
         baseEnvGroups={baseEnvGroups}
-        latestSource={latestSource}
         attachedEnvGroups={attachedEnvGroups}
       />
       <Spacer y={1} />
-      <AppSaveButton
+      <PreviewSaveButton
         status={buttonStatus}
         isDisabled={isSubmitting}
         disabledTooltipMessage="Please wait for the deploy to complete before updating environment variables"

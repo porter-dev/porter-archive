@@ -4,13 +4,14 @@ import { useFieldArray, useFormContext } from "react-hook-form";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import { type ButtonStatus } from "main/home/app-dashboard/app-view/AppDataContainer";
-import AppSaveButton from "main/home/app-dashboard/app-view/AppSaveButton";
 import { useLatestRevision } from "main/home/app-dashboard/app-view/LatestRevisionContext";
 import SelectableAppList from "main/home/app-dashboard/apps/SelectableAppList";
 import { useLatestAppRevisions } from "lib/hooks/useLatestAppRevisions";
 import { type PorterAppFormData } from "lib/porter-apps";
 
 import { Context } from "shared/Context";
+
+import PreviewSaveButton from "./PreviewSaveButton";
 
 type Props = {
   buttonStatus: ButtonStatus;
@@ -72,7 +73,7 @@ export const RequiredApps: React.FC<Props> = ({ buttonStatus }) => {
         })}
       />
       <Spacer y={0.75} />
-      <AppSaveButton
+      <PreviewSaveButton
         status={buttonStatus}
         isDisabled={isSubmitting}
         disabledTooltipMessage={"Please fill out all required fields"}

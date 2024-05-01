@@ -1,12 +1,18 @@
 import React, { useContext, useMemo, useState } from "react";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
 import styled from "styled-components";
 
+import CopyToClipboard from "components/CopyToClipboard";
 import Loading from "components/Loading";
+import Banner from "components/porter/Banner";
 import Button from "components/porter/Button";
 import Container from "components/porter/Container";
 import Fieldset from "components/porter/Fieldset";
 import Icon from "components/porter/Icon";
 import Image from "components/porter/Image";
+import Link from "components/porter/Link";
+import Modal from "components/porter/Modal";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import {
@@ -15,10 +21,9 @@ import {
   useCustomerUsage,
   usePaymentMethods,
   usePorterCredits,
+  useReferralDetails,
   useSetDefaultPaymentMethod,
 } from "lib/hooks/useStripe";
-import dayjs from "dayjs";
-import relativeTime from "dayjs/plugin/relativeTime";
 
 import { Context } from "shared/Context";
 import cardIcon from "assets/credit-card.svg";
@@ -31,8 +36,10 @@ import Bars from "./Bars";
 dayjs.extend(relativeTime);
 
 function BillingPage(): JSX.Element {
+  const { referralDetails } = useReferralDetails();
   const { setCurrentOverlay } = useContext(Context);
   const [shouldCreate, setShouldCreate] = useState(false);
+  const [showReferralModal, setShowReferralModal] = useState(false);
   const { currentProject } = useContext(Context);
 
   const { creditGrants } = usePorterCredits();
@@ -93,6 +100,16 @@ function BillingPage(): JSX.Element {
     await refetchPaymentEnabled({ throwOnError: false, cancelRefetch: false });
   };
 
+  const isTrialExpired = (timestamp: string): boolean => {
+    if (timestamp === "") {
+      return true;
+    }
+    const timestampDate = dayjs(timestamp);
+    return timestampDate.isBefore(dayjs(new Date()));
+  };
+
+  const trialExpired = plan && isTrialExpired(plan.trial_info.ending_before);
+
   if (shouldCreate) {
     return (
       <BillingModal
@@ -106,6 +123,51 @@ function BillingPage(): JSX.Element {
 
   return (
     <>
+      {plan?.trial_info !== undefined &&
+        plan.trial_info.ending_before !== "" &&
+        !trialExpired && (
+          <>
+            <Banner type="warning">
+              Your free trial is ending{" "}
+              {dayjs().to(dayjs(plan.trial_info.ending_before))}.
+            </Banner>
+            <Spacer y={1.5} />
+          </>
+        )}
+      {currentProject?.metronome_enabled && currentProject?.sandbox_enabled && (
+        <>
+          <Text size={16}>Credit balance</Text>
+          <Spacer y={1} />
+          <Text color="helper">
+            View the amount of Porter credits you have remaining to spend on
+            resources in this project.
+          </Text>
+          <Spacer y={1} />
+          <Container>
+            <Image src={gift} style={{ marginBottom: "-2px" }} />
+            <Spacer inline x={1} />
+            <Text size={20}>
+              {creditGrants && creditGrants.remaining_credits > 0
+                ? `$${formatCredits(creditGrants.remaining_credits)}`
+                : "$ 0.00"}
+            </Text>
+          </Container>
+          <Spacer y={1} />
+          <Text color="helper">
+            Earn additional free credits by{" "}
+            <Link
+              hasunderline
+              onClick={() => {
+                setShowReferralModal(true);
+              }}
+            >
+              referring users to Porter
+            </Link>
+            .
+          </Text>
+          <Spacer y={2} />
+        </>
+      )}
       <Text size={16}>Payment methods</Text>
       <Spacer y={1} />
       <Text color="helper">
@@ -179,122 +241,123 @@ function BillingPage(): JSX.Element {
         onClick={() => {
           setShouldCreate(true);
         }}
+        alt
       >
         <I className="material-icons">add</I>
-        Add Payment Method
+        Add payment method
       </Button>
       <Spacer y={2} />
 
-      {currentProject?.metronome_enabled && (
-        <div>
-
-          {currentProject?.sandbox_enabled && (
-            <div>
-              <Text size={16}>Porter credit grants</Text>
-              <Spacer y={1} />
+      {currentProject?.metronome_enabled && plan && plan.plan_name !== "" ? (
+        <>
+          <Text size={16}>Current usage</Text>
+          <Spacer y={1} />
+          <Text color="helper">
+            View the current usage of this billing period.
+          </Text>
+          <Spacer y={1} />
+          {usage?.length &&
+          usage.length > 0 &&
+          usage[0].usage_metrics.length > 0 ? (
+            <Flex>
+              <BarWrapper>
+                <Bars
+                  title="GiB Hours"
+                  fill="#8784D2"
+                  yKey="gib_hours"
+                  xKey="starting_on"
+                  data={processedData}
+                />
+              </BarWrapper>
+              <Spacer x={1} inline />
+              <BarWrapper>
+                <Bars
+                  title="CPU Hours"
+                  fill="#5886E0"
+                  yKey="cpu_hours"
+                  xKey="starting_on"
+                  data={processedData}
+                />
+              </BarWrapper>
+            </Flex>
+          ) : (
+            <Fieldset>
               <Text color="helper">
-                View the amount of Porter credits you have available to spend on
-                resources within this project.
+                No usage data available for this billing period.
               </Text>
-              <Spacer y={1} />
-
-              <Container>
-                <Image src={gift} style={{ marginTop: "-2px" }} />
-                <Spacer inline x={1} />
-                <Text size={20}>
-                  {creditGrants &&
-                    creditGrants.remaining_credits > 0
-                    ? `$${formatCredits(
-                      creditGrants.remaining_credits
-                    )}/$${formatCredits(creditGrants.granted_credits)}`
-                    : "$ 0.00"}
-                </Text>
-              </Container>
-              <Spacer y={2} />
-            </div>
+            </Fieldset>
           )}
-
-          <div>
-            <Text size={16}>Plan Details</Text>
-            <Spacer y={1} />
-            <Text color="helper">
-              View the details of the current billing plan of this project.
-            </Text>
-            <Spacer y={1} />
-
-            {plan && plan.plan_name !== "" ? (
-              <div>
-                <Text>Active Plan</Text>
-                <Spacer y={0.5} />
-                <Fieldset row>
-                  <Container row spaced>
-                    <Container row>
-                      <Text color="helper">{plan.plan_name}</Text>
-                    </Container>
-                    <Container row>
-                      {plan.trial_info !== undefined &&
-                        plan.trial_info.ending_before !== "" ? (
-                        <Text>
-                          Free trial ends{" "}
-                          {dayjs().to(dayjs(plan.trial_info.ending_before))}
-                        </Text>
-                      ) : (
-                        <Text>Started on {readableDate(plan.starting_on)}</Text>
-                      )}
-                    </Container>
-                  </Container>
-                </Fieldset>
-                <Spacer y={2} />
-                <Text size={16}>Current Usage</Text>
-                <Spacer y={1} />
-                <Text color="helper">
-                  View the current usage of this billing period.
-                </Text>
-                <Spacer y={1} />
-                {usage?.length &&
-                  usage.length > 0 &&
-                  usage[0].usage_metrics.length > 0 ? (
-                  <Flex>
-                    <BarWrapper>
-                      <Bars
-                        title="GiB Hours"
-                        fill="#8784D2"
-                        yKey="gib_hours"
-                        xKey="starting_on"
-                        data={processedData}
-                      />
-                    </BarWrapper>
-                    <Spacer x={1} inline />
-                    <BarWrapper>
-                      <Bars
-                        title="CPU Hours"
-                        fill="#5886E0"
-                        yKey="cpu_hours"
-                        xKey="starting_on"
-                        data={processedData}
-                      />
-                    </BarWrapper>
-                  </Flex>
-                ) : (
-                  <Fieldset>
-                    <Text color="helper">
-                      No usage data available for this billing period.
-                    </Text>
-                  </Fieldset>
-                )}
-                <Spacer y={2} />
-              </div>
-            ) : (
-              <Text>This project does not have an active billing plan.</Text>
-            )}
-          </div>
-        </div>
+          <Spacer y={2} />
+        </>
+      ) : (
+        <Text>This project does not have an active billing plan.</Text>
+      )}
+      {showReferralModal && (
+        <Modal
+          closeModal={() => {
+            setShowReferralModal(false);
+          }}
+        >
+          <Text size={16}>Refer users to Porter</Text>
+          <Spacer y={1} />
+          <Text color="helper">
+            Earn $10 in free credits for each user you refer to Porter. Referred
+            users need to connect a payment method for credits to be added to
+            your account.
+          </Text>
+          <Spacer y={1} />
+          <Container row>
+            <ReferralCode>
+              Referral code:{" "}
+              {currentProject?.referral_code ? (
+                <Code>{currentProject.referral_code}</Code>
+              ) : (
+                "n/a"
+              )}
+            </ReferralCode>
+            <Spacer inline x={1} />
+            <CopyToClipboard
+              text={
+                window.location.origin +
+                "/register?referral=" +
+                currentProject?.referral_code
+              }
+              tooltip="Copied to clipboard"
+            >
+              <CopyButton>Copy referral link</CopyButton>
+            </CopyToClipboard>
+          </Container>
+          <Spacer y={1} />
+          <Text color="helper">
+            You have referred{" "}
+            {referralDetails ? referralDetails.referral_count : "?"}/10 users.
+          </Text>
+        </Modal>
       )}
     </>
   );
 }
 
 export default BillingPage;
+
+const CopyButton = styled.div`
+  cursor: pointer;
+  background: #ffffff11;
+  padding: 5px;
+  border-radius: 5px;
+  font-size: 13px;
+`;
+
+const Code = styled.span`
+  font-style: italic;
+`;
+
+const ReferralCode = styled.div`
+  background: linear-gradient(60deg, #4b366d 0%, #6475b9 100%);
+  padding: 10px 15px;
+  border-radius: 10px;
+  width: fit-content;
+`;
 
 const Flex = styled.div`
   display: flex;
@@ -308,8 +371,8 @@ const BarWrapper = styled.div`
 `;
 
 const I = styled.i`
-  font-size: 18px;
-  margin-right: 10px;
+  font-size: 16px;
+  margin-right: 8px;
 `;
 
 const DeleteButton = styled.div`

@@ -1,6 +1,7 @@
 package test
 
 import (
+	"context"
 	"errors"
 
 	"github.com/porter-dev/porter/internal/repository"
@@ -238,6 +239,7 @@ func NewOAuthIntegrationRepository(canQuery bool) repository.OAuthIntegrationRep
 
 // CreateOAuthIntegration creates a new o auth mechanism
 func (repo *OAuthIntegrationRepository) CreateOAuthIntegration(
+	ctx context.Context,
 	am *ints.OAuthIntegration,
 ) (*ints.OAuthIntegration, error) {
 	if !repo.canQuery {

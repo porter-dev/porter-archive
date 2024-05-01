@@ -1,6 +1,7 @@
 package keyrotate_test
 
 import (
+	"context"
 	"os"
 	"testing"
 	"time"
@@ -80,7 +81,6 @@ func setupTestEnv(tester *tester, t *testing.T) {
 		&ints.RegTokenCache{},
 		&ints.HelmRepoTokenCache{},
 	)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -263,7 +263,7 @@ func initOAuthIntegration(tester *tester, t *testing.T) {
 		UserID:    tester.initUsers[0].ID,
 	}
 
-	oauth, err := tester.repo.OAuthIntegration().CreateOAuthIntegration(oauth)
+	oauth, err := tester.repo.OAuthIntegration().CreateOAuthIntegration(context.Background(), oauth)
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}

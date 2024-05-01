@@ -33,6 +33,7 @@ type GormRepository struct {
 	githubAppInstallation     repository.GithubAppInstallationRepository
 	githubAppOAuthIntegration repository.GithubAppOAuthIntegrationRepository
 	slackIntegration          repository.SlackIntegrationRepository
+	upstashIntegration        repository.UpstashIntegrationRepository
 	appEventWebhook           repository.AppEventWebhookRepository
 	gitlabIntegration         repository.GitlabIntegrationRepository
 	gitlabAppOAuthIntegration repository.GitlabAppOAuthIntegrationRepository
@@ -166,6 +167,10 @@ func (t *GormRepository) GithubAppOAuthIntegration() repository.GithubAppOAuthIn
 
 func (t *GormRepository) SlackIntegration() repository.SlackIntegrationRepository {
 	return t.slackIntegration
+}
+
+func (t *GormRepository) UpstashIntegration() repository.UpstashIntegrationRepository {
+	return t.upstashIntegration
 }
 
 // AppEventWebhook returns the AppEventWebhookRepository interface implemented by gorm
@@ -325,6 +330,7 @@ func NewRepository(db *gorm.DB, key *[32]byte, storageBackend credentials.Creden
 		slackIntegration:          NewSlackIntegrationRepository(db, key),
 		gitlabIntegration:         NewGitlabIntegrationRepository(db, key, storageBackend),
 		gitlabAppOAuthIntegration: NewGitlabAppOAuthIntegrationRepository(db, key, storageBackend),
+		upstashIntegration:        NewUpstashIntegrationRepository(db, key),
 		notificationConfig:        NewNotificationConfigRepository(db),
 		jobNotificationConfig:     NewJobNotificationConfigRepository(db),
 		buildEvent:                NewBuildEventRepository(db),

@@ -257,7 +257,9 @@ const Apps: React.FC = () => {
               Get started by creating an application.
             </Text>
             <Spacer y={1} />
-            {currentProject?.sandbox_enabled && currentProject?.billing_enabled && !hasPaymentEnabled ? (
+            {currentProject?.sandbox_enabled &&
+            currentProject?.billing_enabled &&
+            !hasPaymentEnabled ? (
               <Button
                 alt
                 onClick={() => {
@@ -410,7 +412,9 @@ const Apps: React.FC = () => {
               Delete Environment
             </Button>
           ) : (
-            <PorterLink to="/apps/new/app">
+            <PorterLink
+              to={`/api/projects/${currentProject?.id}/oauth/upstash`}
+            >
               <Button
                 onClick={async () => {
                   await updateAppStep({ step: "stack-launch-start" });

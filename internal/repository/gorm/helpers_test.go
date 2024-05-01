@@ -1,6 +1,7 @@
 package gorm_test
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"testing"
@@ -92,7 +93,6 @@ func setupTestEnv(tester *tester, t *testing.T) {
 		&ints.HelmRepoTokenCache{},
 		&ints.GithubAppInstallation{},
 	)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -164,7 +164,6 @@ func initMultiUser(tester *tester, t *testing.T) {
 	}
 
 	user, err = tester.repo.User().CreateUser(user)
-
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -308,7 +307,7 @@ func initOAuthIntegration(tester *tester, t *testing.T) {
 		UserID:    tester.initUsers[0].ID,
 	}
 
-	oauth, err := tester.repo.OAuthIntegration().CreateOAuthIntegration(oauth)
+	oauth, err := tester.repo.OAuthIntegration().CreateOAuthIntegration(context.Background(), oauth)
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -597,7 +596,6 @@ func initKubeEvents(tester *tester, t *testing.T) {
 		}
 
 		err = tester.repo.KubeEvent().AppendSubEvent(event, subEvent)
-
 		if err != nil {
 			t.Fatalf("%v\n", err)
 		}

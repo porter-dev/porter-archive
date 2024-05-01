@@ -82,6 +82,8 @@ type ServerConf struct {
 	SlackClientID     string `env:"SLACK_CLIENT_ID"`
 	SlackClientSecret string `env:"SLACK_CLIENT_SECRET"`
 
+	UpstashClientID string `env:"UPSTASH_CLIENT_ID"`
+
 	BillingPrivateKey       string `env:"BILLING_PRIVATE_KEY"`
 	BillingPrivateServerURL string `env:"BILLING_PRIVATE_URL"`
 	BillingPublicServerURL  string `env:"BILLING_PUBLIC_URL"`

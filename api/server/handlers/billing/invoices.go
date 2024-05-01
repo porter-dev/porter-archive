@@ -15,16 +15,17 @@ import (
 
 // ListCustomerInvoicesHandler is a handler for listing payment methods
 type ListCustomerInvoicesHandler struct {
-	handlers.PorterHandlerWriter
+	handlers.PorterHandlerReadWriter
 }
 
 // NewListBillingHandler will create a new ListBillingHandler
 func NewListCustomerInvoicesHandler(
 	config *config.Config,
+	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
 ) *ListCustomerInvoicesHandler {
 	return &ListCustomerInvoicesHandler{
-		PorterHandlerWriter: handlers.NewDefaultPorterHandler(config, nil, writer),
+		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, nil, writer),
 	}
 }
 
@@ -34,7 +35,15 @@ func (c *ListCustomerInvoicesHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 
 	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
-	invoices, err := c.Config().BillingManager.MetronomeClient.ListInvoices(ctx, proj.UsageID)
+	req := &types.ListCustomerInvoicesRequest{}
+
+	if ok := c.DecodeAndValidate(w, r, req); !ok {
+		err := telemetry.Error(ctx, span, nil, "error decoding list customer usage request")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+		return
+	}
+
+	invoices, err := c.Config().BillingManager.MetronomeClient.ListCustomerInvoices(ctx, proj.UsageID, req.Status, req.StartingOn, req.EndingBefore)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error listing payment method")
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error listing payment method: %w", err)))

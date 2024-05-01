@@ -15,6 +15,8 @@ import {
   type UsageList,
   ReferralDetailsValidator,
   ReferralDetails
+  InvoiceList,
+  InvoiceValidator,
 } from "lib/billing/types";
 
 import api from "shared/api";
@@ -56,6 +58,10 @@ type TGetCredits = {
 
 type TGetPlan = {
   plan: Plan | null;
+};
+
+type TGetInvoices = {
+  invoiceList: InvoiceList | null;
 };
 
 type TGetUsage = {
@@ -405,5 +411,47 @@ export const useReferralDetails = (): TGetReferralDetails => {
 
   return {
     referralDetails: referralsReq.data ?? null,
+  };
+};
+
+
+export const useCustomerInvoices = (): TGetInvoices => {
+  const { currentProject } = useContext(Context);
+
+  // Fetch current plan
+  const invoicesReq = useQuery(
+    ["getCustomerInvoices", currentProject?.id],
+    async (): Promise<InvoiceList | null> => {
+      if (!currentProject?.metronome_enabled) {
+        return null;
+      }
+
+      if (!currentProject?.id) {
+        return null;
+      }
+
+      try {
+        const now = new Date();
+        const startingDate = `${now.getFullYear()}-${now.getMonth()}-01`;
+        const endingDate = now.toISOString();
+        const res = await api.getCustomerInvoices(
+          "<token>",
+          {
+            status: "COMPLETED",
+            starting_on: startingDate,
+            ending_before: endingDate,
+          },
+          { project_id: currentProject.id }
+        );
+
+        const invoices = InvoiceValidator.array().parse(res.data);
+        return invoices;
+      } catch (error) {
+        return null
+      }
+    });
+
+  return {
+    invoiceList: invoicesReq.data ?? null,
   };
 };

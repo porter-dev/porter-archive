@@ -17,13 +17,15 @@ const TrialValidator = z.object({
 });
 
 export type Plan = z.infer<typeof PlanValidator>;
-export const PlanValidator = z.object({
-  id: z.string(),
-  plan_name: z.string(),
-  plan_description: z.string(),
-  starting_on: z.string(),
-  trial_info: TrialValidator,
-}).nullable();
+export const PlanValidator = z
+  .object({
+    id: z.string(),
+    plan_name: z.string(),
+    plan_description: z.string(),
+    starting_on: z.string(),
+    trial_info: TrialValidator,
+  })
+  .nullable();
 
 export type UsageMetric = z.infer<typeof UsageMetricValidator>;
 export const UsageMetricValidator = z.object({
@@ -50,3 +52,12 @@ export const CreditGrantsValidator = z.object({
 });
 
 export const ClientSecretResponse = z.string();
+
+export type ReferralDetails = z.infer<typeof ReferralDetailsValidator>;
+export const ReferralDetailsValidator = z
+  .object({
+    code: z.string(),
+    referral_count: z.number(),
+    max_allowed_referrals: z.number(),
+  })
+  .nullable();

@@ -56,4 +56,5 @@ type Repository interface {
 	GithubWebhook() GithubWebhookRepository
 	Datastore() DatastoreRepository
 	AppInstance() AppInstanceRepository
+	Referral() ReferralRepository
 }

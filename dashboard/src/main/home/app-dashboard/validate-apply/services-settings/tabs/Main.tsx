@@ -16,18 +16,19 @@ import { type ClientService } from "lib/porter-apps/services";
 type MainTabProps = {
   index: number;
   service: ClientService;
-  isPredeploy?: boolean;
+  lifecycleJobType?: "predeploy" | "initdeploy";
 };
 
 const MainTab: React.FC<MainTabProps> = ({
   index,
   service,
-  isPredeploy = false,
+  lifecycleJobType,
 }) => {
   const { register, control, watch } = useFormContext<PorterAppFormData>();
   const cron = watch(`app.services.${index}.config.cron.value`);
   const run = watch(`app.services.${index}.run.value`);
   const predeployRun = watch(`app.predeploy.${index}.run.value`);
+  const initdeployRun = watch(`app.initialDeploy.${index}.run.value`);
 
   const build = watch("app.build");
   const source = watch("source");
@@ -55,9 +56,14 @@ const MainTab: React.FC<MainTabProps> = ({
   }, []);
 
   const isStartCommandValid = useMemo(() => {
-    const runCommand = isPredeploy ? predeployRun : run;
+    const runCommand =
+      lifecycleJobType === "predeploy"
+        ? predeployRun
+        : lifecycleJobType === "initdeploy"
+        ? initdeployRun
+        : run;
     return runCommand.includes("&&") || runCommand.includes(";");
-  }, [isPredeploy, predeployRun, run]);
+  }, [lifecycleJobType, predeployRun, run]);
 
   // if your Docker image has a CMD or ENTRYPOINT
   return (
@@ -87,8 +93,10 @@ const MainTab: React.FC<MainTabProps> = ({
         disabled={service.run.readOnly}
         disabledTooltip={"You may only edit this field in your porter.yaml."}
         {...register(
-          isPredeploy
+          lifecycleJobType === "predeploy"
             ? `app.predeploy.${index}.run.value`
+            : lifecycleJobType === "initdeploy"
+            ? `app.initialDeploy.${index}.run.value`
             : `app.services.${index}.run.value`
         )}
       />

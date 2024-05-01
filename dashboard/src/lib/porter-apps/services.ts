@@ -32,10 +32,12 @@ const LAUNCHER_PREFIX = "/cnb/lifecycle/launcher ";
 export type DetectedServices = {
   services: ClientService[];
   predeploy?: ClientService;
+  initialDeploy?: ClientService;
   build?: BuildOptions;
   previews?: {
     services: ClientService[];
     predeploy?: ClientService;
+    initialDeploy?: ClientService;
     variables?: Record<string, string>;
   };
 };
@@ -194,6 +196,12 @@ export function isPredeployService(
   service: SerializedService | ClientService
 ): boolean {
   return service.config.type === "predeploy";
+}
+
+export function isInitdeployService(
+  service: SerializedService | ClientService
+): boolean {
+  return service.config.type === "initdeploy";
 }
 
 export function prefixSubdomain(subdomain: string): string {
@@ -713,9 +721,11 @@ export function serviceProto(service: SerializedService): Service {
 export function serializedServiceFromProto({
   service,
   isPredeploy,
+  isInitdeploy,
 }: {
   service: Service;
   isPredeploy?: boolean;
+  isInitdeploy?: boolean;
 }): SerializedService {
   const config = service.config;
   if (!config.case) {
@@ -756,6 +766,15 @@ export function serializedServiceFromProto({
             instances: service.instancesOptional ?? service.instances,
             config: {
               type: "predeploy" as const,
+            },
+          }
+        : isInitdeploy
+        ? {
+            ...service,
+            run: service.runOptional ?? service.run,
+            instances: service.instancesOptional ?? service.instances,
+            config: {
+              type: "initdeploy" as const,
             },
           }
         : {

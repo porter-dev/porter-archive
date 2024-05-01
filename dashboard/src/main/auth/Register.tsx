@@ -1,5 +1,6 @@
 import React, { useContext, useEffect, useState } from "react";
 import styled from "styled-components";
+import { useLocation } from "react-router-dom";
 
 import Heading from "components/form-components/Heading";
 import Button from "components/porter/Button";
@@ -35,6 +36,9 @@ const Register: React.FC<Props> = ({ authenticate }) => {
   const [lastName, setLastName] = useState("");
   const [lastNameError, setLastNameError] = useState(false);
   const [companyName, setCompanyName] = useState("");
+  const [referralCode, setReferralCode] = useState("");
+  const [referralCodeError, setReferralCodeError] = useState(false);
+
   const [companyNameError, setCompanyNameError] = useState(false);
   const [email, setEmail] = useState("");
   const [emailError, setEmailError] = useState(false);
@@ -70,6 +74,16 @@ const Register: React.FC<Props> = ({ authenticate }) => {
     { value: "Porter blog", label: "Porter blog" },
     { value: "Other", label: "Other" },
   ];
+
+  const { search } = useLocation()
+  const searchParams = new URLSearchParams(search)
+  const referralCodeFromUrl = searchParams.get("referral")
+
+  useEffect(() => {
+    if (referralCodeFromUrl) {
+      setReferralCode(referralCodeFromUrl);
+    }
+  }, [referralCodeFromUrl]); // Only re-run the effect if referralCodeFromUrl changes
 
   const handleRegister = (): void => {
     const isHosted = window.location.hostname === "cloud.porter.run";
@@ -118,6 +132,7 @@ const Register: React.FC<Props> = ({ authenticate }) => {
               chosenReferralOption === "Other"
                 ? `Other: ${referralOtherText}`
                 : chosenReferralOption,
+            referred_by_code: referralCode,
           },
           {}
         )
@@ -171,6 +186,7 @@ const Register: React.FC<Props> = ({ authenticate }) => {
               chosenReferralOption === "Other"
                 ? `Other: ${referralOtherText}`
                 : chosenReferralOption,
+            referred_by_code: referralCode,
           },
           {}
         )
@@ -178,7 +194,7 @@ const Register: React.FC<Props> = ({ authenticate }) => {
           if (res?.data?.redirect) {
             window.location.href = res.data.redirect;
           } else {
-            setUser(res?.data?.id, res?.data?.email);
+            setUser(res?.data?.id);
             authenticate();
 
             try {
@@ -400,6 +416,21 @@ const Register: React.FC<Props> = ({ authenticate }) => {
               setValue={setChosenReferralOption}
               value={chosenReferralOption}
             />
+            <Spacer y={0.5} />
+            <Input
+              placeholder="Code"
+              label="Referral code"
+              value={referralCode}
+              setValue={(x) => {
+                setReferralCode(x);
+                setReferralCodeError(false);
+              }}
+              width="100%"
+              height="40px"
+              error={referralCodeError && ""}
+            />
+            <Spacer y={0.5} />
+
             {chosenReferralOption === "Other" && (
               <>
                 <Spacer y={0.5} />

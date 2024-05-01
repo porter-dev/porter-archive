@@ -82,6 +82,7 @@ require (
 	github.com/honeycombio/otel-config-go v1.11.0
 	github.com/launchdarkly/go-sdk-common/v3 v3.0.1
 	github.com/launchdarkly/go-server-sdk/v6 v6.1.0
+	github.com/lithammer/shortuuid/v4 v4.0.0
 	github.com/matryer/is v1.4.0
 	github.com/nats-io/nats.go v1.24.0
 	github.com/open-policy-agent/opa v0.44.0

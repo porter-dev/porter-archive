@@ -196,3 +196,15 @@ type BillingEvent struct {
 	TransactionID string                 `json:"transaction_id"`
 	Timestamp     string                 `json:"timestamp"`
 }
+
+// Invoice represents a Metronome invoice.
+type Invoice struct {
+	ID             uuid.UUID  `json:"id"`
+	CustomerID     uuid.UUID  `json:"customer_id"`
+	CreditType     CreditType `json:"credit_type"`
+	StartTimestamp string     `json:"start_timestamp"`
+	EndTimestamp   string     `json:"end_timestamp"`
+	Status         string     `json:"status"`
+	Total          float64    `json:"total"`
+	Type           string     `json:"type"`
+}

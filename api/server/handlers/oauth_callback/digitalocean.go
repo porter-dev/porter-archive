@@ -72,7 +72,8 @@ func (p *OAuthCallbackDOHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	oauthInt.PopulateTargetMetadata()
 
 	// create the oauth integration first
-	oauthInt, err = p.Repo().OAuthIntegration().CreateOAuthIntegration(r.Context(), oauthInt)
+	oauthInt, err = p.Repo().OAuthIntegration().CreateOAuthIntegration(oauthInt)
+
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

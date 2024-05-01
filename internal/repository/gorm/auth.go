@@ -1,13 +1,10 @@
 package gorm
 
 import (
-	"context"
-
 	"github.com/porter-dev/porter/internal/encryption"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
 	"github.com/porter-dev/porter/internal/repository/credentials"
-	"github.com/porter-dev/porter/internal/telemetry"
 	"gorm.io/gorm"
 
 	ints "github.com/porter-dev/porter/internal/models/integrations"
@@ -594,19 +591,11 @@ func NewOAuthIntegrationRepository(
 
 // CreateOAuthIntegration creates a new oauth auth mechanism
 func (repo *OAuthIntegrationRepository) CreateOAuthIntegration(
-	ctx context.Context,
 	am *ints.OAuthIntegration,
 ) (*ints.OAuthIntegration, error) {
-	ctx, span := telemetry.NewSpan(ctx, "create-oauth-integration")
-	defer span.End()
-
-	telemetry.WithAttributes(span,
-		telemetry.AttributeKV{Key: "project-id", Value: am.ProjectID},
-	)
-
 	err := repo.EncryptOAuthIntegrationData(am, repo.key)
 	if err != nil {
-		return nil, telemetry.Error(ctx, span, err, "error encrypting oauth integration data")
+		return nil, err
 	}
 
 	// if storage backend is not nil, strip out credential data, which will be stored in credential
@@ -625,23 +614,24 @@ func (repo *OAuthIntegrationRepository) CreateOAuthIntegration(
 	project := &models.Project{}
 
 	if err := repo.db.Where("id = ?", am.ProjectID).First(&project).Error; err != nil {
-		return nil, telemetry.Error(ctx, span, err, "error finding project")
+		return nil, err
 	}
 
 	assoc := repo.db.Model(&project).Association("OAuthIntegrations")
 
 	if assoc.Error != nil {
-		return nil, telemetry.Error(ctx, span, assoc.Error, "error associating project with oauth integration")
+		return nil, assoc.Error
 	}
 
 	if err := assoc.Append(am); err != nil {
-		return nil, telemetry.Error(ctx, span, err, "error appending oauth integration to project")
+		return nil, err
 	}
 
 	if repo.storageBackend != nil {
 		err = repo.storageBackend.WriteOAuthCredential(am, credentialData)
+
 		if err != nil {
-			return nil, telemetry.Error(ctx, span, err, "error writing oauth credential to storage backend")
+			return nil, err
 		}
 	}
 
@@ -718,12 +708,14 @@ func (repo *OAuthIntegrationRepository) UpdateOAuthIntegration(
 	}
 
 	err = repo.DecryptOAuthIntegrationData(am, repo.key)
+
 	if err != nil {
 		return nil, err
 	}
 
 	if repo.storageBackend != nil {
 		err = repo.storageBackend.WriteOAuthCredential(am, credentialData)
+
 		if err != nil {
 			return nil, err
 		}
@@ -858,6 +850,7 @@ func (repo *GCPIntegrationRepository) CreateGCPIntegration(
 
 	if repo.storageBackend != nil {
 		err = repo.storageBackend.WriteGCPCredential(am, credentialData)
+
 		if err != nil {
 			return nil, err
 		}
@@ -1003,6 +996,7 @@ func (repo *AWSIntegrationRepository) CreateAWSIntegration(
 
 	if repo.storageBackend != nil {
 		err = repo.storageBackend.WriteAWSCredential(am, credentialData)
+
 		if err != nil {
 			return nil, err
 		}
@@ -1041,6 +1035,7 @@ func (repo *AWSIntegrationRepository) OverwriteAWSIntegration(
 
 	if repo.storageBackend != nil {
 		err = repo.storageBackend.WriteAWSCredential(am, credentialData)
+
 		if err != nil {
 			return nil, err
 		}
@@ -1344,6 +1339,7 @@ func (repo *AzureIntegrationRepository) CreateAzureIntegration(
 
 	if repo.storageBackend != nil {
 		err = repo.storageBackend.WriteAzureCredential(az, credentialData)
+
 		if err != nil {
 			return nil, err
 		}
@@ -1382,6 +1378,7 @@ func (repo *AzureIntegrationRepository) OverwriteAzureIntegration(
 
 	if repo.storageBackend != nil {
 		err = repo.storageBackend.WriteAzureCredential(az, credentialData)
+
 		if err != nil {
 			return nil, err
 		}
@@ -1579,6 +1576,7 @@ func (repo *GitlabIntegrationRepository) CreateGitlabIntegration(gi *ints.Gitlab
 
 	if repo.storageBackend != nil {
 		err = repo.storageBackend.WriteGitlabCredential(gi, credentialData)
+
 		if err != nil {
 			return nil, err
 		}

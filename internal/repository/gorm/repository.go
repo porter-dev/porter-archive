@@ -170,6 +170,7 @@ func (t *GormRepository) SlackIntegration() repository.SlackIntegrationRepositor
 	return t.slackIntegration
 }
 
+// UpstashIntegration returns the UpstashIntegrationRepository interface implemented by gorm
 func (t *GormRepository) UpstashIntegration() repository.UpstashIntegrationRepository {
 	return t.upstashIntegration
 }

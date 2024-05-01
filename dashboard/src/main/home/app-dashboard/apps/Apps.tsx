@@ -412,9 +412,7 @@ const Apps: React.FC = () => {
               Delete Environment
             </Button>
           ) : (
-            <PorterLink
-              to={`/api/projects/${currentProject?.id}/oauth/upstash`}
-            >
+            <PorterLink to="/apps/new/app">
               <Button
                 onClick={async () => {
                   await updateAppStep({ step: "stack-launch-start" });

@@ -89,7 +89,8 @@ func (p *OAuthCallbackGitlabHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 		ProjectID: projID,
 	}
 
-	oauthInt, err = p.Repo().OAuthIntegration().CreateOAuthIntegration(r.Context(), oauthInt)
+	oauthInt, err = p.Repo().OAuthIntegration().CreateOAuthIntegration(oauthInt)
+
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -107,6 +108,7 @@ func (p *OAuthCallbackGitlabHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 
 	// create the oauth integration first
 	_, err = p.Repo().GitlabAppOAuthIntegration().CreateGitlabAppOAuthIntegration(giOAuthInt)
+
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

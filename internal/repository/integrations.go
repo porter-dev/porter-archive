@@ -1,8 +1,6 @@
 package repository
 
 import (
-	"context"
-
 	ints "github.com/porter-dev/porter/internal/models/integrations"
 )
 
@@ -34,7 +32,7 @@ type OIDCIntegrationRepository interface {
 // OAuthIntegrationRepository represents the set of queries on the oauth
 // mechanism
 type OAuthIntegrationRepository interface {
-	CreateOAuthIntegration(ctx context.Context, am *ints.OAuthIntegration) (*ints.OAuthIntegration, error)
+	CreateOAuthIntegration(am *ints.OAuthIntegration) (*ints.OAuthIntegration, error)
 	ReadOAuthIntegration(projectID, id uint) (*ints.OAuthIntegration, error)
 	ListOAuthIntegrationsByProjectID(projectID uint) ([]*ints.OAuthIntegration, error)
 	UpdateOAuthIntegration(am *ints.OAuthIntegration) (*ints.OAuthIntegration, error)

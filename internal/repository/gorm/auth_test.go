@@ -1,7 +1,6 @@
 package gorm_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/go-test/deep"
@@ -35,6 +34,7 @@ func TestCreateKubeIntegration(t *testing.T) {
 	}
 
 	ki, err = tester.repo.KubeIntegration().ReadKubeIntegration(tester.initProjects[0].ID, ki.Model.ID)
+
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -121,6 +121,7 @@ func TestCreateBasicIntegration(t *testing.T) {
 	}
 
 	basic, err = tester.repo.BasicIntegration().ReadBasicIntegration(tester.initProjects[0].ID, basic.Model.ID)
+
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -212,6 +213,7 @@ func TestCreateOIDCIntegration(t *testing.T) {
 	}
 
 	oidc, err = tester.repo.OIDCIntegration().ReadOIDCIntegration(tester.initProjects[0].ID, oidc.Model.ID)
+
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -304,12 +306,13 @@ func TestCreateOAuthIntegration(t *testing.T) {
 
 	expOAuth := *oauth
 
-	oauth, err := tester.repo.OAuthIntegration().CreateOAuthIntegration(context.Background(), oauth)
+	oauth, err := tester.repo.OAuthIntegration().CreateOAuthIntegration(oauth)
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
 
 	oauth, err = tester.repo.OAuthIntegration().ReadOAuthIntegration(tester.initProjects[0].ID, oauth.Model.ID)
+
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -403,6 +406,7 @@ func TestCreateGCPIntegration(t *testing.T) {
 	}
 
 	gcp, err = tester.repo.GCPIntegration().ReadGCPIntegration(tester.initProjects[0].ID, gcp.Model.ID)
+
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -492,6 +496,7 @@ func TestCreateAWSIntegration(t *testing.T) {
 	}
 
 	aws, err = tester.repo.AWSIntegration().ReadAWSIntegration(tester.initProjects[0].ID, aws.Model.ID)
+
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -530,6 +535,7 @@ func TestOverwriteAWSIntegration(t *testing.T) {
 	aws.AWSSecretAccessKey = []byte("secret2")
 
 	aws, err = tester.repo.AWSIntegration().OverwriteAWSIntegration(aws)
+
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}

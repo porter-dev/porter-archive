@@ -50,6 +50,19 @@ function BillingPage(): JSX.Element {
 
   const { usage } = useCustomerUsage("day", true);
 
+  const trialEnding = (starting_on: string, ending_before: string,): string => {
+    if (ending_before === undefined) {
+      return "";
+    }
+
+    const diff = dayjs(ending_before).diff(dayjs());
+    if (diff <= 0) {
+      return `Started on  ${readableDate(starting_on)}`
+    }
+
+    return `Free trial ends ${dayjs().to(dayjs(ending_before))}`
+  }
+
   const processedData = useMemo(() => {
     const before = usage;
     const resultMap = new Map();
@@ -235,8 +248,7 @@ function BillingPage(): JSX.Element {
                       {plan.trial_info !== undefined &&
                         plan.trial_info.ending_before !== "" ? (
                         <Text>
-                          Free trial ends{" "}
-                          {dayjs().to(dayjs(plan.trial_info.ending_before))}
+                          {trialEnding(plan.starting_on, plan.trial_info.ending_before)}
                         </Text>
                       ) : (
                         <Text>Started on {readableDate(plan.starting_on)}</Text>

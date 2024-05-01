@@ -24,6 +24,8 @@ const (
 	// defaultPaidAmountCents is the amount paid by the user to get the credits
 	// grant, if set to 0 it means they are free
 	defaultPaidAmountCents = 0
+	// maxReferralRewards is the maximum number of referral rewards a user can receive
+	maxReferralRewards = 10
 )
 
 // CreateBillingHandler is a handler for creating payment methods
@@ -137,6 +139,15 @@ func (c *CreateBillingHandler) grantRewardIfReferral(ctx context.Context, referr
 	}
 
 	if referral == nil {
+		return nil
+	}
+
+	referralCount, err := c.Repo().Referral().CountReferralsByProjectID(referral.ProjectID, models.ReferralStatusCompleted)
+	if err != nil {
+		return telemetry.Error(ctx, span, err, "failed to get referral count by referrer id")
+	}
+
+	if referralCount >= maxReferralRewards {
 		return nil
 	}
 

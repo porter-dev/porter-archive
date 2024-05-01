@@ -197,21 +197,37 @@ type BillingEvent struct {
 	Timestamp     string                 `json:"timestamp"`
 }
 
+// ListCustomerInvoicesRequest is the request to list invoices for a customer
 type ListCustomerInvoicesRequest struct {
-	CustomerID   uuid.UUID `json:"customer_id"`
-	Status       string    `json:"status,omitempty"`
-	StartingOn   string    `json:"starting_on,omitempty"`
-	EndingBefore string    `json:"ending_before,omitempty"`
+	Status       string `schema:"status,omitempty"`
+	StartingOn   string `schema:"starting_on,omitempty"`
+	EndingBefore string `schema:"ending_before,omitempty"`
 }
 
 // Invoice represents a Metronome invoice.
 type Invoice struct {
-	ID             uuid.UUID  `json:"id"`
-	CustomerID     uuid.UUID  `json:"customer_id"`
-	CreditType     CreditType `json:"credit_type"`
-	StartTimestamp string     `json:"start_timestamp"`
-	EndTimestamp   string     `json:"end_timestamp"`
-	Status         string     `json:"status"`
-	Total          float64    `json:"total"`
-	Type           string     `json:"type"`
+	ID              uuid.UUID       `json:"id"`
+	CustomerID      uuid.UUID       `json:"customer_id"`
+	CreditType      CreditType      `json:"credit_type"`
+	StartTimestamp  string          `json:"start_timestamp"`
+	EndTimestamp    string          `json:"end_timestamp"`
+	Status          string          `json:"status"`
+	Subtotal        float64         `json:"subtotal"`
+	Total           float64         `json:"total"`
+	Type            string          `json:"type"`
+	LineItems       []LineItem      `json:"line_items"`
+	ExternalInvoice ExternalInvoice `json:"external_invoice"`
+}
+
+type ExternalInvoice struct {
+	BillingProviderType string `json:"billing_provider_type"`
+	InvoiceID           string `json:"invoice_id"`
+	IssuedAt            string `json:"issued_at"`
+	ExternalStatus      string `json:"external_status"`
+}
+
+type LineItem struct {
+	Name       string     `json:"name"`
+	Total      float64    `json:"total"`
+	CreditType CreditType `json:"credit_type"`
 }

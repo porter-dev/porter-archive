@@ -455,8 +455,8 @@ func getProjectRoutes(
 	// GET /api/projects/{project_id}/billing/invoices -> project.NewListCustomerInvoicesHandler
 	listCustomerInvoicesEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
-			Verb:   types.APIVerbCreate,
-			Method: types.HTTPVerbPost,
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
 			Path: &types.Path{
 				Parent:       basePath,
 				RelativePath: relPath + "/billing/invoices",

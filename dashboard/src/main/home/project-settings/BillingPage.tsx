@@ -46,6 +46,7 @@ function BillingPage(): JSX.Element {
   const { creditGrants } = usePorterCredits();
   const { plan } = useCustomerPlan();
   const { invoiceList } = useCustomerInvoices();
+  console.log(invoiceList)
 
   const {
     paymentMethodList,

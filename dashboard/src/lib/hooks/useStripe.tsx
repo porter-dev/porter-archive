@@ -432,17 +432,19 @@ export const useCustomerInvoices = (): TGetInvoices => {
 
       try {
         const now = new Date();
-        const startingDate = `${now.getFullYear()}-${now.getMonth()}-01`;
+        const startingDate = new Date(now.setMonth(now.getMonth() - 1)).toISOString();
         const endingDate = now.toISOString();
         const res = await api.getCustomerInvoices(
           "<token>",
           {
-            status: "COMPLETED",
+            status: "DRAFT",
             starting_on: startingDate,
             ending_before: endingDate,
           },
           { project_id: currentProject.id }
         );
+
+        console.log(res)
 
         const invoices = InvoiceValidator.array().parse(res.data);
         return invoices;

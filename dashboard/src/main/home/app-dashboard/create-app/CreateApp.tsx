@@ -437,7 +437,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
       let stringifiedJson = "unable to stringify errors";
       try {
         stringifiedJson = JSON.stringify(errors);
-      } catch (e) {}
+      } catch (e) { }
       void updateAppStep({
         step: "stack-launch-failure",
         errorMessage: `Form validation error (visible to user): ${errorMessage}. Stringified JSON errors (invisible to user): ${stringifiedJson}`,
@@ -546,8 +546,8 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                     <Text
                       color={
                         isNameHighlight &&
-                        porterAppFormMethods.getValues("app.name.value")
-                          .length > 0
+                          porterAppFormMethods.getValues("app.name.value")
+                            .length > 0
                           ? "#FFCC00"
                           : "helper"
                       }
@@ -682,9 +682,8 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                             }
                           >
                             {detectedServices.count > 0
-                              ? `Detected ${detectedServices.count} service${
-                                  detectedServices.count > 1 ? "s" : ""
-                                } from porter.yaml.`
+                              ? `Detected ${detectedServices.count} service${detectedServices.count > 1 ? "s" : ""
+                              } from porter.yaml.`
                               : `Could not detect any services from porter.yaml. Make sure it exists in the root of your repo.`}
                           </Text>
                         </AppearingDiv>
@@ -779,7 +778,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
           }}
         />
       )}
-      {currentProject?.billing_enabled && !hasPaymentEnabled && (
+      {currentProject?.sandbox_enabled && currentProject?.billing_enabled && !hasPaymentEnabled && (
         <BillingModal
           back={() => {
             history.push("/apps");

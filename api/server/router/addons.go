@@ -1,10 +1,7 @@
 package router
 
 import (
-	"fmt"
-
 	"github.com/go-chi/chi/v5"
-	"github.com/porter-dev/porter/api/server/handlers/addons"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/server/shared/router"
@@ -57,34 +54,6 @@ func getAddonRoutes(
 
 	var routes []*router.Route
 
-	// GET /api/projects/{project_id}/clusters/{cluster_id}/addons/latest -> addons.LatestAddonsHandler
-	latestAddonsEndpoint := factory.NewAPIEndpoint(
-		&types.APIRequestMetadata{
-			Verb:   types.APIVerbGet,
-			Method: types.HTTPVerbGet,
-			Path: &types.Path{
-				Parent:       basePath,
-				RelativePath: fmt.Sprintf("%s/latest", relPath),
-			},
-			Scopes: []types.PermissionScope{
-				types.UserScope,
-				types.ProjectScope,
-				types.ClusterScope,
-			},
-		},
-	)
-
-	latestAddonsHandler := addons.NewLatestAddonsHandler(
-		config,
-		factory.GetDecoderValidator(),
-		factory.GetResultWriter(),
-	)
-
-	routes = append(routes, &router.Route{
-		Endpoint: latestAddonsEndpoint,
-		Handler:  latestAddonsHandler,
-		Router:   r,
-	})
 
 	return routes, newPath
 }

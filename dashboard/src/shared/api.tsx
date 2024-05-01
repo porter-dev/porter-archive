@@ -1302,16 +1302,58 @@ const getAppTemplate = baseApi<
   return `/api/projects/${project_id}/clusters/${cluster_id}/apps/${porter_app_name}/templates`;
 });
 
-const listLatestAddons = baseApi<
+const listAddons = baseApi<
+  {},
   {
-    deployment_target_id?: string;
+    projectId: number;
+    deploymentTargetId: string;
+  }
+>("GET", ({ projectId, deploymentTargetId }) => {
+  return `/api/projects/${projectId}/targets/${deploymentTargetId}/addons`;
+});
+
+const getAddon = baseApi<
+  {},
+  {
+    projectId: number;
+    deploymentTargetId: string;
+    addonName: string;
+  }
+>("GET", ({ projectId, deploymentTargetId, addonName }) => {
+  return `/api/projects/${projectId}/targets/${deploymentTargetId}/addons/${addonName}`;
+});
+
+const getTailscaleServices = baseApi<
+  {},
+  {
+    projectId: number;
+    deploymentTargetId: string;
+  }
+>("GET", ({ projectId, deploymentTargetId }) => {
+  return `/api/projects/${projectId}/targets/${deploymentTargetId}/addons/tailscale-services`;
+});
+
+const updateAddon = baseApi<
+  {
+    b64_addon: string;
   },
   {
     projectId: number;
-    clusterId: number;
+    deploymentTargetId: string;
   }
->("GET", ({ projectId, clusterId }) => {
-  return `/api/projects/${projectId}/clusters/${clusterId}/addons/latest`;
+>("POST", ({ projectId, deploymentTargetId }) => {
+  return `/api/projects/${projectId}/targets/${deploymentTargetId}/addons/update`;
+});
+
+const deleteAddon = baseApi<
+  {},
+  {
+    projectId: number;
+    deploymentTargetId: string;
+    addonName: string;
+  }
+>("DELETE", ({ projectId, deploymentTargetId, addonName }) => {
+  return `/api/projects/${projectId}/targets/${deploymentTargetId}/addons/${addonName}`;
 });
 
 const getGitlabProcfileContents = baseApi<
@@ -2316,7 +2358,7 @@ const createEnvironmentGroups = baseApi<
     infisical_env?: {
       slug: string;
       path: string;
-    }
+    };
   },
   {
     id: number;
@@ -3797,7 +3839,11 @@ export default {
   createDeploymentTarget,
   getDeploymentTarget,
   getAppTemplate,
-  listLatestAddons,
+  listAddons,
+  getAddon,
+  getTailscaleServices,
+  updateAddon,
+  deleteAddon,
   getGitlabProcfileContents,
   getProjectClusters,
   getProjectRegistries,

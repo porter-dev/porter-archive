@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/porter-dev/porter/api/server/handlers/addons"
 	"github.com/porter-dev/porter/api/server/handlers/deployment_target"
 	"github.com/porter-dev/porter/api/server/handlers/porter_app"
 	"github.com/porter-dev/porter/api/server/shared"
@@ -142,6 +143,151 @@ func getDeploymentTargetRoutes(
 	routes = append(routes, &router.Route{
 		Endpoint: createCloudSqlSecretEndpoint,
 		Handler:  createCloudSqlSecretHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/targets/{deployment_target_identifier}/addons -> addons.LatestAddonsHandler
+	listAddonsEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/addons", relPath),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.DeploymentTargetScope,
+			},
+		},
+	)
+
+	listAddonsHandler := addons.NewLatestAddonsHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: listAddonsEndpoint,
+		Handler:  listAddonsHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/targets/{deployment_target_identifier}/addons/{addon_name} -> addons.AddonHandler
+	addonEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/addons/{%s}", relPath, types.URLParamAddonName),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.DeploymentTargetScope,
+			},
+		},
+	)
+
+	addonHandler := addons.NewAddonHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: addonEndpoint,
+		Handler:  addonHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/targets/{deployment_target_identifier}/addons/tailscale-services -> addons.TailscaleServicesHandler
+	tailscaleServicesEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/addons/tailscale-services", relPath),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.DeploymentTargetScope,
+			},
+		},
+	)
+
+	tailscaleServicesHandler := addons.NewTailscaleServicesHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: tailscaleServicesEndpoint,
+		Handler:  tailscaleServicesHandler,
+		Router:   r,
+	})
+
+	// POST /api/projects/{project_id}/targets/{deployment_target_identifier}/addons/update -> addons.UpdateAddonHandler
+	updateAddonEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbUpdate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/addons/update", relPath),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.DeploymentTargetScope,
+			},
+		},
+	)
+
+	updateAddonHandler := addons.NewUpdateAddonHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: updateAddonEndpoint,
+		Handler:  updateAddonHandler,
+		Router:   r,
+	})
+
+	// DELETE /api/projects/{project_id}/targets/{deployment_target_identifier}/addons/{addon_name} -> addons.DeleteAddonHandler
+	deleteAddonEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbDelete,
+			Method: types.HTTPVerbDelete,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/addons/{%s}", relPath, types.URLParamAddonName),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.DeploymentTargetScope,
+			},
+		},
+	)
+
+	deleteAddonHandler := addons.NewDeleteAddonHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: deleteAddonEndpoint,
+		Handler:  deleteAddonHandler,
 		Router:   r,
 	})
 

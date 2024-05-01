@@ -35,6 +35,13 @@ type AddCustomerPlanRequest struct {
 	EndingBeforeUTC string `json:"ending_before,omitempty"`
 	// NetPaymentTermDays is the number of days after issuance of invoice after which the invoice is due
 	NetPaymentTermDays int `json:"net_payment_terms_days,omitempty"`
+	// Trial is the trial period for the plan
+	Trial *TrialSpec `json:"trial_spec,omitempty"`
+}
+
+// TrialSpec is the trial period for the plan
+type TrialSpec struct {
+	LengthInDays int64 `json:"length_in_days"`
 }
 
 // EndCustomerPlanRequest represents a request to end the plan for a specific customer.

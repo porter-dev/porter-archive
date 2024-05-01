@@ -1,4 +1,6 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
 import { createPortal } from "react-dom";
 import {
   Route,
@@ -24,7 +26,6 @@ import { fakeGuardedRoute } from "shared/auth/RouteGuard";
 import { Context } from "shared/Context";
 import DeploymentTargetProvider from "shared/DeploymentTargetContext";
 import { pushFiltered, pushQueryParams, type PorterUrl } from "shared/routing";
-import { relativeDate, timeFrom } from "shared/string_utils";
 import midnight from "shared/themes/midnight";
 import standard from "shared/themes/standard";
 import {
@@ -33,8 +34,11 @@ import {
   type ProjectType,
 } from "shared/types";
 
-import AddOnDashboard from "./add-on-dashboard/AddOnDashboard";
-import NewAddOnFlow from "./add-on-dashboard/NewAddOnFlow";
+import AddonDashboard from "./add-on-dashboard/AddOnDashboard";
+import AddonTemplates from "./add-on-dashboard/AddonTemplates";
+import AddonView from "./add-on-dashboard/AddonView";
+import LegacyAddOnDashboard from "./add-on-dashboard/legacy_AddOnDashboard";
+import LegacyNewAddOnFlow from "./add-on-dashboard/legacy_NewAddOnFlow";
 import AppView from "./app-dashboard/app-view/AppView";
 import AppDashboard from "./app-dashboard/AppDashboard";
 import Apps from "./app-dashboard/apps/Apps";
@@ -65,6 +69,8 @@ import { NewProjectFC } from "./new-project/NewProject";
 import Onboarding from "./onboarding/Onboarding";
 import ProjectSettings from "./project-settings/ProjectSettings";
 import Sidebar from "./sidebar/Sidebar";
+
+dayjs.extend(relativeTime);
 
 // Guarded components
 const GuardedProjectSettings = fakeGuardedRoute("settings", "", [
@@ -215,7 +221,7 @@ const Home: React.FC<Props> = (props) => {
       } else {
         setHasFinishedOnboarding(true);
       }
-    } catch (error) { }
+    } catch (error) {}
   };
 
   useEffect(() => {
@@ -377,13 +383,8 @@ const Home: React.FC<Props> = (props) => {
     if (timestamp === "") {
       return true;
     }
-
-    const diff = timeFrom(timestamp);
-    if (diff.when === "future") {
-      return false;
-    }
-
-    return true;
+    const timestampDate = dayjs(timestamp);
+    return timestampDate.isBefore(dayjs(new Date()));
   };
 
   const showCardBanner = !hasPaymentEnabled;
@@ -423,8 +424,8 @@ const Home: React.FC<Props> = (props) => {
                     >
                       connect a valid payment method
                     </Link>
-                    . Your free trial is ending {" "}
-                    {relativeDate(plan.trial_info.ending_before, true)}.
+                    . Your free trial is ending{" "}
+                    {dayjs().to(dayjs(plan.trial_info.ending_before))}
                   </GlobalBanner>
                 )}
                 {!trialExpired && showBillingModal && (
@@ -548,10 +549,28 @@ const Home: React.FC<Props> = (props) => {
               </Route>
 
               <Route path="/addons/new">
-                <NewAddOnFlow />
+                {currentProject?.capi_provisioner_enabled &&
+                currentProject?.simplified_view_enabled &&
+                currentProject?.beta_features_enabled ? (
+                  <AddonTemplates />
+                ) : (
+                  <LegacyNewAddOnFlow />
+                )}
+              </Route>
+              <Route path="/addons/:addonName/:tab">
+                <AddonView />
+              </Route>
+              <Route path="/addons/:addonName">
+                <AddonView />
               </Route>
               <Route path="/addons">
-                <AddOnDashboard />
+                {currentProject?.capi_provisioner_enabled &&
+                currentProject?.simplified_view_enabled &&
+                currentProject?.beta_features_enabled ? (
+                  <AddonDashboard />
+                ) : (
+                  <LegacyAddOnDashboard />
+                )}
               </Route>
               <Route
                 path="/new-project"

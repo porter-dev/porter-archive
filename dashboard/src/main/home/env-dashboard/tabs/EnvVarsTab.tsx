@@ -180,14 +180,17 @@ const EnvVarsTab: React.FC<Props> = ({ envGroup, fetchEnvGroup }) => {
     }
   });
 
+  const envGroupProvider =
+    envGroup.type === "doppler" ? "Doppler" : "Infisical";
+
   return (
     <>
       <Text size={16}>Environment variables</Text>
       <Spacer y={0.5} />
       {envGroup.type === "doppler" || envGroup.type === "infisical" ? (
         <Text color="helper">
-          {envGroup.type === "doppler" ? "Doppler" : "Infisical"} environment
-          variables can only be updated from the Doppler dashboard.
+          {envGroupProvider} environment variables can only be updated from the{" "}
+          {envGroupProvider} dashboard.
         </Text>
       ) : (
         <Text color="helper">

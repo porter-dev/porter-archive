@@ -257,9 +257,7 @@ const Apps: React.FC = () => {
               Get started by creating an application.
             </Text>
             <Spacer y={1} />
-            {currentProject?.sandbox_enabled &&
-            currentProject?.billing_enabled &&
-            !hasPaymentEnabled ? (
+            {currentProject?.sandbox_enabled && currentProject?.billing_enabled && !hasPaymentEnabled ? (
               <Button
                 alt
                 onClick={() => {

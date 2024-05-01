@@ -18,6 +18,7 @@ import (
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
+// OAuthCallbackUpstashHandler is the handler responding to the upstash oauth callback
 type OAuthCallbackUpstashHandler struct {
 	handlers.PorterHandlerReadWriter
 }
@@ -25,6 +26,7 @@ type OAuthCallbackUpstashHandler struct {
 // UpstashApiKeyEndpoint is the endpoint to fetch the upstash developer api key
 const UpstashApiKeyEndpoint = "https://api.upstash.com/apikey"
 
+// NewOAuthCallbackUpstashHandler generates a new OAuthCallbackUpstashHandler
 func NewOAuthCallbackUpstashHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
@@ -35,6 +37,7 @@ func NewOAuthCallbackUpstashHandler(
 	}
 }
 
+// ServeHTTP gets the upstash oauth token from the callback code, uses it to create a developer api token, then creates a new upstash integration
 func (p *OAuthCallbackUpstashHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, span := telemetry.NewSpan(r.Context(), "serve-oauth-callback-upstash")
 	defer span.End()
@@ -114,19 +117,21 @@ func (p *OAuthCallbackUpstashHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		// attempt to parse the redirect uri, if it fails just redirect to dashboard
 		redirectURI, err := url.Parse(redirectStr)
 		if err != nil {
-			http.Redirect(w, r, "/dashboard", 302)
+			http.Redirect(w, r, "/dashboard", http.StatusFound)
 		}
 
-		http.Redirect(w, r, fmt.Sprintf("%s?%s", redirectURI.Path, redirectURI.RawQuery), 302)
+		http.Redirect(w, r, fmt.Sprintf("%s?%s", redirectURI.Path, redirectURI.RawQuery), http.StatusFound)
 	} else {
-		http.Redirect(w, r, "/dashboard", 302)
+		http.Redirect(w, r, "/dashboard", http.StatusFound)
 	}
 }
 
+// UpstashApiKeyRequest is the request body to fetch the upstash developer api key
 type UpstashApiKeyRequest struct {
 	Name string `json:"name"`
 }
 
+// UpstashApiKeyResponse is the response body to fetch the upstash developer api key
 type UpstashApiKeyResponse struct {
 	ApiKey string `json:"api_key"`
 }

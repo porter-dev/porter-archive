@@ -355,28 +355,6 @@ func (m MetronomeClient) ListCustomerUsage(ctx context.Context, customerID uuid.
 	return usage, nil
 }
 
-// ListCustomerInvoices will return the invoices for a customer for the given status and time range
-func (m MetronomeClient) ListCustomerInvoices(ctx context.Context, customerID uuid.UUID, status string) (invoices []types.Invoice, err error) {
-	ctx, span := telemetry.NewSpan(ctx, "list-customer-invoices")
-	defer span.End()
-
-	if customerID == uuid.Nil {
-		return invoices, telemetry.Error(ctx, span, err, "customer id empty")
-	}
-
-	path := fmt.Sprintf("customers/%s/invoices", customerID)
-	var result struct {
-		Data []types.Invoice `json:"data"`
-	}
-
-	_, err = m.do(http.MethodGet, path, nil, &result)
-	if err != nil {
-		return invoices, telemetry.Error(ctx, span, err, "failed to list customer invoices")
-	}
-
-	return result.Data, nil
-}
-
 // IngestEvents sends a list of billing events to Metronome's ingest endpoint
 func (m MetronomeClient) IngestEvents(ctx context.Context, events []types.BillingEvent) (err error) {
 	ctx, span := telemetry.NewSpan(ctx, "ingets-billing-events")

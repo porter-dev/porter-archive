@@ -54,14 +54,9 @@ export const CreditGrantsValidator = z.object({
 export type InvoiceList = Invoice[];
 export type Invoice = z.infer<typeof InvoiceValidator>;
 export const InvoiceValidator = z.object({
-  id: z.string(),
-  customer_id: z.string(),
-  credit_type: z.string(),
-  start_timestamp: z.string(),
-  end_timestamp: z.string(),
+  hosted_invoice_url: z.string(),
   status: z.string(),
-  total: z.number(),
-  type: z.string(),
+  created: z.string(),
 });
 
 export const ClientSecretResponse = z.string();

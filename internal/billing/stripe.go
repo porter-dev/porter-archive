@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/telemetry"
@@ -244,33 +245,37 @@ func (s StripeClient) GetPublishableKey(ctx context.Context) (key string) {
 	return s.PublishableKey
 }
 
-// PopulateInvoiceURLs will populate the invoice hosted URL for each invoice
-func (s StripeClient) PopulateInvoiceURLs(ctx context.Context, invoices []types.Invoice) (invoiceList []types.Invoice, err error) {
+func (s StripeClient) ListCustomerInvoices(ctx context.Context, customerID string, status string) (invoiceList []types.Invoice, err error) {
 	ctx, span := telemetry.NewSpan(ctx, "populate-invoice-urls")
 	defer span.End()
 
-	if len(invoices) == 0 {
-		return invoiceList, nil
+	if customerID == "" {
+		return invoiceList, telemetry.Error(ctx, span, err, "customer id cannot be empty")
 	}
 
 	stripe.Key = s.SecretKey
 
-	for _, usageInvoice := range invoices {
-		if usageInvoice.ExternalInvoice.InvoiceID == "" {
+	params := &stripe.InvoiceListParams{
+		Customer: stripe.String(customerID),
+		Status:   stripe.String(status),
+	}
+
+	result := invoice.List(params)
+
+	for result.Next() {
+		invoice := result.Current().(*stripe.Invoice)
+
+		if invoice == nil {
 			continue
 		}
 
-		if usageInvoice.ExternalInvoice.ExternalStatus == "SKIPPED" {
-			continue
-		}
+		createdTimestamp := time.Unix(invoice.Created, 0)
 
-		stripeInvoice, err := invoice.Get(usageInvoice.ExternalInvoice.InvoiceID, &stripe.InvoiceParams{})
-		if err != nil {
-			return invoiceList, telemetry.Error(ctx, span, err, "failed to get Stripe invoice")
-		}
-
-		usageInvoice.ExternalInvoice.ExternalURL = stripeInvoice.HostedInvoiceURL
-		invoiceList = append(invoiceList, usageInvoice)
+		invoiceList = append(invoiceList, types.Invoice{
+			HostedInvoiceURL: invoice.HostedInvoiceURL,
+			Status:           string(invoice.Status),
+			Created:          createdTimestamp.Format(time.RFC3339),
+		})
 	}
 
 	return invoiceList, nil

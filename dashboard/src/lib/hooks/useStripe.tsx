@@ -437,7 +437,7 @@ export const useCustomerInvoices = (): TGetInvoices => {
         const res = await api.getCustomerInvoices(
           "<token>",
           {
-            status: "FINALIZED",
+            status: "paid",
           },
           { project_id: currentProject.id }
         );

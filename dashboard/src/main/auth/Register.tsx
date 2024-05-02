@@ -21,7 +21,7 @@ import logo from "assets/logo.png";
 import InfoPanel from "./InfoPanel";
 
 type Props = {
-  authenticate: () => void;
+  authenticate: () => Promise<void>;
 };
 
 const getWindowDimensions = () => {
@@ -141,7 +141,7 @@ const Register: React.FC<Props> = ({ authenticate }) => {
             window.location.href = res.data.redirect;
           } else {
             setUser(res?.data?.id, res?.data?.email);
-            authenticate();
+            authenticate().catch(() => {});
 
             try {
               window.dataLayer?.push({

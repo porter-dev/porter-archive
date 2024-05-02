@@ -11,6 +11,7 @@ import ResetPasswordFinalize from "../../main/auth/ResetPasswordFinalize";
 import ResetPasswordInit from "../../main/auth/ResetPasswordInit";
 import SetInfo from "../../main/auth/SetInfo";
 import VerifyEmail from "../../main/auth/VerifyEmail";
+import CurrentError from "../../main/CurrentError";
 
 type AuthnState = {
   userId: number;
@@ -32,7 +33,8 @@ const AuthnProvider = ({
 }: {
   children: JSX.Element;
 }): JSX.Element => {
-  const { setUser, clearContext, setCurrentError } = useContext(Context);
+  const { setUser, clearContext, setCurrentError, currentError } =
+    useContext(Context);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isEmailVerified, setIsEmailVerified] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -103,71 +105,80 @@ const AuthnProvider = ({
   // return unauthenticated routes
   if (!isLoggedIn) {
     return (
-      <Switch>
-        <Route
-          path="/login"
-          render={() => {
-            return <Login authenticate={authenticate} />;
-          }}
-        />
-        <Route
-          path="/register"
-          render={() => {
-            return <Register authenticate={authenticate} />;
-          }}
-        />
-        <Route
-          path="/password/reset/finalize"
-          render={() => {
-            return <ResetPasswordFinalize />;
-          }}
-        />
-        <Route
-          path="/password/reset"
-          render={() => {
-            return <ResetPasswordInit />;
-          }}
-        />
-        <Route
-          path="*"
-          render={() => {
-            return <Redirect to="/login" />;
-          }}
-        />
-      </Switch>
+      <>
+        <Switch>
+          <Route
+            path="/login"
+            render={() => {
+              return <Login authenticate={authenticate} />;
+            }}
+          />
+          <Route
+            path="/register"
+            render={() => {
+              return <Register authenticate={authenticate} />;
+            }}
+          />
+          <Route
+            path="/password/reset/finalize"
+            render={() => {
+              return <ResetPasswordFinalize />;
+            }}
+          />
+          <Route
+            path="/password/reset"
+            render={() => {
+              return <ResetPasswordInit />;
+            }}
+          />
+          <Route
+            path="*"
+            render={() => {
+              return <Redirect to="/login" />;
+            }}
+          />
+        </Switch>
+        <CurrentError currentError={currentError} />
+      </>
     );
   }
 
   // if logged in but not verified, block until email verification
   if (!local && !isEmailVerified) {
     return (
-      <Switch>
-        <Route
-          path="/"
-          render={() => {
-            return <VerifyEmail handleLogOut={handleLogOut} />;
-          }}
-        />
-      </Switch>
+      <>
+        <Switch>
+          <Route
+            path="/"
+            render={() => {
+              return <VerifyEmail handleLogOut={handleLogOut} />;
+            }}
+          />
+        </Switch>
+        <CurrentError currentError={currentError} />
+      </>
     );
   }
 
   // Handle case where new user signs up via OAuth and has not set name and company
   if (!hasInfo && userId > 9312) {
     return (
-      <Switch>
-        <Route
-          path="/"
-          render={() => {
-            return (
-              <SetInfo
-                handleLogOut={handleLogOut}
-                authenticate={authenticate}
-              />
-            );
-          }}
-        />
-      </Switch>
+      <>
+        <Switch>
+          <Route
+            path="/"
+            render={() => {
+              return (
+                <SetInfo
+                  handleLogOut={handleLogOut}
+                  authenticate={authenticate}
+                />
+              );
+            }}
+          />
+        </Switch>
+        <CurrentError currentError={currentError} />
+      </>
     );
   }
 

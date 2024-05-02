@@ -1,6 +1,13 @@
-import React, { useCallback, useContext, useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { AddonWithEnvVars } from "@porter-dev/api-contracts";
 import { useQueries } from "@tanstack/react-query";
+import dayjs from "dayjs";
 import { useHistory } from "react-router";
 import styled from "styled-components";
 import { z } from "zod";
@@ -27,7 +34,7 @@ import {
   useDeploymentTargetList,
   type DeploymentTarget,
 } from "lib/hooks/useDeploymentTarget";
-import { checkIfProjectHasPayment } from "lib/hooks/useStripe";
+import { checkIfProjectHasPayment, useCustomerPlan } from "lib/hooks/useStripe";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
@@ -58,7 +65,8 @@ const Apps: React.FC = () => {
   const { deploymentTargetList } = useDeploymentTargetList({ preview: false });
   const [deploymentTargetIdFilter, setDeploymentTargetIdFilter] =
     useState<string>("all");
-  const { hasPaymentEnabled } = checkIfProjectHasPayment();
+  const { hasPaymentEnabled, refetchPaymentEnabled } =
+    checkIfProjectHasPayment();
 
   const history = useHistory();
 
@@ -68,6 +76,24 @@ const Apps: React.FC = () => {
   const [showDeleteEnvModal, setShowDeleteEnvModal] = useState(false);
   const [envDeleting, setEnvDeleting] = useState(false);
   const [showBillingModal, setShowBillingModal] = useState(false);
+
+  const { plan } = useCustomerPlan();
+
+  const isTrialExpired = (timestamp: string): boolean => {
+    if (timestamp === "") {
+      return true;
+    }
+    const timestampDate = dayjs(timestamp);
+    return timestampDate.isBefore(dayjs(new Date()));
+  };
+  const trialExpired =
+    plan !== null && plan && isTrialExpired(plan.trial_info.ending_before);
+
+  useEffect(() => {
+    if (trialExpired && !hasPaymentEnabled) {
+      setShowBillingModal(true);
+    }
+  });
 
   const [{ data: apps = [], status }, { data: addons = [] }] = useQueries({
     queries: [
@@ -257,7 +283,9 @@ const Apps: React.FC = () => {
               Get started by creating an application.
             </Text>
             <Spacer y={1} />
-            {currentProject?.sandbox_enabled && currentProject?.billing_enabled && !hasPaymentEnabled ? (
+            {currentProject?.sandbox_enabled &&
+            currentProject?.billing_enabled &&
+            !hasPaymentEnabled ? (
               <Button
                 alt
                 onClick={() => {
@@ -454,6 +482,21 @@ const Apps: React.FC = () => {
           }}
           deleteEnv={deletePreviewEnv}
           loading={envDeleting}
+        />
+      )}
+      {trialExpired && !hasPaymentEnabled && showBillingModal && (
+        <BillingModal
+          back={() => {
+            setShowBillingModal(false);
+            history.push("/project-settings?selected_tab=billing");
+          }}
+          trialExpired
+          onCreate={async () => {
+            await refetchPaymentEnabled({
+              throwOnError: false,
+              cancelRefetch: false,
+            });
+          }}
         />
       )}
     </StyledAppDashboard>

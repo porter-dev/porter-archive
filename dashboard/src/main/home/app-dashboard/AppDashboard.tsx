@@ -32,9 +32,6 @@ import time from "assets/time.png";
 import letter from "assets/vector.svg";
 
 import DashboardHeader from "../cluster-dashboard/DashboardHeader";
-import BillingModal from "../modals/BillingModal";
-import { checkIfProjectHasPayment, useCustomerPlan } from "lib/hooks/useStripe";
-import dayjs from "dayjs";
 
 type Props = {};
 
@@ -56,7 +53,7 @@ const namespaceBlacklist = [
   "monitoring",
 ];
 
-const AppDashboard: React.FC<Props> = ({ }) => {
+const AppDashboard: React.FC<Props> = ({}) => {
   const { currentProject, currentCluster, setFeaturePreview } =
     useContext(Context);
   const [apps, setApps] = useState([]);
@@ -68,19 +65,6 @@ const AppDashboard: React.FC<Props> = ({ }) => {
 
   const [isLoading, setIsLoading] = useState(true);
   const [shouldLoadTime, setShouldLoadTime] = useState(true);
-
-  const { hasPaymentEnabled, refetchPaymentEnabled } =
-    checkIfProjectHasPayment();
-  const { plan } = useCustomerPlan();
-
-  const isTrialExpired = (timestamp: string): boolean => {
-    if (timestamp === "") {
-      return true;
-    }
-    const timestampDate = dayjs(timestamp);
-    return timestampDate.isBefore(dayjs(new Date()));
-  };
-  const trialExpired = plan !== null && plan && isTrialExpired(plan.trial_info.ending_before);
 
   const filteredApps = useMemo(() => {
     const filteredBySearch = search(apps ?? [], searchValue, {
@@ -383,17 +367,6 @@ const AppDashboard: React.FC<Props> = ({ }) => {
             </List>
           )}
         </>
-      )}
-      {trialExpired && !hasPaymentEnabled && (
-        <BillingModal
-          trialExpired
-          onCreate={async () => {
-            await refetchPaymentEnabled({
-              throwOnError: false,
-              cancelRefetch: false,
-            });
-          }}
-        />
       )}
       <Spacer y={5} />
     </StyledAppDashboard>

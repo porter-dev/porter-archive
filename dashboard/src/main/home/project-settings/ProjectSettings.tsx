@@ -104,11 +104,6 @@ function ProjectSettings(props: any) {
     if (!_.isEqual(tabOpts, tabOptions)) {
       setTabOptions(tabOpts);
     }
-
-    const selectedTab = getQueryParam(props, "selected_tab");
-    if (selectedTab && selectedTab !== currentTab) {
-      setCurrentTab(selectedTab);
-    }
   }, [context, projectName, currentTab, props, tabOptions]);
 
   const validateProjectName = (): ValidationError => {

@@ -1,16 +1,16 @@
 import React, { useState, useContext, useEffect } from "react";
 import styled from "styled-components";
 import loadable from "@loadable/component";
-import { type RouteComponentProps, withRouter } from "react-router";
+import { RouteComponentProps, withRouter } from "react-router";
 import { Route, Switch } from "react-router-dom";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
-import { type WithAuthProps, withAuth } from "shared/auth/AuthorizationHoc";
-import { type ClusterType } from "shared/types";
+import { WithAuthProps, withAuth } from "shared/auth/AuthorizationHoc";
+import { ClusterType } from "shared/types";
 import {
   getQueryParam,
-  type PorterUrl,
+  PorterUrl,
   pushQueryParams,
 } from "shared/routing";
 
@@ -22,16 +22,16 @@ import AppDashboard from "./apps/AppDashboard";
 import JobDashboard from "./jobs/JobDashboard";
 
 const LazyPreviewEnvironmentsRoutes = loadable(
-  // @ts-expect-error
-  async () => await import("./preview-environments/routes.tsx"),
+  // @ts-ignore
+  () => import("./preview-environments/routes.tsx"),
   {
     fallback: <Loading />,
   }
 );
 
 const LazyStackRoutes = loadable(
-  // @ts-expect-error
-  async () => await import("./stacks/routes.tsx"),
+  // @ts-ignore
+  () => import("./stacks/routes.tsx"),
   {
     fallback: <Loading />,
   }
@@ -82,7 +82,7 @@ const DashboardRouter: React.FC<Props> = ({
   // Reset namespace filter and close expanded chart on cluster change
   useEffect(() => {
     let namespace = "default";
-    const localStorageNamespace = localStorage.getItem(
+    let localStorageNamespace = localStorage.getItem(
       `${currentProject.id}-${currentCluster.id}-namespace`
     );
     if (localStorageNamespace) {

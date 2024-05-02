@@ -19,7 +19,7 @@ import logo from "assets/logo.png";
 import InfoPanel from "./InfoPanel";
 
 type Props = {
-  authenticate: () => void;
+  authenticate: () => Promise<void>;
   handleLogOut: () => void;
 };
 
@@ -69,7 +69,7 @@ const SetInfo: React.FC<Props> = ({ authenticate, handleLogOut }) => {
           { id: user.id }
         )
         .then((res: any) => {
-          authenticate();
+          authenticate().catch(() => {});
 
           try {
             window.dataLayer?.push({

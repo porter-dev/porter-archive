@@ -67,6 +67,9 @@ func (p *ProjectCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 
 	if p.Config().ServerConf.EnableSandbox {
 		step = types.StepCleanUp
+
+		// Generate referral code for porter cloud projects
+		proj.ReferralCode = models.NewReferralCode()
 	}
 
 	// create onboarding flow set to the first step. Read in env var

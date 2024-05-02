@@ -51,6 +51,30 @@ func GetOAuthCallbackRoutes(
 		Router:   r,
 	})
 
+	// GET /api/oauth/upstash/callback -> oauth_callback.NewOAuthCallbackUpstashHandler
+	upstashEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/upstash/callback",
+			},
+		},
+	)
+
+	upstashHandler := oauth_callback.NewOAuthCallbackUpstashHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: upstashEndpoint,
+		Handler:  upstashHandler,
+		Router:   r,
+	})
+
 	// GET /api/oauth/digitalocean/callback -> oauth_callback.NewOAuthCallbackDOHandler
 	doEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

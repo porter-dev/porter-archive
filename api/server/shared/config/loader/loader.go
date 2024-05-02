@@ -261,6 +261,17 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 		res.Logger.Info().Msg("Created Slack client")
 	}
 
+	if sc.UpstashEnabled && sc.UpstashClientID != "" {
+		res.Logger.Info().Msg("Creating Upstash client")
+		res.UpstashConf = oauth.NewUpstashClient(&oauth.Config{
+			ClientID:     sc.UpstashClientID,
+			ClientSecret: "",
+			Scopes:       []string{"offline_access"},
+			BaseURL:      sc.ServerURL,
+		})
+		res.Logger.Info().Msg("Created Upstash client")
+	}
+
 	res.WSUpgrader = &websocket.Upgrader{
 		WSUpgrader: &gorillaws.Upgrader{
 			ReadBufferSize:  1024,

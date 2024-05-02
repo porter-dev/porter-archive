@@ -76,6 +76,9 @@ type Config struct {
 	// SlackConf is the configuration for a Slack OAuth client
 	SlackConf *oauth2.Config
 
+	// UpstashConf is the configuration for an Upstash OAuth client
+	UpstashConf oauth2.Config
+
 	// WSUpgrader upgrades HTTP connections to websocket connections
 	WSUpgrader *websocket.Upgrader
 

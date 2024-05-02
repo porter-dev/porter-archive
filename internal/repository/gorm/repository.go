@@ -33,6 +33,7 @@ type GormRepository struct {
 	githubAppInstallation     repository.GithubAppInstallationRepository
 	githubAppOAuthIntegration repository.GithubAppOAuthIntegrationRepository
 	slackIntegration          repository.SlackIntegrationRepository
+	upstashIntegration        repository.UpstashIntegrationRepository
 	appEventWebhook           repository.AppEventWebhookRepository
 	gitlabIntegration         repository.GitlabIntegrationRepository
 	gitlabAppOAuthIntegration repository.GitlabAppOAuthIntegrationRepository
@@ -62,6 +63,7 @@ type GormRepository struct {
 	datastore                 repository.DatastoreRepository
 	appInstance               repository.AppInstanceRepository
 	ipam                      repository.IpamRepository
+	referral                  repository.ReferralRepository
 }
 
 func (t *GormRepository) User() repository.UserRepository {
@@ -166,6 +168,11 @@ func (t *GormRepository) GithubAppOAuthIntegration() repository.GithubAppOAuthIn
 
 func (t *GormRepository) SlackIntegration() repository.SlackIntegrationRepository {
 	return t.slackIntegration
+}
+
+// UpstashIntegration returns the UpstashIntegrationRepository interface implemented by gorm
+func (t *GormRepository) UpstashIntegration() repository.UpstashIntegrationRepository {
+	return t.upstashIntegration
 }
 
 // AppEventWebhook returns the AppEventWebhookRepository interface implemented by gorm
@@ -293,6 +300,11 @@ func (t *GormRepository) Ipam() repository.IpamRepository {
 	return t.ipam
 }
 
+// Referral returns the ReferralRepository interface implemented by gorm
+func (t *GormRepository) Referral() repository.ReferralRepository {
+	return t.referral
+}
+
 // NewRepository returns a Repository which persists users in memory
 // and accepts a parameter that can trigger read/write errors
 func NewRepository(db *gorm.DB, key *[32]byte, storageBackend credentials.CredentialStorage) repository.Repository {
@@ -325,6 +337,7 @@ func NewRepository(db *gorm.DB, key *[32]byte, storageBackend credentials.Creden
 		slackIntegration:          NewSlackIntegrationRepository(db, key),
 		gitlabIntegration:         NewGitlabIntegrationRepository(db, key, storageBackend),
 		gitlabAppOAuthIntegration: NewGitlabAppOAuthIntegrationRepository(db, key, storageBackend),
+		upstashIntegration:        NewUpstashIntegrationRepository(db, key),
 		notificationConfig:        NewNotificationConfigRepository(db),
 		jobNotificationConfig:     NewJobNotificationConfigRepository(db),
 		buildEvent:                NewBuildEventRepository(db),
@@ -352,5 +365,6 @@ func NewRepository(db *gorm.DB, key *[32]byte, storageBackend credentials.Creden
 		appInstance:               NewAppInstanceRepository(db),
 		ipam:                      NewIpamRepository(db),
 		appEventWebhook:           NewAppEventWebhookRepository(db),
+		referral:                  NewReferralRepository(db),
 	}
 }

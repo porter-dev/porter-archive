@@ -72,14 +72,12 @@ func (u *UserCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// write the user to the db
 	user, err = u.Repo().User().CreateUser(user)
-
 	if err != nil {
 		u.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
 	err = addUserToDefaultProject(u.Config(), user)
-
 	if err != nil {
 		u.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -95,7 +93,20 @@ func (u *UserCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// non-fatal send email verification
 	if !user.EmailVerified {
 		err = startEmailVerification(u.Config(), w, r, user)
+		if err != nil {
+			u.HandleAPIErrorNoWrite(w, r, apierrors.NewErrInternal(err))
+		}
+	}
 
+	// create referral if referred by another user
+	if request.ReferredBy != "" {
+		referral := &models.Referral{
+			Code:           request.ReferredBy,
+			ReferredUserID: user.ID,
+			Status:         models.ReferralStatusSignedUp,
+		}
+
+		_, err = u.Repo().Referral().CreateReferral(referral)
 		if err != nil {
 			u.HandleAPIErrorNoWrite(w, r, apierrors.NewErrInternal(err))
 		}
@@ -146,7 +157,6 @@ func addUserToDefaultProject(config *config.Config, user *models.User) error {
 					Kind:      types.RoleAdmin,
 				},
 			})
-
 			if err != nil {
 				return err
 			}

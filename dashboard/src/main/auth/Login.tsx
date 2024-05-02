@@ -21,7 +21,7 @@ import GoogleIcon from "assets/GoogleIcon";
 import logo from "assets/logo.png";
 
 type Props = {
-  authenticate: () => void;
+  authenticate: () => Promise<void>;
 };
 
 const getWindowDimensions = () => {
@@ -56,7 +56,7 @@ const Login: React.FC<Props> = ({ authenticate }) => {
             window.location.href = res.data.redirect;
           } else {
             setUser(res?.data?.id, res?.data?.email);
-            authenticate();
+            authenticate().catch(() => {});
           }
         })
         .catch((err) => {

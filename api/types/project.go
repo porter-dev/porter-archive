@@ -60,6 +60,8 @@ type Project struct {
 	AdvancedInfraEnabled            bool    `json:"advanced_infra_enabled"`
 	SandboxEnabled                  bool    `json:"sandbox_enabled"`
 	AdvancedRbacEnabled             bool    `json:"advanced_rbac_enabled"`
+	// ReferralCode is a unique code that can be shared to referr other users to Porter
+	ReferralCode string `json:"referral_code"`
 }
 
 // FeatureFlags is a struct that contains old feature flag representations

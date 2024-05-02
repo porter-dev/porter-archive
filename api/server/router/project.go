@@ -397,6 +397,33 @@ func getProjectRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/referrals/details -> user.NewGetUserReferralDetailsHandler
+	getReferralDetailsEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/referrals/details",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	getReferralDetailsHandler := project.NewGetProjectReferralDetailsHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: getReferralDetailsEndpoint,
+		Handler:  getReferralDetailsHandler,
+		Router:   r,
+	})
+
 	// POST /api/projects/{project_id}/billing/usage -> project.NewListCustomerUsageHandler
 	listCustomerUsageEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

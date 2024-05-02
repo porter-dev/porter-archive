@@ -16,10 +16,13 @@ import (
 )
 
 const (
-	metronomeBaseUrl        = "https://api.metronome.com/v1/"
-	defaultCollectionMethod = "charge_automatically"
-	defaultMaxRetries       = 10
-	porterStandardTrialDays = 15
+	metronomeBaseUrl         = "https://api.metronome.com/v1/"
+	defaultCollectionMethod  = "charge_automatically"
+	defaultMaxRetries        = 10
+	porterStandardTrialDays  = 15
+	defaultRewardAmountCents = 1000
+	defaultPaidAmountCents   = 0
+	maxReferralRewards       = 10
 )
 
 // MetronomeClient is the client used to call the Metronome API
@@ -28,6 +31,15 @@ type MetronomeClient struct {
 	billableMetrics      []types.BillableMetric
 	PorterCloudPlanID    uuid.UUID
 	PorterStandardPlanID uuid.UUID
+
+	// DefaultRewardAmountCents is the default amount in USD cents rewarded to users
+	// who successfully refer a new user
+	DefaultRewardAmountCents float64
+	// DefaultPaidAmountCents is the amount paid by the user to get the credits
+	// grant, if set to 0 it means they are free
+	DefaultPaidAmountCents float64
+	// MaxReferralRewards is the maximum number of referral rewards a user can receive
+	MaxReferralRewards int64
 }
 
 // NewMetronomeClient returns a new Metronome client
@@ -43,9 +55,12 @@ func NewMetronomeClient(metronomeApiKey string, porterCloudPlanID string, porter
 	}
 
 	return MetronomeClient{
-		ApiKey:               metronomeApiKey,
-		PorterCloudPlanID:    porterCloudPlanUUID,
-		PorterStandardPlanID: porterStandardPlanUUID,
+		ApiKey:                   metronomeApiKey,
+		PorterCloudPlanID:        porterCloudPlanUUID,
+		PorterStandardPlanID:     porterStandardPlanUUID,
+		DefaultRewardAmountCents: defaultRewardAmountCents,
+		DefaultPaidAmountCents:   defaultPaidAmountCents,
+		MaxReferralRewards:       maxReferralRewards,
 	}, nil
 }
 
@@ -242,6 +257,47 @@ func (m MetronomeClient) ListCustomerCredits(ctx context.Context, customerID uui
 	return response, nil
 }
 
+// CreateCreditsGrant will create a new credit grant for the customer with the specified amount
+func (m MetronomeClient) CreateCreditsGrant(ctx context.Context, customerID uuid.UUID, reason string, grantAmount float64, paidAmount float64, expiresAt string) (err error) {
+	ctx, span := telemetry.NewSpan(ctx, "create-credits-grant")
+	defer span.End()
+
+	if customerID == uuid.Nil {
+		return telemetry.Error(ctx, span, err, "customer id empty")
+	}
+
+	path := "credits/createGrant"
+	creditTypeID, err := m.getCreditTypeID(ctx, "USD (cents)")
+	if err != nil {
+		return telemetry.Error(ctx, span, err, "failed to get credit type id")
+	}
+
+	req := types.CreateCreditsGrantRequest{
+		CustomerID:    customerID,
+		UniquenessKey: uuid.NewString(),
+		GrantAmount: types.GrantAmountID{
+			Amount:       grantAmount,
+			CreditTypeID: creditTypeID,
+		},
+		PaidAmount: types.PaidAmount{
+			Amount:       paidAmount,
+			CreditTypeID: creditTypeID,
+		},
+		Name:      "Porter Credits",
+		Reason:    reason,
+		ExpiresAt: expiresAt,
+		Priority:  1,
+	}
+
+	statusCode, err := m.do(http.MethodPost, path, req, nil)
+	if err != nil && statusCode != http.StatusConflict {
+		// a conflict response indicates the grant already exists
+		return telemetry.Error(ctx, span, err, "failed to create credits grant")
+	}
+
+	return nil
+}
+
 // ListCustomerUsage will return the aggregated usage for a customer
 func (m MetronomeClient) ListCustomerUsage(ctx context.Context, customerID uuid.UUID, startingOn string, endingBefore string, windowsSize string, currentPeriod bool) (usage []types.Usage, err error) {
 	ctx, span := telemetry.NewSpan(ctx, "list-customer-usage")
@@ -357,6 +413,30 @@ func (m MetronomeClient) listBillableMetricIDs(ctx context.Context, customerID u
 	}
 
 	return result.Data, nil
+}
+
+func (m MetronomeClient) getCreditTypeID(ctx context.Context, currencyCode string) (creditTypeID uuid.UUID, err error) {
+	ctx, span := telemetry.NewSpan(ctx, "get-credit-type-id")
+	defer span.End()
+
+	path := "/credit-types/list"
+
+	var result struct {
+		Data []types.PricingUnit `json:"data"`
+	}
+
+	_, err = m.do(http.MethodGet, path, nil, &result)
+	if err != nil {
+		return creditTypeID, telemetry.Error(ctx, span, err, "failed to retrieve billable metrics from metronome")
+	}
+
+	for _, pricingUnit := range result.Data {
+		if pricingUnit.Name == currencyCode {
+			return pricingUnit.ID, nil
+		}
+	}
+
+	return creditTypeID, telemetry.Error(ctx, span, fmt.Errorf("credit type not found for currency code %s", currencyCode), "failed to find credit type")
 }
 
 func (m MetronomeClient) do(method string, path string, body interface{}, data interface{}) (statusCode int, err error) {

@@ -13,6 +13,8 @@ import {
   type PaymentMethod,
   type PaymentMethodList,
   type UsageList,
+  ReferralDetailsValidator,
+  ReferralDetails
 } from "lib/billing/types";
 
 import api from "shared/api";
@@ -58,6 +60,10 @@ type TGetPlan = {
 
 type TGetUsage = {
   usage: UsageList | null;
+};
+
+type TGetReferralDetails = {
+  referralDetails: ReferralDetails
 };
 
 export const usePaymentMethods = (): TUsePaymentMethod => {
@@ -365,5 +371,39 @@ export const useCustomerUsage = (
 
   return {
     usage: usageReq.data ?? null,
+  };
+};
+
+export const useReferralDetails = (): TGetReferralDetails => {
+  const { currentProject } = useContext(Context);
+
+  // Fetch user's referral code
+  const referralsReq = useQuery(
+    ["getReferralDetails", currentProject?.id],
+    async (): Promise<ReferralDetails | null> => {
+      if (!currentProject?.metronome_enabled) {
+        return null;
+      }
+
+      if (!currentProject?.id || currentProject.id === -1) {
+        return null;
+      }
+
+      try {
+        const res = await api.getReferralDetails(
+          "<token>",
+          {},
+          { project_id: currentProject?.id }
+        );
+
+        const referraldetails = ReferralDetailsValidator.parse(res.data);
+        return referraldetails;
+      } catch (error) {
+        return null
+      }
+    });
+
+  return {
+    referralDetails: referralsReq.data ?? null,
   };
 };

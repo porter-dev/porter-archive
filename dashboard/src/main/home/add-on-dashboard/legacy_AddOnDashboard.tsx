@@ -50,6 +50,7 @@ export const RestrictedNamespaces = [
   "monitoring",
   "porter-agent-system",
   "external-secrets",
+  "infisical-operator"
 ];
 
 const templateBlacklist = ["web", "worker", "job", "umbrella"];

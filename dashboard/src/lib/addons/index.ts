@@ -168,7 +168,9 @@ function addonTypeEnumProto(type: ClientAddon["config"]["type"]): AddonType {
     .exhaustive();
 }
 
-export function clientAddonToProto(addon: ClientAddon): Addon {
+export function clientAddonToProto(
+  addon: Omit<ClientAddon, "template">
+): Addon {
   const config = match(addon.config)
     .returnType<Addon["config"]>()
     .with({ type: "postgres" }, (data) => ({

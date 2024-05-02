@@ -63,7 +63,12 @@ func (p *OAuthCallbackUpstashHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	projID, _ := session.Values["project_id"].(uint)
+	projID, ok := session.Values["project_id"].(uint)
+	if !ok {
+		err = telemetry.Error(ctx, span, nil, "project id not found in session")
+		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
 	telemetry.WithAttributes(span,
 		telemetry.AttributeKV{Key: "project-id", Value: projID},
 	)
@@ -74,7 +79,14 @@ func (p *OAuthCallbackUpstashHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	token, err := p.Config().UpstashConf.Exchange(ctx, r.URL.Query().Get("code"))
+	code := r.URL.Query().Get("code")
+	if code == "" {
+		err = telemetry.Error(ctx, span, nil, "code not found in query params")
+		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusForbidden))
+		return
+	}
+
+	token, err := p.Config().UpstashConf.Exchange(ctx, code)
 	if err != nil {
 		err = telemetry.Error(ctx, span, err, "exchange failed")
 		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusForbidden))
@@ -106,24 +118,21 @@ func (p *OAuthCallbackUpstashHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		DeveloperApiKey: []byte(apiKey),
 	}
 
-	oauthInt, err = p.Repo().UpstashIntegration().Insert(ctx, oauthInt)
+	_, err = p.Repo().UpstashIntegration().Insert(ctx, oauthInt)
 	if err != nil {
 		err = telemetry.Error(ctx, span, err, "error creating oauth integration")
 		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
+	redirect := "/dashboard"
 	if redirectStr, ok := session.Values["redirect_uri"].(string); ok && redirectStr != "" {
-		// attempt to parse the redirect uri, if it fails just redirect to dashboard
 		redirectURI, err := url.Parse(redirectStr)
-		if err != nil {
-			http.Redirect(w, r, "/dashboard", http.StatusFound)
+		if err == nil {
+			redirect = fmt.Sprintf("%s?%s", redirectURI.Path, redirectURI.RawQuery)
 		}
-
-		http.Redirect(w, r, fmt.Sprintf("%s?%s", redirectURI.Path, redirectURI.RawQuery), http.StatusFound)
-	} else {
-		http.Redirect(w, r, "/dashboard", http.StatusFound)
 	}
+	http.Redirect(w, r, redirect, http.StatusFound)
 }
 
 // UpstashApiKeyRequest is the request body to fetch the upstash developer api key

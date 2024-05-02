@@ -196,27 +196,3 @@ type BillingEvent struct {
 	TransactionID string                 `json:"transaction_id"`
 	Timestamp     string                 `json:"timestamp"`
 }
-
-// ListCustomerInvoicesRequest is the request to list invoices for a customer
-type ListCustomerInvoicesRequest struct {
-	Status       string `schema:"status,omitempty"`
-	StartingOn   string `schema:"starting_on,omitempty"`
-	EndingBefore string `schema:"ending_before,omitempty"`
-}
-
-// Invoice represents a Metronome invoice.
-type Invoice struct {
-	ID              uuid.UUID       `json:"id"`
-	Status          string          `json:"status"`
-	IssuedAt        string          `json:"issued_at"`
-	ExternalInvoice ExternalInvoice `json:"external_invoice"`
-}
-
-// ExternalInvoice represents an external invoice in the billing provider (e.g. Stripe)
-type ExternalInvoice struct {
-	BillingProviderType string `json:"billing_provider_type"`
-	InvoiceID           string `json:"invoice_id"`
-	IssuedAt            string `json:"issued_at_timestamp"`
-	ExternalStatus      string `json:"external_status"`
-	ExternalURL         string `json:"external_url"`
-}

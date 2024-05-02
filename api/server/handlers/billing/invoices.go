@@ -37,16 +37,9 @@ func (c *ListCustomerInvoicesHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 
 	telemetry.WithAttributes(span,
 		telemetry.AttributeKV{Key: "billing-config-exists", Value: c.Config().BillingManager.StripeConfigLoaded},
-		telemetry.AttributeKV{Key: "metronome-config-exists", Value: c.Config().BillingManager.MetronomeConfigLoaded},
 		telemetry.AttributeKV{Key: "billing-enabled", Value: proj.GetFeatureFlag(models.BillingEnabled, c.Config().LaunchDarklyClient)},
-		telemetry.AttributeKV{Key: "metronome-enabled", Value: proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient)},
 		telemetry.AttributeKV{Key: "porter-cloud-enabled", Value: proj.EnableSandbox},
 	)
-
-	if !c.Config().BillingManager.MetronomeConfigLoaded || !proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient) {
-		c.WriteResult(w, r, "")
-		return
-	}
 
 	if !c.Config().BillingManager.StripeConfigLoaded || !proj.GetFeatureFlag(models.BillingEnabled, c.Config().LaunchDarklyClient) {
 		c.WriteResult(w, r, "")
@@ -61,19 +54,13 @@ func (c *ListCustomerInvoicesHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	invoices, err := c.Config().BillingManager.MetronomeClient.ListCustomerInvoices(ctx, proj.UsageID, req.Status)
+	invoices, err := c.Config().BillingManager.StripeClient.ListCustomerInvoices(ctx, proj.BillingID, req.Status)
 	if err != nil {
-		err := telemetry.Error(ctx, span, err, "error listing customer invoices")
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error listing customer invoices: %w", err)))
+		err = telemetry.Error(ctx, span, err, fmt.Sprintf("error listing invoices for customer %s", proj.BillingID))
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
 
-	invoices, err = c.Config().BillingManager.StripeClient.PopulateInvoiceURLs(ctx, invoices)
-	if err != nil {
-		err := telemetry.Error(ctx, span, err, "error populating invoice urls")
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error populating invoice urls: %w", err)))
-		return
-	}
-
+	// Write the response to the frontend
 	c.WriteResult(w, r, invoices)
 }

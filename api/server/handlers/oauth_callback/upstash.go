@@ -150,7 +150,6 @@ func fetchUpstashApiKey(ctx context.Context, accessToken string) (string, error)
 	ctx, span := telemetry.NewSpan(ctx, "fetch-upstash-api-key")
 	defer span.End()
 
-	client := &http.Client{}
 	data := UpstashApiKeyRequest{
 		Name: fmt.Sprintf("PORTER_API_KEY_%d", time.Now().Unix()),
 	}
@@ -169,14 +168,13 @@ func fetchUpstashApiKey(ctx context.Context, accessToken string) (string, error)
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", accessToken))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	resp, err := client.Do(req)
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return "", telemetry.Error(ctx, span, err, "error sending request")
 	}
-	defer resp.Body.Close()
-
+	defer resp.Body.Close() // nolint: errcheck
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "status-code", Value: resp.StatusCode})
 	if resp.StatusCode != http.StatusOK {
-		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "status-code", Value: resp.StatusCode})
 		body, err := io.ReadAll(resp.Body)
 		if err != nil {
 			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "read-response-body-error", Value: err.Error()})

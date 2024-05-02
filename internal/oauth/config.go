@@ -112,8 +112,8 @@ func NewSlackClient(cfg *Config) *oauth2.Config {
 }
 
 // NewUpstashClient creates a new oauth2.Config for Upstash
-func NewUpstashClient(cfg *Config) *oauth2.Config {
-	return &oauth2.Config{
+func NewUpstashClient(cfg *Config) oauth2.Config {
+	return oauth2.Config{
 		ClientID:     cfg.ClientID,
 		ClientSecret: cfg.ClientSecret,
 		Endpoint: oauth2.Endpoint{

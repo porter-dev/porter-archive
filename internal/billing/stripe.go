@@ -244,6 +244,7 @@ func (s StripeClient) GetPublishableKey(ctx context.Context) (key string) {
 	return s.PublishableKey
 }
 
+// PopulateInvoiceURLs will populate the invoice hosted URL for each invoice
 func (s StripeClient) PopulateInvoiceURLs(ctx context.Context, invoices []types.Invoice) (invoiceList []types.Invoice, err error) {
 	ctx, span := telemetry.NewSpan(ctx, "populate-invoice-urls")
 	defer span.End()

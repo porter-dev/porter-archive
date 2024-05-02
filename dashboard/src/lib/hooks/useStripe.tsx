@@ -5,20 +5,18 @@ import { z } from "zod";
 import {
   ClientSecretResponse,
   CreditGrantsValidator,
-  InvoiceList,
   InvoiceValidator,
   PaymentMethodValidator,
-  Plan,
   PlanValidator,
+  ReferralDetailsValidator,
   UsageValidator,
   type CreditGrants,
+  type InvoiceList,
   type PaymentMethod,
   type PaymentMethodList,
+  type Plan,
+  type ReferralDetails,
   type UsageList,
-  ReferralDetailsValidator,
-  ReferralDetails
-  InvoiceList,
-  InvoiceValidator,
 } from "lib/billing/types";
 
 import api from "shared/api";
@@ -71,7 +69,7 @@ type TGetUsage = {
 };
 
 type TGetReferralDetails = {
-  referralDetails: ReferralDetails
+  referralDetails: ReferralDetails;
 };
 
 export const usePaymentMethods = (): TUsePaymentMethod => {
@@ -410,15 +408,15 @@ export const useReferralDetails = (): TGetReferralDetails => {
         const referraldetails = ReferralDetailsValidator.parse(res.data);
         return referraldetails;
       } catch (error) {
-        return null
+        return null;
       }
-    });
+    }
+  );
 
   return {
     referralDetails: referralsReq.data ?? null,
   };
 };
-
 
 export const useCustomerInvoices = (): TGetInvoices => {
   const { currentProject } = useContext(Context);

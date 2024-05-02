@@ -17,12 +17,15 @@ type AuthnState = {
   handleLogOut: () => void;
 };
 
-const NilAuthnState = {
-    userId: -1,
-    handleLogOut: () => {},
-};
+export const AuthnContext = React.createContext<AuthnState | null>(null);
 
-export const AuthnContext = React.createContext<AuthnState>(NilAuthnState);
+export const useAuthn = (): AuthnState => {
+  const context = useContext(AuthnContext);
+  if (context == null) {
+    throw new Error("useAuthn must be used within an AuthnContext");
+  }
+  return context;
+};
 
 const AuthnProvider = ({
   children,

@@ -7,7 +7,7 @@ import api from "shared/api";
 import { Context } from "shared/Context";
 import { PorterUrls, type PorterUrl } from "shared/routing";
 
-import { AuthnContext } from "../shared/auth/AuthnContext";
+import { useAuthn } from "../shared/auth/AuthnContext";
 import CurrentError from "./CurrentError";
 import Home from "./home/Home";
 
@@ -22,7 +22,7 @@ const Main: React.FC<PropsType> = () => {
     currentProject,
     currentCluster,
   } = useContext(Context);
-  const { handleLogOut } = useContext(AuthnContext);
+  const { handleLogOut } = useAuthn();
   const [version, setVersion] = useState("");
 
   useEffect(() => {
@@ -48,7 +48,7 @@ const Main: React.FC<PropsType> = () => {
   }, []);
 
   const renderMain = (): JSX.Element => {
-    if (!version || !currentProject || !currentCluster) {
+    if (!version) {
       return <Loading />;
     }
 

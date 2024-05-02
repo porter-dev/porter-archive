@@ -1,18 +1,30 @@
-import React, { useContext, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import styled from "styled-components";
 
 import Fieldset from "components/porter/Fieldset";
 import Select from "components/porter/Select";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
-import { useCustomerUsage } from "lib/hooks/useStripe";
+import {
+  useCustomerCosts,
+  useCustomerPlan,
+  useCustomerUsage,
+} from "lib/hooks/useMetronome";
 
 import Bars from "./Bars";
 
 function UsagePage(): JSX.Element {
-  const [currentPeriod, setCurrentPeriod] = useState("4-17-24");
+  const [currentPeriodStart, setCurrentPeriodStart] = useState("4-17-24");
+  const [currentPeriodEnd, setCurrentPeriodEnd] = useState("4-17-24");
+  const costLimitDays = 30;
 
   const { usage } = useCustomerUsage("day", true);
+  const { costs } = useCustomerCosts(
+    currentPeriodStart,
+    currentPeriodEnd,
+    costLimitDays
+  );
+  const { plan } = useCustomerPlan();
 
   const processedData = useMemo(() => {
     const before = usage;
@@ -55,9 +67,9 @@ function UsagePage(): JSX.Element {
           { value: "1-17-24", label: "1/17/24 - 2/17/24" },
           { value: "12-17-23", label: "12/17/23 - 1/17/24" },
         ]}
-        value={currentPeriod}
+        value={currentPeriodStart}
         setValue={(value) => {
-          setCurrentPeriod(value);
+          setCurrentPeriodStart(value);
         }}
         width="fit-content"
         prefix={<>Billing period</>}

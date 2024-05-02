@@ -29,10 +29,10 @@ export const PlanValidator = z
 
 export type UsageMetric = z.infer<typeof UsageMetricValidator>;
 export const UsageMetricValidator = z.object({
-  // starting_on and ending_before are ISO 8601 date strings
+  // starting_on and ending_before are RFC 3339 date strings
   // that represent the timeframe where the metric was ingested.
   // If the granularity is set per day, the starting_on field
-  // represents the dat the metric was ingested.
+  // represents the day the metric was ingested.
   starting_on: z.string(),
   ending_before: z.string(),
   value: z.number(),
@@ -49,6 +49,14 @@ export type CreditGrants = z.infer<typeof CreditGrantsValidator>;
 export const CreditGrantsValidator = z.object({
   granted_credits: z.number(),
   remaining_credits: z.number(),
+});
+
+export type CostList = Cost[];
+export type Cost = z.infer<typeof CostValidator>;
+export const CostValidator = z.object({
+  start_timestamp: z.string(),
+  end_timestamp: z.string(),
+  credit_types: z.any(),
 });
 
 export type InvoiceList = Invoice[];

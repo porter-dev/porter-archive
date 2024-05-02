@@ -16,12 +16,14 @@ import Modal from "components/porter/Modal";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import {
-  checkIfProjectHasPayment,
   useCustomerInvoices,
   useCustomerPlan,
-  usePaymentMethods,
   usePorterCredits,
   useReferralDetails,
+} from "lib/hooks/useMetronome";
+import {
+  checkIfProjectHasPayment,
+  usePaymentMethods,
   useSetDefaultPaymentMethod,
 } from "lib/hooks/useStripe";
 

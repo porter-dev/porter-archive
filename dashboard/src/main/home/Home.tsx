@@ -18,7 +18,8 @@ import Link from "components/porter/Link";
 import Modal from "components/porter/Modal";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
-import { checkIfProjectHasPayment, useCustomerPlan } from "lib/hooks/useStripe";
+import { useCustomerPlan } from "lib/hooks/useMetronome";
+import { checkIfProjectHasPayment } from "lib/hooks/useStripe";
 
 import api from "shared/api";
 import { withAuth, type WithAuthProps } from "shared/auth/AuthorizationHoc";

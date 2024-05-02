@@ -79,6 +79,9 @@ type Config struct {
 	// UpstashConf is the configuration for an Upstash OAuth client
 	UpstashConf oauth2.Config
 
+	// NeonConf is the configuration for a Neon OAuth client
+	NeonConf oauth2.Config
+
 	// WSUpgrader upgrades HTTP connections to websocket connections
 	WSUpgrader *websocket.Upgrader
 

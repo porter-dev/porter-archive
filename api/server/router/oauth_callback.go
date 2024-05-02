@@ -75,6 +75,30 @@ func GetOAuthCallbackRoutes(
 		Router:   r,
 	})
 
+	// GET /api/oauth/neon/callback -> oauth_callback.NewOAuthCallbackNeonHandler
+	neonEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/neon/callback",
+			},
+		},
+	)
+
+	neonHandler := oauth_callback.NewOAuthCallbackNeonHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: neonEndpoint,
+		Handler:  neonHandler,
+		Router:   r,
+	})
+
 	// GET /api/oauth/digitalocean/callback -> oauth_callback.NewOAuthCallbackDOHandler
 	doEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

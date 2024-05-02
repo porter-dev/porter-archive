@@ -85,6 +85,10 @@ type ServerConf struct {
 	UpstashEnabled  bool   `env:"UPSTASH_ENABLED,default=false"`
 	UpstashClientID string `env:"UPSTASH_CLIENT_ID"`
 
+	NeonEnabled      bool   `env:"NEON_ENABLED,default=false"`
+	NeonClientID     string `env:"NEON_CLIENT_ID"`
+	NeonClientSecret string `env:"NEON_CLIENT_SECRET"`
+
 	BillingPrivateKey       string `env:"BILLING_PRIVATE_KEY"`
 	BillingPrivateServerURL string `env:"BILLING_PRIVATE_URL"`
 	BillingPublicServerURL  string `env:"BILLING_PUBLIC_URL"`

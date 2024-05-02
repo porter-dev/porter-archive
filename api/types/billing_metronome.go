@@ -215,19 +215,14 @@ type Invoice struct {
 	Subtotal        float64         `json:"subtotal"`
 	Total           float64         `json:"total"`
 	Type            string          `json:"type"`
-	LineItems       []LineItem      `json:"line_items"`
 	ExternalInvoice ExternalInvoice `json:"external_invoice"`
 }
 
+// ExternalInvoice represents an external invoice in the billing provider (e.g. Stripe)
 type ExternalInvoice struct {
 	BillingProviderType string `json:"billing_provider_type"`
 	InvoiceID           string `json:"invoice_id"`
 	IssuedAt            string `json:"issued_at"`
 	ExternalStatus      string `json:"external_status"`
-}
-
-type LineItem struct {
-	Name       string     `json:"name"`
-	Total      float64    `json:"total"`
-	CreditType CreditType `json:"credit_type"`
+	ExternalURL         string `json:"external_url"`
 }

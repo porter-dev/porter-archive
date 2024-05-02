@@ -29,7 +29,7 @@ func NewOAuthCallbackNeonHandler(
 	}
 }
 
-// ServeHTTP gets the neon oauth token from the callback code, uses it to create a developer api token, then creates a new neon integration
+// ServeHTTP gets the neon oauth token from the callback code then creates a new neon integration
 func (p *OAuthCallbackNeonHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, span := telemetry.NewSpan(r.Context(), "serve-oauth-callback-neon")
 	defer span.End()

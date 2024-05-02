@@ -7,6 +7,7 @@ import MainWrapperErrorBoundary from "shared/error_handling/MainWrapperErrorBoun
 import AuthnProvider from "../shared/auth/AuthnContext";
 import { ContextProvider } from "../shared/Context";
 import Main from "./Main";
+import CurrentError from "./CurrentError";
 
 type PropsType = RouteComponentProps & {};
 

@@ -1,16 +1,16 @@
 import React, { useState, useContext, useEffect } from "react";
 import styled from "styled-components";
 import loadable from "@loadable/component";
-import { RouteComponentProps, withRouter } from "react-router";
+import { type RouteComponentProps, withRouter } from "react-router";
 import { Route, Switch } from "react-router-dom";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
-import { WithAuthProps, withAuth } from "shared/auth/AuthorizationHoc";
-import { ClusterType } from "shared/types";
+import { type WithAuthProps, withAuth } from "shared/auth/AuthorizationHoc";
+import { type ClusterType } from "shared/types";
 import {
   getQueryParam,
-  PorterUrl,
+  type PorterUrl,
   pushQueryParams,
 } from "shared/routing";
 
@@ -20,20 +20,18 @@ import DashboardRoutes from "./dashboard/Routes";
 import GuardedRoute from "shared/auth/RouteGuard";
 import AppDashboard from "./apps/AppDashboard";
 import JobDashboard from "./jobs/JobDashboard";
-import ExpandedEnvGroupDashboard from "./env-groups/ExpandedEnvGroupDashboard";
-import EnvGroupDashboard from "./env-groups/EnvGroupDashboard";
 
 const LazyPreviewEnvironmentsRoutes = loadable(
-  // @ts-ignore
-  () => import("./preview-environments/routes.tsx"),
+  // @ts-expect-error
+  async () => await import("./preview-environments/routes.tsx"),
   {
     fallback: <Loading />,
   }
 );
 
 const LazyStackRoutes = loadable(
-  // @ts-ignore
-  () => import("./stacks/routes.tsx"),
+  // @ts-expect-error
+  async () => await import("./stacks/routes.tsx"),
   {
     fallback: <Loading />,
   }
@@ -84,7 +82,7 @@ const DashboardRouter: React.FC<Props> = ({
   // Reset namespace filter and close expanded chart on cluster change
   useEffect(() => {
     let namespace = "default";
-    let localStorageNamespace = localStorage.getItem(
+    const localStorageNamespace = localStorage.getItem(
       `${currentProject.id}-${currentCluster.id}-namespace`
     );
     if (localStorageNamespace) {
@@ -147,24 +145,6 @@ const DashboardRouter: React.FC<Props> = ({
           setNamespace={setNamespace}
           sortType={sortType}
         />
-      </GuardedRoute>
-      <GuardedRoute
-        path={"/env-groups/:name"}
-        scope="env_group"
-        resource=""
-        verb={["get", "list"]}
-      >
-        <ExpandedEnvGroupDashboard
-          currentCluster={currentCluster}
-        />
-      </GuardedRoute>
-      <GuardedRoute
-        path={"/env-groups"}
-        scope="env_group"
-        resource=""
-        verb={["get", "list"]}
-      >
-        <EnvGroupDashboard currentCluster={currentCluster} />
       </GuardedRoute>
       <Route path={["/cluster-dashboard"]}>
         <DashboardRoutes />

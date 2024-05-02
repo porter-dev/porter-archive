@@ -5,9 +5,11 @@ import { z } from "zod";
 import {
   ClientSecretResponse,
   CreditGrantsValidator,
+  InvoiceList,
+  InvoiceValidator,
   PaymentMethodValidator,
-  PlanValidator,
   Plan,
+  PlanValidator,
   UsageValidator,
   type CreditGrants,
   type PaymentMethod,
@@ -105,7 +107,7 @@ export const usePaymentMethods = (): TUsePaymentMethod => {
         setPaymentMethodList(data);
         return data;
       } catch (error) {
-        return null
+        return null;
       }
     }
   );
@@ -177,7 +179,7 @@ export const useSetDefaultPaymentMethod = (): TSetDefaultPaymentMethod => {
   const { currentProject } = useContext(Context);
 
   if (!currentProject?.billing_enabled) {
-    return { setDefaultPaymentMethod: async () => { } };
+    return { setDefaultPaymentMethod: async () => {} };
   }
 
   const setDefaultPaymentMethod = async (
@@ -203,7 +205,6 @@ export const useSetDefaultPaymentMethod = (): TSetDefaultPaymentMethod => {
 export const checkIfProjectHasPayment = (): TCheckHasPaymentEnabled => {
   const { currentProject } = useContext(Context);
 
-
   // Check if payment is enabled for the project
   const paymentEnabledReq = useQuery(
     ["checkPaymentEnabled", currentProject?.id],
@@ -226,9 +227,10 @@ export const checkIfProjectHasPayment = (): TCheckHasPaymentEnabled => {
         const data = z.boolean().parse(res.data);
         return data;
       } catch (error) {
-        return null
+        return null;
       }
-    });
+    }
+  );
 
   return {
     hasPaymentEnabled: paymentEnabledReq.data ?? null,
@@ -260,9 +262,10 @@ export const usePublishableKey = (): TGetPublishableKey => {
         );
         return res.data;
       } catch (error) {
-        return null
+        return null;
       }
-    });
+    }
+  );
 
   return {
     publishableKey: keyReq.data ?? null,
@@ -295,7 +298,7 @@ export const usePorterCredits = (): TGetCredits => {
         const creditGrants = CreditGrantsValidator.parse(res.data);
         return creditGrants;
       } catch (error) {
-        return null
+        return null;
       }
     }
   );
@@ -330,9 +333,10 @@ export const useCustomerPlan = (): TGetPlan => {
         const plan = PlanValidator.parse(res.data);
         return plan;
       } catch (error) {
-        return null
+        return null;
       }
-    });
+    }
+  );
 
   return {
     plan: planReq.data ?? null,
@@ -373,7 +377,8 @@ export const useCustomerUsage = (
       } catch (error) {
         return null;
       }
-    });
+    }
+  );
 
   return {
     usage: usageReq.data ?? null,
@@ -442,9 +447,10 @@ export const useCustomerInvoices = (): TGetInvoices => {
         const invoices = InvoiceValidator.array().parse(res.data);
         return invoices;
       } catch (error) {
-        return null
+        return null;
       }
-    });
+    }
+  );
 
   return {
     invoiceList: invoicesReq.data ?? null,

@@ -221,7 +221,7 @@ const Home: React.FC<Props> = (props) => {
       } else {
         setHasFinishedOnboarding(true);
       }
-    } catch (error) {}
+    } catch (error) { }
   };
 
   useEffect(() => {
@@ -428,32 +428,6 @@ const Home: React.FC<Props> = (props) => {
                     {dayjs().to(dayjs(plan.trial_info.ending_before))}
                   </GlobalBanner>
                 )}
-                {!trialExpired && showBillingModal && (
-                  <BillingModal
-                    back={() => {
-                      setShowBillingModal(false);
-                    }}
-                    onCreate={async () => {
-                      await refetchPaymentEnabled({
-                        throwOnError: false,
-                        cancelRefetch: false,
-                      });
-                      setShowBillingModal(false);
-                    }}
-                  />
-                )}
-                {trialExpired && (
-                  <BillingModal
-                    trialExpired
-                    onCreate={async () => {
-                      await refetchPaymentEnabled({
-                        throwOnError: false,
-                        cancelRefetch: false,
-                      });
-                      setShowBillingModal(false);
-                    }}
-                  />
-                )}
               </>
             )}
           <ModalHandler setRefreshClusters={setForceRefreshClusters} />
@@ -534,8 +508,8 @@ const Home: React.FC<Props> = (props) => {
 
               <Route path="/addons/new">
                 {currentProject?.capi_provisioner_enabled &&
-                currentProject?.simplified_view_enabled &&
-                currentProject?.beta_features_enabled ? (
+                  currentProject?.simplified_view_enabled &&
+                  currentProject?.beta_features_enabled ? (
                   <AddonTemplates />
                 ) : (
                   <LegacyNewAddOnFlow />
@@ -549,8 +523,8 @@ const Home: React.FC<Props> = (props) => {
               </Route>
               <Route path="/addons">
                 {currentProject?.capi_provisioner_enabled &&
-                currentProject?.simplified_view_enabled &&
-                currentProject?.beta_features_enabled ? (
+                  currentProject?.simplified_view_enabled &&
+                  currentProject?.beta_features_enabled ? (
                   <AddonDashboard />
                 ) : (
                   <LegacyAddOnDashboard />

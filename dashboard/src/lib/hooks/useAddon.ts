@@ -139,6 +139,7 @@ export const useAddonList = ({
               "monitoring",
               "porter-agent-system",
               "external-secrets",
+              "infisical-operator"
             ].includes(a.namespace ?? "");
           });
       },

@@ -20,6 +20,8 @@ import DashboardRoutes from "./dashboard/Routes";
 import GuardedRoute from "shared/auth/RouteGuard";
 import AppDashboard from "./apps/AppDashboard";
 import JobDashboard from "./jobs/JobDashboard";
+import ExpandedEnvGroupDashboard from "./env-groups/ExpandedEnvGroupDashboard";
+import EnvGroupDashboard from "./env-groups/EnvGroupDashboard";
 
 const LazyPreviewEnvironmentsRoutes = loadable(
   // @ts-ignore
@@ -145,6 +147,24 @@ const DashboardRouter: React.FC<Props> = ({
           setNamespace={setNamespace}
           sortType={sortType}
         />
+      </GuardedRoute>
+      <GuardedRoute
+        path={"/env-groups/:name"}
+        scope="env_group"
+        resource=""
+        verb={["get", "list"]}
+      >
+        <ExpandedEnvGroupDashboard
+          currentCluster={currentCluster}
+        />
+      </GuardedRoute>
+      <GuardedRoute
+        path={"/env-groups"}
+        scope="env_group"
+        resource=""
+        verb={["get", "list"]}
+      >
+        <EnvGroupDashboard currentCluster={currentCluster} />
       </GuardedRoute>
       <Route path={["/cluster-dashboard"]}>
         <DashboardRoutes />

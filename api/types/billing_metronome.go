@@ -207,14 +207,8 @@ type ListCustomerInvoicesRequest struct {
 // Invoice represents a Metronome invoice.
 type Invoice struct {
 	ID              uuid.UUID       `json:"id"`
-	CustomerID      uuid.UUID       `json:"customer_id"`
-	CreditType      CreditType      `json:"credit_type"`
-	StartTimestamp  string          `json:"start_timestamp"`
-	EndTimestamp    string          `json:"end_timestamp"`
 	Status          string          `json:"status"`
-	Subtotal        float64         `json:"subtotal"`
-	Total           float64         `json:"total"`
-	Type            string          `json:"type"`
+	IssuedAt        string          `json:"issued_at"`
 	ExternalInvoice ExternalInvoice `json:"external_invoice"`
 }
 

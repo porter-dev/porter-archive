@@ -421,7 +421,7 @@ export const useReferralDetails = (): TGetReferralDetails => {
 export const useCustomerInvoices = (): TGetInvoices => {
   const { currentProject } = useContext(Context);
 
-  // Fetch current plan
+  // Fetch customer invoices
   const invoicesReq = useQuery(
     ["getCustomerInvoices", currentProject?.id],
     async (): Promise<InvoiceList | null> => {

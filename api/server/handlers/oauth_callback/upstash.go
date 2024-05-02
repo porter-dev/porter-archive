@@ -24,6 +24,7 @@ type OAuthCallbackUpstashHandler struct {
 }
 
 // UpstashApiKeyEndpoint is the endpoint to fetch the upstash developer api key
+// nolint:gosec // Not a security key
 const UpstashApiKeyEndpoint = "https://api.upstash.com/apikey"
 
 // NewOAuthCallbackUpstashHandler generates a new OAuthCallbackUpstashHandler

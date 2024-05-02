@@ -1,8 +1,13 @@
 package user
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
+
+	"gorm.io/gorm"
+
+	"github.com/porter-dev/porter/internal/telemetry"
 
 	"github.com/porter-dev/porter/api/server/authn"
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -31,24 +36,78 @@ func NewUserCreateHandler(
 }
 
 func (u *UserCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-user-create")
+	defer span.End()
+
+	r = r.Clone(ctx)
+
 	request := &types.CreateUserRequest{}
-
 	ok := u.DecodeAndValidate(w, r, request)
-
 	if !ok {
+		err := telemetry.Error(ctx, span, nil, "error decoding and validating request")
+		u.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
-	user := &models.User{
-		Email:       request.Email,
-		Password:    request.Password,
-		FirstName:   request.FirstName,
-		LastName:    request.LastName,
-		CompanyName: request.CompanyName,
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "email", Value: request.Email})
+	if request.Email == "" {
+		err := fmt.Errorf("email is required")
+		u.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+		return
+	}
+
+	newUser := &models.User{
+		Email:        request.Email,
+		Password:     request.Password,
+		FirstName:    request.FirstName,
+		LastName:     request.LastName,
+		CompanyName:  request.CompanyName,
+		AuthProvider: request.AuthProvider,
+		ExternalId:   request.ExternalId,
+	}
+
+	if request.AuthProvider != "" {
+		telemetry.WithAttributes(span,
+			telemetry.AttributeKV{Key: "auth-provider", Value: request.AuthProvider},
+			telemetry.AttributeKV{Key: "external-id", Value: request.ExternalId},
+		)
+
+		user, err := u.Repo().User().ReadUserByAuthProvider(request.AuthProvider, request.ExternalId)
+		if err != nil {
+			if !errors.Is(err, gorm.ErrRecordNotFound) {
+				telemetry.Error(ctx, span, err, "error reading user by auth provider")
+				u.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+				return
+			}
+
+			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "new-user", Value: true})
+
+			newUser, err = u.Repo().User().CreateUser(newUser)
+			if err != nil {
+				telemetry.Error(ctx, span, err, "error creating user")
+				u.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+				return
+			}
+
+			user = newUser
+		}
+
+		u.Config().AnalyticsClient.Identify(analytics.CreateSegmentIdentifyUser(user))
+
+		u.Config().AnalyticsClient.Track(analytics.UserCreateTrack(&analytics.UserCreateTrackOpts{
+			UserScopedTrackOpts: analytics.GetUserScopedTrackOpts(user.ID),
+			Email:               user.Email,
+			FirstName:           user.FirstName,
+			LastName:            user.LastName,
+			CompanyName:         user.CompanyName,
+			ReferralMethod:      request.ReferralMethod,
+		}))
+
+		u.WriteResult(w, r, user.ToUserType())
 	}
 
 	// check if user exists
-	doesExist := doesUserExist(u.Repo().User(), user)
+	doesExist := doesUserExist(u.Repo().User(), newUser)
 
 	if doesExist {
 		err := fmt.Errorf("email already taken")
@@ -62,37 +121,37 @@ func (u *UserCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// hash the password using bcrypt
-	hashedPw, err := bcrypt.GenerateFromPassword([]byte(user.Password), 8)
+	hashedPw, err := bcrypt.GenerateFromPassword([]byte(newUser.Password), 8)
 	if err != nil {
 		u.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
-	user.Password = string(hashedPw)
+	newUser.Password = string(hashedPw)
 
 	// write the user to the db
-	user, err = u.Repo().User().CreateUser(user)
+	newUser, err = u.Repo().User().CreateUser(newUser)
 	if err != nil {
 		u.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
-	err = addUserToDefaultProject(u.Config(), user)
+	err = addUserToDefaultProject(u.Config(), newUser)
 	if err != nil {
 		u.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
 	// save the user as authenticated in the session
-	redirect, err := authn.SaveUserAuthenticated(w, r, u.Config(), user)
+	redirect, err := authn.SaveUserAuthenticated(w, r, u.Config(), newUser)
 	if err != nil {
 		u.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
 	// non-fatal send email verification
-	if !user.EmailVerified {
-		err = startEmailVerification(u.Config(), w, r, user)
+	if !newUser.EmailVerified {
+		err = startEmailVerification(u.Config(), w, r, newUser)
 		if err != nil {
 			u.HandleAPIErrorNoWrite(w, r, apierrors.NewErrInternal(err))
 		}
@@ -102,7 +161,7 @@ func (u *UserCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if request.ReferredBy != "" {
 		referral := &models.Referral{
 			Code:           request.ReferredBy,
-			ReferredUserID: user.ID,
+			ReferredUserID: newUser.ID,
 			Status:         models.ReferralStatusSignedUp,
 		}
 
@@ -112,14 +171,14 @@ func (u *UserCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	u.Config().AnalyticsClient.Identify(analytics.CreateSegmentIdentifyUser(user))
+	u.Config().AnalyticsClient.Identify(analytics.CreateSegmentIdentifyUser(newUser))
 
 	u.Config().AnalyticsClient.Track(analytics.UserCreateTrack(&analytics.UserCreateTrackOpts{
-		UserScopedTrackOpts: analytics.GetUserScopedTrackOpts(user.ID),
-		Email:               user.Email,
-		FirstName:           user.FirstName,
-		LastName:            user.LastName,
-		CompanyName:         user.CompanyName,
+		UserScopedTrackOpts: analytics.GetUserScopedTrackOpts(newUser.ID),
+		Email:               newUser.Email,
+		FirstName:           newUser.FirstName,
+		LastName:            newUser.LastName,
+		CompanyName:         newUser.CompanyName,
 		ReferralMethod:      request.ReferralMethod,
 	}))
 
@@ -128,7 +187,7 @@ func (u *UserCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u.WriteResult(w, r, user.ToUserType())
+	u.WriteResult(w, r, newUser.ToUserType())
 }
 
 func doesUserExist(userRepo repository.UserRepository, user *models.User) bool {

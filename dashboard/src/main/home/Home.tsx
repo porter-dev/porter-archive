@@ -69,6 +69,8 @@ import { NewProjectFC } from "./new-project/NewProject";
 import Onboarding from "./onboarding/Onboarding";
 import ProjectSettings from "./project-settings/ProjectSettings";
 import Sidebar from "./sidebar/Sidebar";
+import {AuthnContext} from "../../shared/auth/AuthnContext";
+import UserInviteModal from "../../components/UserInviteModal";
 
 dayjs.extend(relativeTime);
 
@@ -125,6 +127,20 @@ const Home: React.FC<Props> = (props) => {
   const [forceSidebar, setForceSidebar] = useState(true);
   const [theme, setTheme] = useState(standard);
   const [showWrongEmailModal, setShowWrongEmailModal] = useState(false);
+  const [inviteModalOpen, setInviteModalOpen] = useState(false);
+
+  const { invites, invitesLoading } = useContext(AuthnContext);
+
+  useEffect(() => {
+    console.log(invites.length, invitesLoading, inviteModalOpen)
+    if (invites.length && !invitesLoading) {
+      setInviteModalOpen(true);
+    } else {
+      setInviteModalOpen(false);
+    }
+  }, [invites.length, invitesLoading]);
+
+  console.log(invites)
 
   const redirectToNewProject = () => {
     pushFiltered(props, "/new-project", ["project_id"]);
@@ -710,6 +726,12 @@ const Home: React.FC<Props> = (props) => {
               <Spacer y={1} />
               <Button onClick={props.logOut}>Log out</Button>
             </Modal>
+          )}
+          {inviteModalOpen && (
+              <UserInviteModal invites={invites} closeModal={() => {
+                setInviteModalOpen(false)
+                props.history.push("/")
+              }}/>
           )}
         </StyledHome>
       </DeploymentTargetProvider>

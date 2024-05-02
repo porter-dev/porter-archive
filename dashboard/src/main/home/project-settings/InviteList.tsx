@@ -48,6 +48,8 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
   const [isHTTPS] = useState(() => window.location.protocol === "https:");
   const [showNewGroupModal, setShowNewGroupModal] = useState(false);
 
+  console.log(invites);
+
   useEffect(() => {
     api
       .getAvailableRoles("<token>", {}, { project_id: currentProject?.id })
@@ -79,7 +81,7 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
         }
       );
       invites = response.data.filter(
-        (i: InviteType) => !i.accepted && !i.email.includes("@porter.run")
+        (i: InviteType) => !i.accepted && (!i.email.includes("@porter.run") || user.isPorterUser)
       );
     } catch (err) {
       console.log(err);
@@ -97,6 +99,7 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
     } catch (err) {
       console.log(err);
     }
+    console.log(collaborators)
     setInvites([...invites, ...collaborators]);
     setIsLoading(false);
   };
@@ -104,14 +107,15 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
   const parseCollaboratorsResponse = (
     collaborators: Collaborator[]
   ): InviteType[] => {
+      console.log(collaborators)
     const admins = collaborators
-      .filter((c) => c.kind === "admin" && !c.email.includes("@porter.run"))
+      .filter((c) => c.kind === "admin" && (!c.email.includes("@porter.run") || user?.isPorterUser))
       .map((c) => ({ ...c, id: Number(c.id) }))
       .sort((curr, prev) => curr.id - prev.id)
       .slice(1);
 
     const nonAdmins = collaborators
-      .filter((c) => c.kind !== "admin" && !c.email.includes("@porter.run"))
+      .filter((c) => c.kind !== "admin" && (!c.email.includes("@porter.run") || user?.isPorterUser))
       .map((c) => ({ ...c, id: Number(c.id) }))
       .sort((curr, prev) => curr.id - prev.id);
 

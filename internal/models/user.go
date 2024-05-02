@@ -23,6 +23,9 @@ type User struct {
 	// The github user id used for login (optional)
 	GithubUserID int64
 	GoogleUserID string
+
+	AuthProvider string `json:"auth_provider"`
+	ExternalId   string `json:"external_id"`
 }
 
 // ToUserType generates an external types.User to be shared over REST

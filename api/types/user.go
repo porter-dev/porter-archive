@@ -17,7 +17,9 @@ type CreateUserRequest struct {
 	CompanyName    string `json:"company_name" form:"required,max=255"`
 	ReferralMethod string `json:"referral_method" form:"max=255"`
 	// ReferredBy is the referral code of the project from which this user was referred
-	ReferredBy string `json:"referred_by_code" form:"max=255"`
+	ReferredBy   string `json:"referred_by_code" form:"max=255"`
+	AuthProvider string `json:"auth_provider"`
+	ExternalId   string `json:"external_id"`
 }
 
 type CreateUserResponse User

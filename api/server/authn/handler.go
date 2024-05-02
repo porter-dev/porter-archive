@@ -70,6 +70,47 @@ func (authn *AuthN) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// if the bearer token is not found, look for a request cookie
+
+	// first look for new ory cookie
+	// set the cookies on the ory client
+	var cookies string
+
+	// this example passes all request.Cookies
+	// to `ToSession` function
+	//
+	// However, you can pass only the value of
+	// ory_session_projectid cookie to the endpoint
+	cookies = r.Header.Get("Cookie")
+
+	fmt.Println("Cookies: ", cookies)
+
+	// check if we have a session
+	orySession, _, err := authn.config.Ory.FrontendAPI.ToSession(r.Context()).Cookie(cookies).Execute()
+	if err != nil {
+		fmt.Println("Ory error: ", err.Error())
+	}
+	if err == nil && orySession != nil && *orySession.Active {
+		fmt.Println("in here")
+		// get Ory user id
+		if orySession.Identity != nil {
+			fmt.Println("now in here")
+			// get user id from Ory
+			externalId := orySession.Identity.Id
+			user, err := authn.config.Repo.User().ReadUserByAuthProvider("ory", externalId)
+			if err != nil || user == nil {
+				err := fmt.Errorf("ory user not found in database", externalId)
+				authn.sendForbiddenError(err, w, r)
+				return
+			}
+
+			fmt.Println("going next")
+
+			authn.nextWithUserID(w, r, user.ID)
+			return
+		}
+	}
+
+	// then look for existing porter cookie
 	session, err := authn.config.Store.Get(r, authn.config.ServerConf.CookieName)
 	if err != nil {
 		session.Values["authenticated"] = false

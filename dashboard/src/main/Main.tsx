@@ -22,7 +22,7 @@ const Main: React.FC<PropsType> = () => {
     currentProject,
     currentCluster,
   } = useContext(Context);
-  const { handleLogOut } = useAuthn();
+  const { handleLogOut, session } = useAuthn();
   const [version, setVersion] = useState("");
 
   useEffect(() => {

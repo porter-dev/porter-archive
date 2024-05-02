@@ -112,32 +112,6 @@ func getInviteRoutes(
 		Router:   r,
 	})
 
-	// GET /api/projects/{project_id}/invites/{token} -> invite.NewInviteAcceptHandler
-	acceptEndpoint := factory.NewAPIEndpoint(
-		&types.APIRequestMetadata{
-			Verb:   types.APIVerbGet,
-			Method: types.HTTPVerbGet,
-			Path: &types.Path{
-				Parent:       basePath,
-				RelativePath: "/invites/{token}",
-			},
-			// only user scope is needed here. adding the project scope will prevent the user
-			// from joining the project, since they don't have a role in the project yet.
-			Scopes: []types.PermissionScope{
-				types.UserScope,
-			},
-			ShouldRedirect: true,
-		},
-	)
-
-	acceptHandler := invite.NewInviteAcceptHandler(config)
-
-	routes = append(routes, &router.Route{
-		Endpoint: acceptEndpoint,
-		Handler:  acceptHandler,
-		Router:   r,
-	})
-
 	// POST /api/projects/{project_id}/invites/{invite_id} -> invite.NewInviteUpdateRoleHandler
 	updateRoleEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

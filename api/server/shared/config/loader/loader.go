@@ -11,6 +11,7 @@ import (
 	"strconv"
 
 	gorillaws "github.com/gorilla/websocket"
+	ory "github.com/ory/client-go"
 	"github.com/porter-dev/api-contracts/generated/go/porter/v1/porterv1connect"
 	"github.com/porter-dev/porter/api/server/shared/apierrors/alerter"
 	"github.com/porter-dev/porter/api/server/shared/config"
@@ -377,6 +378,14 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 		MetronomeConfigLoaded: metronomeEnabled,
 	}
 	res.Logger.Info().Msg("Created billing manager")
+
+	c := ory.NewConfiguration()
+	c.Servers = ory.ServerConfigurations{{
+		URL: InstanceEnvConf.ServerConf.OryUrl,
+	}}
+
+	res.Ory = ory.NewAPIClient(c)
+	res.OryApiKey = InstanceEnvConf.ServerConf.OryApiKey
 
 	return res, nil
 }

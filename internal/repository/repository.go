@@ -27,6 +27,7 @@ type Repository interface {
 	GithubAppInstallation() GithubAppInstallationRepository
 	GithubAppOAuthIntegration() GithubAppOAuthIntegrationRepository
 	SlackIntegration() SlackIntegrationRepository
+	UpstashIntegration() UpstashIntegrationRepository
 	AppEventWebhook() AppEventWebhookRepository
 	GitlabIntegration() GitlabIntegrationRepository
 	GitlabAppOAuthIntegration() GitlabAppOAuthIntegrationRepository

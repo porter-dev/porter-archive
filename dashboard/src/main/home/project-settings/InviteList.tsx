@@ -684,8 +684,8 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
 export default InvitePage;
 
 const I = styled.i`
-  margin-right: 10px;
-  font-size: 18px;
+  margin-right: 8px;
+  font-size: 16px;
 `;
 
 const Flex = styled.div`

@@ -82,6 +82,34 @@ func getProjectOAuthRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/oauth/upstash -> project_integration.NewProjectOAuthUpstashHandler
+	upstashEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/upstash",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	upstashHandler := project_oauth.NewProjectOAuthUpstashHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: upstashEndpoint,
+		Handler:  upstashHandler,
+		Router:   r,
+	})
+
 	// GET /api/projects/{project_id}/oauth/digitalocean -> project_integration.NewProjectOAuthDOHandler
 	doEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

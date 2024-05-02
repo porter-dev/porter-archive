@@ -22,6 +22,7 @@ import {
   defaultSerialized,
   deserializeService,
   getServiceResourceAllowances,
+  isInitdeployService,
   isPredeployService,
 } from "lib/porter-apps/services";
 
@@ -47,9 +48,9 @@ type AddServiceFormValues = z.infer<typeof addServiceFormValidator>;
 
 type ServiceListProps = {
   addNewText: string;
-  isPredeploy?: boolean;
+  lifecycleJobType?: "predeploy" | "initdeploy";
   existingServiceNames?: string[];
-  fieldArrayName: "app.services" | "app.predeploy";
+  fieldArrayName: "app.services" | "app.predeploy" | "app.initialDeploy";
   serviceVersionStatus?: Record<string, ClientServiceStatus[]>;
   internalNetworkingDetails?: {
     namespace: string;
@@ -62,7 +63,7 @@ type ServiceListProps = {
 const ServiceList: React.FC<ServiceListProps> = ({
   addNewText,
   fieldArrayName,
-  isPredeploy = false,
+  lifecycleJobType,
   existingServiceNames = [],
   serviceVersionStatus,
   internalNetworkingDetails = {
@@ -115,7 +116,9 @@ const ServiceList: React.FC<ServiceListProps> = ({
     name:
       fieldArrayName === "app.services"
         ? "deletions.serviceNames"
-        : "deletions.predeploy",
+        : lifecycleJobType === "predeploy"
+        ? "deletions.predeploy"
+        : "deletions.initialDeploy",
   });
 
   const serviceName = watch("name");
@@ -126,12 +129,35 @@ const ServiceList: React.FC<ServiceListProps> = ({
   const services = useMemo(() => {
     // if predeploy, only show predeploy services
     // if not predeploy, only show non-predeploy services
+    if (lifecycleJobType === "predeploy") {
+      return fields.map((svc, idx) => {
+        const predeploy = isPredeployService(svc);
+        return {
+          svc,
+          idx,
+          included: predeploy,
+        };
+      });
+    }
+
+    if (lifecycleJobType === "initdeploy") {
+      return fields.map((svc, idx) => {
+        const initdeploy = isInitdeployService(svc);
+        return {
+          svc,
+          idx,
+          included: initdeploy,
+        };
+      });
+    }
+
     return fields.map((svc, idx) => {
       const predeploy = isPredeployService(svc);
+      const initdeploy = isInitdeployService(svc);
       return {
         svc,
         idx,
-        included: isPredeploy ? predeploy : !predeploy,
+        included: !predeploy && !initdeploy,
       };
     });
   }, [fields]);
@@ -141,14 +167,24 @@ const ServiceList: React.FC<ServiceListProps> = ({
       setError("name", {
         message: "A service with this name already exists",
       });
-    } else if (!isPredeploy && serviceName === "predeploy") {
+    } else if (
+      lifecycleJobType !== "predeploy" &&
+      serviceName === "predeploy"
+    ) {
       setError("name", {
         message: "predeploy is a reserved service name",
+      });
+    } else if (
+      lifecycleJobType !== "initdeploy" &&
+      serviceName === "initdeploy"
+    ) {
+      setError("name", {
+        message: "initdeploy is a reserved service name",
       });
     } else {
       clearErrors("name");
     }
-  }, [serviceName, isPredeploy]);
+  }, [serviceName, lifecycleJobType]);
 
   const isServiceNameDuplicate = (name: string): boolean => {
     return services.some(({ svc: s }) => s.name.value === name);
@@ -156,7 +192,10 @@ const ServiceList: React.FC<ServiceListProps> = ({
 
   const maybeRenderAddServicesButton = (): JSX.Element | null => {
     if (
-      (isPredeploy && services.find((s) => isPredeployService(s.svc))) ||
+      (lifecycleJobType === "predeploy" &&
+        services.find((s) => isPredeployService(s.svc))) ||
+      (lifecycleJobType === "initdeploy" &&
+        services.find((s) => isInitdeployService(s.svc))) ||
       !allowAddServices
     ) {
       return null;
@@ -165,22 +204,37 @@ const ServiceList: React.FC<ServiceListProps> = ({
       <>
         <AddServiceButton
           onClick={() => {
-            if (!isPredeploy) {
-              setShowAddServiceModal(true);
+            if (lifecycleJobType === "initdeploy") {
+              append(
+                deserializeService({
+                  service: defaultSerialized({
+                    name: "initdeploy",
+                    type: "initdeploy",
+                    defaultCPU: newServiceDefaultCpuCores,
+                    defaultRAM: newServiceDefaultRamMegabytes,
+                  }),
+                  expanded: true,
+                })
+              );
               return;
             }
 
-            append(
-              deserializeService({
-                service: defaultSerialized({
-                  name: "pre-deploy",
-                  type: "predeploy",
-                  defaultCPU: newServiceDefaultCpuCores,
-                  defaultRAM: newServiceDefaultRamMegabytes,
-                }),
-                expanded: true,
-              })
-            );
+            if (lifecycleJobType === "predeploy") {
+              append(
+                deserializeService({
+                  service: defaultSerialized({
+                    name: "pre-deploy",
+                    type: "predeploy",
+                    defaultCPU: newServiceDefaultCpuCores,
+                    defaultRAM: newServiceDefaultRamMegabytes,
+                  }),
+                  expanded: true,
+                })
+              );
+              return;
+            }
+
+            setShowAddServiceModal(true);
           }}
         >
           <i className="material-icons add-icon">add_icon</i>

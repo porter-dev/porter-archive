@@ -32,6 +32,7 @@ type TestRepository struct {
 	gitlabIntegration         repository.GitlabIntegrationRepository
 	gitlabAppOAuthIntegration repository.GitlabAppOAuthIntegrationRepository
 	slackIntegration          repository.SlackIntegrationRepository
+	upstashIntegration        repository.UpstashIntegrationRepository
 	appEventWebhook           repository.AppEventWebhookRepository
 	notificationConfig        repository.NotificationConfigRepository
 	jobNotificationConfig     repository.JobNotificationConfigRepository
@@ -59,6 +60,7 @@ type TestRepository struct {
 	githubWebhook             repository.GithubWebhookRepository
 	datastore                 repository.DatastoreRepository
 	appInstance               repository.AppInstanceRepository
+	referral                  repository.ReferralRepository
 }
 
 func (t *TestRepository) User() repository.UserRepository {
@@ -167,6 +169,10 @@ func (t *TestRepository) GitlabAppOAuthIntegration() repository.GitlabAppOAuthIn
 
 func (t *TestRepository) SlackIntegration() repository.SlackIntegrationRepository {
 	return t.slackIntegration
+}
+
+func (t *TestRepository) UpstashIntegration() repository.UpstashIntegrationRepository {
+	return t.upstashIntegration
 }
 
 func (t *TestRepository) AppEventWebhook() repository.AppEventWebhookRepository {
@@ -283,6 +289,11 @@ func (t *TestRepository) AppInstance() repository.AppInstanceRepository {
 	return t.appInstance
 }
 
+// Referral returns a test Referral
+func (t *TestRepository) Referral() repository.ReferralRepository {
+	return t.referral
+}
+
 // NewRepository returns a Repository which persists users in memory
 // and accepts a parameter that can trigger read/write errors
 func NewRepository(canQuery bool, failingMethods ...string) repository.Repository {
@@ -314,6 +325,7 @@ func NewRepository(canQuery bool, failingMethods ...string) repository.Repositor
 		gitlabIntegration:         NewGitlabIntegrationRepository(canQuery),
 		gitlabAppOAuthIntegration: NewGitlabAppOAuthIntegrationRepository(canQuery),
 		slackIntegration:          NewSlackIntegrationRepository(canQuery),
+		upstashIntegration:        NewUpstashIntegrationRepository(canQuery),
 		appEventWebhook:           NewAppEventWebhookRepository(canQuery),
 		notificationConfig:        NewNotificationConfigRepository(canQuery),
 		jobNotificationConfig:     NewJobNotificationConfigRepository(canQuery),
@@ -341,5 +353,6 @@ func NewRepository(canQuery bool, failingMethods ...string) repository.Repositor
 		githubWebhook:             NewGithubWebhookRepository(),
 		datastore:                 NewDatastoreRepository(),
 		appInstance:               NewAppInstanceRepository(),
+		referral:                  NewReferralRepository(),
 	}
 }

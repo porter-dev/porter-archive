@@ -139,17 +139,18 @@ export const usePorterYaml = ({
           ignoreUnknownFields: true,
         });
 
-        const { services, predeploy, build } = serviceOverrides({
+        const { services, predeploy, initialDeploy, build } = serviceOverrides({
           overrides: proto,
           useDefaults,
           defaultCPU: newServiceDefaultCpuCores,
           defaultRAM: newServiceDefaultRamMegabytes,
         });
 
-        if (services.length || predeploy || build) {
+        if (services.length || predeploy || initialDeploy || build) {
           setDetectedServices({
             build,
             services,
+            initialDeploy,
             predeploy,
           });
         }
@@ -164,19 +165,26 @@ export const usePorterYaml = ({
           const {
             services: previewServices,
             predeploy: previewPredeploy,
+            initialDeploy: previewInitialDeploy,
             build: previewBuild,
           } = serviceOverrides({
             overrides: previewProto,
             useDefaults,
           });
 
-          if (previewServices.length || previewPredeploy || previewBuild) {
+          if (
+            previewServices.length ||
+            previewPredeploy ||
+            previewInitialDeploy ||
+            previewBuild
+          ) {
             setDetectedServices((prev) => ({
               ...prev,
               services: prev?.services ? prev.services : [],
               previews: {
                 services: previewServices,
                 predeploy: previewPredeploy,
+                initialDeploy: previewInitialDeploy,
                 build: previewBuild,
                 variables: data.preview_app?.env_variables ?? {},
               },

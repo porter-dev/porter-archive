@@ -81,3 +81,8 @@ PORTER_CLOUD_PLAN_ID=
 
 # PORTER_STANDARD_PLAN_ID is the id of the standard plan in Metronome. Only used if METRONOME_API_KEY is set
 PORTER_STANDARD_PLAN_ID=
+
+# UPSTASH_ENABLED is used to enable the Upstash integration
+UPSTASH_ENABLED=false
+# UPSTASH_CLIENT_ID is used to integrate with Upstash
+UPSTASH_CLIENT_ID=

@@ -226,6 +226,12 @@ type Project struct {
 	EnableReprovision    bool `gorm:"default:false"`
 	AdvancedInfraEnabled bool `gorm:"default:false"`
 	AdvancedRbacEnabled  bool `gorm:"default:false"`
+
+	// ReferralCode is a unique code that can be shared to referr other users to Porter
+	ReferralCode string
+
+	// Referrals is a list of users that have been referred by this project's code
+	Referrals []Referral `json:"referrals"`
 }
 
 // GetFeatureFlag calls launchdarkly for the specified flag
@@ -332,6 +338,7 @@ func (p *Project) ToProjectType(launchDarklyClient *features.Client) types.Proje
 		AdvancedInfraEnabled:            p.GetFeatureFlag(AdvancedInfraEnabled, launchDarklyClient),
 		SandboxEnabled:                  p.EnableSandbox,
 		AdvancedRbacEnabled:             p.GetFeatureFlag(AdvancedRbacEnabled, launchDarklyClient),
+		ReferralCode:                    p.ReferralCode,
 	}
 }
 

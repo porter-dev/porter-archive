@@ -165,6 +165,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
         serviceNames: [],
         envGroupNames: [],
         predeploy: [],
+        initialDeploy: [],
       },
     },
   });
@@ -715,7 +716,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                     <ServiceList
                       addNewText={"Add a new pre-deploy job"}
                       fieldArrayName={"app.predeploy"}
-                      isPredeploy
+                      lifecycleJobType="predeploy"
                     />
                   </>,
                   <>

@@ -18,10 +18,6 @@ type OAuthCallbackNeonHandler struct {
 	handlers.PorterHandlerReadWriter
 }
 
-// NeonApiKeyEndpoint is the endpoint to fetch the neon developer api key
-// nolint:gosec // Not a security key
-const NeonApiKeyEndpoint = "https://api.neon.com/apikey"
-
 // NewOAuthCallbackNeonHandler generates a new OAuthCallbackNeonHandler
 func NewOAuthCallbackNeonHandler(
 	config *config.Config,

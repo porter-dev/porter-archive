@@ -1,4 +1,4 @@
-import React, { useContext, useMemo, useState } from "react";
+import React, { useContext, useState } from "react";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import styled from "styled-components";
@@ -219,16 +219,12 @@ function BillingPage(): JSX.Element {
         View all invoices from Porter over the past 12 months.
       </Text>
       <Spacer y={1} />
-      {[
-        { date: "04-01-2024", link: "n/a" },
-        { date: "03-01-2024", link: "n/a" },
-        { date: "02-01-2024", link: "n/a" },
-      ].map((invoice, i) => {
+      {invoiceList?.map((invoice, i) => {
         return (
           <>
             <Container row key={i}>
-              <Link target="_blank" to={invoice.link}>
-                {invoice.date}
+              <Link target="_blank" to={invoice.hosted_invoice_url}>
+                {dayjs(invoice.created).format("DD/MM/YYYY")}
               </Link>
             </Container>
             <Spacer y={1} />

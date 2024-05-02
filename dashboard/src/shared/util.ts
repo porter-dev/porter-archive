@@ -19,9 +19,7 @@ export function envGroupPath(
   project: ProjectType | undefined,
   subPath: string
 ): string {
-  return project?.simplified_view_enabled && !project?.validate_apply_v2
-    ? `/env-groups${subPath}`
-    : `/environment-groups${subPath}`;
+  return `/environment-groups${subPath}`;
 }
 
 export const PREFLIGHT_MESSAGE_CONST = {

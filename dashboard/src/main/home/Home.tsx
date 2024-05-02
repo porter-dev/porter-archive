@@ -486,37 +486,21 @@ const Home: React.FC<Props> = (props) => {
 
             <Switch>
               <Route path="/apps/new/app">
-                {currentProject?.validate_apply_v2 ? (
-                  <ClusterContextProvider
-                    clusterId={currentCluster?.id}
-                    refetchInterval={0}
-                  >
-                    <CreateApp />
-                  </ClusterContextProvider>
-                ) : (
-                  <NewAppFlow />
-                )}
+                <ClusterContextProvider
+                  clusterId={currentCluster?.id}
+                  refetchInterval={0}
+                >
+                  <CreateApp />
+                </ClusterContextProvider>
               </Route>
               <Route path="/apps/:appName/:tab">
-                {currentProject?.validate_apply_v2 ? (
-                  <AppView />
-                ) : (
-                  <ExpandedApp />
-                )}
+                <AppView />
               </Route>
               <Route path="/apps/:appName">
-                {currentProject?.validate_apply_v2 ? (
-                  <AppView />
-                ) : (
-                  <ExpandedApp />
-                )}
+                <AppView />
               </Route>
               <Route path="/apps">
-                {currentProject?.validate_apply_v2 ? (
-                  <Apps />
-                ) : (
-                  <AppDashboard />
-                )}
+                <Apps />
               </Route>
 
               <Route path="/environment-groups/new">
@@ -616,9 +600,6 @@ const Home: React.FC<Props> = (props) => {
                   "/jobs",
                   "/env-groups",
                   "/datastores",
-                  ...(!currentProject?.validate_apply_v2
-                    ? ["/preview-environments"]
-                    : []),
                   "/stacks",
                 ]}
                 render={() => {

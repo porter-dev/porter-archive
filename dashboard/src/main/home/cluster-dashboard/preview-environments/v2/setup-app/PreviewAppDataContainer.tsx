@@ -159,13 +159,14 @@ export const PreviewAppDataContainer: React.FC<Props> = ({
 
       const addons = data.addons.map((addon) => {
         const variables = match(addon.config)
+          .returnType<Record<string, string>>()
           .with({ type: "postgres" }, (conf) => ({
             POSTGRESQL_USERNAME: conf.username,
           }))
           .with({ type: "redis" }, (conf) => ({
             REDIS_PASSWORD: conf.password,
           }))
-          .exhaustive();
+          .otherwise(() => ({}));
         const secrets = match(addon.config)
           .with({ type: "postgres" }, (conf) => ({
             POSTGRESQL_PASSWORD: conf.password,
@@ -173,7 +174,7 @@ export const PreviewAppDataContainer: React.FC<Props> = ({
           .with({ type: "redis" }, (conf) => ({
             REDIS_PASSWORD: conf.password,
           }))
-          .exhaustive();
+          .otherwise(() => ({}));
 
         const proto = clientAddonToProto(addon);
 

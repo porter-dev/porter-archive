@@ -1,4 +1,4 @@
-import React, { useContext, useMemo, useState } from "react";
+import React, { useContext, useMemo } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 import { match } from "ts-pattern";
 
@@ -7,7 +7,6 @@ import { ControlledInput } from "components/porter/ControlledInput";
 import InputSlider from "components/porter/InputSlider";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
-import SmartOptModal from "main/home/app-dashboard/new-app-flow/tabs/SmartOptModal";
 import { useClusterContext } from "main/home/infrastructure-dashboard/ClusterContextProvider";
 import { type PorterAppFormData } from "lib/porter-apps";
 import {
@@ -33,7 +32,6 @@ const Resources: React.FC<ResourcesProps> = ({
 }) => {
   const { control, register, watch } = useFormContext<PorterAppFormData>();
   const { currentProject } = useContext(Context);
-  const [showNeedHelpModal, setShowNeedHelpModal] = useState(false);
   const { nodes } = useClusterContext();
   const { maxRamMegabytes, maxCpuCores } = useMemo(() => {
     return getServiceResourceAllowances(nodes, currentProject?.sandbox_enabled);
@@ -64,9 +62,6 @@ const Resources: React.FC<ResourcesProps> = ({
   return (
     <>
       <Spacer y={1} />
-      {showNeedHelpModal && (
-        <SmartOptModal setModalVisible={setShowNeedHelpModal} />
-      )}
       <Controller
         name={
           lifecycleJobType === "predeploy"

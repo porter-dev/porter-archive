@@ -8,8 +8,8 @@ import Spacer from "components/porter/Spacer";
 import Tag from "components/porter/Tag";
 import Text from "components/porter/Text";
 import { useLatestRevision } from "main/home/app-dashboard/app-view/LatestRevisionContext";
-import { Service } from "main/home/app-dashboard/new-app-flow/serviceTypes";
 import { isClientServiceNotification } from "lib/porter-apps/notification";
+import { prefixSubdomain } from "lib/porter-apps/services";
 
 import alert from "assets/alert-warning.svg";
 import metrics from "assets/bar-group-03.svg";
@@ -168,7 +168,7 @@ const ServiceStatusDetail: React.FC<Props> = ({
                       <Spacer inline x={0.5} />
                       <Tag>
                         <Link
-                          to={Service.prefixSubdomain(externalUri)}
+                          to={prefixSubdomain(externalUri)}
                           target={"_blank"}
                           showTargetBlankIcon={false}
                         >

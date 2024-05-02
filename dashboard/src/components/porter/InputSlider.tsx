@@ -1,13 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import Slider, { Mark } from '@material-ui/core/Slider';
+import Slider, { type Mark } from '@material-ui/core/Slider';
 import Tooltip from '@material-ui/core/Tooltip';
 import Typography from '@material-ui/core/Typography';
 import styled from 'styled-components';
 import { withStyles } from '@material-ui/core/styles';
 import Text from './Text';
 import Spacer from './Spacer';
-import SmartOptModal from 'main/home/app-dashboard/new-app-flow/tabs/SmartOptModal';
-import NodeInfoModal from 'main/home/app-dashboard/new-app-flow/tabs/NodeInfoModal';
 
 type InputSliderProps = {
   label?: string;
@@ -68,9 +66,9 @@ const InputSlider: React.FC<InputSliderProps> = ({
       label: max.toString(),
     },
   ];
-  var isExceedingLimit = false;
-  var displayOptimalText = false;
-  //Optimal Marks only give useful information to user if they are using more than 2 nodes
+  let isExceedingLimit = false;
+  let displayOptimalText = false;
+  // Optimal Marks only give useful information to user if they are using more than 2 nodes
   // if (optimal != 0 && nodeCount && nodeCount > 2) {
   //   marks.push({
   //     value: optimal,
@@ -127,10 +125,6 @@ const InputSlider: React.FC<InputSliderProps> = ({
             >
               help_outline
             </StyledIcon></>}
-          {showNeedHelpModal &&
-            <NodeInfoModal
-              setModalVisible={setShowNeedHelpModal}
-            />}
           {isExceedingLimit &&
             <><Spacer inline x={1} /><Label color="#FFBF00"> Value is not optimal for cost</Label></>}
         </>
@@ -168,7 +162,7 @@ const InputSlider: React.FC<InputSliderProps> = ({
                 valueLabelDisplay={smartLimit && Number(value) > smartLimit ? "off" : "auto"}
                 disabled={disabled}
                 marks={marks}
-                step={(step ? step : 1)}
+                step={(step || 1)}
                 style={{
                   color: disabled ? "gray" : color,
                 }}
@@ -257,7 +251,7 @@ const MaxedOutToolTip = withStyles(theme => ({
 
 const StyledSlider = withStyles({
   root: {
-    height: '8px', //height of the track
+    height: '8px', // height of the track
   },
   mark: {
     backgroundColor: '#fff',  // mark color

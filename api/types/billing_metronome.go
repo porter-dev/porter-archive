@@ -216,7 +216,7 @@ type Invoice struct {
 type ExternalInvoice struct {
 	BillingProviderType string `json:"billing_provider_type"`
 	InvoiceID           string `json:"invoice_id"`
-	IssuedAt            string `json:"issued_at"`
+	IssuedAt            string `json:"issued_at_timestamp"`
 	ExternalStatus      string `json:"external_status"`
 	ExternalURL         string `json:"external_url"`
 }

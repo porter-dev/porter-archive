@@ -87,13 +87,13 @@ const Apps: React.FC = () => {
     return timestampDate.isBefore(dayjs(new Date()));
   };
   const trialExpired =
-    plan !== null && plan && isTrialExpired(plan.trial_info.ending_before);
+    plan != null && isTrialExpired(plan.trial_info.ending_before);
 
   useEffect(() => {
     if (trialExpired && !hasPaymentEnabled) {
       setShowBillingModal(true);
     }
-  });
+  }, []);
 
   const [{ data: apps = [], status }, { data: addons = [] }] = useQueries({
     queries: [

@@ -1,28 +1,28 @@
-import React, { Component } from "react";
+import React from "react";
+import { withRouter, type RouteComponentProps } from "react-router";
 
+import AuthzProvider from "shared/auth/AuthzContext";
+import MainWrapperErrorBoundary from "shared/error_handling/MainWrapperErrorBoundary";
+
+import AuthnProvider from "../shared/auth/AuthnContext";
 import { ContextProvider } from "../shared/Context";
 import Main from "./Main";
-import { RouteComponentProps, withRouter } from "react-router";
-import AuthProvider from "shared/auth/AuthContext";
-import MainWrapperErrorBoundary from "shared/error_handling/MainWrapperErrorBoundary";
+import CurrentError from "./CurrentError";
 
 type PropsType = RouteComponentProps & {};
 
-type StateType = {};
-
-class MainWrapper extends Component<PropsType, StateType> {
-  render() {
-    let { history, location } = this.props;
-    return (
-      <ContextProvider history={history} location={location}>
-        <AuthProvider>
+const MainWrapper: React.FC<PropsType> = ({ history, location }) => {
+  return (
+    <ContextProvider history={history} location={location}>
+      <AuthzProvider>
+        <AuthnProvider>
           <MainWrapperErrorBoundary>
             <Main />
           </MainWrapperErrorBoundary>
-        </AuthProvider>
-      </ContextProvider>
-    );
-  }
-}
+        </AuthnProvider>
+      </AuthzProvider>
+    </ContextProvider>
+  );
+};
 
 export default withRouter(MainWrapper);

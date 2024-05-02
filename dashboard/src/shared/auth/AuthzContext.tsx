@@ -1,16 +1,24 @@
 import React, { useContext, useEffect, useState } from "react";
+
 import api from "shared/api";
 import { Context } from "shared/Context";
-import { POLICY_HIERARCHY_TREE, populatePolicy } from "./authorization-helpers";
-import { PolicyDocType } from "./types";
 
-type AuthContext = {
+import { POLICY_HIERARCHY_TREE, populatePolicy } from "./authorization-helpers";
+import { type PolicyDocType } from "./types";
+
+type AuthzContext = {
   currentPolicy: PolicyDocType;
 };
 
-export const AuthContext = React.createContext<AuthContext>({} as AuthContext);
+export const AuthzContext = React.createContext<AuthzContext>(
+  {} as AuthzContext
+);
 
-const AuthProvider: React.FC = ({ children }) => {
+const AuthzProvider = ({
+  children,
+}: {
+  children: JSX.Element;
+}): JSX.Element => {
   const { user, currentProject } = useContext(Context);
   const [currentPolicy, setCurrentPolicy] = useState(null);
 
@@ -42,10 +50,10 @@ const AuthProvider: React.FC = ({ children }) => {
   }, [user, currentProject?.id]);
 
   return (
-    <AuthContext.Provider value={{ currentPolicy }}>
+    <AuthzContext.Provider value={{ currentPolicy }}>
       {children}
-    </AuthContext.Provider>
+    </AuthzContext.Provider>
   );
 };
 
-export default AuthProvider;
+export default AuthzProvider;

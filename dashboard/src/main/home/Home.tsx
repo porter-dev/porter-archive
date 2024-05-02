@@ -221,7 +221,7 @@ const Home: React.FC<Props> = (props) => {
       } else {
         setHasFinishedOnboarding(true);
       }
-    } catch (error) { }
+    } catch (error) {}
   };
 
   useEffect(() => {
@@ -508,8 +508,8 @@ const Home: React.FC<Props> = (props) => {
 
               <Route path="/addons/new">
                 {currentProject?.capi_provisioner_enabled &&
-                  currentProject?.simplified_view_enabled &&
-                  currentProject?.beta_features_enabled ? (
+                currentProject?.simplified_view_enabled &&
+                currentProject?.beta_features_enabled ? (
                   <AddonTemplates />
                 ) : (
                   <LegacyNewAddOnFlow />
@@ -523,8 +523,8 @@ const Home: React.FC<Props> = (props) => {
               </Route>
               <Route path="/addons">
                 {currentProject?.capi_provisioner_enabled &&
-                  currentProject?.simplified_view_enabled &&
-                  currentProject?.beta_features_enabled ? (
+                currentProject?.simplified_view_enabled &&
+                currentProject?.beta_features_enabled ? (
                   <AddonDashboard />
                 ) : (
                   <LegacyAddOnDashboard />
@@ -606,28 +606,21 @@ const Home: React.FC<Props> = (props) => {
                 path={"/project-settings"}
                 render={() => <GuardedProjectSettings />}
               />
-              {currentProject?.validate_apply_v2 && (
-                <>
-                  <Route exact path="/preview-environments/configure">
-                    <SetupApp />
-                  </Route>
-                  <Route
-                    exact
-                    path={`/preview-environments/apps/:appName/:tab`}
-                  >
-                    <AppView preview />
-                  </Route>
-                  <Route exact path="/preview-environments/apps/:appName">
-                    <AppView preview />
-                  </Route>
-                  <Route exact path={`/preview-environments/apps`}>
-                    <Apps />
-                  </Route>
-                  <Route exact path={`/preview-environments`}>
-                    <PreviewEnvs />
-                  </Route>
-                </>
-              )}
+              <Route exact path="/preview-environments/configure">
+                <SetupApp />
+              </Route>
+              <Route exact path={`/preview-environments/apps/:appName/:tab`}>
+                <AppView preview />
+              </Route>
+              <Route exact path="/preview-environments/apps/:appName">
+                <AppView preview />
+              </Route>
+              <Route exact path={`/preview-environments/apps`}>
+                <Apps />
+              </Route>
+              <Route exact path={`/preview-environments`}>
+                <PreviewEnvs />
+              </Route>
               <Route path={"*"} render={() => <LaunchWrapper />} />
             </Switch>
           </ViewWrapper>

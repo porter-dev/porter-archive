@@ -34,6 +34,7 @@ type GormRepository struct {
 	githubAppOAuthIntegration repository.GithubAppOAuthIntegrationRepository
 	slackIntegration          repository.SlackIntegrationRepository
 	upstashIntegration        repository.UpstashIntegrationRepository
+	neonIntegration           repository.NeonIntegrationRepository
 	appEventWebhook           repository.AppEventWebhookRepository
 	gitlabIntegration         repository.GitlabIntegrationRepository
 	gitlabAppOAuthIntegration repository.GitlabAppOAuthIntegrationRepository
@@ -173,6 +174,11 @@ func (t *GormRepository) SlackIntegration() repository.SlackIntegrationRepositor
 // UpstashIntegration returns the UpstashIntegrationRepository interface implemented by gorm
 func (t *GormRepository) UpstashIntegration() repository.UpstashIntegrationRepository {
 	return t.upstashIntegration
+}
+
+// NeonIntegration returns the NeonIntegrationRepository interface implemented by gorm
+func (t *GormRepository) NeonIntegration() repository.NeonIntegrationRepository {
+	return t.neonIntegration
 }
 
 // AppEventWebhook returns the AppEventWebhookRepository interface implemented by gorm
@@ -338,6 +344,7 @@ func NewRepository(db *gorm.DB, key *[32]byte, storageBackend credentials.Creden
 		gitlabIntegration:         NewGitlabIntegrationRepository(db, key, storageBackend),
 		gitlabAppOAuthIntegration: NewGitlabAppOAuthIntegrationRepository(db, key, storageBackend),
 		upstashIntegration:        NewUpstashIntegrationRepository(db, key),
+		neonIntegration:           NewNeonIntegrationRepository(db, key),
 		notificationConfig:        NewNotificationConfigRepository(db),
 		jobNotificationConfig:     NewJobNotificationConfigRepository(db),
 		buildEvent:                NewBuildEventRepository(db),

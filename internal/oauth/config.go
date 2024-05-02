@@ -125,6 +125,20 @@ func NewUpstashClient(cfg *Config) oauth2.Config {
 	}
 }
 
+// NewNeonClient creates a new oauth2.Config for Neon
+func NewNeonClient(cfg *Config) oauth2.Config {
+	return oauth2.Config{
+		ClientID:     cfg.ClientID,
+		ClientSecret: cfg.ClientSecret,
+		Endpoint: oauth2.Endpoint{
+			AuthURL:  "https://oauth2.neon.tech/oauth2/auth",
+			TokenURL: "https://oauth2.neon.tech/oauth2/token",
+		},
+		RedirectURL: cfg.BaseURL + "/api/oauth/neon/callback",
+		Scopes:      cfg.Scopes,
+	}
+}
+
 func CreateRandomState() string {
 	b := make([]byte, 16)
 	rand.Read(b)

@@ -484,21 +484,24 @@ const Apps: React.FC = () => {
           loading={envDeleting}
         />
       )}
-      {trialExpired && !hasPaymentEnabled && showBillingModal && (
-        <BillingModal
-          back={() => {
-            setShowBillingModal(false);
-            history.push("/project-settings?selected_tab=billing");
-          }}
-          trialExpired
-          onCreate={async () => {
-            await refetchPaymentEnabled({
-              throwOnError: false,
-              cancelRefetch: false,
-            });
-          }}
-        />
-      )}
+      {!currentProject?.sandbox_enabled &&
+        trialExpired &&
+        !hasPaymentEnabled &&
+        showBillingModal && (
+          <BillingModal
+            back={() => {
+              setShowBillingModal(false);
+              history.push("/project-settings?selected_tab=billing");
+            }}
+            trialExpired
+            onCreate={async () => {
+              await refetchPaymentEnabled({
+                throwOnError: false,
+                cancelRefetch: false,
+              });
+            }}
+          />
+        )}
     </StyledAppDashboard>
   );
 };

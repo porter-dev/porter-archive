@@ -35,6 +35,24 @@ func (c *ListCustomerInvoicesHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 
 	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "billing-config-exists", Value: c.Config().BillingManager.StripeConfigLoaded},
+		telemetry.AttributeKV{Key: "metronome-config-exists", Value: c.Config().BillingManager.MetronomeConfigLoaded},
+		telemetry.AttributeKV{Key: "billing-enabled", Value: proj.GetFeatureFlag(models.BillingEnabled, c.Config().LaunchDarklyClient)},
+		telemetry.AttributeKV{Key: "metronome-enabled", Value: proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient)},
+		telemetry.AttributeKV{Key: "porter-cloud-enabled", Value: proj.EnableSandbox},
+	)
+
+	if !c.Config().BillingManager.MetronomeConfigLoaded || !proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient) {
+		c.WriteResult(w, r, "")
+		return
+	}
+
+	if !c.Config().BillingManager.StripeConfigLoaded || !proj.GetFeatureFlag(models.BillingEnabled, c.Config().LaunchDarklyClient) {
+		c.WriteResult(w, r, "")
+		return
+	}
+
 	req := &types.ListCustomerInvoicesRequest{}
 
 	if ok := c.DecodeAndValidate(w, r, req); !ok {
@@ -43,10 +61,17 @@ func (c *ListCustomerInvoicesHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	invoices, err := c.Config().BillingManager.MetronomeClient.ListCustomerInvoices(ctx, proj.UsageID, req.Status, req.StartingOn, req.EndingBefore)
+	invoices, err := c.Config().BillingManager.MetronomeClient.ListCustomerInvoices(ctx, proj.UsageID, req.Status)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error listing customer invoices")
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error listing customer invoices: %w", err)))
+		return
+	}
+
+	invoices, err = c.Config().BillingManager.StripeClient.PopulateInvoiceURLs(ctx, invoices)
+	if err != nil {
+		err := telemetry.Error(ctx, span, err, "error populating invoice urls")
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error populating invoice urls: %w", err)))
 		return
 	}
 

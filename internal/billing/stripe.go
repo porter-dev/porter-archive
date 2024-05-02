@@ -9,6 +9,7 @@ import (
 	"github.com/porter-dev/porter/internal/telemetry"
 	"github.com/stripe/stripe-go/v76"
 	"github.com/stripe/stripe-go/v76/customer"
+	"github.com/stripe/stripe-go/v76/invoice"
 	"github.com/stripe/stripe-go/v76/paymentmethod"
 	"github.com/stripe/stripe-go/v76/setupintent"
 )
@@ -241,6 +242,37 @@ func (s StripeClient) GetPublishableKey(ctx context.Context) (key string) {
 	defer span.End()
 
 	return s.PublishableKey
+}
+
+func (s StripeClient) PopulateInvoiceURLs(ctx context.Context, invoices []types.Invoice) (invoiceList []types.Invoice, err error) {
+	ctx, span := telemetry.NewSpan(ctx, "populate-invoice-urls")
+	defer span.End()
+
+	if len(invoices) == 0 {
+		return invoiceList, nil
+	}
+
+	stripe.Key = s.SecretKey
+
+	for _, usageInvoice := range invoices {
+		if usageInvoice.ExternalInvoice.InvoiceID == "" {
+			continue
+		}
+
+		if usageInvoice.ExternalInvoice.ExternalStatus == "SKIPPED" {
+			continue
+		}
+
+		stripeInvoice, err := invoice.Get(usageInvoice.ExternalInvoice.InvoiceID, &stripe.InvoiceParams{})
+		if err != nil {
+			return invoiceList, telemetry.Error(ctx, span, err, "failed to get Stripe invoice")
+		}
+
+		usageInvoice.ExternalInvoice.ExternalURL = stripeInvoice.HostedInvoiceURL
+		invoiceList = append(invoiceList, usageInvoice)
+	}
+
+	return invoiceList, nil
 }
 
 func (s StripeClient) checkDefaultPaymentMethod(customerID string) (defaultPaymentExists bool, defaultPaymentID string, err error) {

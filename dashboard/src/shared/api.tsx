@@ -3530,8 +3530,6 @@ const getCustomerUsage = baseApi<
 const getCustomerInvoices = baseApi<
   {
     status: string;
-    starting_on: string;
-    ending_before: string;
   },
   {
     project_id?: number;

@@ -33,6 +33,7 @@ type TestRepository struct {
 	gitlabAppOAuthIntegration repository.GitlabAppOAuthIntegrationRepository
 	slackIntegration          repository.SlackIntegrationRepository
 	upstashIntegration        repository.UpstashIntegrationRepository
+	neonIntegration           repository.NeonIntegrationRepository
 	appEventWebhook           repository.AppEventWebhookRepository
 	notificationConfig        repository.NotificationConfigRepository
 	jobNotificationConfig     repository.JobNotificationConfigRepository
@@ -173,6 +174,10 @@ func (t *TestRepository) SlackIntegration() repository.SlackIntegrationRepositor
 
 func (t *TestRepository) UpstashIntegration() repository.UpstashIntegrationRepository {
 	return t.upstashIntegration
+}
+
+func (t *TestRepository) NeonIntegration() repository.NeonIntegrationRepository {
+	return t.neonIntegration
 }
 
 func (t *TestRepository) AppEventWebhook() repository.AppEventWebhookRepository {
@@ -326,6 +331,7 @@ func NewRepository(canQuery bool, failingMethods ...string) repository.Repositor
 		gitlabAppOAuthIntegration: NewGitlabAppOAuthIntegrationRepository(canQuery),
 		slackIntegration:          NewSlackIntegrationRepository(canQuery),
 		upstashIntegration:        NewUpstashIntegrationRepository(canQuery),
+		neonIntegration:           NewNeonIntegrationRepository(canQuery),
 		appEventWebhook:           NewAppEventWebhookRepository(canQuery),
 		notificationConfig:        NewNotificationConfigRepository(canQuery),
 		jobNotificationConfig:     NewJobNotificationConfigRepository(canQuery),

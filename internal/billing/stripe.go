@@ -245,6 +245,7 @@ func (s StripeClient) GetPublishableKey(ctx context.Context) (key string) {
 	return s.PublishableKey
 }
 
+// ListCustomerInvoices will return all invoices for the customer with the given status
 func (s StripeClient) ListCustomerInvoices(ctx context.Context, customerID string, status string) (invoiceList []types.Invoice, err error) {
 	ctx, span := telemetry.NewSpan(ctx, "populate-invoice-urls")
 	defer span.End()

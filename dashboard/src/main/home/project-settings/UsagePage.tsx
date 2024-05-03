@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import styled from "styled-components";
@@ -18,44 +18,30 @@ import Bars from "./Bars";
 dayjs.extend(utc);
 
 function UsagePage(): JSX.Element {
-  const [currentPeriodStart, setCurrentPeriodStart] = useState<Date | null>(
-    null
+  const { plan } = useCustomerPlan();
+
+  const startDate = dayjs.utc(plan?.starting_on);
+  const endDate = dayjs().utc().startOf("day");
+  const numberOfDays = startDate.daysInMonth();
+
+  const [currentPeriodStart, setCurrentPeriodStart] = useState(
+    startDate.toDate()
   );
-  const [currentPeriodEnd, setCurrentPeriodEnd] = useState<Date | null>(null);
-  const [currentPeriodDuration, setcurrentPeriodDuration] = useState(30);
+  const [currentPeriodEnd, setCurrentPeriodEnd] = useState(endDate.toDate());
+  const [currentPeriodDuration, setCurrentPeriodDuration] =
+    useState(numberOfDays);
 
   const { usage } = useCustomerUsage(
     currentPeriodStart,
     currentPeriodEnd,
     "day"
   );
-  const { plan } = useCustomerPlan();
   const { costs } = useCustomerCosts(
     currentPeriodStart,
     currentPeriodEnd,
     currentPeriodDuration
   );
   let totalCost = 0;
-
-  // Initial period setup
-  useEffect(() => {
-    if (plan) {
-      const now = new Date();
-      const endDate = dayjs.utc(now).startOf("day").toDate();
-      const startDate = dayjs
-        .utc(now)
-        .subtract(1, "month")
-        .startOf("day")
-        .toDate();
-
-      // Set the limit to the current period's number of days
-      const numberOfDays = startDate.getUTCDate();
-
-      setcurrentPeriodDuration(numberOfDays);
-      setCurrentPeriodStart(startDate);
-      setCurrentPeriodEnd(endDate);
-    }
-  }, [plan]);
 
   const processedUsage = useMemo(() => {
     const before = usage;
@@ -89,17 +75,19 @@ function UsagePage(): JSX.Element {
   }, [usage]);
 
   const processedCosts = useMemo(() => {
-    return costs?.map((dailyCost) => {
-      dailyCost.start_timestamp = new Date(
-        dailyCost.start_timestamp
-      ).toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-      });
-      dailyCost.cost = dailyCost.cost / 100;
-      totalCost += dailyCost.cost;
-      return dailyCost;
-    });
+    return costs
+      ?.map((dailyCost) => {
+        dailyCost.start_timestamp = new Date(
+          dailyCost.start_timestamp
+        ).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+        });
+        dailyCost.cost = parseFloat((dailyCost.cost / 100).toFixed(4));
+        totalCost += dailyCost.cost;
+        return dailyCost;
+      })
+      .filter((dailyCost) => dailyCost.cost > 0);
   }, [costs]);
 
   const generateOptions = (): Array<{ value: string; label: string }> => {
@@ -126,9 +114,11 @@ function UsagePage(): JSX.Element {
     <>
       <Select
         options={options}
-        value={currentPeriodStart}
+        value={currentPeriodStart.toISOString()}
         setValue={(value) => {
-          setCurrentPeriodStart(value);
+          setCurrentPeriodStart(dayjs.utc(value).toDate());
+          setCurrentPeriodEnd(dayjs.utc(value).add(1, "month").toDate());
+          setCurrentPeriodDuration(dayjs.utc(value).daysInMonth());
         }}
         width="fit-content"
         prefix={<>Billing period</>}
@@ -146,7 +136,7 @@ function UsagePage(): JSX.Element {
               fill="#8784D2"
               yKey="cost"
               xKey="start_timestamp"
-              data={processedCosts}
+              data={processedCosts || []}
             />
           </BarWrapper>
           <Spacer y={0.5} />

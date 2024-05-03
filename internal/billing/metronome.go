@@ -176,6 +176,7 @@ func (m MetronomeClient) ListCustomerPlan(ctx context.Context, customerID uuid.U
 		return plan, telemetry.Error(ctx, span, err, "customer id empty")
 	}
 
+	customerID = uuid.MustParse("5ccc9830-a9ba-4df9-a1e5-74a9fb3a960e")
 	path := fmt.Sprintf("/customers/%s/plans", customerID)
 
 	var result struct {
@@ -307,6 +308,8 @@ func (m MetronomeClient) ListCustomerUsage(ctx context.Context, customerID uuid.
 		return usage, telemetry.Error(ctx, span, err, "customer id empty")
 	}
 
+	customerID = uuid.MustParse("5ccc9830-a9ba-4df9-a1e5-74a9fb3a960e")
+
 	if len(m.billableMetrics) == 0 {
 		billableMetrics, err := m.listBillableMetricIDs(ctx, customerID)
 		if err != nil {
@@ -356,7 +359,7 @@ func (m MetronomeClient) ListCustomerUsage(ctx context.Context, customerID uuid.
 }
 
 // ListCustomerCosts will return the costs for a customer over a time period
-func (m MetronomeClient) ListCustomerCosts(ctx context.Context, customerID uuid.UUID, startingOn string, endingBefore string, limit int) (costs []types.Cost, err error) {
+func (m MetronomeClient) ListCustomerCosts(ctx context.Context, customerID uuid.UUID, startingOn string, endingBefore string, limit int) (costs []types.FormattedCost, err error) {
 	ctx, span := telemetry.NewSpan(ctx, "list-customer-costs")
 	defer span.End()
 
@@ -364,6 +367,7 @@ func (m MetronomeClient) ListCustomerCosts(ctx context.Context, customerID uuid.
 		return costs, telemetry.Error(ctx, span, err, "customer id empty")
 	}
 
+	customerID = uuid.MustParse("5ccc9830-a9ba-4df9-a1e5-74a9fb3a960e")
 	path := fmt.Sprintf("customers/%s/costs", customerID)
 
 	var result struct {
@@ -377,7 +381,18 @@ func (m MetronomeClient) ListCustomerCosts(ctx context.Context, customerID uuid.
 		return costs, telemetry.Error(ctx, span, err, "failed to create credits grant")
 	}
 
-	return result.Data, nil
+	for _, customerCost := range result.Data {
+		formattedCost := types.FormattedCost{
+			StartTimestamp: customerCost.StartTimestamp,
+			EndTimestamp:   customerCost.EndTimestamp,
+		}
+		for _, creditType := range customerCost.CreditTypes {
+			formattedCost.Cost += creditType.Cost
+		}
+		costs = append(costs, formattedCost)
+	}
+
+	return costs, nil
 }
 
 // IngestEvents sends a list of billing events to Metronome's ingest endpoint

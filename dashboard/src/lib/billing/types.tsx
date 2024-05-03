@@ -56,7 +56,7 @@ export type Cost = z.infer<typeof CostValidator>;
 export const CostValidator = z.object({
   start_timestamp: z.string(),
   end_timestamp: z.string(),
-  credit_types: z.any(),
+  cost: z.number(),
 });
 
 export type InvoiceList = Invoice[];

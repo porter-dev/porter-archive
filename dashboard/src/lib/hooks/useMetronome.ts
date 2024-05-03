@@ -2,13 +2,13 @@ import { useContext } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 import {
-  CostList,
   CostValidator,
   CreditGrantsValidator,
   InvoiceValidator,
   PlanValidator,
   ReferralDetailsValidator,
   UsageValidator,
+  type CostList,
   type CreditGrants,
   type InvoiceList,
   type Plan,
@@ -115,8 +115,9 @@ export const useCustomerPlan = (): TGetPlan => {
 };
 
 export const useCustomerUsage = (
-  windowSize: string,
-  currentPeriod: boolean
+  startingOn: Date | null,
+  endingBefore: Date | null,
+  windowSize: string
 ): TGetUsage => {
   const { currentProject } = useContext(Context);
 
@@ -132,12 +133,17 @@ export const useCustomerUsage = (
         return null;
       }
 
+      if (startingOn === null || endingBefore === null) {
+        return null;
+      }
+
       try {
         const res = await api.getCustomerUsage(
           "<token>",
           {
+            starting_on: startingOn.toISOString(),
+            ending_before: endingBefore.toISOString(),
             window_size: windowSize,
-            current_period: currentPeriod,
           },
           {
             project_id: currentProject?.id,
@@ -157,8 +163,8 @@ export const useCustomerUsage = (
 };
 
 export const useCustomerCosts = (
-  startingOn: string,
-  endingBefore: string,
+  startingOn: Date | null,
+  endingBefore: Date | null,
   limit: number
 ): TGetCosts => {
   const { currentProject } = useContext(Context);
@@ -175,15 +181,19 @@ export const useCustomerCosts = (
         return null;
       }
 
+      if (startingOn === null || endingBefore === null) {
+        return null;
+      }
+
       try {
         const res = await api.getCustomerCosts(
           "<token>",
           {},
           {
             project_id: currentProject?.id,
-            starting_on: startingOn,
-            ending_before: endingBefore,
-            limit: limit,
+            starting_on: startingOn.toISOString(),
+            ending_before: endingBefore.toISOString(),
+            limit,
           }
         );
 

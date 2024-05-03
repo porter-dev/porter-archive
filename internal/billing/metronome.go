@@ -176,7 +176,6 @@ func (m MetronomeClient) ListCustomerPlan(ctx context.Context, customerID uuid.U
 		return plan, telemetry.Error(ctx, span, err, "customer id empty")
 	}
 
-	customerID = uuid.MustParse("5ccc9830-a9ba-4df9-a1e5-74a9fb3a960e")
 	path := fmt.Sprintf("/customers/%s/plans", customerID)
 
 	var result struct {
@@ -308,8 +307,6 @@ func (m MetronomeClient) ListCustomerUsage(ctx context.Context, customerID uuid.
 		return usage, telemetry.Error(ctx, span, err, "customer id empty")
 	}
 
-	customerID = uuid.MustParse("5ccc9830-a9ba-4df9-a1e5-74a9fb3a960e")
-
 	if len(m.billableMetrics) == 0 {
 		billableMetrics, err := m.listBillableMetricIDs(ctx, customerID)
 		if err != nil {
@@ -367,7 +364,6 @@ func (m MetronomeClient) ListCustomerCosts(ctx context.Context, customerID uuid.
 		return costs, telemetry.Error(ctx, span, err, "customer id empty")
 	}
 
-	customerID = uuid.MustParse("5ccc9830-a9ba-4df9-a1e5-74a9fb3a960e")
 	path := fmt.Sprintf("customers/%s/costs", customerID)
 
 	var result struct {

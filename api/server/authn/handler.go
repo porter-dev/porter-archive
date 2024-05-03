@@ -2,11 +2,11 @@ package authn
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
-	"time"
 
 	"github.com/gorilla/sessions"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
@@ -70,63 +70,57 @@ func (authn *AuthN) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// if the bearer token is not found, look for a request cookie
-	session, err := authn.config.Store.Get(r, authn.config.ServerConf.CookieName)
+
+	// first look for new ory cookie
+	// set the cookies on the ory client
+	var cookies string
+
+	// this example passes all request.Cookies
+	// to `ToSession` function
+	//
+	// However, you can pass only the value of
+	// ory_session_projectid cookie to the endpoint
+	cookies = r.Header.Get("Cookie")
+
+	fmt.Println("Cookies: ", cookies)
+
+	// check if we have a session
+	orySession, _, err := authn.config.Ory.FrontendAPI.ToSession(r.Context()).Cookie(cookies).Execute()
 	if err != nil {
-		session.Values["authenticated"] = false
-
-		// we attempt to save the session, but do not catch the error since we send the
-		// forbidden error regardless
-		session.Save(r, w)
-
 		authn.sendForbiddenError(err, w, r)
 		return
 	}
 
-	cancelTokens := func(lastIssueTime time.Time, cancelEmail string, authn *AuthN, session *sessions.Session) bool {
-		if email, ok := session.Values["email"]; ok {
-			if email.(string) == cancelEmail {
-				timeAsUTC := lastIssueTime.UTC()
-				sess, _ := authn.config.Repo.Session().SelectSession(&models.Session{Key: session.ID})
-				if sess.CreatedAt.UTC().Before(timeAsUTC) {
-					_, _ = authn.config.Repo.Session().DeleteSession(sess)
-					return true
-				}
-			}
-		}
-		return false
+	if orySession == nil {
+		err = errors.New("ory session is nil")
+		authn.sendForbiddenError(err, w, r)
+		return
 	}
-
-	est, err := time.LoadLocation("EST")
-	// if err == nil {
-	// 	authn.handleForbiddenForSession(w, r, fmt.Errorf("error, contact admin"), session)
-	// 	return
-	// }
-	// TODO: handle error from time.LoadLocation
-	if err == nil {
-		if cancelTokens(time.Date(2024, 0o1, 16, 18, 35, 0, 0, est), "support@porter.run", authn, session) {
-			authn.handleForbiddenForSession(w, r, fmt.Errorf("error, contact admin"), session)
-			return
-		}
-		if cancelTokens(time.Date(2024, 0o1, 16, 18, 35, 0, 0, est), "admin@porter.run", authn, session) {
-			authn.handleForbiddenForSession(w, r, fmt.Errorf("error, contact admin"), session)
-			return
-		}
+	if !*orySession.Active {
+		err = errors.New("ory session is not active")
+		authn.sendForbiddenError(err, w, r)
+		return
 	}
-
-	if auth, ok := session.Values["authenticated"].(bool); !auth || !ok {
-		authn.handleForbiddenForSession(w, r, fmt.Errorf("stored cookie was not authenticated"), session)
+	if orySession.Identity == nil {
+		err = errors.New("ory session identity is nil")
+		authn.sendForbiddenError(err, w, r)
 		return
 	}
 
-	// read the user id in the token
-	userID, ok := session.Values["user_id"].(uint)
-
-	if !ok {
-		authn.handleForbiddenForSession(w, r, fmt.Errorf("could not cast user_id to uint"), session)
+	fmt.Println("now in here")
+	// get user id from Ory
+	externalId := orySession.Identity.Id
+	user, err := authn.config.Repo.User().ReadUserByAuthProvider("ory", externalId)
+	if err != nil || user == nil {
+		err := fmt.Errorf("ory user not found in database", externalId)
+		authn.sendForbiddenError(err, w, r)
 		return
 	}
 
-	authn.nextWithUserID(w, r, userID)
+	fmt.Println("going next")
+
+	authn.nextWithUserID(w, r, user.ID)
+	return
 }
 
 func (authn *AuthN) handleForbiddenForSession(

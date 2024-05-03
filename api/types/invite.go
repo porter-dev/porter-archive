@@ -5,12 +5,14 @@ const (
 )
 
 type Invite struct {
-	ID       uint   `json:"id"`
-	Token    string `json:"token"`
-	Expired  bool   `json:"expired"`
-	Email    string `json:"email"`
-	Accepted bool   `json:"accepted"`
-	Kind     string `json:"kind"`
+	ID             uint   `json:"id"`
+	Token          string `json:"token"`
+	Expired        bool   `json:"expired"`
+	Email          string `json:"email"`
+	Accepted       bool   `json:"accepted"`
+	Kind           string `json:"kind"`
+	InvitingUserID uint   `json:"inviting_user_id"`
+	Status         string `json:"status"`
 }
 
 type GetInviteResponse Invite

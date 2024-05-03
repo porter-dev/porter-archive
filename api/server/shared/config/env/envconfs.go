@@ -169,6 +169,9 @@ type ServerConf struct {
 	TelemetryName string `env:"TELEMETRY_NAME"`
 	// TelemetryCollectorURL is the URL (host:port) for collecting spans
 	TelemetryCollectorURL string `env:"TELEMETRY_COLLECTOR_URL,default=localhost:4317"`
+
+	OryUrl    string `env:"ORY_URL,default=http://localhost:4000"`
+	OryApiKey string `env:"ORY_API_KEY"`
 }
 
 // DBConf is the database configuration: if generated from environment variables,

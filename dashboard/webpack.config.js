@@ -93,8 +93,21 @@ module.exports = () => {
           type: "javascript/auto",
         },
         {
+          test: /\.mjs$/,
+          use: [
+            {
+              loader: require.resolve("babel-loader"),
+              options: {
+                plugins: [
+                  isDevelopment && require.resolve("react-refresh/babel"),
+                ].filter(Boolean),
+              },
+            },
+          ],
+        },
+        {
           enforce: "pre",
-          test: /\.js$/,
+          test: /\.(ts|tsx|mjs|js|jsx)$/,
           loader: "source-map-loader",
         },
         {

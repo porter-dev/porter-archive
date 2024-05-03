@@ -24,11 +24,6 @@ type Props = {
   authenticate: () => Promise<void>;
 };
 
-const getWindowDimensions = () => {
-  const { innerWidth: width, innerHeight: height } = window;
-  return { width, height };
-};
-
 const Login: React.FC<Props> = ({ authenticate }) => {
   const { setUser, setCurrentError } = useContext(Context);
   const [email, setEmail] = useState("");
@@ -39,9 +34,6 @@ const Login: React.FC<Props> = ({ authenticate }) => {
   const [hasGithub, setHasGithub] = useState(true);
   const [hasGoogle, setHasGoogle] = useState(false);
   const [hasResetPassword, setHasResetPassword] = useState(true);
-  const [windowDimensions, setWindowDimensions] = useState(
-    getWindowDimensions()
-  );
 
   const handleLogin = (): void => {
     if (!emailRegex.test(email)) {
@@ -63,10 +55,6 @@ const Login: React.FC<Props> = ({ authenticate }) => {
           setCurrentError(err.response.data.error);
         });
     }
-  };
-
-  const handleResize = () => {
-    setWindowDimensions(getWindowDimensions());
   };
 
   const handleKeyDown = (e: any) => {
@@ -102,10 +90,6 @@ const Login: React.FC<Props> = ({ authenticate }) => {
     const emailFromCLI = urlParams.get("email");
     emailFromCLI && setEmail(emailFromCLI);
 
-    window.addEventListener("resize", handleResize);
-    return () => {
-      window.removeEventListener("resize", handleResize);
-    };
   }, []);
 
   const githubRedirect = () => {
@@ -119,102 +103,69 @@ const Login: React.FC<Props> = ({ authenticate }) => {
   };
 
   return (
-    <StyledLogin>
-      {windowDimensions.width > windowDimensions.height && (
-        <Wrapper>
-          <Container row>
-            <a href="https://porter.run">
-              <Logo src={logo} />
-            </a>
-            {window.location.hostname === "cloud.porter.run" && (
-              <Badge>Cloud</Badge>
-            )}
-          </Container>
-          <Spacer y={2} />
-          <Jumbotron>
-            <Shiny>Welcome back to Porter</Shiny>
-          </Jumbotron>
-          <Spacer y={2} />
-          <LinkRow to="https://porter.run/docs" target="_blank">
-            <img src={docs} /> Read the Porter docs
-          </LinkRow>
-          <Spacer y={0.5} />
-          <LinkRow to="https://porter.run/blog" target="_blank">
-            <img src={blog} /> See what's new with Porter
-          </LinkRow>
-        </Wrapper>
-      )}
-      <Wrapper>
-        {windowDimensions.width <= windowDimensions.height && (
-          <Flex>
-            <a href="https://porter.run">
-              <Logo src={logo} />
-            </a>
-            <Spacer y={2} />
-          </Flex>
-        )}
-        <Heading isAtTop>Log in to your Porter account</Heading>
-        <Spacer y={1} />
-        {(hasGithub || hasGoogle) && (
+    <Container>
+      <Heading isAtTop>Log in to your Porter account</Heading>
+      <Spacer y={1} />
+      {(hasGithub || hasGoogle) && (
           <>
             <Container row>
               {hasGithub && (
-                <OAuthButton onClick={githubRedirect}>
-                  <Icon src={github} />
-                  Log in with GitHub
-                </OAuthButton>
+                  <OAuthButton onClick={githubRedirect}>
+                    <Icon src={github} />
+                    Log in with GitHub
+                  </OAuthButton>
               )}
               {hasGithub && hasGoogle && <Spacer inline x={2} />}
               {hasGoogle && (
-                <OAuthButton onClick={googleRedirect}>
-                  <StyledGoogleIcon />
-                  Log in with Google
-                </OAuthButton>
+                  <OAuthButton onClick={googleRedirect}>
+                    <StyledGoogleIcon />
+                    Log in with Google
+                  </OAuthButton>
               )}
             </Container>
             {hasBasic && (
-              <OrWrapper>
-                <Line />
-                <Or>or</Or>
-              </OrWrapper>
+                <OrWrapper>
+                  <Line />
+                  <Or>or</Or>
+                </OrWrapper>
             )}
           </>
-        )}
-        {hasBasic && (
+      )}
+      {hasBasic && (
           <>
             <Input
-              autoFocus={true}
-              type="email"
-              placeholder="Email"
-              label="Email"
-              value={email}
-              setValue={(x) => {
-                setEmail(x);
-                setEmailError(false);
-                setCredentialError(false);
-              }}
-              width="100%"
-              height="40px"
-              error={emailError && "Please enter a valid email"}
+                autoFocus={true}
+                type="email"
+                placeholder="Email"
+                label="Email"
+                value={email}
+                setValue={(x) => {
+                  setEmail(x);
+                  setEmailError(false);
+                  setCredentialError(false);
+                }}
+                width="100%"
+                height="40px"
+                error={emailError && "Please enter a valid email"}
             />
             <Spacer y={1} />
             <Input
-              type="password"
-              placeholder="Password"
-              label="Password"
-              value={password}
-              setValue={(x) => {
-                setPassword(x);
-                setCredentialError(false);
-              }}
-              width="100%"
-              height="40px"
-              error={credentialError && ""}
+                type="password"
+                placeholder="Password"
+                label="Password"
+                value={password}
+                setValue={(x) => {
+                  setPassword(x);
+                  setCredentialError(false);
+                }}
+                width="100%"
+                height="40px"
+                error={credentialError && ""}
             >
               {hasResetPassword && (
-                <ForgotPassword>
-                  <Link to="/password/reset">Forgot your password?</Link>
-                </ForgotPassword>
+                  <ForgotPassword>
+                    <Link to="/password/reset">Forgot your password?</Link>
+                  </ForgotPassword>
               )}
             </Input>
             <Spacer height="30px" />
@@ -222,82 +173,18 @@ const Login: React.FC<Props> = ({ authenticate }) => {
               Continue
             </Button>
           </>
-        )}
-        <Spacer y={1} />
-        <Text size={13} color="helper">
-          Don't have an account?
-          <Spacer width="5px" inline />
-          <Link to="/register">Sign up</Link>
-        </Text>
-      </Wrapper>
-    </StyledLogin>
+      )}
+    </Container>
   );
 };
 
 export default Login;
-
-const Badge = styled.div`
-  margin-left: 17px;
-  margin-top: -6px;
-  background: ${(props) => props.theme.clickable};
-  padding: 5px 10px;
-  border: 1px solid #aaaabb;
-  border-radius: 5px;
-`;
 
 const ForgotPassword = styled.div`
   position: absolute;
   right: 0;
   top: 0;
   font-size: 13px;
-`;
-
-const Flex = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-`;
-
-const LinkRow = styled(DynamicLink)`
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-  width: 220px;
-  color: #aaaabb;
-  > i {
-    font-size: 18px;
-    margin-right: 10px;
-    float: left;
-    color: #4797ff;
-  }
-
-  > img {
-    height: 18px;
-    margin-right: 10px;
-  }
-
-  :hover {
-    filter: brightness(2);
-  }
-`;
-
-const Shiny = styled.span`
-  background-image: linear-gradient(225deg, #fff, #7980ff);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-`;
-
-const Jumbotron = styled.div`
-  font-size: 32px;
-  font-weight: 500;
-  line-height: 1.5;
-`;
-
-const Logo = styled.img`
-  height: 24px;
-  user-select: none;
 `;
 
 const StyledGoogleIcon = styled(GoogleIcon)`
@@ -350,25 +237,4 @@ const OAuthButton = styled.div`
   :hover {
     background: #ffffffdd;
   }
-`;
-
-const Wrapper = styled.div`
-  width: 500px;
-  margin-top: -20px;
-  position: relative;
-  padding: 25px;
-  border-radius: 5px;
-  font-size: 13px;
-`;
-
-const StyledLogin = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100vw;
-  height: 100vh;
-  position: fixed;
-  top: 0;
-  left: 0;
-  background: #111114;
 `;

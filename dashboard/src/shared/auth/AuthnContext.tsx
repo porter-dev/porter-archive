@@ -1,9 +1,14 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import { Redirect, Route, Switch } from "react-router-dom";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
 
+import { Configuration, FrontendApi, Session, Identity } from "@ory/client"
+import {useQuery} from "@tanstack/react-query";
+import {clusterStateValidator} from "../../lib/clusters/types";
+import {Invite, inviteValidator} from "../../lib/invites/types";
+import {z} from "zod";
 import Loading from "../../components/Loading";
 import Login from "../../main/auth/Login";
 import Register from "../../main/auth/Register";
@@ -12,10 +17,29 @@ import ResetPasswordInit from "../../main/auth/ResetPasswordInit";
 import SetInfo from "../../main/auth/SetInfo";
 import VerifyEmail from "../../main/auth/VerifyEmail";
 import CurrentError from "../../main/CurrentError";
+import LoginWrapper from "../../main/auth/LoginWrapper";
+
+// Get your Ory url from .env
+// Or localhost for local development
+const basePath = process.env.REACT_APP_ORY_URL || "http://localhost:4000"
+const ory = new FrontendApi(
+    new Configuration({
+        basePath,
+        baseOptions: {
+            withCredentials: true,
+        },
+    }),
+)
+
 
 type AuthnState = {
   userId: number;
+  authenticate: () => Promise<void>;
   handleLogOut: () => void;
+    session: Session | null;
+    invites: Invite[];
+    checkInvites: () => void;
+    invitesLoading: boolean;
 };
 
 export const AuthnContext = React.createContext<AuthnState | null>(null);
@@ -35,56 +59,129 @@ const AuthnProvider = ({
 }): JSX.Element => {
   const { setUser, clearContext, setCurrentError, currentError } =
     useContext(Context);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [isPorterAuthenticated, setIsPorterAuthenticated] = useState(false);
+
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isEmailVerified, setIsEmailVerified] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [invitesLoading, setInvitesLoading] = useState(true);
   const [userId, setUserId] = useState(-1);
   const [hasInfo, setHasInfo] = useState(false);
+  const [session, setSession] = useState<Session | null>(null)
+  const [logoutUrl, setLogoutUrl] = useState<string | undefined>()
+  const [invites, setInvites] = useState<Invite[]>([])
   const [local, setLocal] = useState(false);
 
+    console.log(invites)
+
   const authenticate = async (): Promise<void> => {
-    api
-      .checkAuth("", {}, {})
-      .then((res) => {
-        if (res?.data) {
-          setUser?.(res.data.id, res.data.email);
-          setIsLoggedIn(true);
-          setIsEmailVerified(res.data.email_verified);
-          setHasInfo(res.data.company_name && true);
-          setIsLoading(false);
-          setUserId(res.data.id);
-        } else {
-          setIsLoggedIn(false);
-          setIsEmailVerified(false);
-          setHasInfo(false);
-          setIsLoading(false);
-          setUserId(-1);
-        }
-      })
-      .catch(() => {
-        setIsLoggedIn(false);
-        setIsEmailVerified(false);
-        setHasInfo(false);
-        setIsLoading(false);
-        setUserId(-1);
-      });
-  };
+              ory
+                  .toSession()
+                  .then(({data}) => {
+
+                      // Create a logout url
+                      ory.createBrowserLogoutFlow().then(({data}) => {
+                          setLogoutUrl(data.logout_url)
+                      })
+
+                      if (!(data?.identity?.verifiable_addresses?.some(address => address.value === data?.identity?.traits?.email && address.verified) || false)) {
+                            window.location.replace(`${basePath}/ui/verification`)
+                      }
+
+                      // User has a session!
+                      setSession(data)
+                      console.log(data)
+                      console.log(data?.identity?.verifiable_addresses)
+                      console.log(data?.identity?.traits)
+                      console.log(data?.identity?.verifiable_addresses?.some(address => address.value === data?.identity?.traits?.email && address.verified) || false)
+                      setIsEmailVerified(data?.identity?.verifiable_addresses?.some(address => address.value === data?.identity?.traits?.email && address.verified) || false)
+                  }).catch((err) => {
+                    setSession(null)
+                    console.log(err)
+              })
+                  .then(() => {
+                      api
+                  .checkAuth("", {}, {})
+                  .then((res) => {
+                      if (res?.data) {
+                          setUser?.(res.data.id, res.data.email);
+                          setIsEmailVerified(res.data.email_verified);
+                          setIsPorterAuthenticated(true);
+                          setIsEmailVerified(res.data.email_verified);
+                          setHasInfo(res.data.company_name && true);
+                          setUserId(res.data.id);
+                      } else {
+                          setIsPorterAuthenticated(false);
+                      }
+                  })
+                  .catch(() => {
+                      setIsPorterAuthenticated(false);
+                  })
+
+          })
+          .catch((err) => {
+              console.error(err)
+          })
+          .finally(() => {
+            setIsLoading(false);
+        });
+    };
 
   const handleLogOut = (): void => {
     // Clears local storage for proper rendering of clusters
     // Attempt user logout
-    api
-      .logOutUser("<token>", {}, {})
-      .then(() => {
-        setIsLoggedIn(false);
-        setIsEmailVerified(false);
-        clearContext?.();
-        localStorage.clear();
-      })
-      .catch((err) => {
-        setCurrentError?.(err.response?.data.errors[0]);
-      });
+   if (isPorterAuthenticated) {
+       api
+           .logOutUser("<token>", {}, {})
+           .then(() => {
+               setIsLoggedIn(false);
+               setIsPorterAuthenticated(false);
+               setIsEmailVerified(false);
+               clearContext();
+               localStorage.clear();
+           }).catch((err) => {
+               setCurrentError(err.response?.data.errors[0]);
+           })
+   }
+
+   if (session && logoutUrl) {
+       window.location.replace(logoutUrl)
+   }
   };
+
+    useEffect(() => {
+        setIsLoggedIn(isPorterAuthenticated || !!session)
+    }, [isPorterAuthenticated, session])
+
+    useEffect(() => {
+        checkInvites()
+    }, [userId])
+
+    const checkInvites =  () => {
+        setInvitesLoading(true)
+        api.listUserInvites(
+            "<token>",
+            {},
+            {}
+        )
+            .then((res) => {
+                const parsed = z.array(inviteValidator).safeParse(res.data)
+                if (parsed.success) {
+                    console.log(parsed.data)
+                    setInvites(parsed.data)
+                } else {
+                    setInvites([])
+                }
+            })
+            .catch(() => {
+                setInvites([]);
+            }).finally(() => {
+            setInvitesLoading(false)
+        })
+    }
+
+
+    console.log(invites)
 
   useEffect(() => {
     authenticate().catch(() => {});
@@ -110,7 +207,7 @@ const AuthnProvider = ({
           <Route
             path="/login"
             render={() => {
-              return <Login authenticate={authenticate} />;
+              return <LoginWrapper authenticate={authenticate} />;
             }}
           />
           <Route
@@ -185,8 +282,13 @@ const AuthnProvider = ({
   return (
     <AuthnContext.Provider
       value={{
-        userId,
-        handleLogOut,
+          userId,
+          authenticate,
+          handleLogOut,
+          session,
+          invites,
+          checkInvites,
+          invitesLoading
       }}
     >
       {children}

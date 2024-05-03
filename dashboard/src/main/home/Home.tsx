@@ -575,6 +575,9 @@ const Home: React.FC<Props> = (props) => {
                   "/env-groups",
                   "/datastores",
                   "/stacks",
+                  ...(!currentProject?.simplified_view_enabled
+                    ? ["/preview-environments"]
+                    : []),
                 ]}
                 render={() => {
                   if (currentCluster?.id === -1) {
@@ -606,21 +609,28 @@ const Home: React.FC<Props> = (props) => {
                 path={"/project-settings"}
                 render={() => <GuardedProjectSettings />}
               />
-              <Route exact path="/preview-environments/configure">
-                <SetupApp />
-              </Route>
-              <Route exact path={`/preview-environments/apps/:appName/:tab`}>
-                <AppView preview />
-              </Route>
-              <Route exact path="/preview-environments/apps/:appName">
-                <AppView preview />
-              </Route>
-              <Route exact path={`/preview-environments/apps`}>
-                <Apps />
-              </Route>
-              <Route exact path={`/preview-environments`}>
-                <PreviewEnvs />
-              </Route>
+              {currentProject?.simplified_view_enabled && (
+                <>
+                  <Route exact path="/preview-environments/configure">
+                    <SetupApp />
+                  </Route>
+                  <Route
+                    exact
+                    path={`/preview-environments/apps/:appName/:tab`}
+                  >
+                    <AppView preview />
+                  </Route>
+                  <Route exact path="/preview-environments/apps/:appName">
+                    <AppView preview />
+                  </Route>
+                  <Route exact path={`/preview-environments/apps`}>
+                    <Apps />
+                  </Route>
+                  <Route exact path={`/preview-environments`}>
+                    <PreviewEnvs />
+                  </Route>
+                </>
+              )}
               <Route path={"*"} render={() => <LaunchWrapper />} />
             </Switch>
           </ViewWrapper>

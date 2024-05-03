@@ -9,10 +9,6 @@ import { Context } from "shared/Context";
 import Loading from "components/Loading";
 import SaveButton from "components/SaveButton";
 import { KeyValue } from "components/form-components/KeyValueArray";
-import {
-  EnvGroupData,
-  formattedEnvironmentValue,
-} from "../cluster-dashboard/env-groups/EnvGroup";
 import CheckboxRow from "components/form-components/CheckboxRow";
 import {
   PartialEnvGroup,
@@ -21,6 +17,7 @@ import {
 import Helper from "components/form-components/Helper";
 import DocsHelper from "components/DocsHelper";
 import { isEmpty, isObject } from "lodash";
+import { formattedEnvironmentValue } from "../env-dashboard/EnvGroup";
 
 type PropsType = {
   namespace: string;

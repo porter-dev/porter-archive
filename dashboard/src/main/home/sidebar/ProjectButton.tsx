@@ -3,7 +3,6 @@ import { withRouter, type RouteComponentProps } from "react-router";
 import styled from "styled-components";
 
 import Spacer from "components/porter/Spacer";
-import Tooltip from "components/porter/Tooltip";
 
 import { Context } from "shared/Context";
 import { pushFiltered } from "shared/routing";
@@ -59,27 +58,20 @@ const ProjectButton: React.FC<PropsType> = (props) => {
         )}
 
         {user.isPorterUser && currentProject.simplified_view_enabled ? (
-          <Tooltip
-            content={`Porter Apps ${
-              currentProject.validate_apply_v2 ? "V2" : "V1"
-            }`}
-            position="right"
+          <MainSelector
+            projectsLength={props.projects.length}
+            isPorterUser={user.isPorterUser}
+            onClick={() => {
+              (props.projects.length > 1 || user.isPorterUser) &&
+                setShowModal(true);
+            }}
           >
-            <MainSelector
-              projectsLength={props.projects.length}
-              isPorterUser={user.isPorterUser}
-              onClick={() => {
-                (props.projects.length > 1 || user.isPorterUser) &&
-                  setShowModal(true);
-              }}
-            >
-              <ProjectIcon>
-                <ProjectImage src={gradient} />
-                <Letter>{currentProject.name[0].toUpperCase()}</Letter>
-              </ProjectIcon>
-              <ProjectName>{currentProject.name}</ProjectName>
-            </MainSelector>
-          </Tooltip>
+            <ProjectIcon>
+              <ProjectImage src={gradient} />
+              <Letter>{currentProject.name[0].toUpperCase()}</Letter>
+            </ProjectIcon>
+            <ProjectName>{currentProject.name}</ProjectName>
+          </MainSelector>
         ) : (
           <MainSelector
             projectsLength={props.projects.length}

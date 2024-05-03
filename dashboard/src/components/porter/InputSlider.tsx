@@ -6,8 +6,6 @@ import styled from 'styled-components';
 import { withStyles } from '@material-ui/core/styles';
 import Text from './Text';
 import Spacer from './Spacer';
-import SmartOptModal from 'main/home/app-dashboard/new-app-flow/tabs/SmartOptModal';
-import NodeInfoModal from 'main/home/app-dashboard/new-app-flow/tabs/NodeInfoModal';
 
 type InputSliderProps = {
   label?: string;
@@ -127,10 +125,6 @@ const InputSlider: React.FC<InputSliderProps> = ({
             >
               help_outline
             </StyledIcon></>}
-          {showNeedHelpModal &&
-            <NodeInfoModal
-              setModalVisible={setShowNeedHelpModal}
-            />}
           {isExceedingLimit &&
             <><Spacer inline x={1} /><Label color="#FFBF00"> Value is not optimal for cost</Label></>}
         </>

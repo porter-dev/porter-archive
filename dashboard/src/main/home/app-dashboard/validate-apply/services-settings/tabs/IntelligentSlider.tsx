@@ -5,7 +5,6 @@ import Tooltip from "@material-ui/core/Tooltip";
 import styled from "styled-components";
 
 import Spacer from "components/porter/Spacer";
-import NodeInfoModal from "main/home/app-dashboard/new-app-flow/tabs/NodeInfoModal";
 
 const SMART_LIMIT_FRACTION = 0.5;
 
@@ -150,9 +149,6 @@ const IntelligentSlider: React.FC<IntelligentSliderProps> = ({
               help_outline
             </StyledIcon>
           </>
-        )}
-        {showNeedHelpModal && (
-          <NodeInfoModal setModalVisible={setShowNeedHelpModal} />
         )}
         {isExceedingLimit && (
           <>

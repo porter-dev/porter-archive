@@ -28,6 +28,7 @@ type User struct {
 	ExternalId   string `json:"external_id"`
 }
 
+// AuthProvider_Ory represents the Ory auth provider
 const AuthProvider_Ory = "ory"
 
 // ToUserType generates an external types.User to be shared over REST

@@ -390,8 +390,8 @@ func (m MetronomeClient) ListCustomerCosts(ctx context.Context, customerID uuid.
 
 	for _, customerCost := range result.Data {
 		formattedCost := types.FormattedCost{
-			StartTimestamp: startingOnTimestamp,
-			EndTimestamp:   endingBeforeTimestamp,
+			StartTimestamp: customerCost.StartTimestamp,
+			EndTimestamp:   customerCost.EndTimestamp,
 		}
 		for _, creditType := range customerCost.CreditTypes {
 			formattedCost.Cost += creditType.Cost

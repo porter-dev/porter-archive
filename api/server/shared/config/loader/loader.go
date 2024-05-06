@@ -396,9 +396,13 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 		URL: InstanceEnvConf.ServerConf.OryUrl,
 	}}
 
-	res.Ory = *ory.NewAPIClient(c)
-	res.OryApiKeyContextWrapper = func(ctx context.Context) context.Context {
-		return context.WithValue(ctx, ory.ContextAccessToken, InstanceEnvConf.ServerConf.OryApiKey)
+	if InstanceEnvConf.ServerConf.OryEnabled {
+		res.Logger.Info().Msg("Creating Ory client")
+		res.Ory = *ory.NewAPIClient(c)
+		res.OryApiKeyContextWrapper = func(ctx context.Context) context.Context {
+			return context.WithValue(ctx, ory.ContextAccessToken, InstanceEnvConf.ServerConf.OryApiKey)
+		}
+		res.Logger.Info().Msg("Created Ory client")
 	}
 
 	return res, nil

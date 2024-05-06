@@ -94,8 +94,9 @@ NEON_CLIENT_ID=
 # NEON_CLIENT_SECRET is used to integrate with Neon
 NEON_CLIENT_SECRET=
 
-// Note: Ory values can be found in 1Password
-// ORY_URL is the URL for Ory
+# ORY_ENABLED is used to enable the Ory integration
+ORY_ENABLED=false
+# ORY_URL is the URL for Ory; can be found in 1Password
 ORY_URL=
-// ORY_API_KEY authenticates with Ory
+# ORY_API_KEY authenticates with Ory; can be found in 1Password
 ORY_API_KEY=

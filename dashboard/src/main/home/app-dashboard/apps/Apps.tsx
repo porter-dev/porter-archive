@@ -34,7 +34,8 @@ import {
   useDeploymentTargetList,
   type DeploymentTarget,
 } from "lib/hooks/useDeploymentTarget";
-import { checkIfProjectHasPayment, useCustomerPlan } from "lib/hooks/useStripe";
+import { useCustomerPlan } from "lib/hooks/useMetronome";
+import { checkIfProjectHasPayment } from "lib/hooks/useStripe";
 
 import api from "shared/api";
 import { Context } from "shared/Context";

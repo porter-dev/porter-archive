@@ -324,11 +324,16 @@ func (m MetronomeClient) ListCustomerUsage(ctx context.Context, customerID uuid.
 
 	path := "usage/groups"
 
+	startingOnTimestamp, endingBeforeTimestamp, err := parseAndCheckTimestamps(startingOn, endingBefore)
+	if err != nil {
+		return nil, telemetry.Error(ctx, span, err, err.Error())
+	}
+
 	baseReq := types.ListCustomerUsageRequest{
 		CustomerID:    customerID,
 		WindowSize:    windowsSize,
-		StartingOn:    startingOn,
-		EndingBefore:  endingBefore,
+		StartingOn:    startingOnTimestamp,
+		EndingBefore:  endingBeforeTimestamp,
 		CurrentPeriod: currentPeriod,
 	}
 
@@ -371,7 +376,12 @@ func (m MetronomeClient) ListCustomerCosts(ctx context.Context, customerID uuid.
 		Data []types.Cost `json:"data"`
 	}
 
-	queryParams := fmt.Sprintf("starting_on=%s&ending_before=%s&limit=%d", startingOn, endingBefore, limit)
+	startingOnTimestamp, endingBeforeTimestamp, err := parseAndCheckTimestamps(startingOn, endingBefore)
+	if err != nil {
+		return nil, telemetry.Error(ctx, span, err, err.Error())
+	}
+
+	queryParams := fmt.Sprintf("starting_on=%s&ending_before=%s&limit=%d", startingOnTimestamp, endingBeforeTimestamp, limit)
 
 	_, err = m.do(http.MethodGet, path, queryParams, nil, &result)
 	if err != nil {
@@ -380,8 +390,8 @@ func (m MetronomeClient) ListCustomerCosts(ctx context.Context, customerID uuid.
 
 	for _, customerCost := range result.Data {
 		formattedCost := types.FormattedCost{
-			StartTimestamp: customerCost.StartTimestamp,
-			EndTimestamp:   customerCost.EndTimestamp,
+			StartTimestamp: startingOnTimestamp,
+			EndTimestamp:   endingBeforeTimestamp,
 		}
 		for _, creditType := range customerCost.CreditTypes {
 			formattedCost.Cost += creditType.Cost
@@ -488,6 +498,26 @@ func (m MetronomeClient) getCreditTypeID(ctx context.Context, currencyCode strin
 	}
 
 	return creditTypeID, telemetry.Error(ctx, span, fmt.Errorf("credit type not found for currency code %s", currencyCode), "failed to find credit type")
+}
+
+// Utility function to parse and adjust times
+func parseAndCheckTimestamps(startingOn string, endingBefore string) (startingOnTimestamp string, endingBeforeTimestamp string, err error) {
+	startingOnTime, err := time.Parse(time.RFC3339, startingOn)
+	if err != nil {
+		return startingOnTimestamp, endingBeforeTimestamp, fmt.Errorf("failed to parse starting on time: %w", err)
+	}
+
+	endingBeforeTime, err := time.Parse(time.RFC3339, endingBefore)
+	if err != nil {
+		return startingOnTimestamp, endingBeforeTimestamp, fmt.Errorf("failed to parse ending before time: %w", err)
+	}
+
+	if startingOnTime.Equal(endingBeforeTime) {
+		// If starting and ending timestamps are the same, change the ending timestamp to be one day in the future
+		endingBeforeTime = endingBeforeTime.Add(24 * time.Hour)
+	}
+
+	return startingOnTime.Format(time.RFC3339), endingBeforeTime.Format(time.RFC3339), nil
 }
 
 func (m MetronomeClient) do(method string, path string, queryParams string, body interface{}, data interface{}) (statusCode int, err error) {

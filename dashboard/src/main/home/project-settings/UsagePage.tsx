@@ -103,7 +103,7 @@ function UsagePage(): JSX.Element {
     while (startDate.isBefore(endDate)) {
       const nextDate = startDate.add(1, "month");
       options.push({
-        value: startDate.format("M-D-YY"),
+        value: startDate.toISOString(),
         label: `${startDate.format("M/D/YY")} - ${nextDate.format("M/D/YY")}`,
       });
 
@@ -182,7 +182,7 @@ export default UsagePage;
 const Total = styled.div`
   position: absolute;
   top: 20px;
-  left: 15px;
+  left: 55px;
   font-size: 13px;
   background: #42444933;
   backdrop-filter: saturate(150%) blur(8px);

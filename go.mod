@@ -3,7 +3,7 @@ module github.com/porter-dev/porter
 go 1.20
 
 require (
-	cloud.google.com/go v0.110.0 // indirect
+	cloud.google.com/go v0.110.2 // indirect
 	github.com/AlecAivazis/survey/v2 v2.2.9
 	github.com/Masterminds/semver/v3 v3.2.0
 	github.com/aws/aws-sdk-go v1.44.160
@@ -45,11 +45,11 @@ require (
 	github.com/spf13/cobra v1.6.1
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.10.0
-	github.com/stretchr/testify v1.8.4
-	golang.org/x/crypto v0.19.0
-	golang.org/x/net v0.21.0
-	golang.org/x/oauth2 v0.8.0
-	google.golang.org/api v0.114.0
+	github.com/stretchr/testify v1.9.0
+	golang.org/x/crypto v0.21.0
+	golang.org/x/net v0.22.0
+	golang.org/x/oauth2 v0.18.0
+	google.golang.org/api v0.126.0
 	google.golang.org/genproto v0.0.0-20230530153820-e85fd2cbaebc
 	google.golang.org/grpc v1.57.0
 	google.golang.org/protobuf v1.33.0
@@ -86,6 +86,7 @@ require (
 	github.com/matryer/is v1.4.0
 	github.com/nats-io/nats.go v1.24.0
 	github.com/open-policy-agent/opa v0.44.0
+	github.com/ory/client-go v1.9.0
 	github.com/porter-dev/api-contracts v0.2.157
 	github.com/riandyrn/otelchi v0.5.1
 	github.com/santhosh-tekuri/jsonschema/v5 v5.0.1
@@ -104,7 +105,7 @@ require (
 )
 
 require (
-	cloud.google.com/go/compute v1.19.1 // indirect
+	cloud.google.com/go/compute v1.20.1 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
 	cloud.google.com/go/longrunning v0.4.1 // indirect
 	github.com/Azure/azure-sdk-for-go v65.0.0+incompatible // indirect
@@ -149,6 +150,7 @@ require (
 	github.com/goccy/go-json v0.10.2 // indirect
 	github.com/golang-jwt/jwt v3.2.1+incompatible // indirect
 	github.com/google/gnostic v0.6.9 // indirect
+	github.com/google/s2a-go v0.1.4 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.2.3 // indirect
 	github.com/gosimple/unidecode v1.0.1 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.16.0 // indirect
@@ -268,7 +270,7 @@ require (
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
 	github.com/google/uuid v1.3.0
-	github.com/googleapis/gax-go/v2 v2.7.1 // indirect
+	github.com/googleapis/gax-go/v2 v2.11.0 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/gosuri/uitable v0.0.4 // indirect
 	github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79 // indirect

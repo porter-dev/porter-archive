@@ -7,6 +7,7 @@ import Fieldset from "components/porter/Fieldset";
 import Select from "components/porter/Select";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
+import { type CostList } from "lib/billing/types";
 import {
   useCustomerCosts,
   useCustomerPlan,
@@ -41,7 +42,20 @@ function UsagePage(): JSX.Element {
     currentPeriodEnd,
     currentPeriodDuration
   );
-  let totalCost = 0;
+
+  const computeTotalCost = (costs: CostList): number => {
+    let total = 0;
+    costs?.forEach(
+      (cost: {
+        start_timestamp: string;
+        end_timestamp: string;
+        cost: number;
+      }) => {
+        total += cost.cost;
+      }
+    );
+    return parseFloat(total.toFixed(2));
+  };
 
   const processedUsage = useMemo(() => {
     const before = usage;
@@ -84,7 +98,6 @@ function UsagePage(): JSX.Element {
           day: "numeric",
         });
         dailyCost.cost = parseFloat((dailyCost.cost / 100).toFixed(4));
-        totalCost += dailyCost.cost;
         return dailyCost;
       })
       .filter((dailyCost) => dailyCost.cost > 0);
@@ -131,7 +144,7 @@ function UsagePage(): JSX.Element {
       usage[0].usage_metrics.length > 0 ? (
         <>
           <BarWrapper>
-            <Total>Total cost: ${totalCost.toFixed(2)}</Total>
+            <Total>Total cost: ${computeTotalCost(costs)}</Total>
             <Bars
               fill="#8784D2"
               yKey="cost"

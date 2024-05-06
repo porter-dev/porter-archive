@@ -1,6 +1,7 @@
 package user
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -43,8 +44,8 @@ func (u *MigrateUsersHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 
 	r = r.Clone(ctx)
 
-	user, _ := r.Context().Value(types.UserScope).(*models.User)
-	if !strings.HasSuffix(user.Email, "@porter.run") {
+	thisUser, _ := r.Context().Value(types.UserScope).(*models.User)
+	if !strings.HasSuffix(thisUser.Email, "@porter.run") {
 		err := telemetry.Error(ctx, span, nil, "user is not a porter user")
 		u.HandleAPIError(w, r, apierrors.NewErrForbidden(err))
 		return
@@ -58,7 +59,7 @@ func (u *MigrateUsersHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	}
 
 	var usersMissingAuthMechanism []uint
-	migrationErrors := map[uint]string{}
+	migrationErrors := map[string][]uint{}
 
 	for _, user := range users {
 		// skip users that are already migrated
@@ -82,7 +83,8 @@ func (u *MigrateUsersHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 			}
 		}
 
-		if user.Password != "" {
+		switch {
+		case user.Password != "":
 			password := user.Password
 			createIdentityBody.Credentials = &ory.IdentityWithCredentials{
 				Oidc: nil,
@@ -93,7 +95,7 @@ func (u *MigrateUsersHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 				},
 				AdditionalProperties: nil,
 			}
-		} else if user.GithubUserID != 0 {
+		case user.GithubUserID != 0:
 			createIdentityBody.Credentials = &ory.IdentityWithCredentials{
 				Oidc: &ory.IdentityWithCredentialsOidc{
 					Config: &ory.IdentityWithCredentialsOidcConfig{
@@ -107,7 +109,7 @@ func (u *MigrateUsersHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 					},
 				},
 			}
-		} else if user.GoogleUserID != "" {
+		case user.GoogleUserID != "":
 			createIdentityBody.Credentials = &ory.IdentityWithCredentials{
 				Oidc: &ory.IdentityWithCredentialsOidc{
 					Config: &ory.IdentityWithCredentialsOidcConfig{
@@ -121,14 +123,19 @@ func (u *MigrateUsersHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 					},
 				},
 			}
-		} else {
+		default:
 			usersMissingAuthMechanism = append(usersMissingAuthMechanism, user.ID)
 			continue
 		}
 
 		createdIdentity, _, err := u.Config().Ory.IdentityAPI.CreateIdentity(u.Config().OryApiKeyContextWrapper(ctx)).CreateIdentityBody(createIdentityBody).Execute()
 		if err != nil {
-			migrationErrors[user.ID] = fmt.Sprintf("error creating identity: %s", err.Error())
+			errString := fmt.Sprintf("error creating identity: %s", err.Error())
+			if len(migrationErrors[err.Error()]) == 0 {
+				migrationErrors[errString] = []uint{}
+			}
+			migrationErrors[errString] = append(migrationErrors[errString], user.ID)
+
 			continue
 		}
 
@@ -137,18 +144,25 @@ func (u *MigrateUsersHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 
 		_, err = u.Repo().User().UpdateUser(user)
 		if err != nil {
-			migrationErrors[user.ID] = fmt.Sprintf("error updating user: %s", err.Error())
+			errString := fmt.Sprintf("error updating user: %s", err.Error())
+			if len(migrationErrors[err.Error()]) == 0 {
+				migrationErrors[errString] = []uint{}
+			}
+			migrationErrors[errString] = append(migrationErrors[errString], user.ID)
 			continue
 		}
 	}
 
-	telemetry.WithAttributes(span,
-		telemetry.AttributeKV{Key: "users-missing-auth-mechanism", Value: usersMissingAuthMechanism},
-		telemetry.AttributeKV{Key: "migration-errors", Value: migrationErrors},
-	)
+	var errs []error
+	if len(usersMissingAuthMechanism) > 0 {
+		errs = append(errs, fmt.Errorf("users missing auth mechanism: %v", usersMissingAuthMechanism))
+	}
+	for errString, userIds := range migrationErrors {
+		errs = append(errs, fmt.Errorf("%s: %v", errString, userIds))
+	}
 
-	if len(usersMissingAuthMechanism) > 0 || len(migrationErrors) > 0 {
-		err := telemetry.Error(ctx, span, nil, "error migrating users")
+	if len(errs) > 0 {
+		err := telemetry.Error(ctx, span, errors.Join(errs...), "error migrating users")
 		u.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}

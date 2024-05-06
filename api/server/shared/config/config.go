@@ -124,7 +124,7 @@ type Config struct {
 
 	TelemetryConfig telemetry.TracerConfig
 
-	Ory                     *ory.APIClient
+	Ory                     ory.APIClient
 	OryApiKeyContextWrapper func(ctx context.Context) context.Context
 }
 

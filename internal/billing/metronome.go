@@ -23,6 +23,7 @@ const (
 	defaultRewardAmountCents = 1000
 	defaultPaidAmountCents   = 0
 	maxReferralRewards       = 10
+	maxIngestEventLimit      = 100
 )
 
 // MetronomeClient is the client used to call the Metronome API
@@ -366,31 +367,45 @@ func (m MetronomeClient) IngestEvents(ctx context.Context, events []types.Billin
 
 	path := "ingest"
 
-	var currentAttempts int
-	for currentAttempts < defaultMaxRetries {
-		statusCode, err := m.do(http.MethodPost, path, events, nil)
-		// Check errors that are not from error http codes
-		if statusCode == 0 && err != nil {
-			return telemetry.Error(ctx, span, err, "failed to ingest billing events")
+	for i := 0; i < len(events); i += maxIngestEventLimit {
+		end := i + maxIngestEventLimit
+		if end > len(events) {
+			end = len(events)
 		}
 
-		if statusCode == http.StatusForbidden || statusCode == http.StatusUnauthorized {
-			return telemetry.Error(ctx, span, err, "unauthorized")
+		batch := events[i:end]
+
+		// Retry each batch to make sure all events are ingested
+		var currentAttempts int
+		for currentAttempts < defaultMaxRetries {
+			statusCode, err := m.do(http.MethodPost, path, batch, nil)
+			// Check errors that are not from error http codes
+			if statusCode == 0 && err != nil {
+				return telemetry.Error(ctx, span, err, "failed to ingest billing events")
+			}
+
+			if statusCode == http.StatusForbidden || statusCode == http.StatusUnauthorized {
+				return telemetry.Error(ctx, span, err, "unauthorized")
+			}
+
+			// 400 responses should not be retried
+			if statusCode == http.StatusBadRequest {
+				return telemetry.Error(ctx, span, err, "malformed billing events")
+			}
+
+			// Any other status code can be safely retried
+			if statusCode == http.StatusOK {
+				break
+			}
+			currentAttempts++
 		}
 
-		// 400 responses should not be retried
-		if statusCode == http.StatusBadRequest {
-			return telemetry.Error(ctx, span, err, "malformed billing events")
+		if currentAttempts == defaultMaxRetries {
+			return telemetry.Error(ctx, span, err, "max number of retry attempts reached with no success")
 		}
-
-		// Any other status code can be safely retried
-		if statusCode == 200 {
-			return nil
-		}
-		currentAttempts++
 	}
 
-	return telemetry.Error(ctx, span, err, "max number of retry attempts reached with no success")
+	return nil
 }
 
 func (m MetronomeClient) listBillableMetricIDs(ctx context.Context, customerID uuid.UUID) (billableMetrics []types.BillableMetric, err error) {

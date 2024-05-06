@@ -428,32 +428,6 @@ const Home: React.FC<Props> = (props) => {
                     {dayjs().to(dayjs(plan.trial_info.ending_before))}
                   </GlobalBanner>
                 )}
-                {!trialExpired && showBillingModal && (
-                  <BillingModal
-                    back={() => {
-                      setShowBillingModal(false);
-                    }}
-                    onCreate={async () => {
-                      await refetchPaymentEnabled({
-                        throwOnError: false,
-                        cancelRefetch: false,
-                      });
-                      setShowBillingModal(false);
-                    }}
-                  />
-                )}
-                {trialExpired && (
-                  <BillingModal
-                    trialExpired
-                    onCreate={async () => {
-                      await refetchPaymentEnabled({
-                        throwOnError: false,
-                        cancelRefetch: false,
-                      });
-                      setShowBillingModal(false);
-                    }}
-                  />
-                )}
               </>
             )}
           <ModalHandler setRefreshClusters={setForceRefreshClusters} />
@@ -486,37 +460,21 @@ const Home: React.FC<Props> = (props) => {
 
             <Switch>
               <Route path="/apps/new/app">
-                {currentProject?.validate_apply_v2 ? (
-                  <ClusterContextProvider
-                    clusterId={currentCluster?.id}
-                    refetchInterval={0}
-                  >
-                    <CreateApp />
-                  </ClusterContextProvider>
-                ) : (
-                  <NewAppFlow />
-                )}
+                <ClusterContextProvider
+                  clusterId={currentCluster?.id}
+                  refetchInterval={0}
+                >
+                  <CreateApp />
+                </ClusterContextProvider>
               </Route>
               <Route path="/apps/:appName/:tab">
-                {currentProject?.validate_apply_v2 ? (
-                  <AppView />
-                ) : (
-                  <ExpandedApp />
-                )}
+                <AppView />
               </Route>
               <Route path="/apps/:appName">
-                {currentProject?.validate_apply_v2 ? (
-                  <AppView />
-                ) : (
-                  <ExpandedApp />
-                )}
+                <AppView />
               </Route>
               <Route path="/apps">
-                {currentProject?.validate_apply_v2 ? (
-                  <Apps />
-                ) : (
-                  <AppDashboard />
-                )}
+                <Apps />
               </Route>
 
               <Route path="/environment-groups/new">
@@ -616,10 +574,10 @@ const Home: React.FC<Props> = (props) => {
                   "/jobs",
                   "/env-groups",
                   "/datastores",
-                  ...(!currentProject?.validate_apply_v2
+                  "/stacks",
+                  ...(!currentProject?.simplified_view_enabled
                     ? ["/preview-environments"]
                     : []),
-                  "/stacks",
                 ]}
                 render={() => {
                   if (currentCluster?.id === -1) {
@@ -651,7 +609,7 @@ const Home: React.FC<Props> = (props) => {
                 path={"/project-settings"}
                 render={() => <GuardedProjectSettings />}
               />
-              {currentProject?.validate_apply_v2 && (
+              {currentProject?.simplified_view_enabled && (
                 <>
                   <Route exact path="/preview-environments/configure">
                     <SetupApp />

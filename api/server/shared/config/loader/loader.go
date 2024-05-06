@@ -265,11 +265,22 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 		res.Logger.Info().Msg("Creating Upstash client")
 		res.UpstashConf = oauth.NewUpstashClient(&oauth.Config{
 			ClientID:     sc.UpstashClientID,
-			ClientSecret: "",
+			ClientSecret: "", // Upstash doesn't require a secret
 			Scopes:       []string{"offline_access"},
 			BaseURL:      sc.ServerURL,
 		})
 		res.Logger.Info().Msg("Created Upstash client")
+	}
+
+	if sc.NeonEnabled && sc.NeonClientID != "" && sc.NeonClientSecret != "" {
+		res.Logger.Info().Msg("Creating Neon client")
+		res.NeonConf = oauth.NewNeonClient(&oauth.Config{
+			ClientID:     sc.NeonClientID,
+			ClientSecret: sc.NeonClientSecret,
+			Scopes:       []string{"urn:neoncloud:projects:create", "urn:neoncloud:projects:read", "urn:neoncloud:projects:update", "urn:neoncloud:projects:delete", "offline", "offline_access"},
+			BaseURL:      sc.ServerURL,
+		})
+		res.Logger.Info().Msg("Created Neon client")
 	}
 
 	res.WSUpgrader = &websocket.Upgrader{

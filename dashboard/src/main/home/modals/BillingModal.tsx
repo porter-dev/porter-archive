@@ -87,6 +87,9 @@ const BillingModal = ({
                   })}>
                     Already redeemed your startup deal?
                   </Text>
+                  <Spacer y={0.5} />
+                  {"For more details on the current costs and usage of this project, visit the "}
+                  <Link to="/project-settings?selected_tab=billing">billing page.</Link>
                 </div>
               )
               : "Link a payment method to your Porter project."}

@@ -128,15 +128,39 @@ func (u *MigrateUsersHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 			continue
 		}
 
-		createdIdentity, _, err := u.Config().Ory.IdentityAPI.CreateIdentity(u.Config().OryApiKeyContextWrapper(ctx)).CreateIdentityBody(createIdentityBody).Execute()
+		createdIdentity, resp, err := u.Config().Ory.IdentityAPI.CreateIdentity(u.Config().OryApiKeyContextWrapper(ctx)).CreateIdentityBody(createIdentityBody).Execute()
 		if err != nil {
-			errString := fmt.Sprintf("error creating identity: %s", err.Error())
-			if len(migrationErrors[err.Error()]) == 0 {
-				migrationErrors[errString] = []uint{}
-			}
-			migrationErrors[errString] = append(migrationErrors[errString], user.ID)
+			switch resp.StatusCode {
+			// identity already exists, so we need to list the identities and find the one that matches
+			case 409:
+				identities, _, err := u.Config().Ory.IdentityAPI.ListIdentities(u.Config().OryApiKeyContextWrapper(ctx)).CredentialsIdentifier(user.Email).Execute()
+				if err != nil {
+					errString := fmt.Sprintf("error calling list identities``: %v\n", err)
+					if len(migrationErrors[err.Error()]) == 0 {
+						migrationErrors[errString] = []uint{}
+					}
+					migrationErrors[errString] = append(migrationErrors[errString], user.ID)
+					continue
+				}
 
-			continue
+				if len(identities) != 1 {
+					errString := fmt.Sprintf("expected 1 identity, got %d", len(identities))
+					if len(migrationErrors[err.Error()]) == 0 {
+						migrationErrors[errString] = []uint{}
+					}
+					migrationErrors[errString] = append(migrationErrors[errString], user.ID)
+					continue
+				}
+
+				createdIdentity = &identities[0]
+			default:
+				errString := fmt.Sprintf("error creating identity: %s", err.Error())
+				if len(migrationErrors[err.Error()]) == 0 {
+					migrationErrors[errString] = []uint{}
+				}
+				migrationErrors[errString] = append(migrationErrors[errString], user.ID)
+				continue
+			}
 		}
 
 		user.AuthProvider = models.AuthProvider_Ory

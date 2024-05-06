@@ -4,11 +4,13 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/telemetry"
 	"github.com/stripe/stripe-go/v76"
 	"github.com/stripe/stripe-go/v76/customer"
+	"github.com/stripe/stripe-go/v76/invoice"
 	"github.com/stripe/stripe-go/v76/paymentmethod"
 	"github.com/stripe/stripe-go/v76/setupintent"
 )
@@ -241,6 +243,43 @@ func (s StripeClient) GetPublishableKey(ctx context.Context) (key string) {
 	defer span.End()
 
 	return s.PublishableKey
+}
+
+// ListCustomerInvoices will return all invoices for the customer with the given status
+func (s StripeClient) ListCustomerInvoices(ctx context.Context, customerID string, status string) (invoiceList []types.Invoice, err error) {
+	ctx, span := telemetry.NewSpan(ctx, "populate-invoice-urls")
+	defer span.End()
+
+	if customerID == "" {
+		return invoiceList, telemetry.Error(ctx, span, err, "customer id cannot be empty")
+	}
+
+	stripe.Key = s.SecretKey
+
+	params := &stripe.InvoiceListParams{
+		Customer: stripe.String(customerID),
+		Status:   stripe.String(status),
+	}
+
+	result := invoice.List(params)
+
+	for result.Next() {
+		invoice := result.Current().(*stripe.Invoice)
+
+		if invoice == nil {
+			continue
+		}
+
+		createdTimestamp := time.Unix(invoice.Created, 0)
+
+		invoiceList = append(invoiceList, types.Invoice{
+			HostedInvoiceURL: invoice.HostedInvoiceURL,
+			Status:           string(invoice.Status),
+			Created:          createdTimestamp.Format(time.RFC3339),
+		})
+	}
+
+	return invoiceList, nil
 }
 
 func (s StripeClient) checkDefaultPaymentMethod(customerID string) (defaultPaymentExists bool, defaultPaymentID string, err error) {

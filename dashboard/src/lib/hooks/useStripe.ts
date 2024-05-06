@@ -4,17 +4,9 @@ import { z } from "zod";
 
 import {
   ClientSecretResponse,
-  CreditGrantsValidator,
   PaymentMethodValidator,
-  PlanValidator,
-  Plan,
-  UsageValidator,
-  type CreditGrants,
   type PaymentMethod,
   type PaymentMethodList,
-  type UsageList,
-  ReferralDetailsValidator,
-  ReferralDetails
 } from "lib/billing/types";
 
 import api from "shared/api";
@@ -50,22 +42,6 @@ type TGetPublishableKey = {
   publishableKey: string | null;
 };
 
-type TGetCredits = {
-  creditGrants: CreditGrants | null;
-};
-
-type TGetPlan = {
-  plan: Plan | null;
-};
-
-type TGetUsage = {
-  usage: UsageList | null;
-};
-
-type TGetReferralDetails = {
-  referralDetails: ReferralDetails
-};
-
 export const usePaymentMethods = (): TUsePaymentMethod => {
   const { currentProject } = useContext(Context);
 
@@ -99,7 +75,7 @@ export const usePaymentMethods = (): TUsePaymentMethod => {
         setPaymentMethodList(data);
         return data;
       } catch (error) {
-        return null
+        return null;
       }
     }
   );
@@ -171,7 +147,7 @@ export const useSetDefaultPaymentMethod = (): TSetDefaultPaymentMethod => {
   const { currentProject } = useContext(Context);
 
   if (!currentProject?.billing_enabled) {
-    return { setDefaultPaymentMethod: async () => { } };
+    return { setDefaultPaymentMethod: async () => {} };
   }
 
   const setDefaultPaymentMethod = async (
@@ -197,7 +173,6 @@ export const useSetDefaultPaymentMethod = (): TSetDefaultPaymentMethod => {
 export const checkIfProjectHasPayment = (): TCheckHasPaymentEnabled => {
   const { currentProject } = useContext(Context);
 
-
   // Check if payment is enabled for the project
   const paymentEnabledReq = useQuery(
     ["checkPaymentEnabled", currentProject?.id],
@@ -220,9 +195,10 @@ export const checkIfProjectHasPayment = (): TCheckHasPaymentEnabled => {
         const data = z.boolean().parse(res.data);
         return data;
       } catch (error) {
-        return null
+        return null;
       }
-    });
+    }
+  );
 
   return {
     hasPaymentEnabled: paymentEnabledReq.data ?? null,
@@ -254,156 +230,12 @@ export const usePublishableKey = (): TGetPublishableKey => {
         );
         return res.data;
       } catch (error) {
-        return null
-      }
-    });
-
-  return {
-    publishableKey: keyReq.data ?? null,
-  };
-};
-
-export const usePorterCredits = (): TGetCredits => {
-  const { currentProject } = useContext(Context);
-
-  // Fetch available credits
-  const creditsReq = useQuery(
-    ["getPorterCredits", currentProject?.id],
-    async (): Promise<CreditGrants | null> => {
-      if (!currentProject?.metronome_enabled) {
         return null;
-      }
-
-      if (!currentProject?.id || currentProject.id === -1) {
-        return null;
-      }
-
-      try {
-        const res = await api.getPorterCredits(
-          "<token>",
-          {},
-          {
-            project_id: currentProject?.id,
-          }
-        );
-        const creditGrants = CreditGrantsValidator.parse(res.data);
-        return creditGrants;
-      } catch (error) {
-        return null
       }
     }
   );
 
   return {
-    creditGrants: creditsReq.data ?? null,
-  };
-};
-
-export const useCustomerPlan = (): TGetPlan => {
-  const { currentProject } = useContext(Context);
-
-  // Fetch current plan
-  const planReq = useQuery(
-    ["getCustomerPlan", currentProject?.id],
-    async (): Promise<Plan | null> => {
-      if (!currentProject?.metronome_enabled) {
-        return null;
-      }
-
-      if (!currentProject?.id) {
-        return null;
-      }
-
-      try {
-        const res = await api.getCustomerPlan(
-          "<token>",
-          {},
-          { project_id: currentProject.id }
-        );
-
-        const plan = PlanValidator.parse(res.data);
-        return plan;
-      } catch (error) {
-        return null
-      }
-    });
-
-  return {
-    plan: planReq.data ?? null,
-  };
-};
-
-export const useCustomerUsage = (
-  windowSize: string,
-  currentPeriod: boolean
-): TGetUsage => {
-  const { currentProject } = useContext(Context);
-
-  // Fetch customer usage
-  const usageReq = useQuery(
-    ["listCustomerUsage", currentProject?.id],
-    async (): Promise<UsageList | null> => {
-      if (!currentProject?.metronome_enabled) {
-        return null;
-      }
-
-      if (!currentProject?.id || currentProject.id === -1) {
-        return null;
-      }
-
-      try {
-        const res = await api.getCustomerUsage(
-          "<token>",
-          {
-            window_size: windowSize,
-            current_period: currentPeriod,
-          },
-          {
-            project_id: currentProject?.id,
-          }
-        );
-        const usage = UsageValidator.array().parse(res.data);
-        return usage;
-      } catch (error) {
-        return null;
-      }
-    });
-
-  return {
-    usage: usageReq.data ?? null,
-  };
-};
-
-export const useReferralDetails = (): TGetReferralDetails => {
-  const { currentProject } = useContext(Context);
-
-  // Fetch user's referral code
-  const referralsReq = useQuery(
-    ["getReferralDetails", currentProject?.id],
-    async (): Promise<ReferralDetails | null> => {
-      if (!currentProject?.metronome_enabled) {
-        return null;
-      }
-
-      if (!currentProject?.id || currentProject.id === -1) {
-        return null;
-      }
-
-      try {
-        const res = await api.getReferralDetails(
-          "<token>",
-          {},
-          { project_id: currentProject?.id }
-        );
-
-        const referraldetails = ReferralDetailsValidator.parse(res.data);
-        return referraldetails;
-      } catch (error) {
-        return null
-      }
-    });
-
-  return {
-    referralDetails: referralsReq.data ?? null,
+    publishableKey: keyReq.data ?? null,
   };
 };

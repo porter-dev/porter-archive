@@ -116,7 +116,40 @@ type BillableMetric struct {
 	Name string    `json:"name"`
 }
 
-// Plan is a pricing plan to which a user is currently subscribed
+// ListCustomerCostsRequest is the request to list costs for a customer
+type ListCustomerCostsRequest struct {
+	StartingOn   string `schema:"starting_on"`
+	EndingBefore string `schema:"ending_before"`
+	Limit        int    `schema:"limit"`
+}
+
+// Cost is the cost for a customer in a specific time range
+type Cost struct {
+	StartTimestamp string                    `json:"start_timestamp"`
+	EndTimestamp   string                    `json:"end_timestamp"`
+	CreditTypes    map[string]CreditTypeCost `json:"credit_types"`
+}
+
+// CreditTypeCost is the cost for a specific credit type (e.g. CPU hours)
+type CreditTypeCost struct {
+	Name              string                  `json:"name"`
+	Cost              float64                 `json:"cost"`
+	LineItemBreakdown []LineItemBreakdownCost `json:"line_item_breakdown"`
+}
+
+// LineItemBreakdownCost is the cost breakdown by line item
+type LineItemBreakdownCost struct {
+	Name string  `json:"name"`
+	Cost float64 `json:"cost"`
+}
+
+// FormattedCost is the cost for a customer in a specific time range, flattened from the Metronome response
+type FormattedCost struct {
+	StartTimestamp string  `json:"start_timestamp"`
+	EndTimestamp   string  `json:"end_timestamp"`
+	Cost           float64 `json:"cost"`
+}
+
 type Plan struct {
 	ID                  uuid.UUID `json:"id"`
 	PlanID              uuid.UUID `json:"plan_id"`

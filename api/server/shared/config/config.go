@@ -1,7 +1,10 @@
 package config
 
 import (
+	"context"
+
 	"github.com/gorilla/sessions"
+	ory "github.com/ory/client-go"
 	"github.com/porter-dev/api-contracts/generated/go/porter/v1/porterv1connect"
 	"github.com/porter-dev/porter/api/server/shared/apierrors/alerter"
 	"github.com/porter-dev/porter/api/server/shared/config/env"
@@ -120,6 +123,9 @@ type Config struct {
 	EnableCAPIProvisioner bool
 
 	TelemetryConfig telemetry.TracerConfig
+
+	Ory                     *ory.APIClient
+	OryApiKeyContextWrapper func(ctx context.Context) context.Context
 }
 
 type ConfigLoader interface {

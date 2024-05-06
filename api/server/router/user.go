@@ -472,5 +472,30 @@ func getUserRoutes(
 		Router:   r,
 	})
 
+	// Get /api/users/migrate -> user.NewMigrateUsersHandler
+	migrateUsersEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: "/users/migrate",
+			},
+			Scopes: []types.PermissionScope{types.UserScope},
+		},
+	)
+
+	migrateUsersHandler := user.NewMigrateUsersHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: migrateUsersEndpoint,
+		Handler:  migrateUsersHandler,
+		Router:   r,
+	})
+
 	return routes
 }

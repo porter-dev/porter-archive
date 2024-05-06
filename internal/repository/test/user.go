@@ -99,6 +99,11 @@ func (repo *UserRepository) ReadUserByEmail(email string) (*models.User, error) 
 	return nil, gorm.ErrRecordNotFound
 }
 
+// ReadUserByAuthProvider finds a single user based on their auth provider and external id
+func (repo *UserRepository) ReadUserByAuthProvider(authProvider string, externalId string) (*models.User, error) {
+	return nil, errors.New("Cannot read from database")
+}
+
 // ReadUserByGithubUserID finds a single user based on their github id field
 func (repo *UserRepository) ReadUserByGithubUserID(id int64) (*models.User, error) {
 	if !repo.canQuery {
@@ -182,4 +187,9 @@ func (repo *UserRepository) CheckPassword(id int, pwd string) (bool, error) {
 	}
 
 	return true, nil
+}
+
+// ListUsers retrieves all users from the database (that are not deleted)
+func (repo *UserRepository) ListUsers() ([]*models.User, error) {
+	return nil, errors.New("Cannot read from database")
 }

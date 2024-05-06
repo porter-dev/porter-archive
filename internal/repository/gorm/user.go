@@ -55,6 +55,15 @@ func (repo *UserRepository) ReadUserByEmail(email string) (*models.User, error) 
 	return user, nil
 }
 
+// ReadUserByAuthProvider finds a single user based on their auth provider and external id
+func (repo *UserRepository) ReadUserByAuthProvider(authProvider string, externalId string) (*models.User, error) {
+	user := &models.User{}
+	if err := repo.db.Where("auth_provider = ? AND external_id = ?", authProvider, externalId).First(&user).Error; err != nil {
+		return nil, err
+	}
+	return user, nil
+}
+
 // ReadUserByGithubUserID finds a single user based on their github user id
 func (repo *UserRepository) ReadUserByGithubUserID(id int64) (*models.User, error) {
 	user := &models.User{}
@@ -103,4 +112,15 @@ func (repo *UserRepository) CheckPassword(id int, pwd string) (bool, error) {
 	}
 
 	return true, nil
+}
+
+// ListUsers retrieves all users from the database (that are not deleted)
+func (repo *UserRepository) ListUsers() ([]*models.User, error) {
+	users := make([]*models.User, 0)
+
+	if err := repo.db.Model(&models.User{}).Find(&users).Error; err != nil {
+		return nil, err
+	}
+
+	return users, nil
 }

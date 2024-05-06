@@ -93,3 +93,8 @@ NEON_ENABLED=false
 NEON_CLIENT_ID=
 # NEON_CLIENT_SECRET is used to integrate with Neon
 NEON_CLIENT_SECRET=
+
+// ORY_URL is the URL for Ory
+ORY_URL=
+// ORY_API_KEY authenticates with Ory
+ORY_API_KEY=

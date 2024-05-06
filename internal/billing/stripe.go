@@ -36,19 +36,17 @@ func (s StripeClient) CreateCustomer(ctx context.Context, userEmail string, proj
 	defer span.End()
 
 	if projectID == 0 || projectName == "" {
-		return "", fmt.Errorf("invalid project id or name")
+		return "", telemetry.Error(ctx, span, err, "invalid project id or name")
 	}
 
 	stripe.Key = s.SecretKey
 
-	// Create customer if not exists
-	customerName := fmt.Sprintf("project_%s", projectName)
 	projectIDStr := strconv.FormatUint(uint64(projectID), 10)
 	params := &stripe.CustomerParams{
-		Name:  stripe.String(customerName),
+		Name:  stripe.String(projectName),
 		Email: stripe.String(userEmail),
 		Metadata: map[string]string{
-			"porter_project_id": projectIDStr,
+			"project_id": projectIDStr,
 		},
 	}
 

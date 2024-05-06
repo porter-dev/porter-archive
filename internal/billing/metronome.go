@@ -394,7 +394,7 @@ func (m MetronomeClient) IngestEvents(ctx context.Context, events []types.Billin
 			}
 
 			// Any other status code can be safely retried
-			if statusCode == 200 {
+			if statusCode == http.StatusOK {
 				break
 			}
 			currentAttempts++

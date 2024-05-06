@@ -44,16 +44,7 @@ function UsagePage(): JSX.Element {
   );
 
   const computeTotalCost = (costs: CostList): number => {
-    let total = 0;
-    costs?.forEach(
-      (cost: {
-        start_timestamp: string;
-        end_timestamp: string;
-        cost: number;
-      }) => {
-        total += cost.cost;
-      }
-    );
+    const total = costs.reduce((acc, curr) => acc + curr.cost, 0);
     return parseFloat(total.toFixed(2));
   };
 

@@ -29,6 +29,7 @@ import BillingPage from "./BillingPage";
 import InvitePage from "./InviteList";
 import Metadata from "./Metadata";
 import ProjectDeleteConsent from "./ProjectDeleteConsent";
+import UsagePage from "./UsagePage";
 
 type PropsType = RouteComponentProps & WithAuthProps & {};
 type ValidationError = {
@@ -92,6 +93,16 @@ function ProjectSettings(props: any) {
         tabOpts.push({
           value: "billing",
           label: "Billing",
+        });
+      }
+
+      if (
+        currentProject?.billing_enabled &&
+        currentProject?.metronome_enabled
+      ) {
+        tabOpts.push({
+          value: "usage",
+          label: "Usage",
         });
       }
 
@@ -166,7 +177,9 @@ function ProjectSettings(props: any) {
     } else if (currentTab === "api-tokens") {
       return <APITokensSection />;
     } else if (currentTab === "billing") {
-      return <BillingPage></BillingPage>;
+      return <BillingPage />;
+    } else if (currentTab === "usage") {
+      return <UsagePage />;
     } else {
       return (
         <>

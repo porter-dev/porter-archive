@@ -12,6 +12,9 @@ type AppTemplate struct {
 	// ID is a UUID for the AppRevision
 	ID uuid.UUID `gorm:"type:uuid;primaryKey" json:"id"`
 
+	// Name is the name of the template, most commonly matches the app name and is unique within the project
+	Name string `json:"name" gorm:"default:''"`
+
 	// Base64App is the PorterApp as json encoded in base64
 	Base64App string `json:"base64_app"`
 

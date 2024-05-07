@@ -43,7 +43,7 @@ const Settings: React.FC = () => {
     }
   };
 
-  const handleDeletionClick = async (): Promise<void> => {
+  const handleDeletionClick = (): void => {
     setCurrentOverlay({
       message: `Are you sure you want to delete ${addon.name.value}?`,
       onYes: handleDeletionSubmit,

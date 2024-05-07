@@ -52,7 +52,6 @@ func (c *IngestEventsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 
 	telemetry.WithAttributes(span,
 		telemetry.AttributeKV{Key: "metronome-enabled", Value: true},
-		telemetry.AttributeKV{Key: "usage-id", Value: proj.UsageID},
 	)
 
 	ingestEventsRequest := struct {
@@ -76,7 +75,7 @@ func (c *IngestEventsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		}
 	}
 
-	err := c.Config().BillingManager.LagoClient.IngestEvents(ctx, ingestEventsRequest.Events)
+	err := c.Config().BillingManager.LagoClient.IngestEvents(ctx, ingestEventsRequest.Events, proj.EnableSandbox)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error ingesting events")
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))

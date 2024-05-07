@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/google/uuid"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
@@ -100,10 +99,9 @@ func (c *CheckPaymentEnabledHandler) ensureBillingSetup(ctx context.Context, pro
 
 	telemetry.WithAttributes(span,
 		telemetry.AttributeKV{Key: "billing-id", Value: proj.BillingID},
-		telemetry.AttributeKV{Key: "usage-id", Value: proj.UsageID},
 	)
 
-	if proj.BillingID == "" || proj.UsageID == uuid.Nil {
+	if proj.BillingID == "" {
 		adminUser, err := c.getAdminUser(ctx, proj.ID)
 		if err != nil {
 			return telemetry.Error(ctx, span, err, "error getting admin user")
@@ -118,6 +116,14 @@ func (c *CheckPaymentEnabledHandler) ensureBillingSetup(ctx context.Context, pro
 		err = c.ensureStripeCustomerExists(ctx, adminUser.Email, proj)
 		if err != nil {
 			return telemetry.Error(ctx, span, err, "error ensuring Stripe customer exists")
+		}
+	}
+
+	lagoCustomerExists := false
+	if !lagoCustomerExists {
+		adminUser, err := c.getAdminUser(ctx, proj.ID)
+		if err != nil {
+			return telemetry.Error(ctx, span, err, "error getting admin user")
 		}
 
 		// Create usage customer for project and set the usage ID if it doesn't exist
@@ -193,7 +199,7 @@ func (c *CheckPaymentEnabledHandler) ensureMetronomeCustomerExists(ctx context.C
 	ctx, span := telemetry.NewSpan(ctx, "ensure-metronome-customer-exists")
 	defer span.End()
 
-	if !c.Config().BillingManager.LagoConfigLoaded || !proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient) || proj.UsageID != uuid.Nil {
+	if !c.Config().BillingManager.LagoConfigLoaded || !proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient) {
 		return nil
 	}
 
@@ -201,11 +207,6 @@ func (c *CheckPaymentEnabledHandler) ensureMetronomeCustomerExists(ctx context.C
 	if err != nil {
 		return telemetry.Error(ctx, span, err, "error creating Metronome customer")
 	}
-
-	telemetry.WithAttributes(span,
-		telemetry.AttributeKV{Key: "usage-id", Value: proj.UsageID},
-		telemetry.AttributeKV{Key: "usage-plan-id", Value: proj.UsagePlanID},
-	)
 
 	return nil
 }

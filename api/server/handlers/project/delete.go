@@ -93,18 +93,13 @@ func (p *ProjectDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	}
 
 	if p.Config().BillingManager.LagoConfigLoaded && proj.GetFeatureFlag(models.MetronomeEnabled, p.Config().LaunchDarklyClient) {
-		err = p.Config().BillingManager.LagoClient.EndCustomerPlan(ctx, proj.UsageID, proj.UsagePlanID)
+		err = p.Config().BillingManager.LagoClient.EndCustomerPlan(ctx, proj.ID)
 		if err != nil {
 			e := "error ending billing plan"
 			err = telemetry.Error(ctx, span, err, e)
 			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 			return
 		}
-		telemetry.WithAttributes(span,
-			telemetry.AttributeKV{Key: "project-id", Value: proj.ID},
-			telemetry.AttributeKV{Key: "usage-id", Value: proj.UsageID},
-			telemetry.AttributeKV{Key: "usage-plan-id", Value: proj.UsagePlanID},
-		)
 	}
 
 	deletedProject, err := p.Repo().Project().DeleteProject(proj)

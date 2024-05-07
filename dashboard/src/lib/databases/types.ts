@@ -36,6 +36,7 @@ const datastoreTypeValidator = z.enum([
   "ELASTICACHE",
   "MANAGED_REDIS",
   "MANAGED_POSTGRES",
+  "NEON",
 ]);
 const datastoreEngineValidator = z.enum([
   "UNKNOWN",
@@ -109,6 +110,10 @@ export const DATASTORE_TYPE_MANAGED_REDIS: DatastoreType = {
   name: "MANAGED_REDIS" as const,
   displayName: "Managed Redis",
 };
+export const DATASTORE_TYPE_NEON: DatastoreType = {
+  name: "NEON" as const,
+  displayName: "Neon",
+};
 
 export type DatastoreState = {
   state: z.infer<typeof datastoreValidator>["status"];
@@ -170,7 +175,6 @@ export type DatastoreTemplate = {
   disabled: boolean;
   instanceTiers: ResourceOption[];
   supportedEngineVersions: EngineVersion[];
-  formTitle: string;
   creationStateProgression: DatastoreState[];
   deletionStateProgression: DatastoreState[];
 };
@@ -312,6 +316,10 @@ const managedRedisConfigValidator = z.object({
     .default(1),
 });
 
+const neonValidator = z.object({
+  type: z.literal("neon"),
+});
+
 export const dbFormValidator = z.object({
   name: z
     .string()
@@ -332,6 +340,7 @@ export const dbFormValidator = z.object({
     elasticacheRedisConfigValidator,
     managedRedisConfigValidator,
     managedPostgresConfigValidator,
+    neonValidator,
   ]),
   clusterId: z.number(),
 });

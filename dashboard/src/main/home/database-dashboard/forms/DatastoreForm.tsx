@@ -34,6 +34,7 @@ import {
   DATASTORE_TEMPLATE_AWS_RDS,
   DATASTORE_TEMPLATE_MANAGED_POSTGRES,
   DATASTORE_TEMPLATE_MANAGED_REDIS,
+  DATASTORE_TEMPLATE_NEON,
   SUPPORTED_DATASTORE_TEMPLATES,
 } from "../constants";
 import { useDatastoreFormContext } from "../DatastoreFormContextProvider";
@@ -104,6 +105,7 @@ const DatastoreForm: React.FC = () => {
             DATASTORE_TEMPLATE_AWS_RDS,
             DATASTORE_TEMPLATE_AWS_AURORA,
             DATASTORE_TEMPLATE_AWS_ELASTICACHE,
+            DATASTORE_TEMPLATE_NEON,
           ]
         : [
             DATASTORE_TEMPLATE_MANAGED_POSTGRES,
@@ -286,6 +288,14 @@ const DatastoreForm: React.FC = () => {
                             setValue("config.masterUsername", "postgres");
                             setValue("config.engineVersion", "15.4");
                           }
+                        )
+                        .with(
+                          {
+                            name: DATASTORE_TEMPLATE_NEON.name,
+                          },
+                          () => {
+                            setValue("config.type", "neon");
+                          }
                         );
                       setValue("config.instanceClass", "unspecified");
                       setValue("config.masterUserPassword", uuidv4());
@@ -369,6 +379,14 @@ const DatastoreForm: React.FC = () => {
                             password: watchDbPassword,
                             username: "",
                             database_name: "",
+                          }
+                        : template === DATASTORE_TEMPLATE_NEON
+                        ? {
+                            host: "(determined after creation)",
+                            port: 5432,
+                            password: "(determined after creation)",
+                            username: "(determined after creation)",
+                            database_name: "(determined after creation)",
                           }
                         : {
                             host: "(determined after creation)",

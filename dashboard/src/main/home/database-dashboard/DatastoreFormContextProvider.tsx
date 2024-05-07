@@ -96,6 +96,7 @@ const DatastoreFormContextProvider: React.FC<
       await createDatastore(data);
       history.push(`/datastores/${data.name}`);
     } catch (err) {
+      console.error(err);
       const errorMessage = getErrorMessageFromNetworkCall(
         err,
         "Datastore creation"

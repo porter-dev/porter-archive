@@ -13,6 +13,7 @@ import {
   DATASTORE_TYPE_ELASTICACHE,
   DATASTORE_TYPE_MANAGED_POSTGRES,
   DATASTORE_TYPE_MANAGED_REDIS,
+  DATASTORE_TYPE_NEON,
   DATASTORE_TYPE_RDS,
   type DatastoreEngine,
   type DatastoreTemplate,
@@ -21,6 +22,7 @@ import {
 import awsRDS from "assets/amazon-rds.png";
 import awsElastiCache from "assets/aws-elasticache.png";
 import infra from "assets/cluster.svg";
+import neon from "assets/neon.svg";
 import postgresql from "assets/postgresql.svg";
 import redis from "assets/redis.svg";
 
@@ -103,7 +105,6 @@ export const DATASTORE_TEMPLATE_AWS_RDS: DatastoreTemplate = Object.freeze({
       storageGigabytes: 2048,
     },
   ],
-  formTitle: "Create an RDS PostgreSQL instance",
   creationStateProgression: [
     DATASTORE_STATE_CREATING,
     DATASTORE_STATE_CONFIGURING_LOG_EXPORTS,
@@ -145,7 +146,6 @@ export const DATASTORE_TEMPLATE_AWS_AURORA: DatastoreTemplate = Object.freeze({
       storageGigabytes: 256,
     },
   ],
-  formTitle: "Create an Aurora PostgreSQL instance",
   creationStateProgression: [
     DATASTORE_STATE_CREATING,
     DATASTORE_STATE_AVAILABLE,
@@ -205,7 +205,6 @@ export const DATASTORE_TEMPLATE_AWS_ELASTICACHE: DatastoreTemplate =
         storageGigabytes: 0,
       },
     ],
-    formTitle: "Create an ElastiCache Redis instance",
     creationStateProgression: [
       DATASTORE_STATE_CREATING,
       DATASTORE_STATE_MODIFYING,
@@ -246,7 +245,6 @@ export const DATASTORE_TEMPLATE_MANAGED_REDIS: DatastoreTemplate =
         storageGigabytes: 2,
       },
     ],
-    formTitle: "Create an ElastiCache Memcached instance",
     creationStateProgression: [
       DATASTORE_STATE_CREATING,
       DATASTORE_STATE_AVAILABLE,
@@ -284,7 +282,6 @@ export const DATASTORE_TEMPLATE_MANAGED_POSTGRES: DatastoreTemplate =
         storageGigabytes: 2,
       },
     ],
-    formTitle: "Create a managed PostgreSQL instance",
     creationStateProgression: [
       DATASTORE_STATE_CREATING,
       DATASTORE_STATE_AVAILABLE,
@@ -296,10 +293,48 @@ export const DATASTORE_TEMPLATE_MANAGED_POSTGRES: DatastoreTemplate =
     ],
   });
 
+export const DATASTORE_TEMPLATE_NEON: DatastoreTemplate = Object.freeze({
+  name: "Neon",
+  displayName: "Neon",
+  highLevelType: DATASTORE_ENGINE_POSTGRES,
+  type: DATASTORE_TYPE_NEON,
+  engine: DATASTORE_ENGINE_POSTGRES,
+  supportedEngineVersions: [],
+  icon: neon as string,
+  description: "A postgresql instance hosted by Neon.",
+  disabled: true,
+  instanceTiers: [
+    {
+      tier: "db.t4g.micro" as const,
+      label: "Micro",
+      cpuCores: 1,
+      ramGigabytes: 1,
+      storageGigabytes: 1,
+    },
+    {
+      tier: "db.t4g.small" as const,
+      label: "Small",
+      cpuCores: 2,
+      ramGigabytes: 2,
+      storageGigabytes: 2,
+    },
+  ],
+  creationStateProgression: [
+    DATASTORE_STATE_CREATING,
+    DATASTORE_STATE_AVAILABLE,
+  ],
+  deletionStateProgression: [
+    DATASTORE_STATE_AWAITING_DELETION,
+    DATASTORE_STATE_DELETING_RECORD,
+    DATASTORE_STATE_DELETED,
+  ],
+});
+
 export const SUPPORTED_DATASTORE_TEMPLATES: DatastoreTemplate[] = [
   DATASTORE_TEMPLATE_AWS_RDS,
   DATASTORE_TEMPLATE_AWS_AURORA,
   DATASTORE_TEMPLATE_AWS_ELASTICACHE,
   DATASTORE_TEMPLATE_MANAGED_POSTGRES,
   DATASTORE_TEMPLATE_MANAGED_REDIS,
+  DATASTORE_TEMPLATE_NEON,
 ];

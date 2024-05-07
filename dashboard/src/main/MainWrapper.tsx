@@ -11,15 +11,12 @@ import Main from "./Main";
 // required styles for Ory Elements
 import "@ory/elements/dist/style.css";
 
-type PropsType = RouteComponentProps & {};
+type PropsType = RouteComponentProps;
 
 const MainWrapper: React.FC<PropsType> = ({ history, location }) => {
   return (
     <ContextProvider history={history} location={location}>
       <ThemeProvider themeOverrides={{}}>
-        {/* We dont need to pass any custom translations */}
-        {/* <IntlProvider> */}
-        {/* We pass custom translations */}
         <IntlProvider locale="en" defaultLocale="en">
           <AuthzProvider>
             <AuthnProvider>

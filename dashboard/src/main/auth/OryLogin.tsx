@@ -5,6 +5,8 @@ import { useLocation } from "react-router";
 import { useHistory } from "react-router-dom";
 import styled from "styled-components";
 
+import Container from "components/porter/Container";
+
 import { basePath, sdk, sdkError } from "shared/auth/sdk";
 
 import Loading from "../../components/Loading";
@@ -70,22 +72,21 @@ const OryLogin: React.FC<Props> = ({ authenticate }): JSX.Element => {
   const sdkErrorHandler = sdkError(getFlow, setFlow, "/login", true);
 
   // Create a new login flow
-  const createFlow = (): void => {
-    sdk
-      .createBrowserLoginFlow({
+  const createFlow = async (): Promise<void> => {
+    try {
+      const { data: flow } = await sdk.createBrowserLoginFlow({
         refresh: true,
         aal: aal2 ? "aal2" : "aal1",
         ...(loginChallenge && { loginChallenge }),
         ...(returnTo && { returnTo }),
-      })
-      // flow contains the form fields and csrf token
-      .then(({ data: flow }) => {
-        // Update URI query params to include flow id
-        queryParams.set("flow", flow.id);
-        // Set the flow data
-        setFlow(flow);
-      })
-      .catch(sdkErrorHandler);
+      });
+      // Update URI query params to include flow id
+      queryParams.set("flow", flow.id);
+      // Set the flow data
+      setFlow(flow);
+    } catch (err) {
+      sdkErrorHandler(err).catch(() => {});
+    }
   };
 
   // submit the login form data to Ory
@@ -118,7 +119,7 @@ const OryLogin: React.FC<Props> = ({ authenticate }): JSX.Element => {
     }
 
     // we assume there was no flow, so we create a new one
-    createFlow();
+    createFlow().catch(() => {});
   }, []);
 
   // we check if the flow is set, if not we show a loading indicator
@@ -156,13 +157,15 @@ const OryLogin: React.FC<Props> = ({ authenticate }): JSX.Element => {
         // we might need webauthn support which requires additional js
         includeScripts={true}
         // we submit the form data to Ory
-        onSubmit={async ({ body }) => {
-          await submitFlow(body as UpdateLoginFlowBody);
+        onSubmit={({ body }) => {
+          submitFlow(body as UpdateLoginFlowBody).catch(() => {});
         }}
       />
     </Scrollable>
   ) : (
-    <Loading />
+    <Container column>
+      <Loading />
+    </Container>
   );
 };
 

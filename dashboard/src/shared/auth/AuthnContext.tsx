@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from "react";
-import { Configuration, FrontendApi, Session } from "@ory/client";
+import { Configuration, FrontendApi, type Session } from "@ory/client";
 import { Redirect, Route, Switch } from "react-router-dom";
 
 import api from "shared/api";
@@ -105,11 +105,12 @@ const AuthnProvider = ({
         setIsEmailVerified(false);
         clearContext?.();
         localStorage.clear();
-        window.location.replace(logoutUrl);
       })
       .catch((err) => {
         setCurrentError?.(err.response?.data.errors[0]);
       });
+
+    window.location.replace(logoutUrl);
   };
 
   useEffect(() => {

@@ -82,8 +82,8 @@ type ListCreditGrantsRequest struct {
 
 // ListCreditGrantsResponse returns the total remaining and granted credits for a customer.
 type ListCreditGrantsResponse struct {
-	RemainingCredits float64 `json:"remaining_credits"`
-	GrantedCredits   float64 `json:"granted_credits"`
+	RemainingBalanceCents int `json:"remaining_credits"`
+	GrantedBalanceCents   int `json:"granted_credits"`
 }
 
 // ListCustomerUsageRequest is the request to list usage for a customer

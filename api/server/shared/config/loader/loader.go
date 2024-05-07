@@ -372,7 +372,7 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 	}
 
 	if sc.MetronomeAPIKey != "" && sc.PorterCloudPlanID != "" && sc.PorterStandardPlanID != "" {
-		metronomeClient, err = billing.NewMetronomeClient(InstanceEnvConf.ServerConf.MetronomeAPIKey, InstanceEnvConf.ServerConf.PorterCloudPlanID, InstanceEnvConf.ServerConf.PorterStandardPlanID)
+		metronomeClient, err = billing.NewLagoClient(InstanceEnvConf.ServerConf.MetronomeAPIKey, InstanceEnvConf.ServerConf.PorterCloudPlanID, InstanceEnvConf.ServerConf.PorterStandardPlanID)
 		if err != nil {
 			return nil, fmt.Errorf("unable to create metronome client: %w", err)
 		}

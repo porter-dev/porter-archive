@@ -7,7 +7,7 @@ import styled from "styled-components";
 
 import Container from "components/porter/Container";
 
-import { basePath, sdk, sdkError } from "shared/auth/sdk";
+import { basePath, ory, sdkError } from "shared/auth/ory";
 
 import Loading from "../../components/Loading";
 
@@ -58,7 +58,7 @@ const OryLogin: React.FC<Props> = ({ authenticate }): JSX.Element => {
   // Get the flow based on the flowId in the URL (.e.g redirect to this page after flow initialized)
   const getFlow = useCallback(
     async (flowId: string) =>
-      await sdk
+      await ory
         // the flow data contains the form fields, error messages and csrf token
         .getLoginFlow({ id: flowId })
         .then(({ data: flow }) => {
@@ -74,7 +74,7 @@ const OryLogin: React.FC<Props> = ({ authenticate }): JSX.Element => {
   // Create a new login flow
   const createFlow = async (): Promise<void> => {
     try {
-      const { data: flow } = await sdk.createBrowserLoginFlow({
+      const { data: flow } = await ory.createBrowserLoginFlow({
         refresh: true,
         aal: aal2 ? "aal2" : "aal1",
         ...(loginChallenge && { loginChallenge }),
@@ -99,7 +99,7 @@ const OryLogin: React.FC<Props> = ({ authenticate }): JSX.Element => {
 
     // we submit the flow to Ory with the form data
     try {
-      await sdk.updateLoginFlow({ flow: flow.id, updateLoginFlowBody: body });
+      await ory.updateLoginFlow({ flow: flow.id, updateLoginFlowBody: body });
 
       await authenticate();
 

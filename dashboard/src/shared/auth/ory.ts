@@ -7,7 +7,7 @@ import { useHistory } from "react-router-dom";
 export const basePath =
   process.env.REACT_APP_ORY_URL || "http://localhost:4000";
 
-export const sdk = new FrontendApi(
+export const ory = new FrontendApi(
   new Configuration({
     basePath,
     // we always want to include the cookies in each request

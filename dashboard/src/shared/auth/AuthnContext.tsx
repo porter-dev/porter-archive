@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from "react";
-import { Configuration, FrontendApi, type Session } from "@ory/client";
+import { type Session } from "@ory/client";
 import { Redirect, Route, Switch } from "react-router-dom";
 
 import api from "shared/api";
@@ -13,18 +13,7 @@ import ResetPasswordInit from "../../main/auth/ResetPasswordInit";
 import SetInfo from "../../main/auth/SetInfo";
 import VerifyEmail from "../../main/auth/VerifyEmail";
 import CurrentError from "../../main/CurrentError";
-
-// Get your Ory url from .env
-// Or localhost for local development
-const basePath = process.env.REACT_APP_ORY_URL || "http://localhost:4000";
-const ory = new FrontendApi(
-  new Configuration({
-    basePath,
-    baseOptions: {
-      withCredentials: true,
-    },
-  })
-);
+import { ory } from "./ory";
 
 type AuthnState = {
   userId: number;

@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import {
   PaymentElement,
   useElements,
   useStripe,
 } from "@stripe/react-stripe-js";
 import styled from "styled-components";
+import api from "shared/api";
 
 import Button from "components/porter/Button";
 import Error from "components/porter/Error";
@@ -15,7 +16,10 @@ import {
   useSetDefaultPaymentMethod,
 } from "lib/hooks/useStripe";
 
+import { Context } from "shared/Context";
+
 const PaymentSetupForm = ({ onCreate }: { onCreate: () => Promise<void> }) => {
+  const { currentProject } = useContext(Context);
   const stripe = useStripe();
   const elements = useElements();
 
@@ -57,6 +61,26 @@ const PaymentSetupForm = ({ onCreate }: { onCreate: () => Promise<void> }) => {
     // Confirm the setup and set as default
     if (setupIntent?.payment_method !== null) {
       await setDefaultPaymentMethod(setupIntent?.payment_method as string);
+
+      // create cluster on first payment setup for sandbox
+      if (currentProject?.sandbox_enabled) {
+        await api.connectProjectToCluster(
+          "<token>",
+          {},
+          { id: currentProject.id }
+        )
+        .then(() => {
+          api.inviteAdmin(
+            "<token>",
+            {},
+            { project_id: currentProject.id }
+          )
+        })
+        .catch((err: any) => {
+          setErrorMessage(err.message);
+          setLoading(false);
+        })
+      }
     }
 
     onCreate();

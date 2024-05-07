@@ -92,8 +92,8 @@ func (p *ProjectDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	if p.Config().BillingManager.MetronomeConfigLoaded && proj.GetFeatureFlag(models.MetronomeEnabled, p.Config().LaunchDarklyClient) {
-		err = p.Config().BillingManager.MetronomeClient.EndCustomerPlan(ctx, proj.UsageID, proj.UsagePlanID)
+	if p.Config().BillingManager.LagoConfigLoaded && proj.GetFeatureFlag(models.MetronomeEnabled, p.Config().LaunchDarklyClient) {
+		err = p.Config().BillingManager.LagoClient.EndCustomerPlan(ctx, proj.UsageID, proj.UsagePlanID)
 		if err != nil {
 			e := "error ending billing plan"
 			err = telemetry.Error(ctx, span, err, e)

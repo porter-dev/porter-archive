@@ -193,11 +193,11 @@ func (c *CheckPaymentEnabledHandler) ensureMetronomeCustomerExists(ctx context.C
 	ctx, span := telemetry.NewSpan(ctx, "ensure-metronome-customer-exists")
 	defer span.End()
 
-	if !c.Config().BillingManager.MetronomeConfigLoaded || !proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient) || proj.UsageID != uuid.Nil {
+	if !c.Config().BillingManager.LagoConfigLoaded || !proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient) || proj.UsageID != uuid.Nil {
 		return nil
 	}
 
-	customerID, customerPlanID, err := c.Config().BillingManager.MetronomeClient.CreateCustomerWithPlan(ctx, adminUserEmail, proj.Name, proj.ID, proj.BillingID, proj.EnableSandbox)
+	err = c.Config().BillingManager.LagoClient.CreateCustomerWithPlan(ctx, adminUserEmail, proj.Name, proj.ID, proj.BillingID, proj.EnableSandbox)
 	if err != nil {
 		return telemetry.Error(ctx, span, err, "error creating Metronome customer")
 	}
@@ -206,14 +206,6 @@ func (c *CheckPaymentEnabledHandler) ensureMetronomeCustomerExists(ctx context.C
 		telemetry.AttributeKV{Key: "usage-id", Value: proj.UsageID},
 		telemetry.AttributeKV{Key: "usage-plan-id", Value: proj.UsagePlanID},
 	)
-
-	proj.UsageID = customerID
-	proj.UsagePlanID = customerPlanID
-
-	_, err = c.Repo().Project().UpdateProject(proj)
-	if err != nil {
-		return telemetry.Error(ctx, span, err, "error updating project")
-	}
 
 	return nil
 }

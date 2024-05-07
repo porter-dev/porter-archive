@@ -360,7 +360,7 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 	var (
 		stripeClient     billing.StripeClient
 		stripeEnabled    bool
-		metronomeClient  billing.MetronomeClient
+		lagoClient       billing.LagoClient
 		metronomeEnabled bool
 	)
 	if sc.StripeSecretKey != "" {
@@ -371,23 +371,23 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 		res.Logger.Info().Msg("STRIPE_SECRET_KEY not set, all Stripe functionality will be disabled")
 	}
 
-	if sc.MetronomeAPIKey != "" && sc.PorterCloudPlanID != "" && sc.PorterStandardPlanID != "" {
-		metronomeClient, err = billing.NewLagoClient(InstanceEnvConf.ServerConf.MetronomeAPIKey, InstanceEnvConf.ServerConf.PorterCloudPlanID, InstanceEnvConf.ServerConf.PorterStandardPlanID)
+	if sc.LagoAPIKey != "" && sc.PorterCloudPlanID != "" && sc.PorterStandardPlanID != "" {
+		lagoClient, err = billing.NewLagoClient(InstanceEnvConf.ServerConf.LagoAPIKey, InstanceEnvConf.ServerConf.PorterCloudPlanID, InstanceEnvConf.ServerConf.PorterStandardPlanID)
 		if err != nil {
-			return nil, fmt.Errorf("unable to create metronome client: %w", err)
+			return nil, fmt.Errorf("unable to create Lago client: %w", err)
 		}
 		metronomeEnabled = true
-		res.Logger.Info().Msg("Metronome configuration loaded")
+		res.Logger.Info().Msg("Lago configuration loaded")
 	} else {
-		res.Logger.Info().Msg("METRONOME_API_KEY, PORTER_CLOUD_PLAN_ID, or PORTER_STANDARD_PLAN_ID not set, all Metronome functionality will be disabled")
+		res.Logger.Info().Msg("LAGO_API_KEY, PORTER_CLOUD_PLAN_ID, or PORTER_STANDARD_PLAN_ID not set, all Metronome functionality will be disabled")
 	}
 
 	res.Logger.Info().Msg("Creating billing manager")
 	res.BillingManager = billing.Manager{
-		StripeClient:          stripeClient,
-		StripeConfigLoaded:    stripeEnabled,
-		MetronomeClient:       metronomeClient,
-		MetronomeConfigLoaded: metronomeEnabled,
+		StripeClient:       stripeClient,
+		StripeConfigLoaded: stripeEnabled,
+		LagoClient:         lagoClient,
+		LagoConfigLoaded:   metronomeEnabled,
 	}
 	res.Logger.Info().Msg("Created billing manager")
 

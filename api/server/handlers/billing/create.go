@@ -136,7 +136,7 @@ func (c *CreateBillingHandler) grantRewardIfReferral(ctx context.Context, referr
 		return telemetry.Error(ctx, span, err, "failed to get referral count by referrer id")
 	}
 
-	maxReferralRewards := c.Config().BillingManager.MetronomeClient.MaxReferralRewards
+	maxReferralRewards := c.Config().BillingManager.LagoClient.MaxReferralRewards
 	if referralCount >= maxReferralRewards {
 		return nil
 	}
@@ -151,9 +151,9 @@ func (c *CreateBillingHandler) grantRewardIfReferral(ctx context.Context, referr
 		// practice will mean the credits will most likely run out before expiring
 		expiresAt := time.Now().AddDate(5, 0, 0).Format(time.RFC3339)
 		reason := "Referral reward"
-		rewardAmount := c.Config().BillingManager.MetronomeClient.DefaultRewardAmountCents
-		paidAmount := c.Config().BillingManager.MetronomeClient.DefaultPaidAmountCents
-		err := c.Config().BillingManager.MetronomeClient.CreateCreditsGrant(ctx, referrerProject.UsageID, reason, rewardAmount, paidAmount, expiresAt)
+		rewardAmount := c.Config().BillingManager.LagoClient.DefaultRewardAmountCents
+		paidAmount := c.Config().BillingManager.LagoClient.DefaultPaidAmountCents
+		err := c.Config().BillingManager.LagoClient.CreateCreditsGrant(ctx, referrerProject.UsageID, reason, rewardAmount, paidAmount, expiresAt)
 		if err != nil {
 			return telemetry.Error(ctx, span, err, "failed to grand credits reward")
 		}

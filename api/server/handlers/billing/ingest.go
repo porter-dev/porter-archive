@@ -39,11 +39,11 @@ func (c *IngestEventsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 
 	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
-	if !c.Config().BillingManager.MetronomeConfigLoaded || !proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient) {
+	if !c.Config().BillingManager.LagoConfigLoaded || !proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient) {
 		c.WriteResult(w, r, "")
 
 		telemetry.WithAttributes(span,
-			telemetry.AttributeKV{Key: "metronome-config-exists", Value: c.Config().BillingManager.MetronomeConfigLoaded},
+			telemetry.AttributeKV{Key: "metronome-config-exists", Value: c.Config().BillingManager.LagoConfigLoaded},
 			telemetry.AttributeKV{Key: "metronome-enabled", Value: proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient)},
 			telemetry.AttributeKV{Key: "porter-cloud-enabled", Value: proj.EnableSandbox},
 		)
@@ -76,7 +76,7 @@ func (c *IngestEventsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		}
 	}
 
-	err := c.Config().BillingManager.MetronomeClient.IngestEvents(ctx, ingestEventsRequest.Events)
+	err := c.Config().BillingManager.LagoClient.IngestEvents(ctx, ingestEventsRequest.Events)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error ingesting events")
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))

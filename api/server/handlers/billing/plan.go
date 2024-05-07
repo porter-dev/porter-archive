@@ -33,11 +33,11 @@ func (c *ListPlansHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
-	if !c.Config().BillingManager.MetronomeConfigLoaded || !proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient) {
+	if !c.Config().BillingManager.LagoConfigLoaded || !proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient) {
 		c.WriteResult(w, r, "")
 
 		telemetry.WithAttributes(span,
-			telemetry.AttributeKV{Key: "metronome-config-exists", Value: c.Config().BillingManager.MetronomeConfigLoaded},
+			telemetry.AttributeKV{Key: "metronome-config-exists", Value: c.Config().BillingManager.LagoConfigLoaded},
 			telemetry.AttributeKV{Key: "metronome-enabled", Value: proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient)},
 		)
 		return
@@ -48,7 +48,7 @@ func (c *ListPlansHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		telemetry.AttributeKV{Key: "usage-id", Value: proj.UsageID},
 	)
 
-	plan, err := c.Config().BillingManager.MetronomeClient.ListCustomerPlan(ctx, proj.UsageID)
+	plan, err := c.Config().BillingManager.LagoClient.ListCustomerPlan(ctx, proj.UsageID)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error listing plans")
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
@@ -79,17 +79,17 @@ func (c *ListCreditsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
-	if !c.Config().BillingManager.MetronomeConfigLoaded || !proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient) {
+	if !c.Config().BillingManager.LagoConfigLoaded || !proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient) {
 		c.WriteResult(w, r, "")
 
 		telemetry.WithAttributes(span,
-			telemetry.AttributeKV{Key: "metronome-config-exists", Value: c.Config().BillingManager.MetronomeConfigLoaded},
+			telemetry.AttributeKV{Key: "metronome-config-exists", Value: c.Config().BillingManager.LagoConfigLoaded},
 			telemetry.AttributeKV{Key: "metronome-enabled", Value: proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient)},
 		)
 		return
 	}
 
-	credits, err := c.Config().BillingManager.MetronomeClient.ListCustomerCredits(ctx, proj.UsageID)
+	credits, err := c.Config().BillingManager.LagoClient.ListCustomerCredits(ctx, proj.UsageID)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error listing credits")
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
@@ -127,12 +127,12 @@ func (c *ListCustomerUsageHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
 	telemetry.WithAttributes(span,
-		telemetry.AttributeKV{Key: "metronome-config-exists", Value: c.Config().BillingManager.MetronomeConfigLoaded},
+		telemetry.AttributeKV{Key: "metronome-config-exists", Value: c.Config().BillingManager.LagoConfigLoaded},
 		telemetry.AttributeKV{Key: "metronome-enabled", Value: proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient)},
 		telemetry.AttributeKV{Key: "usage-id", Value: proj.UsageID},
 	)
 
-	if !c.Config().BillingManager.MetronomeConfigLoaded || !proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient) {
+	if !c.Config().BillingManager.LagoConfigLoaded || !proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient) {
 		c.WriteResult(w, r, "")
 		return
 	}
@@ -145,7 +145,7 @@ func (c *ListCustomerUsageHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	usage, err := c.Config().BillingManager.MetronomeClient.ListCustomerUsage(ctx, proj.UsageID, req.StartingOn, req.EndingBefore, req.WindowSize, req.CurrentPeriod)
+	usage, err := c.Config().BillingManager.LagoClient.ListCustomerUsage(ctx, proj.UsageID, req.StartingOn, req.EndingBefore, req.WindowSize, req.CurrentPeriod)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error listing customer usage")
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
@@ -177,12 +177,12 @@ func (c *ListCustomerCostsHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
 	telemetry.WithAttributes(span,
-		telemetry.AttributeKV{Key: "metronome-config-exists", Value: c.Config().BillingManager.MetronomeConfigLoaded},
+		telemetry.AttributeKV{Key: "metronome-config-exists", Value: c.Config().BillingManager.LagoConfigLoaded},
 		telemetry.AttributeKV{Key: "metronome-enabled", Value: proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient)},
 		telemetry.AttributeKV{Key: "usage-id", Value: proj.UsageID},
 	)
 
-	if !c.Config().BillingManager.MetronomeConfigLoaded || !proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient) {
+	if !c.Config().BillingManager.LagoConfigLoaded || !proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient) {
 		c.WriteResult(w, r, "")
 		return
 	}
@@ -195,7 +195,7 @@ func (c *ListCustomerCostsHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	usage, err := c.Config().BillingManager.MetronomeClient.ListCustomerCosts(ctx, proj.UsageID, req.StartingOn, req.EndingBefore, req.Limit)
+	usage, err := c.Config().BillingManager.LagoClient.ListCustomerCosts(ctx, proj.UsageID, req.StartingOn, req.EndingBefore, req.Limit)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error listing customer costs")
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))

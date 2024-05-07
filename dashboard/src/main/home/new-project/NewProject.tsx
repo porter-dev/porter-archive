@@ -97,6 +97,7 @@ export const NewProjectFC = () => {
           }
         )
         .then((res) => res.data as ProjectListType[]);
+        
       setProjects(projectList);
       setCurrentProject(project);
       trackCreateNewProject();

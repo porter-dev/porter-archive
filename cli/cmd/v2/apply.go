@@ -81,18 +81,19 @@ func Apply(ctx context.Context, inp ApplyInput) error {
 		return errors.New("cluster must be set")
 	}
 
-	deploymentTargetID, err := deploymentTargetFromConfig(ctx, client, cliConf.Project, cliConf.Cluster, inp.PreviewApply)
-	if err != nil {
-		return fmt.Errorf("error getting deployment target from config: %w", err)
-	}
-
 	var prNumber int
 	prNumberEnv := os.Getenv("PORTER_PR_NUMBER")
 	if prNumberEnv != "" {
-		prNumber, err = strconv.Atoi(prNumberEnv)
+		parsedPRInt, err := strconv.Atoi(prNumberEnv)
 		if err != nil {
 			return fmt.Errorf("error parsing PORTER_PR_NUMBER to int: %w", err)
 		}
+		prNumber = parsedPRInt
+	}
+
+	deploymentTargetID, err := deploymentTargetFromConfig(ctx, client, cliConf.Project, cliConf.Cluster, inp.PreviewApply, prNumber)
+	if err != nil {
+		return fmt.Errorf("error getting deployment target from config: %w", err)
 	}
 
 	porterYamlExists := len(inp.PorterYamlPath) != 0
@@ -343,7 +344,7 @@ func commitSHAFromEnv() string {
 	return commitSHA
 }
 
-func deploymentTargetFromConfig(ctx context.Context, client api.Client, projectID, clusterID uint, previewApply bool) (string, error) {
+func deploymentTargetFromConfig(ctx context.Context, client api.Client, projectID, clusterID uint, previewApply bool, prNumber int) (string, error) {
 	var deploymentTargetID string
 
 	if os.Getenv("PORTER_DEPLOYMENT_TARGET_ID") != "" {
@@ -375,11 +376,25 @@ func deploymentTargetFromConfig(ctx context.Context, client api.Client, projectI
 			return deploymentTargetID, errors.New("branch name is empty. Please run apply in a git repository with access to the git CLI")
 		}
 
+		var repository string
+		if os.Getenv("PORTER_REPO_NAME") != "" {
+			repository = os.Getenv("PORTER_REPO_NAME")
+		} else if os.Getenv("GITHUB_REPOSITORY") != "" {
+			repository = os.Getenv("GITHUB_REPOSITORY")
+		}
+
 		targetResp, err := client.CreateDeploymentTarget(ctx, projectID, &types.CreateDeploymentTargetRequest{
 			Selector:  "",
 			Name:      branchName,
 			Preview:   true,
 			ClusterId: clusterID,
+			Metadata: types.Metadata{
+				PullRequest: types.TargetPullRequest{
+					Repository: repository,
+					Number:     prNumber,
+					HeadRef:    branchName,
+				},
+			},
 		})
 		if err != nil {
 			return deploymentTargetID, fmt.Errorf("error calling create deployment target endpoint: %w", err)

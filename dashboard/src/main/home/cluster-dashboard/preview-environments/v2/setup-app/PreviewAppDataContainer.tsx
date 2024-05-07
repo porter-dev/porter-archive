@@ -168,6 +168,7 @@ export const PreviewAppDataContainer: React.FC<Props> = ({
           }))
           .otherwise(() => ({}));
         const secrets = match(addon.config)
+          .returnType<Record<string, string>>()
           .with({ type: "postgres" }, (conf) => ({
             POSTGRESQL_PASSWORD: conf.password,
           }))

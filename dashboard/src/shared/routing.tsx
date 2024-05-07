@@ -40,6 +40,7 @@ export const PorterUrls = [
   "compliance",
   "environment-groups",
   "stacks",
+  "ory",
 ];
 
 // TODO: consolidate with pushFiltered
@@ -48,13 +49,15 @@ export const pushQueryParams = (
   params: any,
   removedParams?: string[]
 ) => {
-  let { location, history } = props;
+  const { location, history } = props;
   const urlParams = new URLSearchParams(location.search);
   Object.keys(params)?.forEach((key: string) => {
     params[key] && urlParams.set(key, params[key]);
   });
 
-  removedParams?.map((deletedParam) => urlParams.delete(deletedParam));
+  removedParams?.map((deletedParam) => {
+    urlParams.delete(deletedParam);
+  });
 
   history.push({
     pathname: location.pathname,
@@ -68,11 +71,11 @@ export const pushFiltered = (
   keys: string[], // Query params to preserve during redirect
   params?: any
 ) => {
-  let { location, history } = props;
-  let urlParams = new URLSearchParams(location.search);
-  let newUrlParams = new URLSearchParams("");
+  const { location, history } = props;
+  const urlParams = new URLSearchParams(location.search);
+  const newUrlParams = new URLSearchParams("");
   keys?.forEach((key: string) => {
-    let value = urlParams.get(key);
+    const value = urlParams.get(key);
     value && newUrlParams.set(key, value);
   });
   params &&
@@ -104,17 +107,17 @@ export const useRouting = () => {
       history.push(path, state);
     },
     pushQueryParams: (
-      params: { [key: string]: unknown },
+      params: Record<string, unknown>,
       removedParams?: string[]
     ) => {
-      return pushQueryParams({ location, history }, params, removedParams);
+      pushQueryParams({ location, history }, params, removedParams);
     },
     pushFiltered: (
       pathname: string,
       keys: string[],
-      params?: { [key: string]: unknown }
+      params?: Record<string, unknown>
     ) => {
-      return pushFiltered({ location, history }, pathname, keys, params);
+      pushFiltered({ location, history }, pathname, keys, params);
     },
     getQueryParams: () => {
       return getQueryParams({ location });

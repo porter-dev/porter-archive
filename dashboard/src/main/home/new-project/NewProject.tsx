@@ -100,33 +100,8 @@ export const NewProjectFC = () => {
       setProjects(projectList);
       setCurrentProject(project);
       trackCreateNewProject();
-
-      if (project?.sandbox_enabled) {
-        await api.connectProjectToCluster(
-          "<token>",
-          {},
-          { id: project.id }
-        )
-        .then(() => {
-          api.inviteAdmin(
-            "<token>",
-            {},
-            { project_id: project.id }
-          )
-          .then(() => {
-            setButtonStatus("successful");
-            pushFiltered("/apps", []);
-          })
-        })
-        .catch((err) => {
-          setButtonStatus("Couldn't create project, try again.");
-          console.log(err)
-        })
-
-      } else {
-        setButtonStatus("successful");
-        pushFiltered("/onboarding", []);
-      }
+      setButtonStatus("successful");
+      pushFiltered("/onboarding", []);
     } catch (error) {
       setButtonStatus("Couldn't create project, try again.");
       console.log(error);

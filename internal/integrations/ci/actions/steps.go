@@ -106,6 +106,7 @@ func getDeployStackStep(
 		"PORTER_TAG":        "${{ steps.vars.outputs.sha_short }}",
 		"PORTER_STACK_NAME": stackName,
 		"PORTER_PR_NUMBER":  "${{ github.event.number }}",
+		"PORTER_REPO_NAME":  "${{ github.event.repository.name }}",
 	}
 
 	if deploymentTargetId != "" {

@@ -71,12 +71,24 @@ func (c *CreateDeploymentTargetHandler) ServeHTTP(w http.ResponseWriter, r *http
 		name = request.Selector
 	}
 
+	var metadata *porterv1.DeploymentTargetMeta
+	if request.Metadata.PullRequest.Repository != "" {
+		metadata = &porterv1.DeploymentTargetMeta{
+			PullRequest: &porterv1.PullRequest{
+				Number:     int64(request.Metadata.PullRequest.Number),
+				Repository: request.Metadata.PullRequest.Repository,
+				HeadRef:    request.Metadata.PullRequest.HeadRef,
+			},
+		}
+	}
+
 	createReq := connect.NewRequest(&porterv1.CreateDeploymentTargetRequest{
 		ProjectId: int64(project.ID),
 		ClusterId: int64(clusterId),
 		Name:      name,
 		Namespace: name,
 		IsPreview: request.Preview,
+		Metadata:  metadata,
 	})
 
 	ccpResp, err := c.Config().ClusterControlPlaneClient.CreateDeploymentTarget(ctx, createReq)

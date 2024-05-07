@@ -64,7 +64,7 @@ const EnvDashboard: React.FC<Props> = (props) => {
 
         const data = await z
           .object({
-            environment_groups: z.array(envGroupValidator),
+            environment_groups: z.array(envGroupValidator).default([]),
           })
           .parseAsync(res.data);
         return data;

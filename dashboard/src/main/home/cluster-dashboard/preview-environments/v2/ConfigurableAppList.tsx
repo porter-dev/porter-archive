@@ -24,10 +24,6 @@ export const ConfigurableAppList: React.FC = () => {
     clusterId: currentCluster?.id ?? 0,
   });
 
-  if (status === "loading") {
-    return <Loading offset="-150px" />;
-  }
-
   if (apps.length === 0) {
     return (
       <Fieldset>

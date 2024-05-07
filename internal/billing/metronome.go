@@ -23,6 +23,7 @@ const (
 	defaultRewardAmountCents = 1000
 	defaultPaidAmountCents   = 0
 	maxReferralRewards       = 10
+	maxIngestEventLimit      = 100
 )
 
 // MetronomeClient is the client used to call the Metronome API
@@ -119,7 +120,7 @@ func (m MetronomeClient) createCustomer(ctx context.Context, userEmail string, p
 		Data types.Customer `json:"data"`
 	}
 
-	_, err = m.do(http.MethodPost, path, customer, &result)
+	_, err = m.do(http.MethodPost, path, "", customer, &result)
 	if err != nil {
 		return customerID, telemetry.Error(ctx, span, err, "error creating customer")
 	}
@@ -159,7 +160,7 @@ func (m MetronomeClient) addCustomerPlan(ctx context.Context, customerID uuid.UU
 		} `json:"data"`
 	}
 
-	_, err = m.do(http.MethodPost, path, req, &result)
+	_, err = m.do(http.MethodPost, path, "", req, &result)
 	if err != nil {
 		return customerPlanID, telemetry.Error(ctx, span, err, "failed to add customer to plan")
 	}
@@ -182,7 +183,7 @@ func (m MetronomeClient) ListCustomerPlan(ctx context.Context, customerID uuid.U
 		Data []types.Plan `json:"data"`
 	}
 
-	_, err = m.do(http.MethodGet, path, nil, &result)
+	_, err = m.do(http.MethodGet, path, "", nil, &result)
 	if err != nil {
 		return plan, telemetry.Error(ctx, span, err, "failed to list customer plans")
 	}
@@ -214,7 +215,7 @@ func (m MetronomeClient) EndCustomerPlan(ctx context.Context, customerID uuid.UU
 		EndingBeforeUTC: endBefore,
 	}
 
-	_, err = m.do(http.MethodPost, path, req, nil)
+	_, err = m.do(http.MethodPost, path, "", req, nil)
 	if err != nil {
 		return telemetry.Error(ctx, span, err, "failed to end customer plan")
 	}
@@ -243,7 +244,7 @@ func (m MetronomeClient) ListCustomerCredits(ctx context.Context, customerID uui
 		Data []types.CreditGrant `json:"data"`
 	}
 
-	_, err = m.do(http.MethodPost, path, req, &result)
+	_, err = m.do(http.MethodPost, path, "", req, &result)
 	if err != nil {
 		return credits, telemetry.Error(ctx, span, err, "failed to list customer credits")
 	}
@@ -289,7 +290,7 @@ func (m MetronomeClient) CreateCreditsGrant(ctx context.Context, customerID uuid
 		Priority:  1,
 	}
 
-	statusCode, err := m.do(http.MethodPost, path, req, nil)
+	statusCode, err := m.do(http.MethodPost, path, "", req, nil)
 	if err != nil && statusCode != http.StatusConflict {
 		// a conflict response indicates the grant already exists
 		return telemetry.Error(ctx, span, err, "failed to create credits grant")
@@ -323,11 +324,16 @@ func (m MetronomeClient) ListCustomerUsage(ctx context.Context, customerID uuid.
 
 	path := "usage/groups"
 
+	startingOnTimestamp, endingBeforeTimestamp, err := parseAndCheckTimestamps(startingOn, endingBefore)
+	if err != nil {
+		return nil, telemetry.Error(ctx, span, err, err.Error())
+	}
+
 	baseReq := types.ListCustomerUsageRequest{
 		CustomerID:    customerID,
 		WindowSize:    windowsSize,
-		StartingOn:    startingOn,
-		EndingBefore:  endingBefore,
+		StartingOn:    startingOnTimestamp,
+		EndingBefore:  endingBeforeTimestamp,
 		CurrentPeriod: currentPeriod,
 	}
 
@@ -341,7 +347,7 @@ func (m MetronomeClient) ListCustomerUsage(ctx context.Context, customerID uuid.
 		}
 
 		baseReq.BillableMetricID = billableMetric.ID
-		_, err = m.do(http.MethodPost, path, baseReq, &result)
+		_, err = m.do(http.MethodPost, path, "", baseReq, &result)
 		if err != nil {
 			return usage, telemetry.Error(ctx, span, err, "failed to get customer usage")
 		}
@@ -355,6 +361,47 @@ func (m MetronomeClient) ListCustomerUsage(ctx context.Context, customerID uuid.
 	return usage, nil
 }
 
+// ListCustomerCosts will return the costs for a customer over a time period
+func (m MetronomeClient) ListCustomerCosts(ctx context.Context, customerID uuid.UUID, startingOn string, endingBefore string, limit int) (costs []types.FormattedCost, err error) {
+	ctx, span := telemetry.NewSpan(ctx, "list-customer-costs")
+	defer span.End()
+
+	if customerID == uuid.Nil {
+		return costs, telemetry.Error(ctx, span, err, "customer id empty")
+	}
+
+	path := fmt.Sprintf("customers/%s/costs", customerID)
+
+	var result struct {
+		Data []types.Cost `json:"data"`
+	}
+
+	startingOnTimestamp, endingBeforeTimestamp, err := parseAndCheckTimestamps(startingOn, endingBefore)
+	if err != nil {
+		return nil, telemetry.Error(ctx, span, err, err.Error())
+	}
+
+	queryParams := fmt.Sprintf("starting_on=%s&ending_before=%s&limit=%d", startingOnTimestamp, endingBeforeTimestamp, limit)
+
+	_, err = m.do(http.MethodGet, path, queryParams, nil, &result)
+	if err != nil {
+		return costs, telemetry.Error(ctx, span, err, "failed to create credits grant")
+	}
+
+	for _, customerCost := range result.Data {
+		formattedCost := types.FormattedCost{
+			StartTimestamp: customerCost.StartTimestamp,
+			EndTimestamp:   customerCost.EndTimestamp,
+		}
+		for _, creditType := range customerCost.CreditTypes {
+			formattedCost.Cost += creditType.Cost
+		}
+		costs = append(costs, formattedCost)
+	}
+
+	return costs, nil
+}
+
 // IngestEvents sends a list of billing events to Metronome's ingest endpoint
 func (m MetronomeClient) IngestEvents(ctx context.Context, events []types.BillingEvent) (err error) {
 	ctx, span := telemetry.NewSpan(ctx, "ingets-billing-events")
@@ -366,31 +413,45 @@ func (m MetronomeClient) IngestEvents(ctx context.Context, events []types.Billin
 
 	path := "ingest"
 
-	var currentAttempts int
-	for currentAttempts < defaultMaxRetries {
-		statusCode, err := m.do(http.MethodPost, path, events, nil)
-		// Check errors that are not from error http codes
-		if statusCode == 0 && err != nil {
-			return telemetry.Error(ctx, span, err, "failed to ingest billing events")
+	for i := 0; i < len(events); i += maxIngestEventLimit {
+		end := i + maxIngestEventLimit
+		if end > len(events) {
+			end = len(events)
 		}
 
-		if statusCode == http.StatusForbidden || statusCode == http.StatusUnauthorized {
-			return telemetry.Error(ctx, span, err, "unauthorized")
+		batch := events[i:end]
+
+		// Retry each batch to make sure all events are ingested
+		var currentAttempts int
+		for currentAttempts < defaultMaxRetries {
+			statusCode, err := m.do(http.MethodPost, path, "", batch, nil)
+			// Check errors that are not from error http codes
+			if statusCode == 0 && err != nil {
+				return telemetry.Error(ctx, span, err, "failed to ingest billing events")
+			}
+
+			if statusCode == http.StatusForbidden || statusCode == http.StatusUnauthorized {
+				return telemetry.Error(ctx, span, err, "unauthorized")
+			}
+
+			// 400 responses should not be retried
+			if statusCode == http.StatusBadRequest {
+				return telemetry.Error(ctx, span, err, "malformed billing events")
+			}
+
+			// Any other status code can be safely retried
+			if statusCode == http.StatusOK {
+				break
+			}
+			currentAttempts++
 		}
 
-		// 400 responses should not be retried
-		if statusCode == http.StatusBadRequest {
-			return telemetry.Error(ctx, span, err, "malformed billing events")
+		if currentAttempts == defaultMaxRetries {
+			return telemetry.Error(ctx, span, err, "max number of retry attempts reached with no success")
 		}
-
-		// Any other status code can be safely retried
-		if statusCode == 200 {
-			return nil
-		}
-		currentAttempts++
 	}
 
-	return telemetry.Error(ctx, span, err, "max number of retry attempts reached with no success")
+	return nil
 }
 
 func (m MetronomeClient) listBillableMetricIDs(ctx context.Context, customerID uuid.UUID) (billableMetrics []types.BillableMetric, err error) {
@@ -407,7 +468,7 @@ func (m MetronomeClient) listBillableMetricIDs(ctx context.Context, customerID u
 		Data []types.BillableMetric `json:"data"`
 	}
 
-	_, err = m.do(http.MethodGet, path, nil, &result)
+	_, err = m.do(http.MethodGet, path, "", nil, &result)
 	if err != nil {
 		return billableMetrics, telemetry.Error(ctx, span, err, "failed to retrieve billable metrics from metronome")
 	}
@@ -425,7 +486,7 @@ func (m MetronomeClient) getCreditTypeID(ctx context.Context, currencyCode strin
 		Data []types.PricingUnit `json:"data"`
 	}
 
-	_, err = m.do(http.MethodGet, path, nil, &result)
+	_, err = m.do(http.MethodGet, path, "", nil, &result)
 	if err != nil {
 		return creditTypeID, telemetry.Error(ctx, span, err, "failed to retrieve billable metrics from metronome")
 	}
@@ -439,7 +500,27 @@ func (m MetronomeClient) getCreditTypeID(ctx context.Context, currencyCode strin
 	return creditTypeID, telemetry.Error(ctx, span, fmt.Errorf("credit type not found for currency code %s", currencyCode), "failed to find credit type")
 }
 
-func (m MetronomeClient) do(method string, path string, body interface{}, data interface{}) (statusCode int, err error) {
+// Utility function to parse and adjust times
+func parseAndCheckTimestamps(startingOn string, endingBefore string) (startingOnTimestamp string, endingBeforeTimestamp string, err error) {
+	startingOnTime, err := time.Parse(time.RFC3339, startingOn)
+	if err != nil {
+		return startingOnTimestamp, endingBeforeTimestamp, fmt.Errorf("failed to parse starting on time: %w", err)
+	}
+
+	endingBeforeTime, err := time.Parse(time.RFC3339, endingBefore)
+	if err != nil {
+		return startingOnTimestamp, endingBeforeTimestamp, fmt.Errorf("failed to parse ending before time: %w", err)
+	}
+
+	if startingOnTime.Equal(endingBeforeTime) {
+		// If starting and ending timestamps are the same, change the ending timestamp to be one day in the future
+		endingBeforeTime = endingBeforeTime.Add(24 * time.Hour)
+	}
+
+	return startingOnTime.Format(time.RFC3339), endingBeforeTime.Format(time.RFC3339), nil
+}
+
+func (m MetronomeClient) do(method string, path string, queryParams string, body interface{}, data interface{}) (statusCode int, err error) {
 	client := http.Client{}
 	endpoint, err := url.JoinPath(metronomeBaseUrl, path)
 	if err != nil {
@@ -452,6 +533,11 @@ func (m MetronomeClient) do(method string, path string, body interface{}, data i
 		if err != nil {
 			return statusCode, err
 		}
+	}
+
+	// Add raw query parameters to the endpoint
+	if queryParams != "" {
+		endpoint += "?" + queryParams
 	}
 
 	req, err := http.NewRequest(method, endpoint, bytes.NewBuffer(bodyJson))

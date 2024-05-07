@@ -28,6 +28,21 @@ type CreateDeploymentTargetRequest struct {
 	Preview  bool   `json:"preview"`
 	// required if using the project-scoped endpoint
 	ClusterId uint `json:"cluster_id"`
+	// optional metadata field
+	Metadata Metadata `json:"metadata,omitempty"`
+}
+
+// Metadata is a DB-level representation of the metadata field in a deployment target
+type Metadata struct {
+	PullRequest TargetPullRequest `json:"pull_request"`
+}
+
+// TargetPullRequest represents a pull request in the metadata field of a deployment target
+type TargetPullRequest struct {
+	Repository string `json:"repository"`
+	Number     int    `json:"number"`
+	Title      string `json:"title"`
+	HeadRef    string `json:"head_ref"`
 }
 
 // CreateDeploymentTargetResponse is the response object for the /deployment-targets POST endpoint

@@ -1,13 +1,13 @@
 import React, { Component } from "react";
 import styled from "styled-components";
 
-import TabSelector from "./TabSelector";
 import Loading from "./Loading";
+import TabSelector from "./TabSelector";
 
-export interface TabOption {
+export type TabOption = {
   label: string;
   value: string;
-}
+};
 
 type PropsType = {
   options: TabOption[];
@@ -31,7 +31,7 @@ export default class TabRegion extends Component<PropsType, StateType> {
       : "";
 
   componentDidUpdate(prevProps: PropsType) {
-    let { options, currentTab } = this.props;
+    const { options, currentTab } = this.props;
     if (prevProps.options !== options) {
       if (options.filter((x) => x.value === currentTab).length === 0) {
         this.props.setCurrentTab(this.defaultTab());
@@ -50,7 +50,9 @@ export default class TabRegion extends Component<PropsType, StateType> {
               options={this.props.options}
               color={this.props.color}
               currentTab={this.props.currentTab}
-              setCurrentTab={(x: string) => this.props.setCurrentTab(x)}
+              setCurrentTab={(x: string) => {
+                this.props.setCurrentTab(x);
+              }}
               addendum={this.props.addendum}
             />
             <Gap />

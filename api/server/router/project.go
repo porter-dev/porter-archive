@@ -452,6 +452,62 @@ func getProjectRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/billing/costs -> project.NewListCustomerCostsHandler
+	listCustomerCostsEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/billing/costs",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	listCustomerCostsHandler := billing.NewListCustomerCostsHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: listCustomerCostsEndpoint,
+		Handler:  listCustomerCostsHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/billing/invoices -> project.NewListCustomerInvoicesHandler
+	listCustomerInvoicesEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/billing/invoices",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	listCustomerInvoicesHandler := billing.NewListCustomerInvoicesHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: listCustomerInvoicesEndpoint,
+		Handler:  listCustomerInvoicesHandler,
+		Router:   r,
+	})
+
 	// POST /api/projects/{project_id}/billing/ingest -> project.NewGetUsageDashboardHandler
 	ingestEventsEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

@@ -24,7 +24,7 @@ export const getGithubAction = (
   stackName: string,
   branchName: string,
   porterYamlPath: string = "porter.yaml",
-  deploymentTargetId: string = "",
+  deploymentTargetId: string = ""
 ): string => {
   return `on:
   push:
@@ -52,7 +52,11 @@ jobs:
         PORTER_STACK_NAME: ${stackName}
         PORTER_TAG: \${{ steps.vars.outputs.sha_short }}
         PORTER_TOKEN: \${{ secrets.PORTER_STACK_${projectID}_${clusterId} }}
-        ${deploymentTargetId ? `PORTER_DEPLOYMENT_TARGET_ID: ${deploymentTargetId}` : ""}`;
+        ${
+          deploymentTargetId
+            ? `PORTER_DEPLOYMENT_TARGET_ID: ${deploymentTargetId}`
+            : ""
+        }`;
 };
 
 export const getPreviewGithubAction = ({
@@ -67,7 +71,7 @@ export const getPreviewGithubAction = ({
   appName: string;
   branch: string;
   porterYamlPath?: string;
-}) => {
+}): string => {
   return `"on":
   pull_request:
     branches:
@@ -101,5 +105,6 @@ jobs:
         PORTER_STACK_NAME: ${appName}
         PORTER_TAG: \${{ steps.vars.outputs.sha_short }}
         PORTER_TOKEN: \${{ secrets.PORTER_STACK_${projectId}_${clusterId} }}
-        PORTER_PR_NUMBER: \${{ github.event.number }}`;
+        PORTER_PR_NUMBER: \${{ github.event.number }}
+        PORTER_REPO_NAME: \${{ github.event.repository.name }}`;
 };

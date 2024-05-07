@@ -3527,6 +3527,29 @@ const getCustomerUsage = baseApi<
   }
 >("POST", ({ project_id }) => `/api/projects/${project_id}/billing/usage`);
 
+const getCustomerCosts = baseApi<
+  {},
+  {
+    project_id?: number;
+    starting_on: string;
+    ending_before: string;
+    limit: number;
+  }
+>(
+  "GET",
+  ({ project_id, starting_on, ending_before, limit }) =>
+    `/api/projects/${project_id}/billing/costs?starting_on=${starting_on}&ending_before=${ending_before}&limit=${limit}`
+);
+
+const getCustomerInvoices = baseApi<
+  {
+    status: string;
+  },
+  {
+    project_id?: number;
+  }
+>("GET", ({ project_id }) => `/api/projects/${project_id}/billing/invoices`);
+
 const getCustomerPlan = baseApi<
   {},
   {
@@ -3986,6 +4009,8 @@ export default {
   getPorterCredits,
   getCustomerPlan,
   getCustomerUsage,
+  getCustomerCosts,
+  getCustomerInvoices,
   listPaymentMethod,
   addPaymentMethod,
   setDefaultPaymentMethod,

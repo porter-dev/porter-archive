@@ -263,7 +263,7 @@ const AppHeader: React.FC = () => {
               ) : null
             )
             .with({ type: "docker-registry" }, (s) =>
-              renderTagBadge(s.image.tag)
+              renderTagBadge(latestProto.image?.tag ?? s.image.tag)
             )
             .exhaustive()}
         </NoShrink>

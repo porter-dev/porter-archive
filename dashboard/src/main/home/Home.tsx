@@ -432,6 +432,17 @@ const Home: React.FC<Props> = (props) => {
                 )}
               </>
             )}
+          {showBillingModal && (
+            <BillingModal
+              back={() => {
+                setShowBillingModal(false);
+              }}
+              onCreate={async () => {
+                setShowBillingModal(false);
+                window.location.reload();
+              }}
+            />
+          )}
           <ModalHandler setRefreshClusters={setForceRefreshClusters} />
           {currentOverlay &&
             createPortal(

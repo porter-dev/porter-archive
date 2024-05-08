@@ -24,7 +24,6 @@ import {
 } from "lib/databases/types";
 import { useClusterList } from "lib/hooks/useCluster";
 
-import { valueExists } from "shared/util";
 import database from "assets/database.svg";
 
 import {
@@ -73,8 +72,7 @@ const DatastoreForm: React.FC = () => {
 
   const availableEngines: BlockSelectOption[] = useMemo(() => {
     return [DATASTORE_ENGINE_POSTGRES, DATASTORE_ENGINE_REDIS];
-  }, [watchClusterId]);
-
+  }, [awsClusters, watchClusterId]);
   const availableWorkloadTypes: BlockSelectOption[] = useMemo(() => {
     return [
       {
@@ -317,7 +315,6 @@ const DatastoreForm: React.FC = () => {
                 </>
               )}
             </>,
-
             <>
               <Text size={16}>Specify resources</Text>
               {template && (
@@ -398,7 +395,7 @@ const DatastoreForm: React.FC = () => {
                 Create
               </Button>
             </>,
-          ].filter(valueExists)}
+          ]}
           currentStep={currentStep}
         />
       </StyledConfigureTemplate>

@@ -1,26 +1,14 @@
-import React, { useMemo } from "react";
+import React, { useContext, useMemo } from "react";
 import { useHistory } from "react-router";
 import { match } from "ts-pattern";
 
 import Spacer from "components/porter/Spacer";
 import TabSelector from "components/TabSelector";
 
+import { Context } from "shared/Context";
+
 import { useDatastoreContext } from "./DatabaseContextProvider";
 import DatastoreProvisioningIndicator from "./DatastoreProvisioningIndicator";
-import ConfigurationTab from "./tabs/ConfigurationTab";
-import ConnectTab from "./tabs/ConnectTab";
-import MetricsTab from "./tabs/MetricsTab";
-import SettingsTab from "./tabs/SettingsTab";
-
-const validTabs = [
-  "metrics",
-  "connect",
-  "configuration",
-  "settings",
-  "connected-apps",
-] as const;
-const DEFAULT_TAB = "connect";
-type ValidTab = (typeof validTabs)[number];
 
 type DbTabProps = {
   tabParam?: string;
@@ -32,23 +20,27 @@ export type ButtonStatus = "" | "loading" | JSX.Element | "success";
 const DatabaseTabs: React.FC<DbTabProps> = ({ tabParam }) => {
   const history = useHistory();
   const { datastore } = useDatastoreContext();
-
-  const currentTab = useMemo(() => {
-    if (tabParam && validTabs.includes(tabParam as ValidTab)) {
-      return tabParam as ValidTab;
-    }
-
-    return DEFAULT_TAB;
-  }, [tabParam]);
+  const { user } = useContext(Context);
 
   const tabs = useMemo(() => {
-    return [
-      { label: "Connectivity", value: "connect" },
-      // { label: "Connected Apps", value: "connected-apps" },
-      { label: "Configuration", value: "configuration" },
-      { label: "Settings", value: "settings" },
-    ];
-  }, []);
+    return datastore.template.tabs
+      .filter(
+        (t) =>
+          !t.isOnlyForPorterOperators ||
+          (t.isOnlyForPorterOperators && user.isPorterUser)
+      )
+      .map((tab) => ({
+        label: tab.displayName,
+        value: tab.name,
+      }));
+  }, [datastore.template]);
+
+  const currentTab = useMemo(() => {
+    if (tabParam && tabs.some((tab) => tab.value === tabParam)) {
+      return tabParam;
+    }
+    return tabs.length ? tabs[0].value : "";
+  }, [tabParam, tabs]);
 
   if (datastore.status !== "AVAILABLE") {
     return <DatastoreProvisioningIndicator />;
@@ -65,13 +57,17 @@ const DatabaseTabs: React.FC<DbTabProps> = ({ tabParam }) => {
         }}
       />
       <Spacer y={1} />
-      {match(currentTab)
-        .with("connect", () => <ConnectTab />)
-        .with("settings", () => <SettingsTab />)
-        .with("metrics", () => <MetricsTab />)
-        .with("configuration", () => <ConfigurationTab />)
-        // .with("connected-apps", () => <ConnectedAppsTab />)
-        .otherwise(() => null)}
+      {datastore.template.tabs
+        .filter(
+          (t) =>
+            !t.isOnlyForPorterOperators ||
+            (t.isOnlyForPorterOperators && user.isPorterUser)
+        )
+        .map((tab) =>
+          match(currentTab)
+            .with(tab.name, () => <tab.component key={tab.name} />)
+            .otherwise(() => null)
+        )}
     </div>
   );
 };

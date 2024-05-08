@@ -42,6 +42,31 @@ func (repo *NeonIntegrationRepository) Insert(
 	return created, nil
 }
 
+// Integrations returns all neon integrations for a given project
+func (repo *NeonIntegrationRepository) Integrations(
+	ctx context.Context, projectID uint,
+) ([]ints.NeonIntegration, error) {
+	ctx, span := telemetry.NewSpan(ctx, "gorm-list-neon-integrations")
+	defer span.End()
+
+	var integrations []ints.NeonIntegration
+
+	if err := repo.db.Where("project_id = ?", projectID).Find(&integrations).Error; err != nil {
+		return integrations, telemetry.Error(ctx, span, err, "failed to list neon integrations")
+	}
+
+	for i, integration := range integrations {
+		decrypted, err := repo.DecryptNeonIntegration(integration, repo.key)
+		if err != nil {
+			return integrations, telemetry.Error(ctx, span, err, "failed to decrypt")
+		}
+
+		integrations[i] = decrypted
+	}
+
+	return integrations, nil
+}
+
 // EncryptNeonIntegration will encrypt the neon integration data before
 // writing to the DB
 func (repo *NeonIntegrationRepository) EncryptNeonIntegration(
@@ -78,4 +103,42 @@ func (repo *NeonIntegrationRepository) EncryptNeonIntegration(
 	}
 
 	return encrypted, nil
+}
+
+// DecryptNeonIntegrationData will decrypt the neon integration data before
+// returning it from the DB
+func (repo *NeonIntegrationRepository) DecryptNeonIntegration(
+	neonInt ints.NeonIntegration,
+	key *[32]byte,
+) (ints.NeonIntegration, error) {
+	decrypted := neonInt
+
+	if len(decrypted.ClientID) > 0 {
+		plaintext, err := encryption.Decrypt(decrypted.ClientID, key)
+		if err != nil {
+			return decrypted, err
+		}
+
+		decrypted.ClientID = plaintext
+	}
+
+	if len(decrypted.AccessToken) > 0 {
+		plaintext, err := encryption.Decrypt(decrypted.AccessToken, key)
+		if err != nil {
+			return decrypted, err
+		}
+
+		decrypted.AccessToken = plaintext
+	}
+
+	if len(decrypted.RefreshToken) > 0 {
+		plaintext, err := encryption.Decrypt(decrypted.RefreshToken, key)
+		if err != nil {
+			return decrypted, err
+		}
+
+		decrypted.RefreshToken = plaintext
+	}
+
+	return decrypted, nil
 }

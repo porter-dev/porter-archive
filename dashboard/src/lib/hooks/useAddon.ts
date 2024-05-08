@@ -139,7 +139,7 @@ export const useAddonList = ({
               "monitoring",
               "porter-agent-system",
               "external-secrets",
-              "infisical"
+              "infisical",
             ].includes(a.namespace ?? "");
           });
       },
@@ -552,7 +552,7 @@ export const useAddonLogs = ({
   projectId?: number;
   deploymentTarget: DeploymentTarget;
   addon?: ClientAddon;
-}): { logs: Log[]; refresh: () => void; isInitializing: boolean } => {
+}): { logs: Log[]; refresh: () => Promise<void>; isInitializing: boolean } => {
   const [logs, setLogs] = useState<Log[]>([]);
   const logsBufferRef = useRef<Log[]>([]);
   const { newWebsocket, openWebsocket, closeAllWebsockets } = useWebsockets();

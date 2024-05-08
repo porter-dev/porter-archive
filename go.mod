@@ -2,9 +2,6 @@ module github.com/porter-dev/porter
 
 go 1.20
 
-// replace api-contracts with local path
-replace github.com/porter-dev/api-contracts => ../api-contracts
-
 require (
 	cloud.google.com/go v0.110.2 // indirect
 	github.com/AlecAivazis/survey/v2 v2.2.9
@@ -90,7 +87,7 @@ require (
 	github.com/nats-io/nats.go v1.24.0
 	github.com/open-policy-agent/opa v0.44.0
 	github.com/ory/client-go v1.9.0
-	github.com/porter-dev/api-contracts v0.2.158
+	github.com/porter-dev/api-contracts v0.2.159
 	github.com/riandyrn/otelchi v0.5.1
 	github.com/santhosh-tekuri/jsonschema/v5 v5.0.1
 	github.com/stefanmcshane/helm v0.0.0-20221213002717-88a4a2c6e77d

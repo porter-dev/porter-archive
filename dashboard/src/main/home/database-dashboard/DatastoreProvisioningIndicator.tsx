@@ -2,6 +2,7 @@ import React, { useMemo } from "react";
 
 import StatusBar from "components/porter/StatusBar";
 
+import { DATASTORE_TEMPLATE_NEON } from "./constants";
 import { useDatastoreContext } from "./DatabaseContextProvider";
 
 const DatastoreProvisioningIndicator: React.FC = () => {
@@ -39,14 +40,18 @@ const DatastoreProvisioningIndicator: React.FC = () => {
       return { percentCompleted, title, titleDescriptor, isCreating };
     }, [datastore]);
 
+  const subtitle = useMemo(() => {
+    return `${isCreating ? "Setup" : "Deletion"} can take up to ${
+      datastore.template === DATASTORE_TEMPLATE_NEON ? 5 : 20
+    } minutes. You can close this window and come back later.`;
+  }, [datastore]);
+
   return (
     <StatusBar
       icon={datastore.template.icon}
       title={title}
       titleDescriptor={titleDescriptor}
-      subtitle={`${
-        isCreating ? "Setup" : "Deletion"
-      } can take up to 20 minutes. You can close this window and come back later.`}
+      subtitle={subtitle}
       percentCompleted={percentCompleted}
     />
   );

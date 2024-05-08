@@ -26,6 +26,11 @@ import neon from "assets/neon.svg";
 import postgresql from "assets/postgresql.svg";
 import redis from "assets/redis.svg";
 
+import ConfigurationTab from "./tabs/ConfigurationTab";
+import ConnectTab from "./tabs/ConnectTab";
+import PublicDatastoreConnectTab from "./tabs/PublicDatastoreConnectTab";
+import SettingsTab from "./tabs/SettingsTab";
+
 export const DATASTORE_ENGINE_POSTGRES: DatastoreEngine = {
   name: "POSTGRES" as const,
   displayName: "PostgreSQL",
@@ -118,6 +123,23 @@ export const DATASTORE_TEMPLATE_AWS_RDS: DatastoreTemplate = Object.freeze({
     DATASTORE_STATE_DELETING_RECORD,
     DATASTORE_STATE_DELETED,
   ],
+  tabs: [
+    {
+      name: "connectivity",
+      displayName: "Connectivity",
+      component: ConnectTab,
+    },
+    {
+      name: "configuration",
+      displayName: "Configuration",
+      component: ConfigurationTab,
+    },
+    {
+      name: "settings",
+      displayName: "Settings",
+      component: SettingsTab,
+    },
+  ],
 });
 export const DATASTORE_TEMPLATE_AWS_AURORA: DatastoreTemplate = Object.freeze({
   name: "Amazon Aurora",
@@ -154,6 +176,23 @@ export const DATASTORE_TEMPLATE_AWS_AURORA: DatastoreTemplate = Object.freeze({
     DATASTORE_STATE_AWAITING_DELETION,
     DATASTORE_STATE_DELETING_RECORD,
     DATASTORE_STATE_DELETED,
+  ],
+  tabs: [
+    {
+      name: "connectivity",
+      displayName: "Connectivity",
+      component: ConnectTab,
+    },
+    {
+      name: "configuration",
+      displayName: "Configuration",
+      component: ConfigurationTab,
+    },
+    {
+      name: "settings",
+      displayName: "Settings",
+      component: SettingsTab,
+    },
   ],
 });
 export const DATASTORE_TEMPLATE_AWS_ELASTICACHE: DatastoreTemplate =
@@ -217,6 +256,23 @@ export const DATASTORE_TEMPLATE_AWS_ELASTICACHE: DatastoreTemplate =
       DATASTORE_STATE_DELETING_RECORD,
       DATASTORE_STATE_DELETED,
     ],
+    tabs: [
+      {
+        name: "connectivity",
+        displayName: "Connectivity",
+        component: ConnectTab,
+      },
+      {
+        name: "configuration",
+        displayName: "Configuration",
+        component: ConfigurationTab,
+      },
+      {
+        name: "settings",
+        displayName: "Settings",
+        component: SettingsTab,
+      },
+    ],
   });
 export const DATASTORE_TEMPLATE_MANAGED_REDIS: DatastoreTemplate =
   Object.freeze({
@@ -253,6 +309,23 @@ export const DATASTORE_TEMPLATE_MANAGED_REDIS: DatastoreTemplate =
       DATASTORE_STATE_AWAITING_DELETION,
       DATASTORE_STATE_DELETING_RECORD,
       DATASTORE_STATE_DELETED,
+    ],
+    tabs: [
+      {
+        name: "connectivity",
+        displayName: "Connectivity",
+        component: ConnectTab,
+      },
+      {
+        name: "configuration",
+        displayName: "Configuration",
+        component: ConfigurationTab,
+      },
+      {
+        name: "settings",
+        displayName: "Settings",
+        component: SettingsTab,
+      },
     ],
   });
 export const DATASTORE_TEMPLATE_MANAGED_POSTGRES: DatastoreTemplate =
@@ -291,6 +364,23 @@ export const DATASTORE_TEMPLATE_MANAGED_POSTGRES: DatastoreTemplate =
       DATASTORE_STATE_DELETING_RECORD,
       DATASTORE_STATE_DELETED,
     ],
+    tabs: [
+      {
+        name: "connectivity",
+        displayName: "Connectivity",
+        component: ConnectTab,
+      },
+      {
+        name: "configuration",
+        displayName: "Configuration",
+        component: ConfigurationTab,
+      },
+      {
+        name: "settings",
+        displayName: "Settings",
+        component: SettingsTab,
+      },
+    ],
   });
 
 export const DATASTORE_TEMPLATE_NEON: DatastoreTemplate = Object.freeze({
@@ -301,24 +391,10 @@ export const DATASTORE_TEMPLATE_NEON: DatastoreTemplate = Object.freeze({
   engine: DATASTORE_ENGINE_POSTGRES,
   supportedEngineVersions: [],
   icon: neon as string,
-  description: "A postgresql instance hosted by Neon.",
+  description:
+    "A fully managed serverless Postgres. Neon separates storage and compute to offer autoscaling, branching, and bottomless storage.",
   disabled: true,
-  instanceTiers: [
-    {
-      tier: "db.t4g.micro" as const,
-      label: "Micro",
-      cpuCores: 1,
-      ramGigabytes: 1,
-      storageGigabytes: 1,
-    },
-    {
-      tier: "db.t4g.small" as const,
-      label: "Small",
-      cpuCores: 2,
-      ramGigabytes: 2,
-      storageGigabytes: 2,
-    },
-  ],
+  instanceTiers: [],
   creationStateProgression: [
     DATASTORE_STATE_CREATING,
     DATASTORE_STATE_AVAILABLE,
@@ -327,6 +403,18 @@ export const DATASTORE_TEMPLATE_NEON: DatastoreTemplate = Object.freeze({
     DATASTORE_STATE_AWAITING_DELETION,
     DATASTORE_STATE_DELETING_RECORD,
     DATASTORE_STATE_DELETED,
+  ],
+  tabs: [
+    {
+      name: "connectivity",
+      displayName: "Connectivity",
+      component: PublicDatastoreConnectTab,
+    },
+    {
+      name: "settings",
+      displayName: "Settings",
+      component: SettingsTab,
+    },
   ],
 });
 

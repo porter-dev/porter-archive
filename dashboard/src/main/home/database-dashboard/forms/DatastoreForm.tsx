@@ -24,6 +24,7 @@ import {
 } from "lib/databases/types";
 import { useClusterList } from "lib/hooks/useCluster";
 
+import { valueExists } from "shared/util";
 import database from "assets/database.svg";
 
 import {
@@ -325,82 +326,78 @@ const DatastoreForm: React.FC = () => {
                 </>
               )}
             </>,
-            <>
-              <Text size={16}>Specify resources</Text>
-              {template && (
-                <>
-                  <Spacer y={0.5} />
-                  <Text color="helper">
-                    Specify your datastore CPU and RAM.
-                  </Text>
-                  {errors.config?.instanceClass?.message && (
-                    <AppearingErrorContainer>
-                      <Spacer y={0.5} />
-                      <ErrorComponent
-                        message={errors.config.instanceClass.message}
-                      />
-                    </AppearingErrorContainer>
-                  )}
-                  <Spacer y={0.5} />
-                  <Text>Select an instance tier:</Text>
-                  <Spacer height="20px" />
-                  <Resources
-                    options={template.instanceTiers}
-                    selected={watchTier}
-                    onSelect={(option: ResourceOption) => {
-                      setValue("config.instanceClass", option.tier);
-                      setValue(
-                        "config.allocatedStorageGigabytes",
-                        option.storageGigabytes
-                      );
-                      setCurrentStep(6);
-                    }}
-                    highlight={watchEngine === "REDIS" ? "ram" : "storage"}
-                  />
-                </>
-              )}
-            </>,
-            <>
-              <Text size={16}>Credentials</Text>
-              {watchInstanceClass !== "unspecified" && template && (
-                <>
-                  <Spacer y={0.5} />
-                  <Text color="helper">
-                    These credentials never leave your own cloud environment.
-                    Your app will use them to connect to this datastore.
-                  </Text>
-                  <Spacer height="20px" />
-                  <ConnectionInfo
-                    connectionInfo={
-                      watchEngine === "REDIS"
-                        ? {
-                            host: "(determined after creation)",
-                            port: 6379,
-                            password: watchDbPassword,
-                            username: "",
-                            database_name: "",
-                          }
-                        : template === DATASTORE_TEMPLATE_NEON
-                        ? {
-                            host: "(determined after creation)",
-                            port: 5432,
-                            password: "(determined after creation)",
-                            username: "(determined after creation)",
-                            database_name: "(determined after creation)",
-                          }
-                        : {
-                            host: "(determined after creation)",
-                            port: 5432,
-                            password: watchDbPassword,
-                            username: watchDbUsername,
-                            database_name: watchDbName,
-                          }
-                    }
-                    engine={template.engine}
-                  />
-                </>
-              )}
-            </>,
+            template !== DATASTORE_TEMPLATE_NEON ? (
+              <>
+                <Text size={16}>Specify resources</Text>
+                {template && (
+                  <>
+                    <Spacer y={0.5} />
+                    <Text color="helper">
+                      Specify your datastore CPU and RAM.
+                    </Text>
+                    {errors.config?.instanceClass?.message && (
+                      <AppearingErrorContainer>
+                        <Spacer y={0.5} />
+                        <ErrorComponent
+                          message={errors.config.instanceClass.message}
+                        />
+                      </AppearingErrorContainer>
+                    )}
+                    <Spacer y={0.5} />
+                    <Text>Select an instance tier:</Text>
+                    <Spacer height="20px" />
+                    <Resources
+                      options={template.instanceTiers}
+                      selected={watchTier}
+                      onSelect={(option: ResourceOption) => {
+                        setValue("config.instanceClass", option.tier);
+                        setValue(
+                          "config.allocatedStorageGigabytes",
+                          option.storageGigabytes
+                        );
+                        setCurrentStep(6);
+                      }}
+                      highlight={watchEngine === "REDIS" ? "ram" : "storage"}
+                    />
+                  </>
+                )}
+              </>
+            ) : null,
+            template !== DATASTORE_TEMPLATE_NEON ? (
+              <>
+                <Text size={16}>Credentials</Text>
+                {watchInstanceClass !== "unspecified" && template && (
+                  <>
+                    <Spacer y={0.5} />
+                    <Text color="helper">
+                      These credentials never leave your own cloud environment.
+                      Your app will use them to connect to this datastore.
+                    </Text>
+                    <Spacer height="20px" />
+                    <ConnectionInfo
+                      connectionInfo={
+                        watchEngine === "REDIS"
+                          ? {
+                              host: "(determined after creation)",
+                              port: 6379,
+                              password: watchDbPassword,
+                              username: "",
+                              database_name: "",
+                            }
+                          : {
+                              host: "(determined after creation)",
+                              port: 5432,
+                              password: watchDbPassword,
+                              username: watchDbUsername,
+                              database_name: watchDbName,
+                            }
+                      }
+                      template={template}
+                    />
+                  </>
+                )}
+              </>
+            ) : null,
             <>
               <Text size={16}>Create datastore instance</Text>
               <Spacer y={0.5} />
@@ -413,7 +410,7 @@ const DatastoreForm: React.FC = () => {
                 Create
               </Button>
             </>,
-          ]}
+          ].filter(valueExists)}
           currentStep={currentStep}
         />
       </StyledConfigureTemplate>

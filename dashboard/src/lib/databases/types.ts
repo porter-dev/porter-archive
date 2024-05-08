@@ -164,6 +164,19 @@ export const DATASTORE_STATE_DELETED: DatastoreState = {
   displayName: "Wrapping up",
 };
 
+export type DatastoreTab = {
+  name: string;
+  displayName: string;
+  component: React.FC;
+  isOnlyForPorterOperators?: boolean;
+};
+
+export const DEFAULT_DATASTORE_TAB = {
+  name: "configuration",
+  displayName: "Configuration",
+  component: () => null,
+};
+
 export type DatastoreTemplate = {
   highLevelType: DatastoreEngine; // this was created so that rds aurora postgres and rds postgres can be grouped together
   type: DatastoreType;
@@ -177,6 +190,7 @@ export type DatastoreTemplate = {
   supportedEngineVersions: EngineVersion[];
   creationStateProgression: DatastoreState[];
   deletionStateProgression: DatastoreState[];
+  tabs: DatastoreTab[]; // this what is rendered on the dashboard after the datastore is deployed
 };
 
 const instanceTierValidator = z.enum([

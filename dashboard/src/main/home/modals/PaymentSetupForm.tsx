@@ -4,6 +4,14 @@ import {
   useElements,
   useStripe,
 } from "@stripe/react-stripe-js";
+
+import {
+  ClientSecretResponse,
+  PaymentMethodValidator,
+  type PaymentMethod,
+  type PaymentMethodList,
+} from "lib/billing/types";
+
 import styled from "styled-components";
 import api from "shared/api";
 
@@ -14,6 +22,7 @@ import SaveButton from "components/SaveButton";
 import {
   useCreatePaymentMethod,
   useSetDefaultPaymentMethod,
+  checkIfProjectHasPayment,
 } from "lib/hooks/useStripe";
 
 import { Context } from "shared/Context";
@@ -61,9 +70,12 @@ const PaymentSetupForm = ({ onCreate }: { onCreate: () => Promise<void> }) => {
     // Confirm the setup and set as default
     if (setupIntent?.payment_method !== null) {
       await setDefaultPaymentMethod(setupIntent?.payment_method as string);
+    }
 
-      // create cluster on first payment setup for sandbox
-      if (currentProject?.sandbox_enabled) {
+    if (currentProject?.sandbox_enabled) {
+      const { hasPaymentEnabled, refetchPaymentEnabled } = checkIfProjectHasPayment();
+
+      if (!hasPaymentEnabled) {
         await api.connectProjectToCluster(
           "<token>",
           {},
@@ -75,11 +87,13 @@ const PaymentSetupForm = ({ onCreate }: { onCreate: () => Promise<void> }) => {
             {},
             { project_id: currentProject.id }
           )
+          onCreate();
         })
         .catch((err: any) => {
           setErrorMessage(err.message);
           setLoading(false);
-        })
+          return;
+        })  
       }
     }
 

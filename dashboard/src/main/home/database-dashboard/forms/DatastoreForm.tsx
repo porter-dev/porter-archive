@@ -35,7 +35,6 @@ import {
   DATASTORE_TEMPLATE_AWS_RDS,
   DATASTORE_TEMPLATE_MANAGED_POSTGRES,
   DATASTORE_TEMPLATE_MANAGED_REDIS,
-  DATASTORE_TEMPLATE_NEON,
   SUPPORTED_DATASTORE_TEMPLATES,
 } from "../constants";
 import { useDatastoreFormContext } from "../DatastoreFormContextProvider";
@@ -74,7 +73,8 @@ const DatastoreForm: React.FC = () => {
 
   const availableEngines: BlockSelectOption[] = useMemo(() => {
     return [DATASTORE_ENGINE_POSTGRES, DATASTORE_ENGINE_REDIS];
-  }, [awsClusters, watchClusterId]);
+  }, [watchClusterId]);
+
   const availableWorkloadTypes: BlockSelectOption[] = useMemo(() => {
     return [
       {
@@ -106,7 +106,6 @@ const DatastoreForm: React.FC = () => {
             DATASTORE_TEMPLATE_AWS_RDS,
             DATASTORE_TEMPLATE_AWS_AURORA,
             DATASTORE_TEMPLATE_AWS_ELASTICACHE,
-            DATASTORE_TEMPLATE_NEON,
           ]
         : [
             DATASTORE_TEMPLATE_MANAGED_POSTGRES,
@@ -289,14 +288,6 @@ const DatastoreForm: React.FC = () => {
                             setValue("config.masterUsername", "postgres");
                             setValue("config.engineVersion", "15.4");
                           }
-                        )
-                        .with(
-                          {
-                            name: DATASTORE_TEMPLATE_NEON.name,
-                          },
-                          () => {
-                            setValue("config.type", "neon");
-                          }
                         );
                       setValue("config.instanceClass", "unspecified");
                       setValue("config.masterUserPassword", uuidv4());
@@ -326,78 +317,75 @@ const DatastoreForm: React.FC = () => {
                 </>
               )}
             </>,
-            template !== DATASTORE_TEMPLATE_NEON ? (
-              <>
-                <Text size={16}>Specify resources</Text>
-                {template && (
-                  <>
-                    <Spacer y={0.5} />
-                    <Text color="helper">
-                      Specify your datastore CPU and RAM.
-                    </Text>
-                    {errors.config?.instanceClass?.message && (
-                      <AppearingErrorContainer>
-                        <Spacer y={0.5} />
-                        <ErrorComponent
-                          message={errors.config.instanceClass.message}
-                        />
-                      </AppearingErrorContainer>
-                    )}
-                    <Spacer y={0.5} />
-                    <Text>Select an instance tier:</Text>
-                    <Spacer height="20px" />
-                    <Resources
-                      options={template.instanceTiers}
-                      selected={watchTier}
-                      onSelect={(option: ResourceOption) => {
-                        setValue("config.instanceClass", option.tier);
-                        setValue(
-                          "config.allocatedStorageGigabytes",
-                          option.storageGigabytes
-                        );
-                        setCurrentStep(6);
-                      }}
-                      highlight={watchEngine === "REDIS" ? "ram" : "storage"}
-                    />
-                  </>
-                )}
-              </>
-            ) : null,
-            template !== DATASTORE_TEMPLATE_NEON ? (
-              <>
-                <Text size={16}>Credentials</Text>
-                {watchInstanceClass !== "unspecified" && template && (
-                  <>
-                    <Spacer y={0.5} />
-                    <Text color="helper">
-                      These credentials never leave your own cloud environment.
-                      Your app will use them to connect to this datastore.
-                    </Text>
-                    <Spacer height="20px" />
-                    <ConnectionInfo
-                      connectionInfo={
-                        watchEngine === "REDIS"
-                          ? {
-                              host: "(determined after creation)",
-                              port: 6379,
-                              password: watchDbPassword,
-                              username: "",
-                              database_name: "",
-                            }
-                          : {
-                              host: "(determined after creation)",
-                              port: 5432,
-                              password: watchDbPassword,
-                              username: watchDbUsername,
-                              database_name: watchDbName,
-                            }
-                      }
-                      template={template}
-                    />
-                  </>
-                )}
-              </>
-            ) : null,
+
+            <>
+              <Text size={16}>Specify resources</Text>
+              {template && (
+                <>
+                  <Spacer y={0.5} />
+                  <Text color="helper">
+                    Specify your datastore CPU and RAM.
+                  </Text>
+                  {errors.config?.instanceClass?.message && (
+                    <AppearingErrorContainer>
+                      <Spacer y={0.5} />
+                      <ErrorComponent
+                        message={errors.config.instanceClass.message}
+                      />
+                    </AppearingErrorContainer>
+                  )}
+                  <Spacer y={0.5} />
+                  <Text>Select an instance tier:</Text>
+                  <Spacer height="20px" />
+                  <Resources
+                    options={template.instanceTiers}
+                    selected={watchTier}
+                    onSelect={(option: ResourceOption) => {
+                      setValue("config.instanceClass", option.tier);
+                      setValue(
+                        "config.allocatedStorageGigabytes",
+                        option.storageGigabytes
+                      );
+                      setCurrentStep(6);
+                    }}
+                    highlight={watchEngine === "REDIS" ? "ram" : "storage"}
+                  />
+                </>
+              )}
+            </>,
+            <>
+              <Text size={16}>Credentials</Text>
+              {watchInstanceClass !== "unspecified" && template && (
+                <>
+                  <Spacer y={0.5} />
+                  <Text color="helper">
+                    These credentials never leave your own cloud environment.
+                    Your app will use them to connect to this datastore.
+                  </Text>
+                  <Spacer height="20px" />
+                  <ConnectionInfo
+                    connectionInfo={
+                      watchEngine === "REDIS"
+                        ? {
+                            host: "(determined after creation)",
+                            port: 6379,
+                            password: watchDbPassword,
+                            username: "",
+                            database_name: "",
+                          }
+                        : {
+                            host: "(determined after creation)",
+                            port: 5432,
+                            password: watchDbPassword,
+                            username: watchDbUsername,
+                            database_name: watchDbName,
+                          }
+                    }
+                    template={template}
+                  />
+                </>
+              )}
+            </>,
             <>
               <Text size={16}>Create datastore instance</Text>
               <Spacer y={0.5} />

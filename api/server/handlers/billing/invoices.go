@@ -1,7 +1,6 @@
 package billing
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -54,13 +53,6 @@ func (c *ListCustomerInvoicesHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	invoices, err := c.Config().BillingManager.StripeClient.ListCustomerInvoices(ctx, proj.BillingID, req.Status)
-	if err != nil {
-		err = telemetry.Error(ctx, span, err, fmt.Sprintf("error listing invoices for customer %s", proj.BillingID))
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-		return
-	}
-
 	// Write the response to the frontend
-	c.WriteResult(w, r, invoices)
+	c.WriteResult(w, r, "invoices")
 }

@@ -136,7 +136,7 @@ function UsagePage(): JSX.Element {
           <BarWrapper>
             <Total>Total cost: ${computeTotalCost(processedCosts)}</Total>
             <Bars
-              fill="#8784D2"
+              fill="#C59262"
               yKey="cost"
               xKey="start_timestamp"
               data={processedCosts || []}
@@ -188,6 +188,7 @@ const Total = styled.div`
   padding: 7px 10px;
   border-radius: 5px;
   border: 1px solid #494b4f;
+  z-index: 999;
 `;
 
 const Flex = styled.div`

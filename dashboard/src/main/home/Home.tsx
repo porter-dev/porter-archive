@@ -8,6 +8,7 @@ import {
   withRouter,
   type RouteComponentProps,
 } from "react-router";
+import { Redirect } from "react-router-dom";
 import styled, { ThemeProvider } from "styled-components";
 
 import ConfirmOverlay from "components/ConfirmOverlay";
@@ -35,17 +36,16 @@ import {
   type ProjectType,
 } from "shared/types";
 
+import { useAuthn } from "../../shared/auth/AuthnContext";
+import OryLogin from "../auth/OryLogin";
 import AddonDashboard from "./add-on-dashboard/AddOnDashboard";
 import AddonTemplates from "./add-on-dashboard/AddonTemplates";
 import AddonView from "./add-on-dashboard/AddonView";
 import LegacyAddOnDashboard from "./add-on-dashboard/legacy_AddOnDashboard";
 import LegacyNewAddOnFlow from "./add-on-dashboard/legacy_NewAddOnFlow";
 import AppView from "./app-dashboard/app-view/AppView";
-import AppDashboard from "./app-dashboard/AppDashboard";
 import Apps from "./app-dashboard/apps/Apps";
 import CreateApp from "./app-dashboard/create-app/CreateApp";
-import ExpandedApp from "./app-dashboard/expanded-app/ExpandedApp";
-import NewAppFlow from "./app-dashboard/new-app-flow/NewAppFlow";
 import DashboardRouter from "./cluster-dashboard/DashboardRouter";
 import PreviewEnvs from "./cluster-dashboard/preview-environments/v2/PreviewEnvs";
 import SetupApp from "./cluster-dashboard/preview-environments/v2/setup-app/SetupApp";
@@ -64,7 +64,6 @@ import CreateClusterForm from "./infrastructure-dashboard/forms/CreateClusterFor
 import Integrations from "./integrations/Integrations";
 import LaunchWrapper from "./launch/LaunchWrapper";
 import ModalHandler from "./ModalHandler";
-import BillingModal from "./modals/BillingModal";
 import Navbar from "./navbar/Navbar";
 import { NewProjectFC } from "./new-project/NewProject";
 import Onboarding from "./onboarding/Onboarding";
@@ -118,6 +117,8 @@ const Home: React.FC<Props> = (props) => {
     setUsage,
     setShouldRefreshClusters,
   } = useContext(Context);
+
+  const { authenticate } = useAuthn();
 
   const [showBillingModal, setShowBillingModal] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
@@ -431,6 +432,17 @@ const Home: React.FC<Props> = (props) => {
                 )}
               </>
             )}
+          {showBillingModal && (
+            <BillingModal
+              back={() => {
+                setShowBillingModal(false);
+              }}
+              onCreate={async () => {
+                setShowBillingModal(false);
+                window.location.reload();
+              }}
+            />
+          )}
           <ModalHandler setRefreshClusters={setForceRefreshClusters} />
           {currentOverlay &&
             createPortal(
@@ -535,6 +547,16 @@ const Home: React.FC<Props> = (props) => {
                 path="/new-project"
                 render={() => {
                   return <NewProjectFC />;
+                }}
+              ></Route>
+              <Route
+                path="/ory"
+                render={() => {
+                  if (user.isPorterUser) {
+                    return <OryLogin authenticate={authenticate} />;
+                  } else {
+                    return <Redirect to="/dashboard" />;
+                  }
                 }}
               ></Route>
               <Route

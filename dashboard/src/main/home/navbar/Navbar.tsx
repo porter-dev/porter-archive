@@ -1,85 +1,80 @@
-import React, { Component } from "react";
+import React, { useContext, useState } from "react";
 import styled from "styled-components";
+
+import { withAuth, type WithAuthProps } from "shared/auth/AuthorizationHoc";
 import { Context } from "shared/Context";
-
-import userIcon from "assets/user-icon.png"
 import settings from "assets/settings-bold.png";
+import userIcon from "assets/user-icon.png";
 
-import Feedback from "./Feedback";
+import Container from "../../../components/porter/Container";
+import StatusDot from "../../../components/porter/StatusDot";
+import { useAuthn } from "../../../shared/auth/AuthnContext";
 import Help from "./Help";
-import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
-import { Select } from "@material-ui/core";
 
 type PropsType = WithAuthProps & {
   logOut: () => void;
   currentView: string;
 };
 
-type StateType = {
-  showDropdown: boolean;
-  currentPolicy: string;
-};
+const Navbar: React.FC<PropsType> = ({ logOut }) => {
+  const { capabilities, user, setCurrentModal } = useContext(Context);
+  const [showDropdown, setShowDropdown] = useState(false);
 
-class Navbar extends Component<PropsType, StateType> {
-  state = {
-    showDropdown: false,
-    currentPolicy: "admin",
-  };
+  const { session } = useAuthn();
 
-  renderSettingsDropdown = () => {
-    if (this.state.showDropdown) {
-      let version = this.context?.capabilities?.version;
-      let userEmail = this.context.user && this.context.user.email;
-      return (
-        <>
-          <CloseOverlay
-            onClick={() => this.setState({ showDropdown: false })}
-          />
-          <Dropdown dropdownWidth="250px" dropdownMaxHeight="200px">
-            <DropdownLabel>{userEmail}</DropdownLabel>
-            <UserDropdownButton
-              onClick={() =>
-                this.context.setCurrentModal("AccountSettingsModal", {})
-              }
-            >
-              <SettingsIcon>
-                <Icon src={settings} />
-              </SettingsIcon>
-              Account settings
-            </UserDropdownButton>
-            <UserDropdownButton onClick={this.props.logOut}>
-              <i className="material-icons">keyboard_return</i> Log out
-              {version !== "production" && <VersionTag>{version}</VersionTag>}
-            </UserDropdownButton>
-          </Dropdown>
-        </>
-      );
+  const renderSettingsDropdown = (): JSX.Element | null => {
+    if (!showDropdown) {
+      return null;
     }
-  };
-
-  renderFeedbackButton = () => {
-    return <Feedback currentView={this.props.currentView} />;
-  };
-
-  render() {
+    const version = capabilities?.version;
+    const userEmail = user?.email;
     return (
-      <StyledNavbar>
-        <Help />
-        <NavButton
-          selected={this.state.showDropdown}
-          onClick={() =>
-            this.setState({ showDropdown: !this.state.showDropdown })
-          }
-        >
-          <Img src={userIcon} selected={this.state.showDropdown} />
-          {this.renderSettingsDropdown()}
-        </NavButton>
-      </StyledNavbar>
-    );
-  }
-}
+      <>
+        <CloseOverlay
+          onClick={() => {
+            setShowDropdown(false);
+          }}
+        />
+        <Dropdown dropdownWidth="250px" dropdownMaxHeight="200px">
+          <Container row>
+            <DropdownLabel>{userEmail}</DropdownLabel>
+            {session && <StatusDot status={"available"} />}
+          </Container>
 
-Navbar.contextType = Context;
+          <UserDropdownButton
+            onClick={() => {
+              setCurrentModal("AccountSettingsModal", {});
+            }}
+          >
+            <SettingsIcon>
+              <Icon src={settings} />
+            </SettingsIcon>
+            Account settings
+          </UserDropdownButton>
+          <UserDropdownButton onClick={logOut}>
+            <i className="material-icons">keyboard_return</i> Log out
+            {version !== "production" && <VersionTag>{version}</VersionTag>}
+          </UserDropdownButton>
+        </Dropdown>
+      </>
+    );
+  };
+
+  return (
+    <StyledNavbar>
+      <Help />
+      <NavButton
+        selected={showDropdown}
+        onClick={() => {
+          setShowDropdown(!showDropdown);
+        }}
+      >
+        <Img src={userIcon} selected={showDropdown} />
+        {renderSettingsDropdown()}
+      </NavButton>
+    </StyledNavbar>
+  );
+};
 
 export default withAuth(Navbar);
 
@@ -119,8 +114,8 @@ const I = styled.i`
 
 const Img = styled.img<{ selected: boolean }>`
   height: 16px;
-  opacity: ${props => props.selected ? "1" : "0.6"};
-  margin-right: 10px; 
+  opacity: ${(props) => (props.selected ? "1" : "0.6")};
+  margin-right: 10px;
   border-radius: 5px;
   :hover {
     opacity: 1;
@@ -210,7 +205,7 @@ const Dropdown = styled.div`
   }) => (props.dropdownMaxHeight ? props.dropdownMaxHeight : "300px")};
   border-radius: 5px;
   z-index: 999;
-  border: 1px solid #494B4F;
+  border: 1px solid #494b4f;
   overflow-y: auto;
   margin-bottom: 20px;
   animation: ${(props: {

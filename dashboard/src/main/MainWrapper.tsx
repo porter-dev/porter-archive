@@ -13,10 +13,15 @@ import "@ory/elements/dist/style.css";
 
 type PropsType = RouteComponentProps;
 
+const themeOverrides = {
+  fontFamily: '"Work Sans", sans-serif',
+  // other theme properties...
+};
+
 const MainWrapper: React.FC<PropsType> = ({ history, location }) => {
   return (
     <ContextProvider history={history} location={location}>
-      <ThemeProvider themeOverrides={{}}>
+      <ThemeProvider themeOverrides={themeOverrides}>
         <IntlProvider locale="en" defaultLocale="en">
           <AuthzProvider>
             <AuthnProvider>

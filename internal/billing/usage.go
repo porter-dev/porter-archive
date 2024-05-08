@@ -17,10 +17,15 @@ const (
 	defaultMaxRetries        = 10
 	maxIngestEventLimit      = 100
 
+	// porterStandardTrialDays is the number of days for the trial
+	porterStandardTrialDays = 15
+
 	// These prefixes are used to build the customer and subscription IDs
 	// in Lago. This way we can reuse the project IDs instead of storing
 	// the Lago IDs in the database.
 
+	// TrialIDPrefix is the prefix for the trial ID
+	TrialIDPrefix = "trial"
 	// SubscriptionIDPrefix is the prefix for the subscription ID
 	SubscriptionIDPrefix = "sub"
 	// CustomerIDPrefix is the prefix for the customer ID
@@ -29,9 +34,10 @@ const (
 
 // LagoClient is the client used to call the Lago API
 type LagoClient struct {
-	client               lago.Client
-	PorterCloudPlanID    string
-	PorterStandardPlanID string
+	client                 lago.Client
+	PorterCloudPlanCode    string
+	PorterStandardPlanCode string
+	PorterTrialCode        string
 
 	// DefaultRewardAmountCents is the default amount in USD cents rewarded to users
 	// who successfully refer a new user
@@ -40,48 +46,65 @@ type LagoClient struct {
 	MaxReferralRewards int64
 }
 
-// NewLagoClient returns a new Metronome client
-func NewLagoClient(lagoApiKey string, porterCloudPlanID string, porterStandardPlanID string) (client LagoClient, err error) {
+// NewLagoClient returns a new Lago client
+func NewLagoClient(lagoApiKey string, porterCloudPlanCode string, porterStandardPlanCode string, porterTrialCode string) (client LagoClient, err error) {
 	lagoClient := lago.New().
 		SetApiKey("__YOU_API_KEY__")
 
 	return LagoClient{
 		client:                   *lagoClient,
-		PorterCloudPlanID:        porterCloudPlanID,
-		PorterStandardPlanID:     porterStandardPlanID,
+		PorterCloudPlanCode:      porterCloudPlanCode,
+		PorterStandardPlanCode:   porterStandardPlanCode,
+		PorterTrialCode:          porterTrialCode,
 		DefaultRewardAmountCents: defaultRewardAmountCents,
 		MaxReferralRewards:       maxReferralRewards,
 	}, nil
 }
 
-// CreateCustomerWithPlan will create the customer in Metronome and immediately add it to the plan
+// CreateCustomerWithPlan will create the customer in Lago and immediately add it to the plan
 func (m LagoClient) CreateCustomerWithPlan(ctx context.Context, userEmail string, projectName string, projectID uint, billingID string, sandboxEnabled bool) (err error) {
-	ctx, span := telemetry.NewSpan(ctx, "add-metronome-customer-plan")
+	ctx, span := telemetry.NewSpan(ctx, "add-lago-customer-plan")
 	defer span.End()
-
-	planID := m.PorterStandardPlanID
-	if sandboxEnabled {
-		planID = m.PorterCloudPlanID
-	}
 
 	customerID, err := m.createCustomer(ctx, userEmail, projectName, projectID, billingID, sandboxEnabled)
 	if err != nil {
-		return telemetry.Error(ctx, span, err, fmt.Sprintf("error while creating customer with plan %s", planID))
+		return telemetry.Error(ctx, span, err, "error while creating customer")
 	}
 
-	subscriptionID := m.GenerateLagoID(SubscriptionIDPrefix, projectID, sandboxEnabled)
+	trialID := m.generateLagoID(TrialIDPrefix, projectID, sandboxEnabled)
+	subscriptionID := m.generateLagoID(SubscriptionIDPrefix, projectID, sandboxEnabled)
+	now := time.Now()
+	trialEndTime := now.Add(time.Hour * 24 * porterStandardTrialDays)
 
-	err = m.addCustomerPlan(ctx, customerID, planID, subscriptionID)
+	if sandboxEnabled {
+		err = m.addCustomerPlan(ctx, customerID, m.PorterCloudPlanCode, subscriptionID, &now, nil)
+		if err != nil {
+			return telemetry.Error(ctx, span, err, fmt.Sprintf("error while adding customer to plan %s", m.PorterCloudPlanCode))
+		}
+		return nil
+	}
+
+	// First, start the new customer on the trial
+	err = m.addCustomerPlan(ctx, customerID, m.PorterTrialCode, trialID, &now, &trialEndTime)
+	if err != nil {
+		return telemetry.Error(ctx, span, err, fmt.Sprintf("error while starting customer trial %s", m.PorterTrialCode))
+	}
+
+	// Then, add the customer to the actual plan. The date of the subscription will be the end of the trial
+	err = m.addCustomerPlan(ctx, customerID, m.PorterStandardPlanCode, subscriptionID, &trialEndTime, nil)
+	if err != nil {
+		return telemetry.Error(ctx, span, err, fmt.Sprintf("error while adding customer to plan %s", m.PorterStandardPlanCode))
+	}
 
 	return err
 }
 
-// createCustomer will create the customer in Metronome
+// createCustomer will create the customer in Lago
 func (m LagoClient) createCustomer(ctx context.Context, userEmail string, projectName string, projectID uint, billingID string, sandboxEnabled bool) (customerID string, err error) {
-	ctx, span := telemetry.NewSpan(ctx, "create-metronome-customer")
+	ctx, span := telemetry.NewSpan(ctx, "create-lago-customer")
 	defer span.End()
 
-	customerID = m.GenerateLagoID(CustomerIDPrefix, projectID, sandboxEnabled)
+	customerID = m.generateLagoID(CustomerIDPrefix, projectID, sandboxEnabled)
 
 	customerInput := &lago.CustomerInput{
 		ExternalID: customerID,
@@ -101,20 +124,20 @@ func (m LagoClient) createCustomer(ctx context.Context, userEmail string, projec
 }
 
 // addCustomerPlan will create a plan subscription for the customer
-func (m LagoClient) addCustomerPlan(ctx context.Context, projectID string, planID string, subscriptionID string) (err error) {
-	ctx, span := telemetry.NewSpan(ctx, "add-metronome-customer-plan")
+func (m LagoClient) addCustomerPlan(ctx context.Context, projectID string, planID string, subscriptionID string, startingAt *time.Time, endingAt *time.Time) (err error) {
+	ctx, span := telemetry.NewSpan(ctx, "add-lago-customer-plan")
 	defer span.End()
 
 	if projectID == "" || planID == "" {
 		return telemetry.Error(ctx, span, err, "project and plan id are required")
 	}
 
-	now := time.Now()
 	subscriptionInput := &lago.SubscriptionInput{
 		ExternalCustomerID: projectID,
 		ExternalID:         subscriptionID,
 		PlanCode:           planID,
-		SubscriptionAt:     &now,
+		SubscriptionAt:     startingAt,
+		EndingAt:           endingAt,
 		BillingTime:        lago.Calendar,
 	}
 
@@ -135,7 +158,7 @@ func (m LagoClient) ListCustomerPlan(ctx context.Context, projectID uint, sandbo
 		return plan, telemetry.Error(ctx, span, err, "project id empty")
 	}
 
-	subscriptionID := m.GenerateLagoID(SubscriptionIDPrefix, projectID, sandboxEnabled)
+	subscriptionID := m.generateLagoID(SubscriptionIDPrefix, projectID, sandboxEnabled)
 	subscription, lagoErr := m.client.Subscription().Get(ctx, subscriptionID)
 	if err != nil {
 		return plan, telemetry.Error(ctx, span, lagoErr.Err, "failed to create subscription")
@@ -150,14 +173,14 @@ func (m LagoClient) ListCustomerPlan(ctx context.Context, projectID uint, sandbo
 
 // EndCustomerPlan will immediately end the plan for the given customer
 func (m LagoClient) EndCustomerPlan(ctx context.Context, projectID uint) (err error) {
-	ctx, span := telemetry.NewSpan(ctx, "end-metronome-customer-plan")
+	ctx, span := telemetry.NewSpan(ctx, "end-lago-customer-plan")
 	defer span.End()
 
 	if projectID == 0 {
 		return telemetry.Error(ctx, span, err, "subscription id empty")
 	}
 
-	subscriptionID := m.GenerateLagoID(SubscriptionIDPrefix, projectID, false)
+	subscriptionID := m.generateLagoID(SubscriptionIDPrefix, projectID, false)
 	subscriptionTerminateInput := lago.SubscriptionTerminateInput{
 		ExternalID: subscriptionID,
 	}
@@ -206,7 +229,7 @@ func (m LagoClient) CreateCreditsGrant(ctx context.Context, projectID uint, name
 		return telemetry.Error(ctx, span, err, "project id empty")
 	}
 
-	customerID := m.GenerateLagoID(CustomerIDPrefix, projectID, sandboxEnabled)
+	customerID := m.generateLagoID(CustomerIDPrefix, projectID, sandboxEnabled)
 	expiresAtTime, err := time.Parse(time.RFC3339, expiresAt)
 	if err != nil {
 		return telemetry.Error(ctx, span, err, "failed to parse credit expiration timestamp")
@@ -238,12 +261,12 @@ func (m LagoClient) ListCustomerUsage(ctx context.Context, projectID uint, curre
 		return usage, telemetry.Error(ctx, span, err, "project id empty")
 	}
 
-	subscriptionID := m.GenerateLagoID(SubscriptionIDPrefix, projectID, sandboxEnabled)
+	subscriptionID := m.generateLagoID(SubscriptionIDPrefix, projectID, sandboxEnabled)
 	customerUsageInput := &lago.CustomerUsageInput{
 		ExternalSubscriptionID: subscriptionID,
 	}
 
-	customerID := m.GenerateLagoID(CustomerIDPrefix, projectID, sandboxEnabled)
+	customerID := m.generateLagoID(CustomerIDPrefix, projectID, sandboxEnabled)
 	_, lagoErr := m.client.Customer().CurrentUsage(ctx, customerID, customerUsageInput)
 	if lagoErr.Err != nil {
 		return usage, telemetry.Error(ctx, span, lagoErr.Err, "failed to get customer usage")
@@ -252,7 +275,7 @@ func (m LagoClient) ListCustomerUsage(ctx context.Context, projectID uint, curre
 	return usage, nil
 }
 
-// IngestEvents sends a list of billing events to Metronome's ingest endpoint
+// IngestEvents sends a list of billing events to Lago's ingest endpoint
 func (m LagoClient) IngestEvents(ctx context.Context, events []types.BillingEvent, enableSandbox bool) (err error) {
 	ctx, span := telemetry.NewSpan(ctx, "ingets-billing-events")
 	defer span.End()
@@ -275,7 +298,7 @@ func (m LagoClient) IngestEvents(ctx context.Context, events []types.BillingEven
 			if err != nil {
 				return telemetry.Error(ctx, span, err, "failed to parse customer ID")
 			}
-			externalSubscriptionID := m.GenerateLagoID(SubscriptionIDPrefix, uint(customerID), enableSandbox)
+			externalSubscriptionID := m.generateLagoID(SubscriptionIDPrefix, uint(customerID), enableSandbox)
 
 			event := lago.EventInput{
 				TransactionID:          batch[i].TransactionID,
@@ -302,7 +325,18 @@ func (m LagoClient) IngestEvents(ctx context.Context, events []types.BillingEven
 	return nil
 }
 
-func (m LagoClient) GenerateLagoID(prefix string, projectID uint, sandboxEnabled bool) string {
+// ListCustomerInvoices will return all invoices for the customer with the given status
+func (s StripeClient) ListCustomerInvoices(ctx context.Context, projectID uint) (invoiceList []types.Invoice, err error) {
+	ctx, span := telemetry.NewSpan(ctx, "populate-invoice-urls")
+	defer span.End()
+
+	if projectID == 0 {
+		return invoiceList, telemetry.Error(ctx, span, err, "project id cannot be empty")
+	}
+	return invoiceList, nil
+}
+
+func (m LagoClient) generateLagoID(prefix string, projectID uint, sandboxEnabled bool) string {
 	if sandboxEnabled {
 		return fmt.Sprintf("cloud_%s_%d", prefix, projectID)
 	}

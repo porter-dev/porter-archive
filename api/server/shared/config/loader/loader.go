@@ -371,15 +371,15 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 		res.Logger.Info().Msg("STRIPE_SECRET_KEY not set, all Stripe functionality will be disabled")
 	}
 
-	if sc.LagoAPIKey != "" && sc.PorterCloudPlanID != "" && sc.PorterStandardPlanID != "" {
-		lagoClient, err = billing.NewLagoClient(InstanceEnvConf.ServerConf.LagoAPIKey, InstanceEnvConf.ServerConf.PorterCloudPlanID, InstanceEnvConf.ServerConf.PorterStandardPlanID)
+	if sc.LagoAPIKey != "" && sc.PorterCloudPlanCode != "" && sc.PorterStandardPlanCode != "" && sc.PorterTrialCode != "" {
+		lagoClient, err = billing.NewLagoClient(InstanceEnvConf.ServerConf.LagoAPIKey, InstanceEnvConf.ServerConf.PorterCloudPlanCode, InstanceEnvConf.ServerConf.PorterStandardPlanCode, InstanceEnvConf.ServerConf.PorterTrialCode)
 		if err != nil {
 			return nil, fmt.Errorf("unable to create Lago client: %w", err)
 		}
 		metronomeEnabled = true
 		res.Logger.Info().Msg("Lago configuration loaded")
 	} else {
-		res.Logger.Info().Msg("LAGO_API_KEY, PORTER_CLOUD_PLAN_ID, or PORTER_STANDARD_PLAN_ID not set, all Metronome functionality will be disabled")
+		res.Logger.Info().Msg("LAGO_API_KEY, PORTER_CLOUD_PLAN_CODE, PORTER_STANDARD_PLAN_CODE and PORTER_TRIAL_CODE must be set, all Lago functionality will be disabled")
 	}
 
 	res.Logger.Info().Msg("Creating billing manager")

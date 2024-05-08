@@ -105,7 +105,7 @@ func (repo *NeonIntegrationRepository) EncryptNeonIntegration(
 	return encrypted, nil
 }
 
-// DecryptNeonIntegrationData will decrypt the neon integration data before
+// DecryptNeonIntegration will decrypt the neon integration data before
 // returning it from the DB
 func (repo *NeonIntegrationRepository) DecryptNeonIntegration(
 	neonInt ints.NeonIntegration,

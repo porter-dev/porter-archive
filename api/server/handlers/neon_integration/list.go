@@ -29,6 +29,7 @@ func NewListNeonIntegrationsHandler(
 	}
 }
 
+// NeonIntegration describes a neon integration
 type NeonIntegration struct {
 	CreatedAt time.Time `json:"created_at"`
 }

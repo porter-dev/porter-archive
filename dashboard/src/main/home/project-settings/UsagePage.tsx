@@ -128,14 +128,13 @@ function UsagePage(): JSX.Element {
         prefix={<>Billing period</>}
       />
       <Spacer y={1} />
-      {costs &&
-      costs.length > 0 &&
-      usage &&
-      usage.length > 0 &&
-      usage[0].usage_metrics.length > 0 ? (
+      {processedCosts &&
+      processedCosts.length > 0 &&
+      processedUsage &&
+      processedUsage.length > 0 ? (
         <>
           <BarWrapper>
-            <Total>Total cost: ${computeTotalCost(costs)}</Total>
+            <Total>Total cost: ${computeTotalCost(processedCosts)}</Total>
             <Bars
               fill="#8784D2"
               yKey="cost"

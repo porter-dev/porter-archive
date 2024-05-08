@@ -2061,6 +2061,13 @@ const getSlackIntegrations = baseApi<{}, { id: number }>(
   }
 );
 
+const getNeonIntegrations = baseApi<{}, { projectId: number }>(
+  "GET",
+  ({ projectId }) => {
+    return `/api/projects/${projectId}/neon-integrations`;
+  }
+);
+
 const getRevisions = baseApi<
   {},
   { id: number; cluster_id: number; namespace: string; name: string }
@@ -2882,7 +2889,7 @@ const getDatastoreCredential = baseApi<
 const updateDatastore = baseApi<
   {
     name: string;
-    type: "RDS" | "ELASTICACHE" | "MANAGED-POSTGRES" | "MANAGED-REDIS";
+    type: "RDS" | "ELASTICACHE" | "MANAGED-POSTGRES" | "MANAGED-REDIS" | "NEON";
     engine: "POSTGRES" | "AURORA-POSTGRES" | "REDIS";
 
     values: any;
@@ -3887,6 +3894,7 @@ export default {
   getReleaseSteps,
   getRepoIntegrations,
   getSlackIntegrations,
+  getNeonIntegrations,
   getRepos,
   getRevisions,
   getTemplateInfo,

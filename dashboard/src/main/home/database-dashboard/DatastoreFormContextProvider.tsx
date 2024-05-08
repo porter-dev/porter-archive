@@ -1,15 +1,21 @@
-import React, { createContext, useMemo, useState } from "react";
+import React, { createContext, useContext, useMemo, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FormProvider, useForm } from "react-hook-form";
 import { useHistory } from "react-router";
 import styled from "styled-components";
 
+import Loading from "components/Loading";
 import { Error as ErrorComponent } from "components/porter/Error";
 import { dbFormValidator, type DbFormData } from "lib/databases/types";
 import { getErrorMessageFromNetworkCall } from "lib/hooks/useCluster";
 import { useDatastoreList } from "lib/hooks/useDatabaseList";
 import { useDatastore } from "lib/hooks/useDatastore";
 import { useIntercom } from "lib/hooks/useIntercom";
+import { useNeon } from "lib/hooks/useNeon";
+
+import { Context } from "shared/Context";
+
+import NeonIntegrationModal from "./shared/NeonIntegrationModal";
 
 // todo(ianedwards): refactor button to use more predictable state
 export type UpdateDatastoreButtonProps = {
@@ -20,6 +26,7 @@ export type UpdateDatastoreButtonProps = {
 
 type DatastoreFormContextType = {
   updateDatastoreButtonProps: UpdateDatastoreButtonProps;
+  projectId: number;
 };
 
 const DatastoreFormContext = createContext<DatastoreFormContextType | null>(
@@ -42,7 +49,12 @@ type DatastoreFormContextProviderProps = {
 const DatastoreFormContextProvider: React.FC<
   DatastoreFormContextProviderProps
 > = ({ children }) => {
+  const { currentProject } = useContext(Context);
+
   const [updateDatastoreError, setUpdateDatastoreError] = useState<string>("");
+  const { getNeonIntegrations } = useNeon();
+  const [showNeonIntegrationModal, setShowNeonIntegrationModal] =
+    useState(false);
 
   const { showIntercomWithMessage } = useIntercom();
 
@@ -85,6 +97,9 @@ const DatastoreFormContextProvider: React.FC<
   }, [isSubmitting, updateDatastoreError, errors]);
 
   const onSubmit = handleSubmit(async (data) => {
+    if (!currentProject) {
+      return;
+    }
     setUpdateDatastoreError("");
     if (existingDatastores.some((db) => db.name === data.name)) {
       setUpdateDatastoreError(
@@ -93,6 +108,15 @@ const DatastoreFormContextProvider: React.FC<
       return;
     }
     try {
+      if (data.config.type === "neon") {
+        const integrations = await getNeonIntegrations({
+          projectId: currentProject.id,
+        });
+        if (integrations.length === 0) {
+          setShowNeonIntegrationModal(true);
+          return;
+        }
+      }
       await createDatastore(data);
       history.push(`/datastores/${data.name}`);
     } catch (err) {
@@ -107,10 +131,15 @@ const DatastoreFormContextProvider: React.FC<
     }
   });
 
+  if (!currentProject) {
+    return <Loading />;
+  }
+
   return (
     <DatastoreFormContext.Provider
       value={{
         updateDatastoreButtonProps,
+        projectId: currentProject.id,
       }}
     >
       <Wrapper>
@@ -118,6 +147,13 @@ const DatastoreFormContextProvider: React.FC<
           <form onSubmit={onSubmit}>{children}</form>
         </FormProvider>
       </Wrapper>
+      {showNeonIntegrationModal && (
+        <NeonIntegrationModal
+          onClose={() => {
+            setShowNeonIntegrationModal(false);
+          }}
+        />
+      )}
     </DatastoreFormContext.Provider>
   );
 };

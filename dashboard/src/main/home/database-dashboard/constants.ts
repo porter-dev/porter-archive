@@ -13,6 +13,7 @@ import {
   DATASTORE_TYPE_ELASTICACHE,
   DATASTORE_TYPE_MANAGED_POSTGRES,
   DATASTORE_TYPE_MANAGED_REDIS,
+  DATASTORE_TYPE_NEON,
   DATASTORE_TYPE_RDS,
   type DatastoreEngine,
   type DatastoreTemplate,
@@ -21,8 +22,14 @@ import {
 import awsRDS from "assets/amazon-rds.png";
 import awsElastiCache from "assets/aws-elasticache.png";
 import infra from "assets/cluster.svg";
+import neon from "assets/neon.svg";
 import postgresql from "assets/postgresql.svg";
 import redis from "assets/redis.svg";
+
+import ConfigurationTab from "./tabs/ConfigurationTab";
+import ConnectTab from "./tabs/ConnectTab";
+import PublicDatastoreConnectTab from "./tabs/PublicDatastoreConnectTab";
+import SettingsTab from "./tabs/SettingsTab";
 
 export const DATASTORE_ENGINE_POSTGRES: DatastoreEngine = {
   name: "POSTGRES" as const,
@@ -103,7 +110,6 @@ export const DATASTORE_TEMPLATE_AWS_RDS: DatastoreTemplate = Object.freeze({
       storageGigabytes: 2048,
     },
   ],
-  formTitle: "Create an RDS PostgreSQL instance",
   creationStateProgression: [
     DATASTORE_STATE_CREATING,
     DATASTORE_STATE_CONFIGURING_LOG_EXPORTS,
@@ -116,6 +122,23 @@ export const DATASTORE_TEMPLATE_AWS_RDS: DatastoreTemplate = Object.freeze({
     DATASTORE_STATE_AWAITING_DELETION,
     DATASTORE_STATE_DELETING_RECORD,
     DATASTORE_STATE_DELETED,
+  ],
+  tabs: [
+    {
+      name: "connectivity",
+      displayName: "Connectivity",
+      component: ConnectTab,
+    },
+    {
+      name: "configuration",
+      displayName: "Configuration",
+      component: ConfigurationTab,
+    },
+    {
+      name: "settings",
+      displayName: "Settings",
+      component: SettingsTab,
+    },
   ],
 });
 export const DATASTORE_TEMPLATE_AWS_AURORA: DatastoreTemplate = Object.freeze({
@@ -145,7 +168,6 @@ export const DATASTORE_TEMPLATE_AWS_AURORA: DatastoreTemplate = Object.freeze({
       storageGigabytes: 256,
     },
   ],
-  formTitle: "Create an Aurora PostgreSQL instance",
   creationStateProgression: [
     DATASTORE_STATE_CREATING,
     DATASTORE_STATE_AVAILABLE,
@@ -154,6 +176,23 @@ export const DATASTORE_TEMPLATE_AWS_AURORA: DatastoreTemplate = Object.freeze({
     DATASTORE_STATE_AWAITING_DELETION,
     DATASTORE_STATE_DELETING_RECORD,
     DATASTORE_STATE_DELETED,
+  ],
+  tabs: [
+    {
+      name: "connectivity",
+      displayName: "Connectivity",
+      component: ConnectTab,
+    },
+    {
+      name: "configuration",
+      displayName: "Configuration",
+      component: ConfigurationTab,
+    },
+    {
+      name: "settings",
+      displayName: "Settings",
+      component: SettingsTab,
+    },
   ],
 });
 export const DATASTORE_TEMPLATE_AWS_ELASTICACHE: DatastoreTemplate =
@@ -205,7 +244,6 @@ export const DATASTORE_TEMPLATE_AWS_ELASTICACHE: DatastoreTemplate =
         storageGigabytes: 0,
       },
     ],
-    formTitle: "Create an ElastiCache Redis instance",
     creationStateProgression: [
       DATASTORE_STATE_CREATING,
       DATASTORE_STATE_MODIFYING,
@@ -217,6 +255,23 @@ export const DATASTORE_TEMPLATE_AWS_ELASTICACHE: DatastoreTemplate =
       DATASTORE_STATE_DELETING_PARAMETER_GROUP,
       DATASTORE_STATE_DELETING_RECORD,
       DATASTORE_STATE_DELETED,
+    ],
+    tabs: [
+      {
+        name: "connectivity",
+        displayName: "Connectivity",
+        component: ConnectTab,
+      },
+      {
+        name: "configuration",
+        displayName: "Configuration",
+        component: ConfigurationTab,
+      },
+      {
+        name: "settings",
+        displayName: "Settings",
+        component: SettingsTab,
+      },
     ],
   });
 export const DATASTORE_TEMPLATE_MANAGED_REDIS: DatastoreTemplate =
@@ -246,7 +301,6 @@ export const DATASTORE_TEMPLATE_MANAGED_REDIS: DatastoreTemplate =
         storageGigabytes: 2,
       },
     ],
-    formTitle: "Create an ElastiCache Memcached instance",
     creationStateProgression: [
       DATASTORE_STATE_CREATING,
       DATASTORE_STATE_AVAILABLE,
@@ -255,6 +309,23 @@ export const DATASTORE_TEMPLATE_MANAGED_REDIS: DatastoreTemplate =
       DATASTORE_STATE_AWAITING_DELETION,
       DATASTORE_STATE_DELETING_RECORD,
       DATASTORE_STATE_DELETED,
+    ],
+    tabs: [
+      {
+        name: "connectivity",
+        displayName: "Connectivity",
+        component: ConnectTab,
+      },
+      {
+        name: "configuration",
+        displayName: "Configuration",
+        component: ConfigurationTab,
+      },
+      {
+        name: "settings",
+        displayName: "Settings",
+        component: SettingsTab,
+      },
     ],
   });
 export const DATASTORE_TEMPLATE_MANAGED_POSTGRES: DatastoreTemplate =
@@ -284,7 +355,6 @@ export const DATASTORE_TEMPLATE_MANAGED_POSTGRES: DatastoreTemplate =
         storageGigabytes: 2,
       },
     ],
-    formTitle: "Create a managed PostgreSQL instance",
     creationStateProgression: [
       DATASTORE_STATE_CREATING,
       DATASTORE_STATE_AVAILABLE,
@@ -294,7 +364,59 @@ export const DATASTORE_TEMPLATE_MANAGED_POSTGRES: DatastoreTemplate =
       DATASTORE_STATE_DELETING_RECORD,
       DATASTORE_STATE_DELETED,
     ],
+    tabs: [
+      {
+        name: "connectivity",
+        displayName: "Connectivity",
+        component: ConnectTab,
+      },
+      {
+        name: "configuration",
+        displayName: "Configuration",
+        component: ConfigurationTab,
+      },
+      {
+        name: "settings",
+        displayName: "Settings",
+        component: SettingsTab,
+      },
+    ],
   });
+
+export const DATASTORE_TEMPLATE_NEON: DatastoreTemplate = Object.freeze({
+  name: "Neon",
+  displayName: "Neon",
+  highLevelType: DATASTORE_ENGINE_POSTGRES,
+  type: DATASTORE_TYPE_NEON,
+  engine: DATASTORE_ENGINE_POSTGRES,
+  supportedEngineVersions: [],
+  icon: neon as string,
+  description:
+    "A fully managed serverless Postgres. Neon separates storage and compute to offer autoscaling, branching, and bottomless storage.",
+  disabled: true,
+  instanceTiers: [],
+  creationStateProgression: [
+    DATASTORE_STATE_CREATING,
+    DATASTORE_STATE_AVAILABLE,
+  ],
+  deletionStateProgression: [
+    DATASTORE_STATE_AWAITING_DELETION,
+    DATASTORE_STATE_DELETING_RECORD,
+    DATASTORE_STATE_DELETED,
+  ],
+  tabs: [
+    {
+      name: "connectivity",
+      displayName: "Connectivity",
+      component: PublicDatastoreConnectTab,
+    },
+    {
+      name: "settings",
+      displayName: "Settings",
+      component: SettingsTab,
+    },
+  ],
+});
 
 export const SUPPORTED_DATASTORE_TEMPLATES: DatastoreTemplate[] = [
   DATASTORE_TEMPLATE_AWS_RDS,
@@ -302,4 +424,5 @@ export const SUPPORTED_DATASTORE_TEMPLATES: DatastoreTemplate[] = [
   DATASTORE_TEMPLATE_AWS_ELASTICACHE,
   DATASTORE_TEMPLATE_MANAGED_POSTGRES,
   DATASTORE_TEMPLATE_MANAGED_REDIS,
+  DATASTORE_TEMPLATE_NEON,
 ];

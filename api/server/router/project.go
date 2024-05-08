@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/porter-dev/porter/api/server/handlers/cloud_provider"
+	"github.com/porter-dev/porter/api/server/handlers/neon_integration"
 
 	"github.com/porter-dev/porter/api/server/handlers/deployment_target"
 
@@ -2018,6 +2019,33 @@ func getProjectRoutes(
 	routes = append(routes, &router.Route{
 		Endpoint: createDeploymentTargetEndpoint,
 		Handler:  createDeploymentTargetHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/neon-integrations -> apiContract.NewListNeonIntegrationsHandler
+	listNeonIntegrationsEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/neon-integrations",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	listNeonIntegrationsHandler := neon_integration.NewListNeonIntegrationsHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+	routes = append(routes, &router.Route{
+		Endpoint: listNeonIntegrationsEndpoint,
+		Handler:  listNeonIntegrationsHandler,
 		Router:   r,
 	})
 

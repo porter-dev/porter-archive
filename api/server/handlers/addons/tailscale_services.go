@@ -79,7 +79,7 @@ func (c *TailscaleServicesHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	var services []TailscaleService
+	services := make([]TailscaleService, 0)
 	for _, svc := range svcList.Items {
 		var port int
 		if len(svc.Spec.Ports) > 0 {

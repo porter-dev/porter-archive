@@ -11,7 +11,6 @@ import Text from "components/porter/Text";
 import { readableDate } from "shared/string_utils";
 
 import { useDatastoreContext } from "./DatabaseContextProvider";
-import { getDatastoreIcon } from "./icons";
 import EngineTag from "./tags/EngineTag";
 
 const DatabaseHeader: React.FC = () => {
@@ -22,7 +21,7 @@ const DatabaseHeader: React.FC = () => {
       <Container row style={{ width: "100%" }}>
         <Container row spaced style={{ width: "100%" }}>
           <Container row>
-            <Icon src={getDatastoreIcon(datastore.type)} height={"25px"} />
+            <Icon src={datastore.template.icon} height={"25px"} />
             <Spacer inline x={1} />
             <Text size={21}>{datastore.name}</Text>
             <Spacer inline x={1} />

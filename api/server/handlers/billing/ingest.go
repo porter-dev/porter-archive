@@ -75,7 +75,7 @@ func (c *IngestEventsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		}
 	}
 
-	subscriptionID, err := c.Config().BillingManager.LagoClient.GetCustomeActiveSubscription(ctx, proj.ID, proj.EnableSandbox)
+	plan, err := c.Config().BillingManager.LagoClient.GetCustomeActivePlan(ctx, proj.ID, proj.EnableSandbox)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error getting active subscription")
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
@@ -83,10 +83,10 @@ func (c *IngestEventsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	}
 
 	telemetry.WithAttributes(span,
-		telemetry.AttributeKV{Key: "subscription_id", Value: subscriptionID},
+		telemetry.AttributeKV{Key: "subscription_id", Value: plan.ID},
 	)
 
-	err = c.Config().BillingManager.LagoClient.IngestEvents(ctx, subscriptionID, ingestEventsRequest.Events, proj.EnableSandbox)
+	err = c.Config().BillingManager.LagoClient.IngestEvents(ctx, plan.ID, ingestEventsRequest.Events, proj.EnableSandbox)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error ingesting events")
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))

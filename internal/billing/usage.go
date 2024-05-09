@@ -3,8 +3,8 @@ package billing
 import (
 	"context"
 	"fmt"
-	"log"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/getlago/lago-go-client"
@@ -55,6 +55,7 @@ func NewLagoClient(lagoApiKey string, porterCloudPlanCode string, porterStandard
 	if lagoClient == nil {
 		return client, fmt.Errorf("failed to create lago client")
 	}
+	// lagoClient.Debug = true
 
 	return LagoClient{
 		client:                   *lagoClient,
@@ -134,74 +135,49 @@ func (m LagoClient) CheckIfCustomerExists(ctx context.Context, projectID uint, e
 	return true, nil
 }
 
-func (m LagoClient) GetCustomeActiveSubscription(ctx context.Context, projectID uint, sandboxEnabled bool) (subscriptionID string, err error) {
+func (m LagoClient) GetCustomeActivePlan(ctx context.Context, projectID uint, sandboxEnabled bool) (plan types.Plan, err error) {
 	ctx, span := telemetry.NewSpan(ctx, "get-active-subscription")
 	defer span.End()
 
 	if projectID == 0 {
-		return subscriptionID, telemetry.Error(ctx, span, err, "project id empty")
+		return plan, telemetry.Error(ctx, span, err, "project id empty")
 	}
 
 	if sandboxEnabled {
-		subscriptionID = m.generateLagoID(SubscriptionIDPrefix, projectID, sandboxEnabled)
-		return subscriptionID, nil
+		subscriptionID := m.generateLagoID(SubscriptionIDPrefix, projectID, sandboxEnabled)
+		return types.Plan{ID: subscriptionID}, nil
 	}
 
 	customerID := m.generateLagoID(CustomerIDPrefix, projectID, sandboxEnabled)
 	subscriptionListInput := lago.SubscriptionListInput{
 		ExternalCustomerID: customerID,
-		Status:             []string{"active"},
 	}
 
 	activeSubscriptions, lagoErr := m.client.Subscription().GetList(ctx, subscriptionListInput)
 	if lagoErr != nil {
-		return subscriptionID, telemetry.Error(ctx, span, fmt.Errorf(lagoErr.ErrorCode), "failed to get active subscription")
+		return plan, telemetry.Error(ctx, span, fmt.Errorf(lagoErr.ErrorCode), "failed to get active subscription")
 	}
 
 	if activeSubscriptions == nil {
-		return subscriptionID, telemetry.Error(ctx, span, err, "no active subscriptions found")
+		return plan, telemetry.Error(ctx, span, err, "no active subscriptions found")
 	}
 
-	if len(activeSubscriptions.Subscriptions) > 0 {
-		subscriptionID = activeSubscriptions.Subscriptions[0].ExternalID
-	}
+	for _, subscription := range activeSubscriptions.Subscriptions {
+		if subscription.Status != lago.SubscriptionStatusActive {
+			continue
+		}
 
-	return subscriptionID, nil
-}
-
-// ListCustomerPlan will return the current active plan to which the user is subscribed
-func (m LagoClient) ListCustomerPlan(ctx context.Context, subscriptionID string) (plan types.Plan, err error) {
-	ctx, span := telemetry.NewSpan(ctx, "list-customer-plans")
-	defer span.End()
-
-	if subscriptionID == "" {
-		return plan, telemetry.Error(ctx, span, err, "project id empty")
-	}
-
-	subscription, lagoErr := m.client.Subscription().Get(ctx, subscriptionID)
-	if lagoErr != nil {
-		return plan, telemetry.Error(ctx, span, fmt.Errorf(lagoErr.ErrorCode), "failed to get subscription")
-	}
-
-	if subscription == nil {
-		return plan, nil
-	}
-
-	log.Println("subscription", subscription)
-
-	if subscription.StartedAt != nil {
-		plan.StartingOn = subscription.StartedAt.Format(time.RFC3339)
-	}
-
-	if subscription.EndingAt != nil {
+		plan.ID = subscription.ExternalID
+		plan.StartingOn = subscription.SubscriptionAt.Format(time.RFC3339)
 		plan.EndingBefore = subscription.EndingAt.Format(time.RFC3339)
+
+		if strings.Contains(subscription.ExternalID, TrialIDPrefix) {
+			plan.TrialInfo.EndingBefore = subscription.EndingAt.Format(time.RFC3339)
+		}
+
+		break
 	}
 
-	if subscription.TrialEndedAt != nil {
-		plan.TrialInfo.EndingBefore = subscription.TrialEndedAt.Format(time.RFC3339)
-	}
-
-	log.Println("plan", plan)
 	return plan, nil
 }
 

@@ -151,14 +151,10 @@ type FormattedCost struct {
 }
 
 type Plan struct {
-	ID                  uuid.UUID `json:"id"`
-	PlanID              uuid.UUID `json:"plan_id"`
-	PlanName            string    `json:"plan_name"`
-	PlanDescription     string    `json:"plan_description"`
-	StartingOn          string    `json:"starting_on"`
-	EndingBefore        string    `json:"ending_before"`
-	NetPaymentTermsDays int       `json:"net_payment_terms_days"`
-	TrialInfo           Trial     `json:"trial_info,omitempty"`
+	ID           string `json:"id"`
+	StartingOn   string `json:"starting_on"`
+	EndingBefore string `json:"ending_before"`
+	TrialInfo    Trial  `json:"trial_info,omitempty"`
 }
 
 // Trial contains the information for a trial period

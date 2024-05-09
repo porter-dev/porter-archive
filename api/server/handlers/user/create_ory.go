@@ -1,0 +1,126 @@
+package user
+
+import (
+	"errors"
+	"fmt"
+	"net/http"
+
+	"github.com/porter-dev/porter/internal/telemetry"
+
+	"gorm.io/gorm"
+
+	"github.com/porter-dev/porter/api/server/shared/apierrors"
+	"github.com/porter-dev/porter/internal/analytics"
+	"github.com/porter-dev/porter/internal/models"
+
+	"github.com/porter-dev/porter/api/server/handlers"
+	"github.com/porter-dev/porter/api/server/shared"
+	"github.com/porter-dev/porter/api/server/shared/config"
+)
+
+type OryUserCreateHandler struct {
+	handlers.PorterHandlerReadWriter
+}
+
+func NewOryUserCreateHandler(
+	config *config.Config,
+	decoderValidator shared.RequestDecoderValidator,
+	writer shared.ResultWriter,
+) *OryUserCreateHandler {
+	return &OryUserCreateHandler{
+		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
+	}
+}
+
+type CreateOryUserRequest struct {
+	UserId   string `json:"user_id"`
+	Email    string `json:"email"`
+	Referral string `json:"referral"`
+}
+
+func (u *OryUserCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-create-ory-user")
+	defer span.End()
+
+	// this endpoint is not authenticated through middleware; instead, we check
+	// for the presence of an ory action cookie that matches env
+	oryActionCookie, err := r.Cookie("ory_action")
+	if err != nil {
+		err = telemetry.Error(ctx, span, err, "invalid ory action cookie")
+		reqErr := apierrors.NewErrForbidden(err)
+		apierrors.HandleAPIError(u.Config().Logger, u.Config().Alerter, w, r, reqErr, true)
+		return
+	}
+
+	if oryActionCookie.Value != u.Config().OryActionKey {
+		err = telemetry.Error(ctx, span, nil, "cookie does not match")
+		reqErr := apierrors.NewErrForbidden(err)
+		apierrors.HandleAPIError(u.Config().Logger, u.Config().Alerter, w, r, reqErr, true)
+		return
+	}
+
+	request := &CreateOryUserRequest{}
+	ok := u.DecodeAndValidate(w, r, request)
+	if !ok {
+		err = telemetry.Error(ctx, span, nil, "invalid request")
+		u.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+		return
+	}
+
+	if request.Email == "" {
+		err = telemetry.Error(ctx, span, nil, "email is required")
+		u.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+		return
+	}
+	if request.UserId == "" {
+		err = telemetry.Error(ctx, span, nil, "user_id is required")
+		u.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+		return
+	}
+
+	user := &models.User{
+		Model:         gorm.Model{},
+		Email:         request.Email,
+		EmailVerified: false,
+		AuthProvider:  models.AuthProvider_Ory,
+		ExternalId:    request.UserId,
+	}
+
+	existingUser, err := u.Repo().User().ReadUserByEmail(user.Email)
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		err = telemetry.Error(ctx, span, err, "error reading user by email")
+		u.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	if existingUser == nil || existingUser.ID == 0 {
+		user, err = u.Repo().User().CreateUser(user)
+		if err != nil {
+			err = telemetry.Error(ctx, span, err, "error creating user")
+			u.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
+	} else {
+		existingUser.AuthProvider = models.AuthProvider_Ory
+		existingUser.ExternalId = request.UserId
+		_, err = u.Repo().User().UpdateUser(existingUser)
+		if err != nil {
+			err = telemetry.Error(ctx, span, err, "error updating user")
+			u.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
+	}
+
+	u.Config().AnalyticsClient.Identify(analytics.CreateSegmentIdentifyUser(user))
+
+	u.Config().AnalyticsClient.Track(analytics.UserCreateTrack(&analytics.UserCreateTrackOpts{
+		UserScopedTrackOpts: analytics.GetUserScopedTrackOpts(user.ID),
+		Email:               user.Email,
+		FirstName:           user.FirstName,
+		LastName:            user.LastName,
+		CompanyName:         user.CompanyName,
+		ReferralMethod:      request.Referral,
+	}))
+
+	fmt.Println("triggered by ory")
+}

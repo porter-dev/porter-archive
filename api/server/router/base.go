@@ -197,6 +197,30 @@ func GetBaseRoutes(
 		Router:   r,
 	})
 
+	// POST /api/users/ory -> user.NewOryUserCreateHandler
+	createOryUserEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: "/users/ory",
+			},
+		},
+	)
+
+	createOryUserHandler := user.NewOryUserCreateHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: createOryUserEndpoint,
+		Handler:  createOryUserHandler,
+		Router:   r,
+	})
+
 	// POST /api/login -> user.NewUserLoginHandler
 	loginUserEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

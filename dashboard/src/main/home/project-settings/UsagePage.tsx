@@ -3,6 +3,7 @@ import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import styled from "styled-components";
 
+import Container from "components/porter/Container";
 import Fieldset from "components/porter/Fieldset";
 import Select from "components/porter/Select";
 import Spacer from "components/porter/Spacer";
@@ -128,42 +129,43 @@ function UsagePage(): JSX.Element {
         prefix={<>Billing period</>}
       />
       <Spacer y={1} />
-      {processedCosts &&
-      processedCosts.length > 0 &&
-      processedUsage &&
-      processedUsage.length > 0 ? (
+      {true ||
+      (processedCosts &&
+        processedCosts.length > 0 &&
+        processedUsage &&
+        processedUsage.length > 0) ? (
         <>
-          <BarWrapper>
-            <Total>Total cost: ${computeTotalCost(processedCosts)}</Total>
-            <Bars
-              fill="#C59262"
-              yKey="cost"
-              xKey="start_timestamp"
-              data={processedCosts || []}
-            />
-          </BarWrapper>
+          <Text color="helper">Total usage (selected period):</Text>
           <Spacer y={0.5} />
-          <Flex>
-            <BarWrapper>
-              <Bars
-                title="GiB Hours"
-                fill="#8784D2"
-                yKey="gib_hours"
-                xKey="starting_on"
-                data={processedUsage}
-              />
-            </BarWrapper>
-            <Spacer x={1} inline />
-            <BarWrapper>
-              <Bars
-                title="CPU Hours"
-                fill="#5886E0"
-                yKey="cpu_hours"
-                xKey="starting_on"
-                data={processedUsage}
-              />
-            </BarWrapper>
-          </Flex>
+          <Container row>
+            <Fieldset>
+              <Text size={16}>$ 26.78</Text>
+            </Fieldset>
+            <Spacer inline x={1} />
+            <Fieldset>
+              <Text size={16}>5.18 GiB hours</Text>
+            </Fieldset>
+            <Spacer inline x={1} />
+            <Fieldset>
+              <Text size={16}>1.78 CPU hours</Text>
+            </Fieldset>
+          </Container>
+          <Spacer y={1} />
+          <Text color="helper">Daily average (selected period):</Text>
+          <Spacer y={0.5} />
+          <Container row>
+            <Fieldset>
+              <Text size={16}>$ 3.62</Text>
+            </Fieldset>
+            <Spacer inline x={1} />
+            <Fieldset>
+              <Text size={16}>0.51 GiB hours</Text>
+            </Fieldset>
+            <Spacer inline x={1} />
+            <Fieldset>
+              <Text size={16}>0.18 CPU hours</Text>
+            </Fieldset>
+          </Container>
         </>
       ) : (
         <Fieldset>

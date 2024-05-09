@@ -149,10 +149,10 @@ func (c *CreateBillingHandler) grantRewardIfReferral(ctx context.Context, referr
 	if referral != nil && referral.Status != models.ReferralStatusCompleted {
 		// Metronome requires an expiration to be passed in, so we set it to 5 years which in
 		// practice will mean the credits will most likely run out before expiring
-		expiresAt := time.Now().AddDate(5, 0, 0).Format(time.RFC3339)
+		expiresAt := time.Now().AddDate(5, 0, 0)
 		name := "Referral reward"
 		rewardAmount := c.Config().BillingManager.LagoClient.DefaultRewardAmountCents
-		err := c.Config().BillingManager.LagoClient.CreateCreditsGrant(ctx, referrerProject.ID, name, rewardAmount, expiresAt, referrerProject.EnableSandbox)
+		err := c.Config().BillingManager.LagoClient.CreateCreditsGrant(ctx, referrerProject.ID, name, rewardAmount, &expiresAt, referrerProject.EnableSandbox)
 		if err != nil {
 			return telemetry.Error(ctx, span, err, "failed to grand credits reward")
 		}

@@ -39,7 +39,7 @@ type Project struct {
 	BetaFeaturesEnabled             bool    `json:"beta_features_enabled"`
 	CapiProvisionerEnabled          bool    `json:"capi_provisioner_enabled"`
 	BillingEnabled                  bool    `json:"billing_enabled"`
-	MetronomeEnabled                bool    `json:"metronome_enabled"`
+	LagoEnabled                     bool    `json:"metronome_enabled"`
 	InfisicalEnabled                bool    `json:"infisical_enabled"`
 	FreezeEnabled                   bool    `json:"freeze_enabled"`
 	DBEnabled                       bool    `json:"db_enabled"`

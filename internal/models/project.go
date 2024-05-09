@@ -28,8 +28,8 @@ const (
 	// BillingEnabled enables the "Billing" tab and all Stripe integrations
 	BillingEnabled FeatureFlagLabel = "billing_enabled"
 
-	// MetronomeEnabled enables all Metronome business logic
-	MetronomeEnabled FeatureFlagLabel = "metronome_enabled"
+	// LagoEnabled enables all Lago business logic. This is kept as "metronome_enabled" for compatibility reasons
+	LagoEnabled FeatureFlagLabel = "metronome_enabled"
 
 	// InfisicalEnabled enables the Infisical secrets operator integration
 	InfisicalEnabled FeatureFlagLabel = "infisical_enabled"
@@ -106,7 +106,7 @@ var ProjectFeatureFlags = map[FeatureFlagLabel]bool{
 	BetaFeaturesEnabled:             false,
 	CapiProvisionerEnabled:          true,
 	BillingEnabled:                  false,
-	MetronomeEnabled:                false,
+	LagoEnabled:                     false,
 	InfisicalEnabled:                false,
 	FreezeEnabled:                   false,
 	DBEnabled:                       false,
@@ -311,7 +311,7 @@ func (p *Project) ToProjectType(launchDarklyClient *features.Client) types.Proje
 		BetaFeaturesEnabled:             p.GetFeatureFlag(BetaFeaturesEnabled, launchDarklyClient),
 		CapiProvisionerEnabled:          p.GetFeatureFlag(CapiProvisionerEnabled, launchDarklyClient),
 		BillingEnabled:                  p.GetFeatureFlag(BillingEnabled, launchDarklyClient),
-		MetronomeEnabled:                p.GetFeatureFlag(MetronomeEnabled, launchDarklyClient),
+		LagoEnabled:                     p.GetFeatureFlag(LagoEnabled, launchDarklyClient),
 		InfisicalEnabled:                p.GetFeatureFlag(InfisicalEnabled, launchDarklyClient),
 		FreezeEnabled:                   p.GetFeatureFlag(FreezeEnabled, launchDarklyClient),
 		DBEnabled:                       p.GetFeatureFlag(DBEnabled, launchDarklyClient),

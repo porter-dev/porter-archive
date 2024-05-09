@@ -127,9 +127,9 @@ func (c *CheckPaymentEnabledHandler) ensureBillingSetup(ctx context.Context, pro
 		}
 
 		// Create usage customer for project and set the usage ID if it doesn't exist
-		err = c.ensureMetronomeCustomerExists(ctx, adminUser.Email, proj)
+		err = c.ensureLagoCustomerExists(ctx, adminUser.Email, proj)
 		if err != nil {
-			return telemetry.Error(ctx, span, err, "error ensuring Metronome customer exists")
+			return telemetry.Error(ctx, span, err, "error ensuring Lago customer exists")
 		}
 	}
 
@@ -195,17 +195,31 @@ func (c *CheckPaymentEnabledHandler) ensureStripeCustomerExists(ctx context.Cont
 	return nil
 }
 
-func (c *CheckPaymentEnabledHandler) ensureMetronomeCustomerExists(ctx context.Context, adminUserEmail string, proj *models.Project) (err error) {
-	ctx, span := telemetry.NewSpan(ctx, "ensure-metronome-customer-exists")
+func (c *CheckPaymentEnabledHandler) ensureLagoCustomerExists(ctx context.Context, adminUserEmail string, proj *models.Project) (err error) {
+	ctx, span := telemetry.NewSpan(ctx, "ensure-lago-customer-exists")
 	defer span.End()
 
-	if !c.Config().BillingManager.LagoConfigLoaded || !proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient) {
+	if !c.Config().BillingManager.LagoConfigLoaded || !proj.GetFeatureFlag(models.LagoEnabled, c.Config().LaunchDarklyClient) {
+		return nil
+	}
+
+	// Check if the customer already exists
+	exists, err := c.Config().BillingManager.LagoClient.CheckIfCustomerExists(ctx, proj.ID, proj.EnableSandbox)
+	if err != nil {
+		return telemetry.Error(ctx, span, err, "error while checking if customer exists")
+	}
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "customer-exists", Value: exists},
+	)
+
+	if exists {
 		return nil
 	}
 
 	err = c.Config().BillingManager.LagoClient.CreateCustomerWithPlan(ctx, adminUserEmail, proj.Name, proj.ID, proj.BillingID, proj.EnableSandbox)
 	if err != nil {
-		return telemetry.Error(ctx, span, err, "error creating Metronome customer")
+		return telemetry.Error(ctx, span, err, "error creating Lago customer")
 	}
 
 	return nil

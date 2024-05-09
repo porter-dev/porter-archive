@@ -96,15 +96,15 @@ function ProjectSettings(props: any) {
         });
       }
 
-      if (
-        currentProject?.billing_enabled &&
-        currentProject?.metronome_enabled
-      ) {
-        tabOpts.push({
-          value: "usage",
-          label: "Usage",
-        });
-      }
+      // if (
+      //   currentProject?.billing_enabled &&
+      //   currentProject?.metronome_enabled
+      // ) {
+      //   tabOpts.push({
+      //     value: "usage",
+      //     label: "Usage",
+      //   });
+      // }
 
       tabOpts.push({
         value: "additional-settings",

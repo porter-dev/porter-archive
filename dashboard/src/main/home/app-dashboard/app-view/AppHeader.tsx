@@ -184,7 +184,7 @@ const AppHeader: React.FC = () => {
                       }}
                     />
                     {deploymentTarget.is_preview
-                      ? deploymentTarget.namespace
+                      ? deploymentTarget.name
                       : s.git_branch}
                   </BranchTag>
                 </TagWrapper>
@@ -199,6 +199,25 @@ const AppHeader: React.FC = () => {
                 <Text size={13} color="helper">
                   {s.image.repository}
                 </Text>
+                {deploymentTarget.is_preview && (
+                  <>
+                    <Spacer inline x={1} />
+                    <TagWrapper preview>
+                      Preview
+                      <BranchTag preview>
+                        <PullRequestIcon
+                          styles={{
+                            height: "14px",
+                            opacity: "0.65",
+                            marginRight: "5px",
+                            fill: "",
+                          }}
+                        />
+                        {deploymentTarget.name}
+                      </BranchTag>
+                    </TagWrapper>
+                  </>
+                )}
               </>
             ))
             .otherwise(() => null)}

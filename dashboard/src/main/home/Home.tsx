@@ -57,6 +57,10 @@ import CreateDatastore from "./database-dashboard/forms/CreateDatastore";
 import CreateEnvGroup from "./env-dashboard/CreateEnvGroup";
 import EnvDashboard from "./env-dashboard/EnvDashboard";
 import ExpandedEnv from "./env-dashboard/ExpandedEnv";
+import ExpandedModelTemplate from "./inference-dashboard/ExpandedModelTemplate";
+import InferenceDashboard from "./inference-dashboard/InferenceDashboard";
+import ModelForm from "./inference-dashboard/ModelForm";
+import ModelTemplates from "./inference-dashboard/ModelTemplates";
 import ClusterContextProvider from "./infrastructure-dashboard/ClusterContextProvider";
 import ClusterDashboard from "./infrastructure-dashboard/ClusterDashboard";
 import ClusterView from "./infrastructure-dashboard/ClusterView";
@@ -488,6 +492,25 @@ const Home: React.FC<Props> = (props) => {
               </Route>
               <Route path="/apps">
                 <Apps />
+              </Route>
+
+              <Route path="/inference/templates/:templateId/new">
+                <ModelForm />
+              </Route>
+              <Route path="/inference/templates/:templateId">
+                <ExpandedModelTemplate />
+              </Route>
+              <Route path="/inference/templates">
+                <ModelTemplates />
+              </Route>
+              <Route path="/inference/:modelName/:tab">
+                <AppView />
+              </Route>
+              <Route path="/inference/:modelName">
+                <AppView />
+              </Route>
+              <Route path="/inference">
+                <InferenceDashboard />
               </Route>
 
               <Route path="/environment-groups/new">

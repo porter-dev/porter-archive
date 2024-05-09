@@ -17,6 +17,7 @@ import collapseSidebar from "assets/collapse-sidebar.svg";
 import compliance from "assets/compliance.svg";
 import database from "assets/database.svg";
 import sliders from "assets/env-groups.svg";
+import inference from "assets/inference.svg";
 import integrations from "assets/integrations.svg";
 import lock from "assets/lock.svg";
 import pr_icon from "assets/pull_request_icon.svg";
@@ -307,13 +308,25 @@ class Sidebar extends Component<PropsType, StateType> {
             </NavButton>
             <NavButton
               path="/datastores"
-              active={window.location.pathname.startsWith("/apps")}
+              active={window.location.pathname.startsWith("/datastores")}
             >
               <Container row spaced style={{ width: "100%" }}>
                 <Container row>
                   <Img src={database} />
                   Datastores
                 </Container>
+              </Container>
+            </NavButton>
+            <NavButton
+              path="/inference"
+              active={window.location.pathname.startsWith("/inference")}
+            >
+              <Container row spaced style={{ width: "100%" }}>
+                <Container row>
+                  <Img src={inference} />
+                  Inference
+                </Container>
+                <Badge>Beta</Badge>
               </Container>
             </NavButton>
             {!currentProject.sandbox_enabled && (
@@ -346,6 +359,16 @@ class Sidebar extends Component<PropsType, StateType> {
               </NavButton>
             )}
 
+            <NavButton path="/preview-environments">
+              <Container row spaced style={{ width: "100%" }}>
+                <Container row>
+                  <Img src={pr_icon} />
+                  Preview apps
+                </Container>
+                {!currentProject.preview_envs_enabled && <Badge>Beta</Badge>}
+              </Container>
+            </NavButton>
+
             {!currentProject.sandbox_enabled && (
               <NavButton
                 path={
@@ -369,16 +392,6 @@ class Sidebar extends Component<PropsType, StateType> {
                 </Container>
               </NavButton>
             )}
-
-            <NavButton path="/preview-environments">
-              <Container row spaced style={{ width: "100%" }}>
-                <Container row>
-                  <Img src={pr_icon} />
-                  Preview apps
-                </Container>
-                {!currentProject.preview_envs_enabled && <Badge>Beta</Badge>}
-              </Container>
-            </NavButton>
 
             <NavButton path="/compliance">
               <Container row spaced style={{ width: "100%" }}>

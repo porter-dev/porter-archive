@@ -100,10 +100,10 @@ func (p *ProjectCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	}
 
 	// Create Metronome customer and add to starter plan
-	if p.Config().BillingManager.LagoConfigLoaded && proj.GetFeatureFlag(models.MetronomeEnabled, p.Config().LaunchDarklyClient) {
+	if p.Config().BillingManager.LagoConfigLoaded && proj.GetFeatureFlag(models.LagoEnabled, p.Config().LaunchDarklyClient) {
 		err := p.Config().BillingManager.LagoClient.CreateCustomerWithPlan(ctx, user.Email, proj.Name, proj.ID, proj.BillingID, proj.EnableSandbox)
 		if err != nil {
-			err = telemetry.Error(ctx, span, err, "error creating Metronome customer")
+			err = telemetry.Error(ctx, span, err, "error creating usage customer")
 			p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 			return
 		}

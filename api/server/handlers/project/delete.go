@@ -92,7 +92,7 @@ func (p *ProjectDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	if p.Config().BillingManager.LagoConfigLoaded && proj.GetFeatureFlag(models.MetronomeEnabled, p.Config().LaunchDarklyClient) {
+	if p.Config().BillingManager.LagoConfigLoaded && proj.GetFeatureFlag(models.LagoEnabled, p.Config().LaunchDarklyClient) {
 		err = p.Config().BillingManager.LagoClient.EndCustomerPlan(ctx, proj.ID)
 		if err != nil {
 			e := "error ending billing plan"

@@ -358,10 +358,10 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 	}
 
 	var (
-		stripeClient     billing.StripeClient
-		stripeEnabled    bool
-		lagoClient       billing.LagoClient
-		metronomeEnabled bool
+		stripeClient  billing.StripeClient
+		stripeEnabled bool
+		lagoClient    billing.LagoClient
+		lagoEnabled   bool
 	)
 	if sc.StripeSecretKey != "" {
 		stripeClient = billing.NewStripeClient(InstanceEnvConf.ServerConf.StripeSecretKey, InstanceEnvConf.ServerConf.StripePublishableKey)
@@ -376,7 +376,7 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 		if err != nil {
 			return nil, fmt.Errorf("unable to create Lago client: %w", err)
 		}
-		metronomeEnabled = true
+		lagoEnabled = true
 		res.Logger.Info().Msg("Lago configuration loaded")
 	} else {
 		res.Logger.Info().Msg("LAGO_API_KEY, PORTER_CLOUD_PLAN_CODE, PORTER_STANDARD_PLAN_CODE and PORTER_TRIAL_CODE must be set, all Lago functionality will be disabled")
@@ -387,7 +387,7 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 		StripeClient:       stripeClient,
 		StripeConfigLoaded: stripeEnabled,
 		LagoClient:         lagoClient,
-		LagoConfigLoaded:   metronomeEnabled,
+		LagoConfigLoaded:   lagoEnabled,
 	}
 	res.Logger.Info().Msg("Created billing manager")
 

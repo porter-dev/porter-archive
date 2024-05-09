@@ -33,21 +33,28 @@ func (c *ListPlansHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
-	if !c.Config().BillingManager.LagoConfigLoaded || !proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient) {
-		c.WriteResult(w, r, "")
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "lago-config-exists", Value: c.Config().BillingManager.LagoConfigLoaded},
+		telemetry.AttributeKV{Key: "lago-enabled", Value: proj.GetFeatureFlag(models.LagoEnabled, c.Config().LaunchDarklyClient)},
+	)
 
-		telemetry.WithAttributes(span,
-			telemetry.AttributeKV{Key: "metronome-config-exists", Value: c.Config().BillingManager.LagoConfigLoaded},
-			telemetry.AttributeKV{Key: "metronome-enabled", Value: proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient)},
-		)
+	if !c.Config().BillingManager.LagoConfigLoaded || !proj.GetFeatureFlag(models.LagoEnabled, c.Config().LaunchDarklyClient) {
+		c.WriteResult(w, r, "")
+		return
+	}
+
+	subscriptionID, err := c.Config().BillingManager.LagoClient.GetCustomeActiveSubscription(ctx, proj.ID, proj.EnableSandbox)
+	if err != nil {
+		err := telemetry.Error(ctx, span, err, "error getting active subscription")
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
 	telemetry.WithAttributes(span,
-		telemetry.AttributeKV{Key: "metronome-enabled", Value: true},
+		telemetry.AttributeKV{Key: "subscription_id", Value: subscriptionID},
 	)
 
-	plan, err := c.Config().BillingManager.LagoClient.ListCustomerPlan(ctx, proj.ID, proj.EnableSandbox)
+	plan, err := c.Config().BillingManager.LagoClient.ListCustomerPlan(ctx, subscriptionID)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error listing plans")
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
@@ -78,13 +85,13 @@ func (c *ListCreditsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
-	if !c.Config().BillingManager.LagoConfigLoaded || !proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient) {
-		c.WriteResult(w, r, "")
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "lago-config-exists", Value: c.Config().BillingManager.LagoConfigLoaded},
+		telemetry.AttributeKV{Key: "lago-enabled", Value: proj.GetFeatureFlag(models.LagoEnabled, c.Config().LaunchDarklyClient)},
+	)
 
-		telemetry.WithAttributes(span,
-			telemetry.AttributeKV{Key: "metronome-config-exists", Value: c.Config().BillingManager.LagoConfigLoaded},
-			telemetry.AttributeKV{Key: "metronome-enabled", Value: proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient)},
-		)
+	if !c.Config().BillingManager.LagoConfigLoaded || !proj.GetFeatureFlag(models.LagoEnabled, c.Config().LaunchDarklyClient) {
+		c.WriteResult(w, r, "")
 		return
 	}
 
@@ -94,10 +101,6 @@ func (c *ListCreditsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// 	c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 	// 	return
 	// }
-
-	telemetry.WithAttributes(span,
-		telemetry.AttributeKV{Key: "metronome-enabled", Value: true},
-	)
 
 	c.WriteResult(w, r, "")
 }
@@ -125,11 +128,11 @@ func (c *ListCustomerUsageHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
 	telemetry.WithAttributes(span,
-		telemetry.AttributeKV{Key: "metronome-config-exists", Value: c.Config().BillingManager.LagoConfigLoaded},
-		telemetry.AttributeKV{Key: "metronome-enabled", Value: proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient)},
+		telemetry.AttributeKV{Key: "lago-config-exists", Value: c.Config().BillingManager.LagoConfigLoaded},
+		telemetry.AttributeKV{Key: "lago-enabled", Value: proj.GetFeatureFlag(models.LagoEnabled, c.Config().LaunchDarklyClient)},
 	)
 
-	if !c.Config().BillingManager.LagoConfigLoaded || !proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient) {
+	if !c.Config().BillingManager.LagoConfigLoaded || !proj.GetFeatureFlag(models.LagoEnabled, c.Config().LaunchDarklyClient) {
 		c.WriteResult(w, r, "")
 		return
 	}

@@ -27,7 +27,7 @@ export const useAuthWindow = ({
       if (authWindow) {
         try {
           if (
-            authWindow.location.hostname.includes("dashboard.getporter.dev") ||
+            authWindow.location.hostname.includes("porter") ||
             authWindow.location.hostname.includes("localhost")
           ) {
             authWindow.close();

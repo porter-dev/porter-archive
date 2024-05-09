@@ -129,11 +129,10 @@ function UsagePage(): JSX.Element {
         prefix={<>Billing period</>}
       />
       <Spacer y={1} />
-      {true ||
-      (processedCosts &&
-        processedCosts.length > 0 &&
-        processedUsage &&
-        processedUsage.length > 0) ? (
+      {processedCosts &&
+      processedCosts.length > 0 &&
+      processedUsage &&
+      processedUsage.length > 0 ? (
         <>
           <Text color="helper">Total usage (selected period):</Text>
           <Spacer y={0.5} />

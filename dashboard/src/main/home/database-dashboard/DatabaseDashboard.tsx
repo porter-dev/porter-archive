@@ -82,25 +82,6 @@ const DatabaseDashboard: React.FC = () => {
   }, [datastores, searchValue, typeFilter, engineFilter]);
 
   const renderContents = (): JSX.Element => {
-    if (currentProject?.sandbox_enabled) {
-      return (
-        <DashboardPlaceholder>
-          <Text size={16}>Datastores are coming soon to the Porter Cloud</Text>
-          <Spacer y={0.5} />
-          <Text color={"helper"}>
-            You can also eject to your own cloud account to start using managed
-            datastores immediately.
-          </Text>
-          <Spacer y={1} />
-          <PorterLink to="https://docs.porter.run/other/eject">
-            <Button alt height="35px">
-              Eject to AWS, Azure, or GCP
-            </Button>
-          </PorterLink>
-        </DashboardPlaceholder>
-      );
-    }
-
     if (!currentProject?.db_enabled) {
       return (
         <DashboardPlaceholder>
@@ -343,8 +324,8 @@ export const DatastoreList: React.FC<{
         return (
           <Row
             key={i}
-            onClick={async () => {
-              await onClick(datastore);
+            onClick={() => {
+              void onClick(datastore);
             }}
           >
             <Container row spaced>

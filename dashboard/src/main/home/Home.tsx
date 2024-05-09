@@ -64,6 +64,7 @@ import CreateClusterForm from "./infrastructure-dashboard/forms/CreateClusterFor
 import Integrations from "./integrations/Integrations";
 import LaunchWrapper from "./launch/LaunchWrapper";
 import ModalHandler from "./ModalHandler";
+import BillingModal from "./modals/BillingModal";
 import Navbar from "./navbar/Navbar";
 import { NewProjectFC } from "./new-project/NewProject";
 import Onboarding from "./onboarding/Onboarding";

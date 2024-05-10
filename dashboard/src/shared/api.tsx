@@ -3566,9 +3566,7 @@ const getCustomerCosts = baseApi<
 );
 
 const getCustomerInvoices = baseApi<
-  {
-    status: string;
-  },
+  {},
   {
     project_id?: number;
   }

@@ -12,7 +12,7 @@ import {
   useCustomerCosts,
   useCustomerPlan,
   useCustomerUsage,
-} from "lib/hooks/useMetronome";
+} from "lib/hooks/useLago";
 
 import Bars from "./Bars";
 

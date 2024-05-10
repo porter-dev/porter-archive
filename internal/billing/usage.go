@@ -2,7 +2,9 @@ package billing
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"net/http"
 	"strconv"
 	"strings"
 	"time"
@@ -37,6 +39,7 @@ const (
 // LagoClient is the client used to call the Lago API
 type LagoClient struct {
 	client                 lago.Client
+	lagoApiKey             string
 	PorterCloudPlanCode    string
 	PorterStandardPlanCode string
 	PorterTrialCode        string
@@ -58,6 +61,7 @@ func NewLagoClient(lagoApiKey string, porterCloudPlanCode string, porterStandard
 	// lagoClient.Debug = true
 
 	return LagoClient{
+		lagoApiKey:               lagoApiKey,
 		client:                   *lagoClient,
 		PorterCloudPlanCode:      porterCloudPlanCode,
 		PorterStandardPlanCode:   porterStandardPlanCode,
@@ -168,6 +172,7 @@ func (m LagoClient) GetCustomeActivePlan(ctx context.Context, projectID uint, sa
 		}
 
 		plan.ID = subscription.ExternalID
+		plan.CustomerID = subscription.ExternalCustomerID
 		plan.StartingOn = subscription.SubscriptionAt.Format(time.RFC3339)
 		plan.EndingBefore = subscription.EndingAt.Format(time.RFC3339)
 
@@ -204,31 +209,55 @@ func (m LagoClient) EndCustomerPlan(ctx context.Context, projectID uint) (err er
 }
 
 // ListCustomerCredits will return the total number of credits for the customer
-// func (m LagoClient) ListCustomerCredits(ctx context.Context, customerID string) (credits types.ListCreditGrantsResponse, err error) {
-// 	ctx, span := telemetry.NewSpan(ctx, "list-customer-credits")
-// 	defer span.End()
+func (m LagoClient) ListCustomerCredits(ctx context.Context, projectID uint, sandboxEnabled bool) (credits types.ListCreditGrantsResponse, err error) {
+	ctx, span := telemetry.NewSpan(ctx, "list-customer-credits")
+	defer span.End()
 
-// 	if customerID == "" {
-// 		return credits, telemetry.Error(ctx, span, err, "customer id empty")
-// 	}
+	if projectID == 0 {
+		return credits, telemetry.Error(ctx, span, err, "project id empty")
+	}
+	customerID := m.generateLagoID(CustomerIDPrefix, projectID, sandboxEnabled)
 
-// 	walletListInput := &lago.WalletListInput{
-// 		ExternalCustomerID: customerID,
-// 	}
+	// We manually do the request in this function because the Lago client has an issue
+	// with types for this specific request
+	lagoBaseURL := "https://api.getlago.com"
+	url := fmt.Sprintf("%s/api/v1/wallets?external_customer_id=%s", lagoBaseURL, customerID)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return credits, telemetry.Error(ctx, span, err, "failed to create wallets request")
+	}
 
-// 	walletList, lagoErr := m.client.Wallet().GetList(ctx, walletListInput)
-// 	if lagoErr.Err != nil {
-// 		return credits, telemetry.Error(ctx, span, lagoErr.Err, "failed to get wallet")
-// 	}
+	req.Header.Set("Authorization", "Bearer "+m.lagoApiKey)
 
-// 	var response types.ListCreditGrantsResponse
-// 	for _, wallet := range walletList.Wallets {
-// 		response.GrantedBalanceCents += wallet.BalanceCents
-// 		response.RemainingBalanceCents += wallet.OngoingUsageBalanceCents
-// 	}
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return credits, telemetry.Error(ctx, span, err, "failed to get customer credits")
+	}
+	defer resp.Body.Close()
 
-// 	return response, nil
-// }
+	type ListWalletsResponse struct {
+		Wallets []types.Wallet `json:"wallets"`
+	}
+
+	var walletList ListWalletsResponse
+	err = json.NewDecoder(resp.Body).Decode(&walletList)
+	if err != nil {
+		return credits, telemetry.Error(ctx, span, err, "failed to decode wallet list response")
+	}
+
+	var response types.ListCreditGrantsResponse
+	for _, wallet := range walletList.Wallets {
+		if wallet.Status != string(lago.Active) {
+			continue
+		}
+
+		response.GrantedBalanceCents += wallet.BalanceCents
+		response.RemainingBalanceCents += wallet.OngoingBalanceCents
+	}
+
+	return response, nil
+}
 
 // CreateCreditsGrant will create a new credit grant for the customer with the specified amount
 func (m LagoClient) CreateCreditsGrant(ctx context.Context, projectID uint, name string, grantAmount int64, expiresAt *time.Time, sandboxEnabled bool) (err error) {
@@ -259,23 +288,40 @@ func (m LagoClient) CreateCreditsGrant(ctx context.Context, projectID uint, name
 }
 
 // ListCustomerUsage will return the aggregated usage for a customer
-func (m LagoClient) ListCustomerUsage(ctx context.Context, projectID uint, currentPeriod bool, sandboxEnabled bool) (usage []types.Usage, err error) {
+func (m LagoClient) ListCustomerUsage(ctx context.Context, customerID string, subscriptionID string, currentPeriod bool) (usage types.Usage, err error) {
 	ctx, span := telemetry.NewSpan(ctx, "list-customer-usage")
 	defer span.End()
 
-	if projectID == 0 {
-		return usage, telemetry.Error(ctx, span, err, "project id empty")
+	if subscriptionID == "" {
+		return usage, telemetry.Error(ctx, span, err, "subscription id empty")
 	}
 
-	subscriptionID := m.generateLagoID(SubscriptionIDPrefix, projectID, sandboxEnabled)
-	customerUsageInput := &lago.CustomerUsageInput{
-		ExternalSubscriptionID: subscriptionID,
-	}
+	if currentPeriod {
+		customerUsageInput := &lago.CustomerUsageInput{
+			ExternalSubscriptionID: subscriptionID,
+		}
 
-	customerID := m.generateLagoID(CustomerIDPrefix, projectID, sandboxEnabled)
-	_, lagoErr := m.client.Customer().CurrentUsage(ctx, customerID, customerUsageInput)
-	if lagoErr != nil {
-		return usage, telemetry.Error(ctx, span, fmt.Errorf(lagoErr.ErrorCode), "failed to get customer usage")
+		currentUsage, lagoErr := m.client.Customer().CurrentUsage(ctx, customerID, customerUsageInput)
+		if lagoErr != nil {
+			return usage, telemetry.Error(ctx, span, fmt.Errorf(lagoErr.ErrorCode), "failed to get customer usage")
+		}
+
+		usage.FromDatetime = currentUsage.FromDatetime.Format(time.RFC3339)
+		usage.ToDatetime = currentUsage.ToDatetime.Format(time.RFC3339)
+		usage.TotalAmountCents = int64(currentUsage.TotalAmountCents)
+		usage.ChargesUsage = make([]types.ChargeUsage, len(currentUsage.ChargesUsage))
+
+		for i, charge := range currentUsage.ChargesUsage {
+			usage.ChargesUsage[i] = types.ChargeUsage{
+				Units:          charge.Units,
+				AmountCents:    int64(charge.AmountCents),
+				AmountCurrency: string(charge.AmountCurrency),
+				BillableMetric: types.BillableMetric{
+					Name: charge.BillableMetric.Name,
+				},
+			}
+		}
+
 	}
 
 	return usage, nil

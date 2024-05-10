@@ -19,7 +19,7 @@ import Link from "components/porter/Link";
 import Modal from "components/porter/Modal";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
-import { useCustomerPlan } from "lib/hooks/useMetronome";
+import { useCustomerPlan } from "lib/hooks/useLago";
 import { checkIfProjectHasPayment } from "lib/hooks/useStripe";
 
 import api from "shared/api";

@@ -2,18 +2,16 @@ import { useContext } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 import {
-  CostValidator,
   CreditGrantsValidator,
   InvoiceValidator,
   PlanValidator,
   ReferralDetailsValidator,
   UsageValidator,
-  type CostList,
   type CreditGrants,
   type InvoiceList,
   type Plan,
   type ReferralDetails,
-  type UsageList,
+  type Usage,
 } from "lib/billing/types";
 
 import api from "shared/api";
@@ -32,11 +30,7 @@ type TGetInvoices = {
 };
 
 type TGetUsage = {
-  usage: UsageList | null;
-};
-
-type TGetCosts = {
-  costs: CostList | null;
+  usage: Usage | null;
 };
 
 type TGetReferralDetails = {
@@ -100,7 +94,6 @@ export const useCustomerPlan = (): TGetPlan => {
           {},
           { project_id: currentProject.id }
         );
-
         const plan = PlanValidator.parse(res.data);
         return plan;
       } catch (error) {
@@ -117,14 +110,14 @@ export const useCustomerPlan = (): TGetPlan => {
 export const useCustomerUsage = (
   startingOn: Date | null,
   endingBefore: Date | null,
-  windowSize: string
+  currentPeriod: boolean
 ): TGetUsage => {
   const { currentProject } = useContext(Context);
 
   // Fetch customer usage
   const usageReq = useQuery(
     ["listCustomerUsage", currentProject?.id],
-    async (): Promise<UsageList | null> => {
+    async (): Promise<Usage | null> => {
       if (!currentProject?.metronome_enabled) {
         return null;
       }
@@ -143,13 +136,13 @@ export const useCustomerUsage = (
           {
             starting_on: startingOn.toISOString(),
             ending_before: endingBefore.toISOString(),
-            window_size: windowSize,
+            current_period: currentPeriod,
           },
           {
             project_id: currentProject?.id,
           }
         );
-        const usage = UsageValidator.array().parse(res.data);
+        const usage = UsageValidator.parse(res.data);
         return usage;
       } catch (error) {
         return null;
@@ -159,54 +152,6 @@ export const useCustomerUsage = (
 
   return {
     usage: usageReq.data ?? null,
-  };
-};
-
-export const useCustomerCosts = (
-  startingOn: Date | null,
-  endingBefore: Date | null,
-  limit: number
-): TGetCosts => {
-  const { currentProject } = useContext(Context);
-
-  // Fetch customer costs
-  const usageReq = useQuery(
-    ["listCustomerCosts", currentProject?.id],
-    async (): Promise<CostList | null> => {
-      if (!currentProject?.metronome_enabled) {
-        return null;
-      }
-
-      if (!currentProject?.id || currentProject.id === -1) {
-        return null;
-      }
-
-      if (startingOn === null || endingBefore === null) {
-        return null;
-      }
-
-      try {
-        const res = await api.getCustomerCosts(
-          "<token>",
-          {},
-          {
-            project_id: currentProject?.id,
-            starting_on: startingOn.toISOString(),
-            ending_before: endingBefore.toISOString(),
-            limit,
-          }
-        );
-
-        const costs = CostValidator.array().parse(res.data);
-        return costs;
-      } catch (error) {
-        return null;
-      }
-    }
-  );
-
-  return {
-    costs: usageReq.data ?? null,
   };
 };
 

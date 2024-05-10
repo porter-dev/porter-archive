@@ -88,14 +88,14 @@ func (c *ListCreditsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// credits, err := c.Config().BillingManager.LagoClient.ListCustomerCredits(ctx, proj.ID, proj.EnableSandbox)
-	// if err != nil {
-	// 	err := telemetry.Error(ctx, span, err, "error listing credits")
-	// 	c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-	// 	return
-	// }
+	credits, err := c.Config().BillingManager.LagoClient.ListCustomerCredits(ctx, proj.ID, proj.EnableSandbox)
+	if err != nil {
+		err := telemetry.Error(ctx, span, err, "error listing credits")
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
 
-	c.WriteResult(w, r, "")
+	c.WriteResult(w, r, credits)
 }
 
 // ListCustomerUsageHandler returns customer usage aggregations like CPU and RAM hours.
@@ -138,7 +138,18 @@ func (c *ListCustomerUsageHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	usage, err := c.Config().BillingManager.LagoClient.ListCustomerUsage(ctx, proj.ID, true, proj.EnableSandbox)
+	plan, err := c.Config().BillingManager.LagoClient.GetCustomeActivePlan(ctx, proj.ID, proj.EnableSandbox)
+	if err != nil {
+		err := telemetry.Error(ctx, span, err, "error getting active subscription")
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "subscription_id", Value: plan.ID},
+	)
+
+	usage, err := c.Config().BillingManager.LagoClient.ListCustomerUsage(ctx, plan.CustomerID, plan.ID, req.CurrentPeriod)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error listing customer usage")
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))

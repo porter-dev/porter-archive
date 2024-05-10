@@ -3542,7 +3542,6 @@ const getPublishableKey = baseApi<
 
 const getCustomerUsage = baseApi<
   {
-    window_size: string;
     starting_on?: string;
     ending_before?: string;
     current_period?: boolean;

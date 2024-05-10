@@ -18,9 +18,10 @@ import Text from "components/porter/Text";
 import {
   useCustomerInvoices,
   useCustomerPlan,
+  useCustomerUsage,
   usePorterCredits,
   useReferralDetails,
-} from "lib/hooks/useMetronome";
+} from "lib/hooks/useLago";
 import {
   checkIfProjectHasPayment,
   usePaymentMethods,

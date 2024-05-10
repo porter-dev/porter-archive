@@ -15,17 +15,23 @@ import (
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
+// GitSource is a struct that contains the git repo name and id
+type GitSource struct {
+	GitRepoName string
+	GitRepoID   uint
+}
+
 // CreateAppWebhookInput is the input to the CreateAppWebhook function
 type CreateAppWebhookInput struct {
 	ProjectID           uint
 	ClusterID           uint
-	PorterAppName       string
+	PorterAppID         uint
+	GitSource           GitSource
 	GithubAppSecret     []byte
 	GithubAppID         string
 	GithubWebhookSecret string
 	ServerURL           string
 
-	PorterAppRepository     repository.PorterAppRepository
 	GithubWebhookRepository repository.GithubWebhookRepository
 }
 
@@ -35,14 +41,17 @@ func CreateAppWebhook(ctx context.Context, inp CreateAppWebhookInput) error {
 	ctx, span := telemetry.NewSpan(ctx, "porter-app-create-app-webhook")
 	defer span.End()
 
-	if inp.PorterAppName == "" {
-		return telemetry.Error(ctx, span, nil, "porter app name is empty")
-	}
 	if inp.ProjectID == 0 {
 		return telemetry.Error(ctx, span, nil, "project id is empty")
 	}
+	if inp.PorterAppID == 0 {
+		return telemetry.Error(ctx, span, nil, "porter app id is empty")
+	}
 	if inp.ClusterID == 0 {
 		return telemetry.Error(ctx, span, nil, "cluster id is empty")
+	}
+	if inp.GitSource.GitRepoName == "" {
+		return telemetry.Error(ctx, span, nil, "git repo name is empty")
 	}
 	if inp.GithubAppSecret == nil {
 		return telemetry.Error(ctx, span, nil, "github app secret is nil")
@@ -53,30 +62,16 @@ func CreateAppWebhook(ctx context.Context, inp CreateAppWebhookInput) error {
 	if inp.GithubWebhookSecret == "" {
 		return telemetry.Error(ctx, span, nil, "github webhook secret is empty")
 	}
-	if inp.PorterAppRepository == nil {
-		return telemetry.Error(ctx, span, nil, "porter app repository is nil")
-	}
 	if inp.GithubWebhookRepository == nil {
 		return telemetry.Error(ctx, span, nil, "github webhook repository is nil")
 	}
 
-	porterApp, err := inp.PorterAppRepository.ReadPorterAppByName(inp.ClusterID, inp.PorterAppName)
-	if err != nil {
-		return telemetry.Error(ctx, span, err, "could not read porter app by name")
-	}
-	if porterApp.ID == 0 {
-		return telemetry.Error(ctx, span, nil, "porter app not found")
-	}
-	if porterApp.GitRepoID == 0 {
-		return telemetry.Error(ctx, span, nil, "porter app git repo id is empty")
-	}
-
-	githubClient, err := GetGithubClientByRepoID(ctx, porterApp.GitRepoID, inp.GithubAppSecret, inp.GithubAppID)
+	githubClient, err := GetGithubClientByRepoID(ctx, inp.GitSource.GitRepoID, inp.GithubAppSecret, inp.GithubAppID)
 	if err != nil {
 		return telemetry.Error(ctx, span, err, "error creating github client")
 	}
 
-	repoDetails := strings.Split(porterApp.RepoName, "/")
+	repoDetails := strings.Split(inp.GitSource.GitRepoName, "/")
 	if len(repoDetails) != 2 {
 		return telemetry.Error(ctx, span, nil, "repo name is not in the format <org>/<repo>")
 	}
@@ -94,7 +89,7 @@ func CreateAppWebhook(ctx context.Context, inp CreateAppWebhookInput) error {
 	}
 
 	// check if the webhook already exists
-	webhook, err := inp.GithubWebhookRepository.GetByClusterAndAppID(ctx, inp.ClusterID, porterApp.ID)
+	webhook, err := inp.GithubWebhookRepository.GetByClusterAndAppID(ctx, inp.ClusterID, inp.PorterAppID)
 	if err != nil {
 		return telemetry.Error(ctx, span, err, "error getting github webhook")
 	}
@@ -119,9 +114,9 @@ func CreateAppWebhook(ctx context.Context, inp CreateAppWebhookInput) error {
 
 	webhook = &models.GithubWebhook{
 		ID:              webhookID,
-		ProjectID:       int(porterApp.ProjectID),
-		ClusterID:       int(porterApp.ClusterID),
-		PorterAppID:     int(porterApp.ID),
+		ProjectID:       int(inp.ProjectID),
+		ClusterID:       int(inp.ClusterID),
+		PorterAppID:     int(inp.PorterAppID),
 		GithubWebhookID: hook.GetID(),
 	}
 

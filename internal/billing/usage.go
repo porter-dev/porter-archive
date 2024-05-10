@@ -383,14 +383,46 @@ func (m LagoClient) IngestEvents(ctx context.Context, subscriptionID string, eve
 	return nil
 }
 
-// ListCustomerInvoices will return all invoices for the customer with the given status
-func (s StripeClient) ListCustomerInvoices(ctx context.Context, projectID uint) (invoiceList []types.Invoice, err error) {
-	ctx, span := telemetry.NewSpan(ctx, "populate-invoice-urls")
+// ListCustomerFinalizedInvoices will return all finalized invoices for the customer
+func (m LagoClient) ListCustomerFinalizedInvoices(ctx context.Context, projectID uint, enableSandbox bool) (invoiceList []types.Invoice, err error) {
+	ctx, span := telemetry.NewSpan(ctx, "list-customer-invoices")
 	defer span.End()
 
 	if projectID == 0 {
 		return invoiceList, telemetry.Error(ctx, span, err, "project id cannot be empty")
 	}
+
+	customerID := m.generateLagoID(CustomerIDPrefix, projectID, enableSandbox)
+	invoiceListInput := &lago.InvoiceListInput{
+		ExternalCustomerID: customerID,
+		Status:             lago.InvoiceStatusFinalized,
+	}
+
+	invoices, lagoErr := m.client.Invoice().GetList(ctx, invoiceListInput)
+	if lagoErr != nil {
+		return invoiceList, telemetry.Error(ctx, span, fmt.Errorf(lagoErr.ErrorCode), "failed to list invoices")
+	}
+
+	for _, invoice := range invoices.Invoices {
+		invoiceReq, lagoErr := m.client.Invoice().Download(ctx, invoice.LagoID.String())
+		if lagoErr != nil {
+			return invoiceList, telemetry.Error(ctx, span, fmt.Errorf(lagoErr.ErrorCode), "failed to download invoice")
+		}
+
+		var fileURL string
+		if invoiceReq == nil {
+			fileURL = invoice.FileURL
+		} else {
+			fileURL = invoiceReq.FileURL
+		}
+
+		invoiceList = append(invoiceList, types.Invoice{
+			HostedInvoiceURL: fileURL,
+			Status:           string(invoice.Status),
+			Created:          invoice.IssuingDate,
+		})
+	}
+
 	return invoiceList, nil
 }
 

@@ -62,3 +62,13 @@ type Wallet struct {
 	OngoingBalanceCents      int    `json:"ongoing_balance_cents,omitempty"`
 	OngoingUsageBalanceCents int    `json:"ongoing_usage_balance_cents,omitempty"`
 }
+
+// Invoice represents an invoice in the billing system.
+type Invoice struct {
+	// The URL to view the hosted invoice.
+	HostedInvoiceURL string `json:"hosted_invoice_url"`
+	// The status of the invoice.
+	Status string `json:"status"`
+	// RFC 3339 timestamp for when the invoice was created.
+	Created string `json:"created"`
+}

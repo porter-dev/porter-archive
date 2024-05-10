@@ -18,7 +18,6 @@ import Text from "components/porter/Text";
 import {
   useCustomerInvoices,
   useCustomerPlan,
-  useCustomerUsage,
   usePorterCredits,
   useReferralDetails,
 } from "lib/hooks/useLago";

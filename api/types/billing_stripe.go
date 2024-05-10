@@ -10,18 +10,3 @@ type PaymentMethod struct {
 	ExpYear      int64  `json:"exp_year"`
 	Default      bool   `json:"is_default"`
 }
-
-// Invoice represents an invoice in the billing system.
-type Invoice struct {
-	// The URL to view the hosted invoice.
-	HostedInvoiceURL string `json:"hosted_invoice_url"`
-	// The status of the invoice.
-	Status string `json:"status"`
-	// RFC 3339 timestamp for when the invoice was created.
-	Created string `json:"created"`
-}
-
-// ListCustomerInvoicesRequest is the request to list invoices for a customer
-type ListCustomerInvoicesRequest struct {
-	Status string `schema:"status"`
-}

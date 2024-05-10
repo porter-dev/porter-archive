@@ -2,6 +2,8 @@
 package billing
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -76,6 +78,29 @@ func (c *IngestEventsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	err := c.Config().BillingManager.MetronomeClient.IngestEvents(ctx, ingestEventsRequest.Events)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error ingesting events")
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	// Call the ingest check webhook
+	webhookUrl := c.Config().ServerConf.IngestStatusWebhookUrl
+	req := struct {
+		ProjectID uint `json:"project_id"`
+	}{
+		ProjectID: proj.ID,
+	}
+
+	reqBody, err := json.Marshal(req)
+	if err != nil {
+		err := telemetry.Error(ctx, span, err, "error marshalling ingest status webhook request")
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	client := &http.Client{}
+	resp, err := client.Post(webhookUrl, "application/json", bytes.NewBuffer(reqBody))
+	if err != nil || resp.StatusCode != http.StatusOK {
+		err := telemetry.Error(ctx, span, err, "error sending ingest status webhook request")
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}

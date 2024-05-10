@@ -103,7 +103,9 @@ func (m LagoClient) CreateCustomerWithPlan(ctx context.Context, userEmail string
 		expiresAt := time.Now().UTC().AddDate(0, 1, 0).Truncate(24 * time.Hour)
 
 		err = m.CreateCreditsGrant(ctx, projectID, starterWalletName, defaultStarterCreditsCents, &expiresAt, sandboxEnabled)
-
+		if err != nil {
+			return telemetry.Error(ctx, span, err, "error while creating starter credits grant")
+		}
 		return nil
 	}
 
@@ -122,6 +124,7 @@ func (m LagoClient) CreateCustomerWithPlan(ctx context.Context, userEmail string
 	return err
 }
 
+// CheckIfCustomerExists will check if the customer exists in Lago
 func (m LagoClient) CheckIfCustomerExists(ctx context.Context, projectID uint, enableSandbox bool) (exists bool, err error) {
 	ctx, span := telemetry.NewSpan(ctx, "check-lago-customer-exists")
 	defer span.End()
@@ -139,6 +142,7 @@ func (m LagoClient) CheckIfCustomerExists(ctx context.Context, projectID uint, e
 	return true, nil
 }
 
+// GetCustomeActivePlan will return the active plan for the customer
 func (m LagoClient) GetCustomeActivePlan(ctx context.Context, projectID uint, sandboxEnabled bool) (plan types.Plan, err error) {
 	ctx, span := telemetry.NewSpan(ctx, "get-active-subscription")
 	defer span.End()
@@ -234,7 +238,6 @@ func (m LagoClient) ListCustomerCredits(ctx context.Context, projectID uint, san
 	if err != nil {
 		return credits, telemetry.Error(ctx, span, err, "failed to get customer credits")
 	}
-	defer resp.Body.Close()
 
 	type ListWalletsResponse struct {
 		Wallets []types.Wallet `json:"wallets"`
@@ -254,6 +257,11 @@ func (m LagoClient) ListCustomerCredits(ctx context.Context, projectID uint, san
 
 		response.GrantedBalanceCents += wallet.BalanceCents
 		response.RemainingBalanceCents += wallet.OngoingBalanceCents
+	}
+
+	err = resp.Body.Close()
+	if err != nil {
+		return credits, telemetry.Error(ctx, span, err, "failed to close response body")
 	}
 
 	return response, nil
@@ -321,7 +329,6 @@ func (m LagoClient) ListCustomerUsage(ctx context.Context, customerID string, su
 				},
 			}
 		}
-
 	}
 
 	return usage, nil
@@ -344,9 +351,7 @@ func (m LagoClient) IngestEvents(ctx context.Context, subscriptionID string, eve
 
 		batch := events[i:end]
 		batchInput := make([]lago.EventInput, len(batch))
-
 		for i := range batch {
-
 			externalSubscriptionID := subscriptionID
 			if enableSandbox {
 				// This hack has to be done because we can't infer the project id from the

@@ -8,6 +8,9 @@ type ListCreditGrantsResponse struct {
 
 // ListCustomerUsageRequest is the request to list usage for a customer
 type ListCustomerUsageRequest struct {
+	// PreviousPeriods is the number of previous periods to include in the response.
+	PreviousPeriods int `json:"previous_periods,omitempty"`
+	// CurrentPeriod is whether to return only usage for the current billing period.
 	CurrentPeriod bool `json:"current_period,omitempty"`
 }
 

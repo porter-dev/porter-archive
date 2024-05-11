@@ -30,7 +30,7 @@ type TGetInvoices = {
 };
 
 type TGetUsage = {
-  usage: Usage | null;
+  usageList: Usage[] | null;
 };
 
 type TGetReferralDetails = {
@@ -108,16 +108,15 @@ export const useCustomerPlan = (): TGetPlan => {
 };
 
 export const useCustomerUsage = (
-  startingOn: Date | null,
-  endingBefore: Date | null,
+  previousPeriods: number,
   currentPeriod: boolean
 ): TGetUsage => {
   const { currentProject } = useContext(Context);
 
   // Fetch customer usage
   const usageReq = useQuery(
-    ["listCustomerUsage", currentProject?.id],
-    async (): Promise<Usage | null> => {
+    ["listCustomerUsage", currentProject?.id, previousPeriods, currentPeriod],
+    async (): Promise<Usage[] | null> => {
       if (!currentProject?.metronome_enabled) {
         return null;
       }
@@ -126,23 +125,18 @@ export const useCustomerUsage = (
         return null;
       }
 
-      if (startingOn === null || endingBefore === null) {
-        return null;
-      }
-
       try {
         const res = await api.getCustomerUsage(
           "<token>",
           {
-            starting_on: startingOn.toISOString(),
-            ending_before: endingBefore.toISOString(),
+            previous_periods: previousPeriods,
             current_period: currentPeriod,
           },
           {
             project_id: currentProject?.id,
           }
         );
-        const usage = UsageValidator.parse(res.data);
+        const usage = UsageValidator.array().parse(res.data);
         return usage;
       } catch (error) {
         return null;
@@ -151,7 +145,7 @@ export const useCustomerUsage = (
   );
 
   return {
-    usage: usageReq.data ?? null,
+    usageList: usageReq.data ?? null,
   };
 };
 

@@ -58,7 +58,7 @@ func NewLagoClient(lagoApiKey string, porterCloudPlanCode string, porterStandard
 	if lagoClient == nil {
 		return client, fmt.Errorf("failed to create lago client")
 	}
-	// lagoClient.Debug = true
+	lagoClient.Debug = true
 
 	return LagoClient{
 		lagoApiKey:               lagoApiKey,
@@ -151,11 +151,6 @@ func (m LagoClient) GetCustomeActivePlan(ctx context.Context, projectID uint, sa
 		return plan, telemetry.Error(ctx, span, err, "project id empty")
 	}
 
-	if sandboxEnabled {
-		subscriptionID := m.generateLagoID(SubscriptionIDPrefix, projectID, sandboxEnabled)
-		return types.Plan{ID: subscriptionID}, nil
-	}
-
 	customerID := m.generateLagoID(CustomerIDPrefix, projectID, sandboxEnabled)
 	subscriptionListInput := lago.SubscriptionListInput{
 		ExternalCustomerID: customerID,
@@ -178,7 +173,10 @@ func (m LagoClient) GetCustomeActivePlan(ctx context.Context, projectID uint, sa
 		plan.ID = subscription.ExternalID
 		plan.CustomerID = subscription.ExternalCustomerID
 		plan.StartingOn = subscription.SubscriptionAt.Format(time.RFC3339)
-		plan.EndingBefore = subscription.EndingAt.Format(time.RFC3339)
+
+		if subscription.EndingAt != nil {
+			plan.EndingBefore = subscription.EndingAt.Format(time.RFC3339)
+		}
 
 		if strings.Contains(subscription.ExternalID, TrialIDPrefix) {
 			plan.TrialInfo.EndingBefore = subscription.EndingAt.Format(time.RFC3339)
@@ -296,12 +294,12 @@ func (m LagoClient) CreateCreditsGrant(ctx context.Context, projectID uint, name
 }
 
 // ListCustomerUsage will return the aggregated usage for a customer
-func (m LagoClient) ListCustomerUsage(ctx context.Context, customerID string, subscriptionID string, currentPeriod bool) (usage types.Usage, err error) {
+func (m LagoClient) ListCustomerUsage(ctx context.Context, customerID string, subscriptionID string, currentPeriod bool, previousPeriods int) (usageList []types.Usage, err error) {
 	ctx, span := telemetry.NewSpan(ctx, "list-customer-usage")
 	defer span.End()
 
 	if subscriptionID == "" {
-		return usage, telemetry.Error(ctx, span, err, "subscription id empty")
+		return usageList, telemetry.Error(ctx, span, err, "subscription id empty")
 	}
 
 	if currentPeriod {
@@ -311,27 +309,32 @@ func (m LagoClient) ListCustomerUsage(ctx context.Context, customerID string, su
 
 		currentUsage, lagoErr := m.client.Customer().CurrentUsage(ctx, customerID, customerUsageInput)
 		if lagoErr != nil {
-			return usage, telemetry.Error(ctx, span, fmt.Errorf(lagoErr.ErrorCode), "failed to get customer usage")
+			return usageList, telemetry.Error(ctx, span, fmt.Errorf(lagoErr.ErrorCode), "failed to get customer usage")
 		}
 
-		usage.FromDatetime = currentUsage.FromDatetime.Format(time.RFC3339)
-		usage.ToDatetime = currentUsage.ToDatetime.Format(time.RFC3339)
-		usage.TotalAmountCents = int64(currentUsage.TotalAmountCents)
-		usage.ChargesUsage = make([]types.ChargeUsage, len(currentUsage.ChargesUsage))
+		if currentUsage == nil {
+			return usageList, nil
+		}
 
-		for i, charge := range currentUsage.ChargesUsage {
-			usage.ChargesUsage[i] = types.ChargeUsage{
-				Units:          charge.Units,
-				AmountCents:    int64(charge.AmountCents),
-				AmountCurrency: string(charge.AmountCurrency),
-				BillableMetric: types.BillableMetric{
-					Name: charge.BillableMetric.Name,
-				},
-			}
+		usage := createUsageFromLagoUsage(*currentUsage)
+		usageList = append(usageList, usage)
+	} else {
+		customerPastUsageInput := &lago.CustomerPastUsageInput{
+			PeriodsCount:           previousPeriods,
+			ExternalSubscriptionID: subscriptionID,
+		}
+
+		previousUsage, lagoErr := m.client.Customer().PastUsage(ctx, customerID, customerPastUsageInput)
+		if lagoErr != nil {
+			return usageList, telemetry.Error(ctx, span, fmt.Errorf(lagoErr.ErrorCode), "failed to get customer usage")
+		}
+
+		for _, pastUsage := range previousUsage.UsagePeriods {
+			usage := createUsageFromLagoUsage(pastUsage)
+			usageList = append(usageList, usage)
 		}
 	}
-
-	return usage, nil
+	return usageList, nil
 }
 
 // IngestEvents sends a list of billing events to Lago's ingest endpoint
@@ -484,6 +487,27 @@ func (m LagoClient) addCustomerPlan(ctx context.Context, customerID string, plan
 	}
 
 	return nil
+}
+
+func createUsageFromLagoUsage(lagoUsage lago.CustomerUsage) types.Usage {
+	usage := types.Usage{}
+	usage.FromDatetime = lagoUsage.FromDatetime.Format(time.RFC3339)
+	usage.ToDatetime = lagoUsage.ToDatetime.Format(time.RFC3339)
+	usage.TotalAmountCents = int64(lagoUsage.TotalAmountCents)
+	usage.ChargesUsage = make([]types.ChargeUsage, len(lagoUsage.ChargesUsage))
+
+	for i, charge := range lagoUsage.ChargesUsage {
+		usage.ChargesUsage[i] = types.ChargeUsage{
+			Units:          charge.Units,
+			AmountCents:    int64(charge.AmountCents),
+			AmountCurrency: string(charge.AmountCurrency),
+			BillableMetric: types.BillableMetric{
+				Name: charge.BillableMetric.Name,
+			},
+		}
+	}
+
+	return usage
 }
 
 func (m LagoClient) generateLagoID(prefix string, projectID uint, sandboxEnabled bool) string {

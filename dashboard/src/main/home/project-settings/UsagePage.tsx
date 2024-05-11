@@ -1,168 +1,127 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
-import styled from "styled-components";
 
 import Container from "components/porter/Container";
 import Fieldset from "components/porter/Fieldset";
 import Select from "components/porter/Select";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
-import { type CostList } from "lib/billing/types";
-import {
-  useCustomerCosts,
-  useCustomerPlan,
-  useCustomerUsage,
-} from "lib/hooks/useLago";
-
-import Bars from "./Bars";
+import { useCustomerPlan, useCustomerUsage } from "lib/hooks/useLago";
 
 dayjs.extend(utc);
 
 function UsagePage(): JSX.Element {
   const { plan } = useCustomerPlan();
+  const planStartDate = dayjs.utc(plan?.starting_on);
 
-  const startDate = dayjs.utc(plan?.starting_on);
-  const endDate = dayjs().utc().startOf("day");
-  const numberOfDays = startDate.daysInMonth();
+  const [currentPeriod, setCurrentPeriod] = useState(planStartDate);
+  const [options, setOptions] = useState<
+    Array<{ value: string; label: string }>
+  >([]);
+  const [previousPeriodCount, setPreviousPeriodCount] = useState(0);
+  const [showCurrentPeriod, setShowCurrentPeriod] = useState(true);
 
-  const [currentPeriodStart, setCurrentPeriodStart] = useState(
-    startDate.toDate()
-  );
-  const [currentPeriodEnd, setCurrentPeriodEnd] = useState(endDate.toDate());
-  const [currentPeriodDuration, setCurrentPeriodDuration] =
-    useState(numberOfDays);
-
-  const { usage } = useCustomerUsage(
-    currentPeriodStart,
-    currentPeriodEnd,
-    "day"
-  );
-  const { costs } = useCustomerCosts(
-    currentPeriodStart,
-    currentPeriodEnd,
-    currentPeriodDuration
+  const { usageList } = useCustomerUsage(
+    previousPeriodCount,
+    showCurrentPeriod
   );
 
-  const computeTotalCost = (costs: CostList): number => {
-    const total = costs.reduce((acc, curr) => acc + curr.cost, 0);
-    return parseFloat(total.toFixed(2));
-  };
-
-  const processedUsage = useMemo(() => {
-    const before = usage;
-    const resultMap = new Map();
-
-    before?.forEach(
-      (metric: {
-        metric_name: string;
-        usage_metrics: Array<{ starting_on: string; value: number }>;
-      }) => {
-        const metricName = metric.metric_name.toLowerCase().replace(" ", "_");
-        metric.usage_metrics.forEach(({ starting_on: startingOn, value }) => {
-          if (resultMap.has(startingOn)) {
-            resultMap.get(startingOn)[metricName] = value;
-          } else {
-            resultMap.set(startingOn, {
-              starting_on: new Date(startingOn).toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-              }),
-              [metricName]: value,
-            });
-          }
-        });
-      }
-    );
-
-    // Convert the map to an array of values
-    const x = Array.from(resultMap.values());
-    return x;
-  }, [usage]);
-
-  const processedCosts = useMemo(() => {
-    return costs
-      ?.map((dailyCost) => {
-        dailyCost.start_timestamp = new Date(
-          dailyCost.start_timestamp
-        ).toLocaleDateString("en-US", {
-          month: "short",
-          day: "numeric",
-        });
-        dailyCost.cost = parseFloat((dailyCost.cost / 100).toFixed(4));
-        return dailyCost;
-      })
-      .filter((dailyCost) => dailyCost.cost > 0);
-  }, [costs]);
+  useEffect(() => {
+    const newOptions = generateOptions();
+    setOptions(newOptions);
+  }, [previousPeriodCount, showCurrentPeriod]);
 
   const generateOptions = (): Array<{ value: string; label: string }> => {
     const options = [];
+    const monthsElapsed = dayjs
+      .utc()
+      .startOf("month")
+      .diff(planStartDate.utc().startOf("month"), "month");
 
-    let startDate = dayjs.utc(currentPeriodStart);
-    const endDate = dayjs.utc(currentPeriodEnd);
-
-    while (startDate.isBefore(endDate)) {
-      const nextDate = startDate.add(1, "month");
+    if (monthsElapsed <= 0) {
       options.push({
-        value: startDate.toISOString(),
-        label: `${startDate.format("M/D/YY")} - ${nextDate.format("M/D/YY")}`,
+        value: currentPeriod.toISOString(),
+        label: dayjs().utc().format("MMMM YYYY"),
       });
-
-      startDate = startDate.add(1, "month");
+      setShowCurrentPeriod(true);
+      return options;
     }
+
+    setPreviousPeriodCount(monthsElapsed);
+    for (let i = 0; i <= monthsElapsed; i++) {
+      const optionDate = planStartDate.add(i, "month");
+      options.push({
+        value: optionDate.toISOString(),
+        label: optionDate.format("MMMM YYYY"),
+      });
+    }
+
     return options;
   };
 
-  const options = generateOptions();
+  const processedUsage = useMemo(() => {
+    if (!usageList || !usageList.length) {
+      return null;
+    }
+
+    const periodUsage = usageList.find((usage) =>
+      dayjs(usage.from_datetime).isSame(currentPeriod.month(), "month")
+    );
+    const totalCost = periodUsage?.total_amount_cents
+      ? (periodUsage.total_amount_cents / 100).toFixed(4)
+      : "";
+    const totalCpuHours =
+      periodUsage?.charges_usage.find((x) =>
+        x.billable_metric.name.includes("CPU")
+      )?.units ?? "";
+    const totalGibHours =
+      periodUsage?.charges_usage.find((x) =>
+        x.billable_metric.name.includes("GiB")
+      )?.units ?? "";
+    const currency = periodUsage?.charges_usage[0].amount_currency ?? "";
+    return {
+      total_cost: totalCost,
+      total_cpu_hours: totalCpuHours,
+      total_gib_hours: totalGibHours,
+      currency,
+    };
+  }, [usageList]);
 
   return (
     <>
       <Select
         options={options}
-        value={currentPeriodStart.toISOString()}
+        value={currentPeriod.toISOString()}
         setValue={(value) => {
-          setCurrentPeriodStart(dayjs.utc(value).toDate());
-          setCurrentPeriodEnd(dayjs.utc(value).add(1, "month").toDate());
-          setCurrentPeriodDuration(dayjs.utc(value).daysInMonth());
+          setCurrentPeriod(dayjs.utc(value));
+          if (dayjs(value).isSame(dayjs(), "month")) {
+            setShowCurrentPeriod(true);
+          } else {
+            setShowCurrentPeriod(false);
+          }
         }}
         width="fit-content"
         prefix={<>Billing period</>}
       />
       <Spacer y={1} />
-      {processedCosts &&
-      processedCosts.length > 0 &&
-      processedUsage &&
-      processedUsage.length > 0 ? (
+      {processedUsage ? (
         <>
           <Text color="helper">Total usage (selected period):</Text>
           <Spacer y={0.5} />
           <Container row>
             <Fieldset>
-              <Text size={16}>$ 26.78</Text>
+              <Text size={16}>
+                $ {processedUsage.total_cost} {processedUsage.currency}
+              </Text>
             </Fieldset>
             <Spacer inline x={1} />
             <Fieldset>
-              <Text size={16}>5.18 GiB hours</Text>
+              <Text size={16}>{processedUsage.total_gib_hours} GiB hours</Text>
             </Fieldset>
             <Spacer inline x={1} />
             <Fieldset>
-              <Text size={16}>1.78 CPU hours</Text>
-            </Fieldset>
-          </Container>
-          <Spacer y={1} />
-          <Text color="helper">Daily average (selected period):</Text>
-          <Spacer y={0.5} />
-          <Container row>
-            <Fieldset>
-              <Text size={16}>$ 3.62</Text>
-            </Fieldset>
-            <Spacer inline x={1} />
-            <Fieldset>
-              <Text size={16}>0.51 GiB hours</Text>
-            </Fieldset>
-            <Spacer inline x={1} />
-            <Fieldset>
-              <Text size={16}>0.18 CPU hours</Text>
+              <Text size={16}>{processedUsage.total_cpu_hours} CPU hours</Text>
             </Fieldset>
           </Container>
         </>
@@ -178,28 +137,3 @@ function UsagePage(): JSX.Element {
 }
 
 export default UsagePage;
-
-const Total = styled.div`
-  position: absolute;
-  top: 20px;
-  left: 55px;
-  font-size: 13px;
-  background: #42444933;
-  backdrop-filter: saturate(150%) blur(8px);
-  padding: 7px 10px;
-  border-radius: 5px;
-  border: 1px solid #494b4f;
-  z-index: 999;
-`;
-
-const Flex = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-`;
-
-const BarWrapper = styled.div`
-  flex: 1;
-  height: 300px;
-  min-width: 450px;
-  position: relative;
-`;

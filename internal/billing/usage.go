@@ -336,7 +336,7 @@ func (m LagoClient) ListCustomerUsage(ctx context.Context, customerID string, su
 
 // IngestEvents sends a list of billing events to Lago's ingest endpoint
 func (m LagoClient) IngestEvents(ctx context.Context, subscriptionID string, events []types.BillingEvent, enableSandbox bool) (err error) {
-	ctx, span := telemetry.NewSpan(ctx, "ingets-billing-events")
+	ctx, span := telemetry.NewSpan(ctx, "ingest-billing-events")
 	defer span.End()
 
 	if len(events) == 0 {
@@ -376,7 +376,11 @@ func (m LagoClient) IngestEvents(ctx context.Context, subscriptionID string, eve
 		// Retry each batch to make sure all events are ingested
 		var currentAttempts int
 		for currentAttempts < defaultMaxRetries {
-			m.client.Event().Batch(ctx, &batchInput)
+
+			_, lagoErr := m.client.Event().Batch(ctx, &batchInput)
+			if lagoErr == nil {
+				return telemetry.Error(ctx, span, fmt.Errorf(lagoErr.ErrorCode), "error sending ingest events to Lago")
+			}
 			currentAttempts++
 		}
 

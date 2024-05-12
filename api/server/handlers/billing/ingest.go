@@ -39,20 +39,16 @@ func (c *IngestEventsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 
 	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "lago-config-exists", Value: c.Config().BillingManager.LagoConfigLoaded},
+		telemetry.AttributeKV{Key: "lago-enabled", Value: proj.GetFeatureFlag(models.LagoEnabled, c.Config().LaunchDarklyClient)},
+		telemetry.AttributeKV{Key: "porter-cloud-enabled", Value: proj.EnableSandbox},
+	)
+
 	if !c.Config().BillingManager.LagoConfigLoaded || !proj.GetFeatureFlag(models.LagoEnabled, c.Config().LaunchDarklyClient) {
 		c.WriteResult(w, r, "")
-
-		telemetry.WithAttributes(span,
-			telemetry.AttributeKV{Key: "lago-config-exists", Value: c.Config().BillingManager.LagoConfigLoaded},
-			telemetry.AttributeKV{Key: "lago-enabled", Value: proj.GetFeatureFlag(models.LagoEnabled, c.Config().LaunchDarklyClient)},
-			telemetry.AttributeKV{Key: "porter-cloud-enabled", Value: proj.EnableSandbox},
-		)
 		return
 	}
-
-	telemetry.WithAttributes(span,
-		telemetry.AttributeKV{Key: "lago-enabled", Value: true},
-	)
 
 	ingestEventsRequest := struct {
 		Events []types.BillingEvent `json:"billing_events"`

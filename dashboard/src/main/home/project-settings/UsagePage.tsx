@@ -13,9 +13,11 @@ dayjs.extend(utc);
 
 function UsagePage(): JSX.Element {
   const { plan } = useCustomerPlan();
-  const planStartDate = dayjs.utc(plan?.starting_on);
+  const planStartDate = dayjs.utc(plan?.starting_on).startOf("month");
 
-  const [currentPeriod, setCurrentPeriod] = useState(planStartDate);
+  const [currentPeriod, setCurrentPeriod] = useState(
+    dayjs().utc().startOf("month")
+  );
   const [options, setOptions] = useState<
     Array<{ value: string; label: string }>
   >([]);
@@ -37,11 +39,11 @@ function UsagePage(): JSX.Element {
     const monthsElapsed = dayjs
       .utc()
       .startOf("month")
-      .diff(planStartDate.utc().startOf("month"), "month");
+      .diff(planStartDate, "month");
 
     if (monthsElapsed <= 0) {
       options.push({
-        value: currentPeriod.toISOString(),
+        value: currentPeriod.month().toString(),
         label: dayjs().utc().format("MMMM YYYY"),
       });
       setShowCurrentPeriod(true);
@@ -52,7 +54,7 @@ function UsagePage(): JSX.Element {
     for (let i = 0; i <= monthsElapsed; i++) {
       const optionDate = planStartDate.add(i, "month");
       options.push({
-        value: optionDate.toISOString(),
+        value: optionDate.month().toString(),
         label: optionDate.format("MMMM YYYY"),
       });
     }
@@ -61,13 +63,19 @@ function UsagePage(): JSX.Element {
   };
 
   const processedUsage = useMemo(() => {
-    if (!usageList || !usageList.length) {
+    if (!usageList?.length) {
       return null;
     }
 
-    const periodUsage = usageList.find((usage) =>
-      dayjs(usage.from_datetime).isSame(currentPeriod.month(), "month")
+    const periodUsage = usageList.find(
+      (usage) =>
+        dayjs(usage.from_datetime).utc().month() === currentPeriod.month()
     );
+
+    if (!periodUsage) {
+      return null;
+    }
+
     const totalCost = periodUsage?.total_amount_cents
       ? (periodUsage.total_amount_cents / 100).toFixed(4)
       : "";
@@ -92,7 +100,7 @@ function UsagePage(): JSX.Element {
     <>
       <Select
         options={options}
-        value={currentPeriod.toISOString()}
+        value={currentPeriod.month().toString()}
         setValue={(value) => {
           setCurrentPeriod(dayjs.utc(value));
           if (dayjs(value).isSame(dayjs(), "month")) {

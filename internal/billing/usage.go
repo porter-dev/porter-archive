@@ -15,6 +15,7 @@ import (
 )
 
 const (
+	lagoBaseURL                = "https://api.getlago.com"
 	defaultStarterCreditsCents = 500
 	defaultRewardAmountCents   = 1000
 	maxReferralRewards         = 10
@@ -58,7 +59,6 @@ func NewLagoClient(lagoApiKey string, porterCloudPlanCode string, porterStandard
 	if lagoClient == nil {
 		return client, fmt.Errorf("failed to create lago client")
 	}
-	lagoClient.Debug = true
 
 	return LagoClient{
 		lagoApiKey:               lagoApiKey,
@@ -222,7 +222,6 @@ func (m LagoClient) ListCustomerCredits(ctx context.Context, projectID uint, san
 
 	// We manually do the request in this function because the Lago client has an issue
 	// with types for this specific request
-	lagoBaseURL := "https://api.getlago.com"
 	url := fmt.Sprintf("%s/api/v1/wallets?external_customer_id=%s", lagoBaseURL, customerID)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -319,14 +318,24 @@ func (m LagoClient) ListCustomerUsage(ctx context.Context, customerID string, su
 		usage := createUsageFromLagoUsage(*currentUsage)
 		usageList = append(usageList, usage)
 	} else {
-		customerPastUsageInput := &lago.CustomerPastUsageInput{
-			PeriodsCount:           previousPeriods,
-			ExternalSubscriptionID: subscriptionID,
+		url := fmt.Sprintf("%s/api/v1/customers/%s/past_usage?external_subscription_id=%s&periods_count=%d", lagoBaseURL, customerID, subscriptionID, previousPeriods)
+		req, err := http.NewRequest("GET", url, nil)
+		if err != nil {
+			return usageList, telemetry.Error(ctx, span, err, "failed to create wallets request")
 		}
 
-		previousUsage, lagoErr := m.client.Customer().PastUsage(ctx, customerID, customerPastUsageInput)
-		if lagoErr != nil {
-			return usageList, telemetry.Error(ctx, span, fmt.Errorf(lagoErr.ErrorCode), "failed to get customer usage")
+		req.Header.Set("Authorization", "Bearer "+m.lagoApiKey)
+
+		client := &http.Client{}
+		resp, err := client.Do(req)
+		if err != nil {
+			return usageList, telemetry.Error(ctx, span, err, "failed to get customer credits")
+		}
+
+		var previousUsage lago.CustomerPastUsageResult
+		err = json.NewDecoder(resp.Body).Decode(&previousUsage)
+		if err != nil {
+			return usageList, telemetry.Error(ctx, span, err, "failed to decode usage list response")
 		}
 
 		for _, pastUsage := range previousUsage.UsagePeriods {

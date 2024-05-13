@@ -11,4 +11,6 @@ type UpstashIntegration struct {
 	SharedOAuthModel
 
 	DeveloperApiKey []byte `json:"developer_api_key"`
+
+	UpstashEmail string `json:"upstash_email"`
 }

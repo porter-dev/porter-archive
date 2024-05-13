@@ -42,6 +42,31 @@ func (repo *UpstashIntegrationRepository) Insert(
 	return created, nil
 }
 
+// Integrations returns all upstash integrations for a given project
+func (repo *UpstashIntegrationRepository) Integrations(
+	ctx context.Context, projectID uint,
+) ([]ints.UpstashIntegration, error) {
+	ctx, span := telemetry.NewSpan(ctx, "gorm-list-upstash-integrations")
+	defer span.End()
+
+	var integrations []ints.UpstashIntegration
+
+	if err := repo.db.Where("project_id = ?", projectID).Find(&integrations).Error; err != nil {
+		return integrations, telemetry.Error(ctx, span, err, "failed to list upstash integrations")
+	}
+
+	for i, integration := range integrations {
+		decrypted, err := repo.DecryptUpstashIntegration(integration, repo.key)
+		if err != nil {
+			return integrations, telemetry.Error(ctx, span, err, "failed to decrypt")
+		}
+
+		integrations[i] = decrypted
+	}
+
+	return integrations, nil
+}
+
 // EncryptUpstashIntegration will encrypt the upstash integration data before
 // writing to the DB
 func (repo *UpstashIntegrationRepository) EncryptUpstashIntegration(
@@ -87,4 +112,51 @@ func (repo *UpstashIntegrationRepository) EncryptUpstashIntegration(
 	}
 
 	return encrypted, nil
+}
+
+// DecryptUpstashIntegration will decrypt the upstash integration data before
+// returning it from the DB
+func (repo *UpstashIntegrationRepository) DecryptUpstashIntegration(
+	upstashInt ints.UpstashIntegration,
+	key *[32]byte,
+) (ints.UpstashIntegration, error) {
+	decrypted := upstashInt
+
+	if len(decrypted.ClientID) > 0 {
+		plaintext, err := encryption.Decrypt(decrypted.ClientID, key)
+		if err != nil {
+			return decrypted, err
+		}
+
+		decrypted.ClientID = plaintext
+	}
+
+	if len(decrypted.AccessToken) > 0 {
+		plaintext, err := encryption.Decrypt(decrypted.AccessToken, key)
+		if err != nil {
+			return decrypted, err
+		}
+
+		decrypted.AccessToken = plaintext
+	}
+
+	if len(decrypted.RefreshToken) > 0 {
+		plaintext, err := encryption.Decrypt(decrypted.RefreshToken, key)
+		if err != nil {
+			return decrypted, err
+		}
+
+		decrypted.RefreshToken = plaintext
+	}
+
+	if len(decrypted.DeveloperApiKey) > 0 {
+		plaintext, err := encryption.Decrypt(decrypted.DeveloperApiKey, key)
+		if err != nil {
+			return decrypted, err
+		}
+
+		decrypted.DeveloperApiKey = plaintext
+	}
+
+	return decrypted, nil
 }

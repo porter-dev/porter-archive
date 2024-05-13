@@ -111,6 +111,7 @@ func (p *OAuthCallbackUpstashHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 
 	oauthInt := integrations.UpstashIntegration{
 		SharedOAuthModel: integrations.SharedOAuthModel{
+			ClientID:     []byte(p.Config().UpstashConf.ClientID),
 			AccessToken:  []byte(token.AccessToken),
 			RefreshToken: []byte(token.RefreshToken),
 			Expiry:       token.Expiry,

@@ -12,10 +12,14 @@ import { useDatastoreList } from "lib/hooks/useDatabaseList";
 import { useDatastore } from "lib/hooks/useDatastore";
 import { useIntercom } from "lib/hooks/useIntercom";
 import { useNeon } from "lib/hooks/useNeon";
+import { useUpstash } from "lib/hooks/useUpstash";
 
 import { Context } from "shared/Context";
 
-import NeonIntegrationModal from "./shared/NeonIntegrationModal";
+import {
+  NeonIntegrationModal,
+  UpstashIntegrationModal,
+} from "./shared/NeonIntegrationModal";
 
 // todo(ianedwards): refactor button to use more predictable state
 export type UpdateDatastoreButtonProps = {
@@ -53,7 +57,10 @@ const DatastoreFormContextProvider: React.FC<
 
   const [updateDatastoreError, setUpdateDatastoreError] = useState<string>("");
   const { getNeonIntegrations } = useNeon();
+  const { getUpstashIntegrations } = useUpstash();
   const [showNeonIntegrationModal, setShowNeonIntegrationModal] =
+    useState(false);
+  const [showUpstashIntegrationModal, setShowUpstashIntegrationModal] =
     useState(false);
 
   const { showIntercomWithMessage } = useIntercom();
@@ -117,6 +124,16 @@ const DatastoreFormContextProvider: React.FC<
           return;
         }
       }
+      if (data.config.type === "upstash") {
+        const integrations = await getUpstashIntegrations({
+          projectId: currentProject.id,
+        });
+        if (integrations.length === 0) {
+          setShowUpstashIntegrationModal(true);
+          return;
+        }
+      }
+
       await createDatastore(data);
       history.push(`/datastores/${data.name}`);
     } catch (err) {
@@ -151,6 +168,13 @@ const DatastoreFormContextProvider: React.FC<
         <NeonIntegrationModal
           onClose={() => {
             setShowNeonIntegrationModal(false);
+          }}
+        />
+      )}
+      {showUpstashIntegrationModal && (
+        <UpstashIntegrationModal
+          onClose={() => {
+            setShowUpstashIntegrationModal(false);
           }}
         />
       )}

@@ -75,6 +75,9 @@ type ServerConf struct {
 	PorterCloudPlanID    string `env:"PORTER_CLOUD_PLAN_ID"`
 	PorterStandardPlanID string `env:"PORTER_STANDARD_PLAN_ID"`
 
+	// The URL of the webhook to verify ingesting events works
+	IngestStatusWebhookUrl string `env:"INGEST_STATUS_WEBHOOK_URL"`
+
 	// This endpoint will be passed to the porter-agent so that
 	// the billing manager can query Prometheus.
 	PrometheusUrl string `env:"PROMETHEUS_URL"`

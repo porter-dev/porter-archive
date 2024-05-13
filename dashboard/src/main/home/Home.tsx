@@ -400,13 +400,14 @@ const Home: React.FC<Props> = (props) => {
       <DeploymentTargetProvider>
         <StyledHome
           padTop={
-            !currentProject?.sandbox_enabled &&
-            showCardBanner &&
-            currentProject?.billing_enabled &&
-            currentProject?.metronome_enabled &&
-            !trialExpired &&
-            plan &&
-            true
+            (!currentProject?.sandbox_enabled &&
+              showCardBanner &&
+              currentProject?.billing_enabled &&
+              currentProject?.metronome_enabled &&
+              !trialExpired &&
+              plan &&
+              true) ||
+            currentProject?.freeze_enabled
           }
         >
           {!currentProject?.sandbox_enabled &&
@@ -433,6 +434,14 @@ const Home: React.FC<Props> = (props) => {
                 )}
               </>
             )}
+          {currentProject?.freeze_enabled && (
+            <GlobalBanner>
+              <i className="material-icons-round">warning</i>
+              This project has been disabled due to recurring issues with the
+              connected payment method. Please contact support@porter.run to
+              reenable this project.
+            </GlobalBanner>
+          )}
           {showBillingModal && (
             <BillingModal
               back={() => {
@@ -704,6 +713,7 @@ export default withRouter(withAuth(Home));
 const GlobalBanner = styled.div`
   width: 100vw;
   z-index: 999;
+  padding: 20px;
   position: fixed;
   top: 0;
   color: #fefefe;

@@ -5,20 +5,12 @@ import styled from "styled-components";
 import Back from "components/porter/Back";
 import Container from "components/porter/Container";
 import Spacer from "components/porter/Spacer";
+import Tag from "components/porter/Tag";
 
 import inferenceGrad from "assets/inference-grad.svg";
 
 import DashboardHeader from "../cluster-dashboard/DashboardHeader";
-import { models } from "./models";
-
-const tagColor = {
-  "text-to-text": "#3f51b5",
-  "audio-to-text": "#0E7F5D",
-  "text-to-image": "#D67400",
-  "text-to-audio": "#7020C0",
-  CPU: "#72747E",
-  A100: "#f50057",
-};
+import { models, tagColor } from "./models";
 
 const ModelTemplates: React.FC = () => {
   const history = useHistory();
@@ -49,9 +41,19 @@ const ModelTemplates: React.FC = () => {
               <Spacer y={0.25} />
               <Container row>
                 {template.tags?.map((t) => (
-                  <Tag style={{ background: tagColor[t] }} key={t}>
-                    {t}
-                  </Tag>
+                  <>
+                    <Tag
+                      backgroundColor={tagColor[t]}
+                      key={t}
+                      size={11}
+                      hoverable={false}
+                    >
+                      {t}
+                    </Tag>
+                    {template.tags.indexOf(t) !== template.tags.length - 1 && (
+                      <Spacer inline x={0.5} />
+                    )}
+                  </>
                 ))}
               </Container>
               <Spacer y={0.5} />
@@ -68,14 +70,6 @@ export default ModelTemplates;
 const StyledTemplateComponent = styled.div`
   width: 100%;
   height: 100%;
-`;
-
-const Tag = styled.div<{ size?: string }>`
-  font-size: 10px;
-  margin-right: 10px;
-  padding: 5px 10px;
-  border-radius: 4px;
-  opacity: 0.85;
 `;
 
 const TemplateDescription = styled.div`
@@ -141,6 +135,6 @@ const TemplateListWrapper = styled.div`
 
 const Icon = styled.img`
   height: 25px;
-  margin-top: 25px;
+  margin-top: 20px;
   margin-bottom: 5px;
 `;

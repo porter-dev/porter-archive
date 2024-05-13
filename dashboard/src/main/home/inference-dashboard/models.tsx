@@ -10,7 +10,7 @@ export const models = {
     name: "Llama 3 8B Instruct",
     icon: "https://1000logos.net/wp-content/uploads/2021/10/Meta-Symbol.png",
     description:
-      "Llama 3 is an auto-regressive language model that uses an optimized transformer architecture. The tuned versions use supervised fine-tuning (SFT) and reinforcement learning with human feedback (RLHF) to align with human preferences for helpfulness and safety.",
+      "Llama 3 is an auto-regressive language model that uses an optimized transformer architecture.",
     tags: ["text-to-text", "A100"],
   },
   "mistral-7b-instruct-v0-2": {
@@ -31,14 +31,14 @@ export const models = {
     name: "Stable Diffusion 2",
     icon: "https://avatars.githubusercontent.com/u/100950301?s=200&v=4",
     description:
-      "This is a model that can be used to generate and modify images based on text prompts. It is a Latent Diffusion Model that uses a fixed, pretrained text encoder (OpenCLIP-ViT/H).",
+      "This is a model that can be used to generate and modify images based on text prompts.",
     tags: ["text-to-image", "A100"],
   },
   "musicgen-large": {
     name: "MusicGen Large",
     icon: "https://1000logos.net/wp-content/uploads/2021/10/Meta-Symbol.png",
     description:
-      "MusicGen is a text-to-music model capable of genreating high-quality music samples conditioned on text descriptions or audio prompts. It is a single stage auto-regressive Transformer model trained over a 32kHz EnCodec tokenizer with 4 codebooks sampled at 50 Hz.",
+      "MusicGen is a text-to-music model capable of genreating high-quality music samples conditioned on text descriptions or audio prompts.",
     tags: ["text-to-audio", "A100"],
   },
 };

@@ -4,8 +4,6 @@ import styled, { keyframes } from "styled-components";
 
 import Container from "./Container";
 import Spacer from "./Spacer";
-import Tag from "./Tag";
-import Text from "./Text";
 
 type Props = {
   key: string;

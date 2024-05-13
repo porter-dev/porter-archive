@@ -1,11 +1,16 @@
 import React from "react";
 import { useHistory, useParams } from "react-router";
+import styled from "styled-components";
 import { match } from "ts-pattern";
 
 import Back from "components/porter/Back";
 import CenterWrapper from "components/porter/CenterWrapper";
-import DashboardHeader from "components/porter/DashboardHeader";
+import Container from "components/porter/Container";
+import Image from "components/porter/Image";
+import Spacer from "components/porter/Spacer";
+import Text from "components/porter/Text";
 
+import { models } from "./models";
 import Gpt2Form from "./TemplateForms/Gpt2Form";
 
 const InferenceForm: React.FC = () => {
@@ -13,6 +18,13 @@ const InferenceForm: React.FC = () => {
     templateId: string;
   }>();
   const history = useHistory();
+
+  const template = models[templateId] || {
+    name: "",
+    icon: "",
+    description: "",
+    tags: [],
+  };
 
   const renderForm = (): React.ReactElement => {
     return match(templateId)
@@ -25,16 +37,35 @@ const InferenceForm: React.FC = () => {
     <CenterWrapper>
       <Back
         onClick={() => {
-          history.push(`/inference`);
+          history.push(`/inference/templates/${templateId}`);
         }}
       />
-      <DashboardHeader
-        title={<div>Configure new {templateId} instance</div>}
-        capitalize={false}
-      />
+      <Container row>
+        <FloatIn>
+          <Image size={24} src={template.icon} />
+        </FloatIn>
+        <Spacer inline x={1} />
+        <Text size={21}>Configure new {template.name} instance</Text>
+      </Container>
+      <Spacer y={1} />
       {renderForm()}
     </CenterWrapper>
   );
 };
 
 export default InferenceForm;
+
+const FloatIn = styled.div`
+  animation: floatIn 0.5s;
+  animation-fill-mode: forwards;
+  @keyframes floatIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0px);
+    }
+  }
+`;

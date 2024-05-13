@@ -2,6 +2,7 @@ import React from "react";
 import styled from "styled-components";
 
 type Props = {
+  size?: number;
   backgroundColor?: string;
   children: React.ReactNode;
   hoverable?: boolean;
@@ -13,6 +14,7 @@ type Props = {
 };
 
 const Tag: React.FC<Props> = ({
+  size,
   backgroundColor,
   hoverable = true,
   hoverColor,
@@ -23,6 +25,7 @@ const Tag: React.FC<Props> = ({
 }) => {
   return (
     <StyledTag
+      size={size}
       backgroundColor={backgroundColor ?? "#ffffff22"}
       hoverable={hoverable}
       hoverColor={hoverColor ?? "#ffffff44"}
@@ -38,6 +41,7 @@ const Tag: React.FC<Props> = ({
 export default Tag;
 
 const StyledTag = styled.div<{
+  size?: number;
   hoverable: boolean;
   backgroundColor: string;
   hoverColor: string;
@@ -46,7 +50,7 @@ const StyledTag = styled.div<{
 }>`
   display: flex;
   justify-content: center;
-  font-size: 13px;
+  font-size: ${({ size }) => size ?? 13}px;
   padding: 3px 5px;
   border-radius: ${({ borderRadiusPixels }) => borderRadiusPixels}px;
   background: ${({ backgroundColor }) => backgroundColor};

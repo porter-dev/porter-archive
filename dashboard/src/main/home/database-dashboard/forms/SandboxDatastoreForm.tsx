@@ -161,14 +161,23 @@ const SandboxDatastoreForm: React.FC = () => {
                         return;
                       }
                       setTemplate(templateMatch);
-                      match(templateMatch).with(
-                        {
-                          name: DATASTORE_TEMPLATE_NEON.name,
-                        },
-                        () => {
-                          setValue("config.type", "neon");
-                        }
-                      );
+                      match(templateMatch)
+                        .with(
+                          {
+                            name: DATASTORE_TEMPLATE_NEON.name,
+                          },
+                          () => {
+                            setValue("config.type", "neon");
+                          }
+                        )
+                        .with(
+                          {
+                            name: DATASTORE_TEMPLATE_UPSTASH.name,
+                          },
+                          () => {
+                            setValue("config.type", "upstash");
+                          }
+                        );
                       setCurrentStep(4);
                     }}
                   />

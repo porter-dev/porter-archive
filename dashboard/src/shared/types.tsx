@@ -289,15 +289,15 @@ export type FormElement = {
 export type RepoType = {
   FullName: string;
 } & (
-    | {
+  | {
       Kind: "github";
       GHRepoID: number;
     }
-    | {
+  | {
       Kind: "gitlab";
       GitIntegrationId: number;
     }
-  );
+);
 
 export type FileType = {
   path: string;
@@ -318,6 +318,7 @@ export type ProjectType = {
   billing_enabled: boolean;
   metronome_enabled: boolean;
   infisical_enabled: boolean;
+  freeze_enabled: boolean;
   capi_provisioner_enabled: boolean;
   db_enabled: boolean;
   efs_enabled: boolean;
@@ -380,15 +381,15 @@ export type ActionConfigType = {
   image_repo_uri: string;
   dockerfile_path?: string;
 } & (
-    | {
+  | {
       kind: "gitlab";
       gitlab_integration_id: number;
     }
-    | {
+  | {
       kind: "github";
       git_repo_id: number;
     }
-  );
+);
 
 export type GithubActionConfigType = ActionConfigType & {
   kind: "github";

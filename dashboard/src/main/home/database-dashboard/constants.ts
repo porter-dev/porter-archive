@@ -429,7 +429,7 @@ export const DATASTORE_TEMPLATE_UPSTASH: DatastoreTemplate = Object.freeze({
   supportedEngineVersions: [],
   icon: upstash as string,
   description:
-    "A fully managed serverless Postgres. Neon separates storage and compute to offer autoscaling, branching, and bottomless storage.",
+    "A fully managed, serverless data store optimized for Redis. Upstash separates storage and compute to deliver auto-scaling, on-demand databases, and per-request pricing with a focus on low latency and high availability.",
   disabled: true,
   instanceTiers: [],
   creationStateProgression: [

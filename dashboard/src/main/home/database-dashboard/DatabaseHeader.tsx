@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useContext, useState } from "react";
 import styled from "styled-components";
 import { match } from "ts-pattern";
 
@@ -7,14 +7,22 @@ import Icon from "components/porter/Icon";
 import Spacer from "components/porter/Spacer";
 import StatusDot from "components/porter/StatusDot";
 import Text from "components/porter/Text";
+import Tooltip from "components/porter/Tooltip";
 
+import { Context } from "shared/Context";
 import { readableDate } from "shared/string_utils";
+import trash from "assets/trash.png";
 
 import { useDatastoreContext } from "./DatabaseContextProvider";
+import { DeleteDatastoreModal } from "./tabs/SettingsTab";
 import EngineTag from "./tags/EngineTag";
 
 const DatabaseHeader: React.FC = () => {
   const { datastore } = useDatastoreContext();
+
+  const [showDeleteDatastoreModal, setShowDeleteDatastoreModal] =
+    useState(false);
+  const { user } = useContext(Context);
 
   return (
     <>
@@ -28,6 +36,29 @@ const DatabaseHeader: React.FC = () => {
             <Container row>
               <EngineTag engine={datastore.template.engine} heightPixels={15} />
             </Container>
+            {user?.isPorterUser && (
+              <>
+                <Spacer inline x={1} />
+                <Tooltip
+                  content={
+                    <Text>
+                      Delete this datastore and all of its resources (only
+                      visible to Porter operators).
+                    </Text>
+                  }
+                  position={"right"}
+                >
+                  <div
+                    style={{ cursor: "pointer" }}
+                    onClick={() => {
+                      setShowDeleteDatastoreModal(true);
+                    }}
+                  >
+                    <Icon src={trash} height={"15px"} />
+                  </div>
+                </Tooltip>
+              </>
+            )}
           </Container>
           {match(datastore.status)
             .with("AVAILABLE", () => (
@@ -51,6 +82,13 @@ const DatabaseHeader: React.FC = () => {
         </div>
         <Spacer y={0.5} />
       </CreatedAtContainer>
+      {showDeleteDatastoreModal && (
+        <DeleteDatastoreModal
+          onClose={() => {
+            setShowDeleteDatastoreModal(false);
+          }}
+        />
+      )}
     </>
   );
 };

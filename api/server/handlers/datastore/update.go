@@ -190,6 +190,9 @@ func (h *UpdateDatastoreHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	case "NEON":
 		datastoreProto.Kind = porterv1.EnumDatastoreKind_ENUM_DATASTORE_KIND_NEON
 		datastoreProto.KindValues = &porterv1.ManagedDatastore_NeonKind{}
+	case "UPSTASH":
+		datastoreProto.Kind = porterv1.EnumDatastoreKind_ENUM_DATASTORE_KIND_UPSTASH
+		datastoreProto.KindValues = &porterv1.ManagedDatastore_UpstashKind{}
 	default:
 		err = telemetry.Error(ctx, span, nil, "invalid datastore type")
 		h.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))

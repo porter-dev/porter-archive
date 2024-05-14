@@ -15,6 +15,7 @@ import {
   DATASTORE_TYPE_MANAGED_REDIS,
   DATASTORE_TYPE_NEON,
   DATASTORE_TYPE_RDS,
+  DATASTORE_TYPE_UPSTASH,
   type DatastoreEngine,
   type DatastoreTemplate,
 } from "lib/databases/types";
@@ -25,6 +26,7 @@ import infra from "assets/cluster.svg";
 import neon from "assets/neon.svg";
 import postgresql from "assets/postgresql.svg";
 import redis from "assets/redis.svg";
+import upstash from "assets/upstash.svg";
 
 import ConfigurationTab from "./tabs/ConfigurationTab";
 import ConnectTab from "./tabs/ConnectTab";
@@ -418,6 +420,41 @@ export const DATASTORE_TEMPLATE_NEON: DatastoreTemplate = Object.freeze({
   ],
 });
 
+export const DATASTORE_TEMPLATE_UPSTASH: DatastoreTemplate = Object.freeze({
+  name: "Upstash",
+  displayName: "Upstash",
+  highLevelType: DATASTORE_ENGINE_REDIS,
+  type: DATASTORE_TYPE_UPSTASH,
+  engine: DATASTORE_ENGINE_REDIS,
+  supportedEngineVersions: [],
+  icon: upstash as string,
+  description:
+    "A fully managed, serverless data store optimized for Redis. Upstash separates storage and compute to deliver auto-scaling, on-demand databases, and per-request pricing with a focus on low latency and high availability.",
+  disabled: true,
+  instanceTiers: [],
+  creationStateProgression: [
+    DATASTORE_STATE_CREATING,
+    DATASTORE_STATE_AVAILABLE,
+  ],
+  deletionStateProgression: [
+    DATASTORE_STATE_AWAITING_DELETION,
+    DATASTORE_STATE_DELETING_RECORD,
+    DATASTORE_STATE_DELETED,
+  ],
+  tabs: [
+    {
+      name: "connectivity",
+      displayName: "Connectivity",
+      component: PublicDatastoreConnectTab,
+    },
+    {
+      name: "settings",
+      displayName: "Settings",
+      component: SettingsTab,
+    },
+  ],
+});
+
 export const SUPPORTED_DATASTORE_TEMPLATES: DatastoreTemplate[] = [
   DATASTORE_TEMPLATE_AWS_RDS,
   DATASTORE_TEMPLATE_AWS_AURORA,
@@ -425,4 +462,5 @@ export const SUPPORTED_DATASTORE_TEMPLATES: DatastoreTemplate[] = [
   DATASTORE_TEMPLATE_MANAGED_POSTGRES,
   DATASTORE_TEMPLATE_MANAGED_REDIS,
   DATASTORE_TEMPLATE_NEON,
+  DATASTORE_TEMPLATE_UPSTASH,
 ];

@@ -2,7 +2,10 @@ import React, { useMemo } from "react";
 
 import StatusBar from "components/porter/StatusBar";
 
-import { DATASTORE_TEMPLATE_NEON } from "./constants";
+import {
+  DATASTORE_TEMPLATE_NEON,
+  DATASTORE_TEMPLATE_UPSTASH,
+} from "./constants";
 import { useDatastoreContext } from "./DatabaseContextProvider";
 
 const DatastoreProvisioningIndicator: React.FC = () => {
@@ -40,9 +43,13 @@ const DatastoreProvisioningIndicator: React.FC = () => {
       return { percentCompleted, title, titleDescriptor, isCreating };
     }, [datastore]);
 
+  // TODO: refactor this so the template has the setup/deletion time
   const subtitle = useMemo(() => {
     return `${isCreating ? "Setup" : "Deletion"} can take up to ${
-      datastore.template === DATASTORE_TEMPLATE_NEON ? 5 : 20
+      datastore.template === DATASTORE_TEMPLATE_NEON ||
+      datastore.template === DATASTORE_TEMPLATE_UPSTASH
+        ? 5
+        : 20
     } minutes. You can close this window and come back later.`;
   }, [datastore]);
 

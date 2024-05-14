@@ -2068,6 +2068,13 @@ const getNeonIntegrations = baseApi<{}, { projectId: number }>(
   }
 );
 
+const getUpstashIntegrations = baseApi<{}, { projectId: number }>(
+  "GET",
+  ({ projectId }) => {
+    return `/api/projects/${projectId}/upstash-integrations`;
+  }
+);
+
 const getRevisions = baseApi<
   {},
   { id: number; cluster_id: number; namespace: string; name: string }
@@ -2889,7 +2896,13 @@ const getDatastoreCredential = baseApi<
 const updateDatastore = baseApi<
   {
     name: string;
-    type: "RDS" | "ELASTICACHE" | "MANAGED-POSTGRES" | "MANAGED-REDIS" | "NEON";
+    type:
+      | "RDS"
+      | "ELASTICACHE"
+      | "MANAGED-POSTGRES"
+      | "MANAGED-REDIS"
+      | "NEON"
+      | "UPSTASH";
     engine: "POSTGRES" | "AURORA-POSTGRES" | "REDIS";
 
     values: any;
@@ -3895,6 +3908,7 @@ export default {
   getRepoIntegrations,
   getSlackIntegrations,
   getNeonIntegrations,
+  getUpstashIntegrations,
   getRepos,
   getRevisions,
   getTemplateInfo,

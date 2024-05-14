@@ -13,7 +13,7 @@ import (
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
-// ListNeonIntegrationsHandler is a struct for listing all noen integrations for a given project
+// ListNeonIntegrationsHandler is a struct for listing all neon integrations for a given project
 type ListNeonIntegrationsHandler struct {
 	handlers.PorterHandlerReadWriter
 }

@@ -376,7 +376,6 @@ func (m LagoClient) IngestEvents(ctx context.Context, subscriptionID string, eve
 		// Retry each batch to make sure all events are ingested
 		var currentAttempts int
 		for currentAttempts < defaultMaxRetries {
-
 			_, lagoErr := m.client.Event().Batch(ctx, &batchInput)
 			if lagoErr == nil {
 				return telemetry.Error(ctx, span, fmt.Errorf(lagoErr.ErrorCode), "error sending ingest events to Lago")

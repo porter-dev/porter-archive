@@ -11,7 +11,7 @@ import { match } from "ts-pattern";
 
 import Button from "components/porter/Button";
 import Container from "components/porter/Container";
-import Fieldset from "components/porter/Fieldset";
+import DashboardPlaceholder from "components/porter/DashboardPlaceholder";
 import Icon from "components/porter/Icon";
 import SearchBar from "components/porter/SearchBar";
 import Spacer from "components/porter/Spacer";
@@ -22,7 +22,6 @@ import type { DeploymentTarget } from "lib/hooks/useDeploymentTarget";
 import { search } from "shared/search";
 import { readableDate } from "shared/string_utils";
 import calendar from "assets/calendar-number.svg";
-import notFound from "assets/not-found.png";
 import pull_request from "assets/pull_request_icon.svg";
 import healthy from "assets/status-healthy.png";
 import time from "assets/time.png";
@@ -58,40 +57,23 @@ const PreviewEnvGrid: React.FC<PreviewEnvGridProps> = ({
 
   if (deploymentTargets.length === 0) {
     return (
-      <Fieldset>
-        <CentralContainer>
-          <Text size={16}>No preview environments have been deployed yet.</Text>
-          <Spacer y={1} />
-
-          <Text color={"helper"}>
-            Get started by enabling preview envs for your apps.
-          </Text>
-          <Spacer y={1} />
-          <Button
-            onClick={() => {
-              setTab("config");
-            }}
-          >
-            Configure Preview Environments
-          </Button>
-        </CentralContainer>
-      </Fieldset>
-    );
-  }
-
-  if (filteredEnvs.length === 0) {
-    let copy =
-      "No preview environments exist. To get started with preview environments, enable them in the Settings tab of an existing application.";
-    if (searchValue !== "") {
-      copy = "No matching environments were found.";
-    }
-    return (
-      <Fieldset>
-        <Container row>
-          <PlaceholderIcon src={notFound} />
-          <Text color="helper">{copy}</Text>
-        </Container>
-      </Fieldset>
+      <DashboardPlaceholder>
+        <Text size={16}>No preview environments have been deployed yet.</Text>
+        <Spacer y={0.5} />
+        <Text color={"helper"}>
+          Get started by enabling preview envs for your apps.
+        </Text>
+        <Spacer y={1} />
+        <Button
+          alt
+          height="35px"
+          onClick={() => {
+            setTab("config");
+          }}
+        >
+          Set up
+        </Button>
+      </DashboardPlaceholder>
     );
   }
 
@@ -106,7 +88,7 @@ const PreviewEnvGrid: React.FC<PreviewEnvGridProps> = ({
           placeholder="Search environments . . ."
           width="100%"
         />
-        <Spacer inline x={2} />
+        <Spacer inline x={1} />
         <Toggle
           items={[
             { label: <ToggleIcon src={calendar} />, value: "calendar" },
@@ -157,12 +139,6 @@ const PreviewEnvGrid: React.FC<PreviewEnvGridProps> = ({
 
 export default PreviewEnvGrid;
 
-const PlaceholderIcon = styled.img`
-  height: 13px;
-  margin-right: 12px;
-  opacity: 0.65;
-`;
-
 const List = styled.div`
   overflow: hidden;
 `;
@@ -177,7 +153,21 @@ const Row = styled.div<{ isAtBottom?: boolean }>`
   border: 1px solid #494b4f;
   border-radius: 5px;
   margin-bottom: 15px;
+  transition: all 0.2s;
+
+  :hover {
+    border: 1px solid #7a7b80;
+  }
+
   animation: fadeIn 0.3s 0s;
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
 `;
 
 const SmallIcon = styled.img<{ opacity?: string; height?: string }>`
@@ -192,11 +182,4 @@ const ToggleIcon = styled.img`
   height: 12px;
   margin: 0 5px;
   min-width: 12px;
-`;
-
-const CentralContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  justify-content: left;
-  align-items: left;
 `;

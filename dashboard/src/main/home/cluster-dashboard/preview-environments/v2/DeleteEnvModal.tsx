@@ -1,10 +1,9 @@
+import React from "react";
+
 import Button from "components/porter/Button";
 import Modal from "components/porter/Modal";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
-
-import React from "react";
-import styled from "styled-components";
 
 type Props = {
   closeModal: () => void;
@@ -32,7 +31,9 @@ const DeleteEnvModal: React.FC<Props> = ({
       </Text>
       <Spacer y={1} />
       <Button
-        onClick={() => deleteEnv()}
+        onClick={() => {
+          void deleteEnv();
+        }}
         color="#b91133"
         status={loading ? "loading" : ""}
         loadingText="Deleting..."
@@ -45,7 +46,3 @@ const DeleteEnvModal: React.FC<Props> = ({
 };
 
 export default DeleteEnvModal;
-
-const Code = styled.span`
-  font-family: monospace;
-`;

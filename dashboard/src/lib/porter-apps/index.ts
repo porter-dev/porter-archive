@@ -350,6 +350,7 @@ const clientBuildToProto = (build: BuildOptions): Build => {
           context: b.context,
           buildpacks: b.buildpacks.map((b) => b.buildpack),
           builder: b.builder,
+          repo: b.repo,
         })
     )
     .with(
@@ -359,6 +360,7 @@ const clientBuildToProto = (build: BuildOptions): Build => {
           method: "docker",
           context: b.context,
           dockerfile: b.dockerfile,
+          repo: b.repo,
         })
     )
     .exhaustive();
@@ -479,11 +481,13 @@ const clientBuildFromProto = (proto?: Build): BuildOptions | undefined => {
         context: z.string(),
         buildpacks: z.array(z.string()).default([]),
         builder: z.string(),
+        repo: z.string().optional(),
       }),
       z.object({
         method: z.literal("docker"),
         context: z.string(),
         dockerfile: z.string(),
+        repo: z.string().optional(),
       }),
     ])
     .safeParse(proto);
@@ -504,6 +508,7 @@ const clientBuildFromProto = (proto?: Build): BuildOptions | undefined => {
           buildpack: b,
         })),
         builder: b.builder,
+        repo: b.repo,
       })
     )
     .with({ method: "docker" }, (b) =>
@@ -511,6 +516,7 @@ const clientBuildFromProto = (proto?: Build): BuildOptions | undefined => {
         method: b.method,
         context: b.context,
         dockerfile: b.dockerfile,
+        repo: b.repo,
       })
     )
     .exhaustive();

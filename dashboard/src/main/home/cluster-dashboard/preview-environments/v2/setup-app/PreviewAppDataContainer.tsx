@@ -42,12 +42,12 @@ const previewEnvSettingsTabs = [
 
 type PreviewEnvSettingsTab = (typeof previewEnvSettingsTabs)[number];
 
-const appTemplateClientValidator = basePorterAppFormValidator.extend({
+export const appTemplateClientValidator = basePorterAppFormValidator.extend({
   addons: z.array(clientAddonValidator).default([]),
 });
 export type AppTemplateFormData = z.infer<typeof appTemplateClientValidator>;
 
-type EncodedAddonWithEnv = {
+export type EncodedAddonWithEnv = {
   base64_addon: string;
   variables: Record<string, string>;
   secrets: Record<string, string>;
@@ -341,13 +341,9 @@ export const PreviewAppDataContainer: React.FC<Props> = ({
       </form>
       {showGHAModal && (
         <PreviewGHAModal
-          projectId={projectId}
-          clusterId={clusterId}
           onClose={() => {
             setShowGHAModal(false);
           }}
-          latestSource={latestSource}
-          appName={porterApp.name}
           savePreviewConfig={async ({ repo }: { repo?: RepoOverrides }) =>
             await createTemplateAndWorkflow({
               app: validatedAppProto,

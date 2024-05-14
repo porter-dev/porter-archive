@@ -16,6 +16,7 @@ import { Context } from "shared/Context";
 import pull_request from "assets/pull_request_icon.svg";
 
 import { existingTemplateWithEnvValidator } from "../types";
+import { CreateTemplate } from "./CreateTemplate";
 import { PreviewAppDataContainer } from "./PreviewAppDataContainer";
 
 type Props = RouteComponentProps;
@@ -73,7 +74,18 @@ const SetupApp: React.FC<Props> = ({ location }) => {
   );
 
   if (!appName) {
-    return null;
+    return (
+      <ClusterContextProvider
+        clusterId={currentCluster?.id}
+        refetchInterval={0}
+      >
+        <CenterWrapper>
+          <Div>
+            <CreateTemplate />
+          </Div>
+        </CenterWrapper>
+      </ClusterContextProvider>
+    );
   }
 
   return (

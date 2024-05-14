@@ -55,7 +55,9 @@ const PreviewEnvs: React.FC = () => {
     if (currentProject?.sandbox_enabled) {
       return (
         <DashboardPlaceholder>
-          <Text size={16}>Preview apps are coming soon to the Porter Cloud</Text>
+          <Text size={16}>
+            Preview apps are coming soon to the Porter Cloud
+          </Text>
           <Spacer y={0.5} />
           <Text color={"helper"}>
             You can also eject to your own cloud account to start using preview
@@ -64,7 +66,7 @@ const PreviewEnvs: React.FC = () => {
           <Spacer y={1} />
           <PorterLink to="https://docs.porter.run/other/eject">
             <Button alt height="35px">
-             Eject to AWS, Azure, or GCP
+              Eject to AWS, Azure, or GCP
             </Button>
           </PorterLink>
         </DashboardPlaceholder>
@@ -96,8 +98,8 @@ const PreviewEnvs: React.FC = () => {
         <TabSelector
           noBuffer
           options={[
-            { label: "Existing Previews", value: "environments" },
-            { label: "Preview Templates", value: "config" },
+            { label: "Current Previews", value: "environments" },
+            { label: "Setup", value: "config" },
           ]}
           currentTab={tab}
           setCurrentTab={(tab: string) => {

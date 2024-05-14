@@ -1060,6 +1060,11 @@ const createAppTemplate = baseApi<
       variables: Record<string, string>;
       secrets: Record<string, string>;
     }>;
+    git_overrides?: {
+      git_branch?: string;
+      git_repo_id: number;
+      git_repo_name: string;
+    };
   },
   {
     project_id: number;

@@ -319,6 +319,12 @@ class Sidebar extends Component<PropsType, StateType> {
                   <Img src={database} />
                   Datastores
                 </Container>
+                {match(currentProject)
+                  .with({ sandbox_enabled: true }, () => <Badge>NEW</Badge>)
+                  .with({ db_enabled: false }, () => (
+                    <Image size={15} src={lock}></Image>
+                  ))
+                  .otherwise(() => null)}
               </Container>
             </NavButton>
             {!currentProject.sandbox_enabled && (

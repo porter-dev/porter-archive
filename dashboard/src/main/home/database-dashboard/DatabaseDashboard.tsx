@@ -69,7 +69,7 @@ const DatabaseDashboard: React.FC = () => {
   }, [datastores, searchValue, typeFilter]);
 
   const renderContents = (): JSX.Element => {
-    if (!currentProject?.db_enabled) {
+    if (!currentProject?.sandbox_enabled && !currentProject?.db_enabled) {
       return (
         <DashboardPlaceholder>
           <Text size={16}>Datastores are not enabled for this project</Text>

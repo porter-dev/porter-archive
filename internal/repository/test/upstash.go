@@ -16,3 +16,7 @@ func NewUpstashIntegrationRepository(canQuery bool) repository.UpstashIntegratio
 func (s *UpstashIntegrationRepository) Insert(ctx context.Context, upstashInt ints.UpstashIntegration) (ints.UpstashIntegration, error) {
 	panic("not implemented") // TODO: Implement
 }
+
+func (s *UpstashIntegrationRepository) Integrations(ctx context.Context, projectID uint) ([]ints.UpstashIntegration, error) {
+	panic("not implemented") // TODO: Implement
+}

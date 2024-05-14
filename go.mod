@@ -78,6 +78,7 @@ require (
 	github.com/evanphx/json-patch/v5 v5.9.0
 	github.com/glebarez/sqlite v1.6.0
 	github.com/go-chi/chi/v5 v5.0.8
+	github.com/golang-jwt/jwt v3.2.1+incompatible
 	github.com/gosimple/slug v1.13.1
 	github.com/honeycombio/otel-config-go v1.11.0
 	github.com/launchdarkly/go-sdk-common/v3 v3.0.1
@@ -87,7 +88,7 @@ require (
 	github.com/nats-io/nats.go v1.24.0
 	github.com/open-policy-agent/opa v0.44.0
 	github.com/ory/client-go v1.9.0
-	github.com/porter-dev/api-contracts v0.2.159
+	github.com/porter-dev/api-contracts v0.2.161
 	github.com/riandyrn/otelchi v0.5.1
 	github.com/santhosh-tekuri/jsonschema/v5 v5.0.1
 	github.com/stefanmcshane/helm v0.0.0-20221213002717-88a4a2c6e77d
@@ -148,7 +149,6 @@ require (
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/goccy/go-json v0.10.2 // indirect
-	github.com/golang-jwt/jwt v3.2.1+incompatible // indirect
 	github.com/google/gnostic v0.6.9 // indirect
 	github.com/google/s2a-go v0.1.4 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.2.3 // indirect

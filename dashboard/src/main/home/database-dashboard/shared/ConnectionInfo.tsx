@@ -13,6 +13,7 @@ import {
   DATASTORE_TYPE_MANAGED_REDIS,
   DATASTORE_TYPE_NEON,
   DATASTORE_TYPE_RDS,
+  DATASTORE_TYPE_UPSTASH,
   type DatastoreConnectionInfo,
   type DatastoreTemplate,
 } from "lib/databases/types";
@@ -38,6 +39,11 @@ const ConnectionInfo: React.FC<Props> = ({ connectionInfo, template }) => {
             { type: DATASTORE_TYPE_ELASTICACHE },
             () =>
               `rediss://:${connectionInfo.password}@${connectionInfo.host}:${connectionInfo.port}/0?ssl_cert_reqs=CERT_REQUIRED`
+          )
+          .with(
+            { type: DATASTORE_TYPE_UPSTASH },
+            () =>
+              `rediss://default:${connectionInfo.password}@${connectionInfo.host}:${connectionInfo.port}/0`
           )
           .with(
             { type: DATASTORE_TYPE_MANAGED_REDIS },

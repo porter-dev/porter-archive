@@ -5,6 +5,7 @@ import (
 
 	"github.com/porter-dev/porter/api/server/handlers/cloud_provider"
 	"github.com/porter-dev/porter/api/server/handlers/neon_integration"
+	"github.com/porter-dev/porter/api/server/handlers/upstash_integration"
 
 	"github.com/porter-dev/porter/api/server/handlers/deployment_target"
 
@@ -2046,6 +2047,33 @@ func getProjectRoutes(
 	routes = append(routes, &router.Route{
 		Endpoint: listNeonIntegrationsEndpoint,
 		Handler:  listNeonIntegrationsHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/upstash-integrations -> apiContract.NewListUpstashIntegrationsHandler
+	listUpstashIntegrationsEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/upstash-integrations",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	listUpstashIntegrationsHandler := upstash_integration.NewListUpstashIntegrationsHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+	routes = append(routes, &router.Route{
+		Endpoint: listUpstashIntegrationsEndpoint,
+		Handler:  listUpstashIntegrationsHandler,
 		Router:   r,
 	})
 

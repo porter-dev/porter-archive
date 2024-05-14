@@ -2,6 +2,9 @@
 package billing
 
 import (
+	"bytes"
+	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -80,5 +83,44 @@ func (c *IngestEventsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	// Call the ingest health endpoint
+	err = c.postIngestHealthEndpoint(ctx, proj.ID)
+	if err != nil {
+		err := telemetry.Error(ctx, span, err, "error calling ingest health endpoint")
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
 	c.WriteResult(w, r, "")
+}
+
+func (c *IngestEventsHandler) postIngestHealthEndpoint(ctx context.Context, projectID uint) (err error) {
+	ctx, span := telemetry.NewSpan(ctx, "post-ingest-health-endpoint")
+	defer span.End()
+
+	// Call the ingest check webhook
+	webhookUrl := c.Config().ServerConf.IngestStatusWebhookUrl
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "ingest-status-webhook-url", Value: webhookUrl})
+
+	if webhookUrl == "" {
+		return nil
+	}
+
+	req := struct {
+		ProjectID uint `json:"project_id"`
+	}{
+		ProjectID: projectID,
+	}
+
+	reqBody, err := json.Marshal(req)
+	if err != nil {
+		return telemetry.Error(ctx, span, err, "error marshalling ingest status webhook request")
+	}
+
+	client := &http.Client{}
+	resp, err := client.Post(webhookUrl, "application/json", bytes.NewBuffer(reqBody))
+	if err != nil || resp.StatusCode != http.StatusOK {
+		return telemetry.Error(ctx, span, err, "error sending ingest status webhook request")
+	}
+	return nil
 }

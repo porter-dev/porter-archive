@@ -22,7 +22,6 @@ const SettingsTab: React.FC = () => {
     useState(false);
 
   const { datastore } = useDatastoreContext();
-  const { deleteDatastore } = useDatastore();
 
   return (
     <div>
@@ -49,9 +48,6 @@ const SettingsTab: React.FC = () => {
           onClose={() => {
             setShowDeleteDatastoreModal(false);
           }}
-          onSubmit={async () => {
-            await deleteDatastore(datastore.name);
-          }}
         />
       )}
     </div>
@@ -61,15 +57,14 @@ const SettingsTab: React.FC = () => {
 export default SettingsTab;
 
 type DeleteDatastoreModalProps = {
-  onSubmit: () => Promise<void>;
   onClose: () => void;
 };
 
-const DeleteDatastoreModal: React.FC<DeleteDatastoreModalProps> = ({
-  onSubmit,
+export const DeleteDatastoreModal: React.FC<DeleteDatastoreModalProps> = ({
   onClose,
 }) => {
   const { datastore } = useDatastoreContext();
+  const { deleteDatastore } = useDatastore();
 
   const [inputtedDatastoreName, setInputtedDatastoreName] =
     useState<string>("");
@@ -79,7 +74,7 @@ const DeleteDatastoreModal: React.FC<DeleteDatastoreModalProps> = ({
   const confirmDeletion = async (): Promise<void> => {
     setIsSubmitting(true);
     try {
-      await onSubmit();
+      await deleteDatastore(datastore.name);
       onClose();
     } catch (err) {
       setDeleteDatastoreError(

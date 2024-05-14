@@ -35,6 +35,9 @@ const (
 	// InfisicalEnabled enables the Infisical secrets operator integration
 	InfisicalEnabled FeatureFlagLabel = "infisical_enabled"
 
+	// FreezeEnabled freezes the project
+	FreezeEnabled FeatureFlagLabel = "freeze_enabled"
+
 	// DBEnabled enables the "Databases" tab
 	DBEnabled FeatureFlagLabel = "db_enabled"
 
@@ -106,6 +109,7 @@ var ProjectFeatureFlags = map[FeatureFlagLabel]bool{
 	BillingEnabled:                  false,
 	MetronomeEnabled:                false,
 	InfisicalEnabled:                false,
+	FreezeEnabled:                   false,
 	DBEnabled:                       false,
 	EFSEnabled:                      false,
 	EnableReprovision:               false,
@@ -319,6 +323,7 @@ func (p *Project) ToProjectType(launchDarklyClient *features.Client) types.Proje
 		BillingEnabled:                  p.GetFeatureFlag(BillingEnabled, launchDarklyClient),
 		MetronomeEnabled:                p.GetFeatureFlag(MetronomeEnabled, launchDarklyClient),
 		InfisicalEnabled:                p.GetFeatureFlag(InfisicalEnabled, launchDarklyClient),
+		FreezeEnabled:                   p.GetFeatureFlag(FreezeEnabled, launchDarklyClient),
 		DBEnabled:                       p.GetFeatureFlag(DBEnabled, launchDarklyClient),
 		EFSEnabled:                      p.GetFeatureFlag(EFSEnabled, launchDarklyClient),
 		EnableReprovision:               p.GetFeatureFlag(EnableReprovision, launchDarklyClient),

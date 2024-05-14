@@ -24,6 +24,7 @@ import {
   DATASTORE_ENGINE_POSTGRES,
   DATASTORE_ENGINE_REDIS,
   DATASTORE_TEMPLATE_NEON,
+  DATASTORE_TEMPLATE_UPSTASH,
   SUPPORTED_DATASTORE_TEMPLATES,
 } from "../constants";
 import { useDatastoreFormContext } from "../DatastoreFormContextProvider";
@@ -48,21 +49,14 @@ const SandboxDatastoreForm: React.FC = () => {
   const { updateDatastoreButtonProps } = useDatastoreFormContext();
 
   const availableEngines: BlockSelectOption[] = useMemo(() => {
-    return [
-      DATASTORE_ENGINE_POSTGRES,
-      {
-        ...DATASTORE_ENGINE_REDIS,
-        disabledOpts: {
-          tooltipText: "Coming soon!",
-        },
-      },
-    ];
+    return [DATASTORE_ENGINE_POSTGRES, DATASTORE_ENGINE_REDIS];
   }, [watchClusterId]);
 
   const availableHostTypes: BlockSelectOption[] = useMemo(() => {
-    const options = [DATASTORE_TEMPLATE_NEON].filter(
-      (t) => t.highLevelType.name === watchEngine
-    );
+    const options = [
+      DATASTORE_TEMPLATE_NEON,
+      DATASTORE_TEMPLATE_UPSTASH,
+    ].filter((t) => t.highLevelType.name === watchEngine);
     return options;
   }, [watchEngine]);
 
@@ -167,14 +161,23 @@ const SandboxDatastoreForm: React.FC = () => {
                         return;
                       }
                       setTemplate(templateMatch);
-                      match(templateMatch).with(
-                        {
-                          name: DATASTORE_TEMPLATE_NEON.name,
-                        },
-                        () => {
-                          setValue("config.type", "neon");
-                        }
-                      );
+                      match(templateMatch)
+                        .with(
+                          {
+                            name: DATASTORE_TEMPLATE_NEON.name,
+                          },
+                          () => {
+                            setValue("config.type", "neon");
+                          }
+                        )
+                        .with(
+                          {
+                            name: DATASTORE_TEMPLATE_UPSTASH.name,
+                          },
+                          () => {
+                            setValue("config.type", "upstash");
+                          }
+                        );
                       setCurrentStep(4);
                     }}
                   />

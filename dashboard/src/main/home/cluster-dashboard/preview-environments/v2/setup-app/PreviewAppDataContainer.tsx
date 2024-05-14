@@ -53,6 +53,11 @@ type EncodedAddonWithEnv = {
   secrets: Record<string, string>;
 };
 
+export type RepoOverrides = {
+  id: number;
+  fullName: string;
+};
+
 export const PreviewAppDataContainer: React.FC<Props> = ({
   existingTemplate,
 }) => {
@@ -233,11 +238,13 @@ export const PreviewAppDataContainer: React.FC<Props> = ({
       variables,
       secrets,
       addons = [],
+      repo,
     }: {
       app: PorterApp | null;
       variables: Record<string, string>;
       secrets: Record<string, string>;
       addons?: EncodedAddonWithEnv[];
+      repo?: RepoOverrides;
     }) => {
       try {
         if (!app) {
@@ -252,6 +259,12 @@ export const PreviewAppDataContainer: React.FC<Props> = ({
             secrets,
             base_deployment_target_id: deploymentTarget.id,
             addons,
+            ...(repo && {
+              git_overrides: {
+                git_repo_id: repo.id,
+                git_repo_name: repo.fullName,
+              },
+            }),
           },
           {
             project_id: projectId,
@@ -335,12 +348,13 @@ export const PreviewAppDataContainer: React.FC<Props> = ({
           }}
           latestSource={latestSource}
           appName={porterApp.name}
-          savePreviewConfig={async () =>
+          savePreviewConfig={async ({ repo }: { repo?: RepoOverrides }) =>
             await createTemplateAndWorkflow({
               app: validatedAppProto,
               variables,
               secrets,
               addons: encodedAddons,
+              repo,
             })
           }
           error={createError}

@@ -24,13 +24,15 @@ import { type SourceOptions } from "lib/porter-apps";
 
 import api from "shared/api";
 
+import { type RepoOverrides } from "./PreviewAppDataContainer";
+
 type PreviewGHAModalProps = {
   projectId: number;
   clusterId: number;
   appName: string;
   latestSource: SourceOptions;
   onClose: () => void;
-  savePreviewConfig: () => Promise<boolean>;
+  savePreviewConfig: ({ repo }: { repo?: RepoOverrides }) => Promise<boolean>;
   error: string;
 };
 
@@ -118,7 +120,14 @@ export const PreviewGHAModal: React.FC<PreviewGHAModalProps> = ({
 
   const confirmUpdate = handleSubmit(async (data) => {
     try {
-      await savePreviewConfig();
+      await savePreviewConfig({
+        ...(data.repository && {
+          repo: {
+            id: data.repoID,
+            fullName: data.repository,
+          },
+        }),
+      });
 
       if (openPRChoice === "skip") {
         await queryClient.invalidateQueries([

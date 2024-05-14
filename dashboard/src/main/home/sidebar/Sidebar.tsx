@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 import { withRouter, type RouteComponentProps } from "react-router";
 import styled from "styled-components";
+import { match } from "ts-pattern";
 
 import Container from "components/porter/Container";
 import Image from "components/porter/Image";
@@ -203,8 +204,12 @@ class Sidebar extends Component<PropsType, StateType> {
                   <Img src={database} />
                   Datastores
                 </Container>
-                {(currentProject.sandbox_enabled ||
-                  !currentProject.db_enabled) && <Image size={15} src={lock} />}
+                {match(currentProject)
+                  .with({ sandbox_enabled: true }, () => <Badge>NEW</Badge>)
+                  .with({ db_enabled: false }, () => (
+                    <Image size={15} src={lock}></Image>
+                  ))
+                  .otherwise(() => null)}
               </Container>
             </NavButton>
             {this.props.isAuthorized("settings", "", [

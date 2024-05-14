@@ -25,14 +25,13 @@ import { useDatastoreList } from "lib/hooks/useDatabaseList";
 import { Context } from "shared/Context";
 import { search } from "shared/search";
 import { readableDate } from "shared/string_utils";
-import engine from "assets/computer-chip.svg";
 import databaseGrad from "assets/database-grad.svg";
 import grid from "assets/grid.png";
 import list from "assets/list.png";
 import notFound from "assets/not-found.png";
 import time from "assets/time.png";
 
-import { getDatastoreIcon, getEngineIcon } from "./icons";
+import { DATASTORE_ENGINE_POSTGRES, DATASTORE_ENGINE_REDIS } from "./constants";
 import EngineTag from "./tags/EngineTag";
 
 const DatabaseDashboard: React.FC = () => {
@@ -40,12 +39,9 @@ const DatabaseDashboard: React.FC = () => {
 
   const [searchValue, setSearchValue] = useState("");
   const [view, setView] = useState<"grid" | "list">("grid");
-  const [typeFilter, setTypeFilter] = useState<"all" | "RDS" | "ELASTICACHE">(
+  const [typeFilter, setTypeFilter] = useState<"all" | "POSTGRES" | "REDIS">(
     "all"
   );
-  const [engineFilter, setEngineFilter] = useState<
-    "all" | "POSTGRES" | "AURORA-POSTGRES" | "REDIS"
-  >("all");
   const history = useHistory();
 
   const { datastores, isLoading } = useDatastoreList({
@@ -65,42 +61,14 @@ const DatabaseDashboard: React.FC = () => {
         if (typeFilter === "all") {
           return true;
         }
-        return datastore.type === typeFilter;
+        return datastore.template.highLevelType.name === typeFilter;
       }
     );
 
-    const filteredByEngine = filteredByDatastoreType.filter(
-      (datastore: ClientDatastore) => {
-        if (engineFilter === "all") {
-          return true;
-        }
-        return datastore.template.engine.name === engineFilter;
-      }
-    );
-
-    return filteredByEngine;
-  }, [datastores, searchValue, typeFilter, engineFilter]);
+    return filteredByDatastoreType;
+  }, [datastores, searchValue, typeFilter]);
 
   const renderContents = (): JSX.Element => {
-    if (currentProject?.sandbox_enabled) {
-      return (
-        <DashboardPlaceholder>
-          <Text size={16}>Datastores are coming soon to the Porter Cloud</Text>
-          <Spacer y={0.5} />
-          <Text color={"helper"}>
-            You can also eject to your own cloud account to start using managed
-            datastores immediately.
-          </Text>
-          <Spacer y={1} />
-          <PorterLink to="https://docs.porter.run/other/eject">
-            <Button alt height="35px">
-              Eject to AWS, Azure, or GCP
-            </Button>
-          </PorterLink>
-        </DashboardPlaceholder>
-      );
-    }
-
     if (!currentProject?.db_enabled) {
       return (
         <DashboardPlaceholder>
@@ -157,25 +125,24 @@ const DatabaseDashboard: React.FC = () => {
             options={[
               { value: "all", label: "All" },
               {
-                value: "RDS",
-                label: "RDS",
-                icon: getDatastoreIcon("RDS"),
+                value: "POSTGRES",
+                label: "Postgres",
+                icon: DATASTORE_ENGINE_POSTGRES.icon,
               },
               {
-                value: "ELASTICACHE",
-                label: "Elasticache",
-                icon: getDatastoreIcon("ELASTICACHE"),
+                value: "REDIS",
+                label: "Redis",
+                icon: DATASTORE_ENGINE_REDIS.icon,
               },
             ]}
             value={typeFilter}
             setValue={(value) => {
               if (
                 value === "all" ||
-                value === "RDS" ||
-                value === "ELASTICACHE"
+                value === "POSTGRES" ||
+                value === "REDIS"
               ) {
                 setTypeFilter(value);
-                setEngineFilter("all");
               }
             }}
             prefix={
@@ -185,47 +152,9 @@ const DatabaseDashboard: React.FC = () => {
                 Type
               </Container>
             }
+            width="350px"
           />
           <Spacer inline x={1} />
-          <Select
-            options={[
-              { value: "all", label: "All" },
-              {
-                value: "POSTGRES",
-                label: "PostgreSQL",
-                icon: getEngineIcon("POSTGRES"),
-              },
-              {
-                value: "AURORA-POSTGRES",
-                label: "Aurora PostgreSQL",
-                icon: getEngineIcon("POSTGRES"),
-              },
-              {
-                value: "REDIS",
-                label: "Redis",
-                icon: getEngineIcon("REDIS"),
-              },
-            ]}
-            value={engineFilter}
-            setValue={(value) => {
-              if (
-                value === "all" ||
-                value === "POSTGRES" ||
-                value === "AURORA-POSTGRES" ||
-                value === "REDIS"
-              ) {
-                setEngineFilter(value);
-              }
-            }}
-            prefix={
-              <Container row>
-                <Image src={engine} size={15} opacity={0.6} />
-                <Spacer inline x={0.5} />
-                Engine
-              </Container>
-            }
-          />
-          <Spacer inline x={2} />
           <SearchBar
             value={searchValue}
             setValue={(x) => {
@@ -343,8 +272,8 @@ export const DatastoreList: React.FC<{
         return (
           <Row
             key={i}
-            onClick={async () => {
-              await onClick(datastore);
+            onClick={() => {
+              void onClick(datastore);
             }}
           >
             <Container row spaced>

@@ -136,6 +136,9 @@ func (m LagoClient) CheckIfCustomerExists(ctx context.Context, projectID uint, e
 	customerID := m.generateLagoID(CustomerIDPrefix, projectID, enableSandbox)
 	_, lagoErr := m.client.Customer().Get(ctx, customerID)
 	if lagoErr != nil {
+		if lagoErr.ErrorCode == "customer_not_found" {
+			return false, nil
+		}
 		return exists, telemetry.Error(ctx, span, fmt.Errorf(lagoErr.ErrorCode), "failed to get customer")
 	}
 

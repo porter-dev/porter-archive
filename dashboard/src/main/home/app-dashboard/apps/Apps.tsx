@@ -486,6 +486,7 @@ const Apps: React.FC = () => {
         />
       )}
       {!currentProject?.sandbox_enabled &&
+        currentProject?.billing_enabled &&
         trialExpired &&
         !hasPaymentEnabled &&
         showBillingModal && (

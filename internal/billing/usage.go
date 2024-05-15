@@ -237,6 +237,29 @@ func (m LagoClient) ListCustomerCredits(ctx context.Context, projectID uint, san
 	return response, nil
 }
 
+// CheckCustomerCouponExpiration will return the expiration date of the customer's coupon
+func (m LagoClient) CheckCustomerCouponExpiration(ctx context.Context, projectID uint, sandboxEnabled bool) (trialEndDate string, err error) {
+	ctx, span := telemetry.NewSpan(ctx, "list-customer-coupons")
+	defer span.End()
+
+	if projectID == 0 {
+		return trialEndDate, telemetry.Error(ctx, span, err, "project id empty")
+	}
+	customerID := m.generateLagoID(CustomerIDPrefix, projectID, sandboxEnabled)
+	couponList, err := m.listCustomerAppliedCoupons(ctx, customerID)
+	if err != nil {
+		return trialEndDate, telemetry.Error(ctx, span, err, "failed to list customer coupons")
+	}
+
+	if len(couponList) == 0 {
+		return trialEndDate, nil
+	}
+
+	appliedCoupon := couponList[0]
+	trialEndDate = time.Now().UTC().AddDate(0, appliedCoupon.FrequencyDurationRemaining, 0).Format(time.RFC3339)
+	return trialEndDate, nil
+}
+
 // CreateCreditsGrant will create a new credit grant for the customer with the specified amount
 func (m LagoClient) CreateCreditsGrant(ctx context.Context, projectID uint, name string, grantAmount int64, expiresAt *time.Time, sandboxEnabled bool) (err error) {
 	ctx, span := telemetry.NewSpan(ctx, "create-credits-grant")
@@ -498,7 +521,7 @@ func (m LagoClient) listCustomerWallets(ctx context.Context, customerID string) 
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return walletList, telemetry.Error(ctx, span, err, "failed to get customer credits")
+		return walletList, telemetry.Error(ctx, span, err, "failed to get customer wallets")
 	}
 
 	response := struct {
@@ -516,6 +539,43 @@ func (m LagoClient) listCustomerWallets(ctx context.Context, customerID string) 
 	}
 
 	return response.Wallets, nil
+}
+
+func (m LagoClient) listCustomerAppliedCoupons(ctx context.Context, customerID string) (couponList []types.AppliedCoupon, err error) {
+	ctx, span := telemetry.NewSpan(ctx, "list-lago-customer-coupons")
+	defer span.End()
+
+	// We manually do the request in this function because the Lago client has an issue
+	// with types for this specific request
+	url := fmt.Sprintf("%s/api/v1/applied_coupons?external_customer_id=%s&status=%s", lagoBaseURL, customerID, lago.AppliedCouponStatusActive)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return couponList, telemetry.Error(ctx, span, err, "failed to create coupons list request")
+	}
+
+	req.Header.Set("Authorization", "Bearer "+m.lagoApiKey)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return couponList, telemetry.Error(ctx, span, err, "failed to get customer coupons")
+	}
+
+	response := struct {
+		AppliedCoupons []types.AppliedCoupon `json:"applied_coupons"`
+	}{}
+
+	err = json.NewDecoder(resp.Body).Decode(&response)
+	if err != nil {
+		return couponList, telemetry.Error(ctx, span, err, "failed to decode coupons list response")
+	}
+
+	err = resp.Body.Close()
+	if err != nil {
+		return couponList, telemetry.Error(ctx, span, err, "failed to close response body")
+	}
+
+	return response.AppliedCoupons, nil
 }
 
 func createUsageFromLagoUsage(lagoUsage lago.CustomerUsage) types.Usage {

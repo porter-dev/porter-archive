@@ -1,88 +1,96 @@
-import React, { useMemo } from "react";
-import { PorterApp } from "@porter-dev/api-contracts";
+import React from "react";
+import pluralize from "pluralize";
 import styled from "styled-components";
 
 import Container from "components/porter/Container";
+import Icon from "components/porter/Icon";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
-import { AppIcon, AppSource } from "main/home/app-dashboard/apps/AppMeta";
-import { type AppRevisionWithSource } from "main/home/app-dashboard/apps/types";
+import { AppSource } from "main/home/app-dashboard/apps/AppMeta";
+import { type Environment } from "lib/environments/types";
 
-import settings from "assets/settings.svg";
+import addOns from "assets/add-ons.svg";
+import database from "assets/database.svg";
 
 type Props = {
-  app: AppRevisionWithSource;
+  env: Environment;
   setEditingApp: () => void;
 };
 
-export const ConfigurableAppRow: React.FC<Props> = ({ app, setEditingApp }) => {
-  const proto = useMemo(() => {
-    return PorterApp.fromJsonString(atob(app.app_revision.b64_app_proto), {
-      ignoreUnknownFields: true,
-    });
-  }, [app.app_revision.b64_app_proto]);
+export const ConfigurableAppRow: React.FC<Props> = ({ env, setEditingApp }) => {
+  const firstApp = env.apps?.[0];
+
+  if (!firstApp) {
+    return null;
+  }
 
   return (
-    <Row>
-      <div>
-        <Container row>
-          <Spacer inline width="1px" />
-          <AppIcon buildpacks={proto.build?.buildpacks ?? []} />
-          <Spacer inline width="12px" />
-          <Text size={14}>{proto.name}</Text>
-          <Spacer inline x={1} />
-        </Container>
-        <Spacer height="15px" />
-        <Container row>
-          <AppSource source={app.source} />
-          <Spacer inline x={1} />
-        </Container>
-      </div>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-        }}
-      >
-        <SettingsButton
-          onClick={() => {
-            setEditingApp();
+    <Row
+      onClick={() => {
+        setEditingApp();
+      }}
+    >
+      <Container row>
+        <Spacer inline width="1px" />
+        <Icon src={addOns} height="18px" />
+        <Spacer inline width="12px" />
+        <Text size={14}>{env.name}</Text>
+        <Spacer inline x={1} />
+      </Container>
+      <Spacer height="15px" />
+      <Container row>
+        <AppSource
+          source={{
+            from: "app_contract",
+            details: firstApp,
           }}
-        >
-          <img src={settings} />
-          <Spacer inline x={0.5} />
-          Update Previews
-        </SettingsButton>
-      </div>
+        />
+        <Spacer inline x={1} />
+        <Container row>
+          <DBIcon opacity="0.6" src={database} />
+          <Text truncate={true} size={13} color="#ffffff44">
+            {`${env.addons.length > 0 ? env.addons.length : "No"} ${pluralize(
+              "datastore",
+              env.addons.length
+            )} included`}
+          </Text>
+        </Container>
+      </Container>
     </Row>
   );
 };
 
-const SettingsButton = styled.button`
-  background: ${(props) => props.theme.fg};
-  padding: 8px 12px;
-  border-radius: 5px;
-  border: 1px solid #494b4f;
+export const Row = styled.div`
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  :hover {
-    filter: brightness(120%);
-  }
-`;
-
-const Row = styled.div<{ isAtBottom?: boolean }>`
   padding: 15px;
-  border-bottom: ${(props) =>
-    props.isAtBottom ? "none" : "1px solid #494b4f"};
-  background: ${({ theme }) => theme.fg};
+  border-bottom: 1px solid #494b4f;
+  background: ${(props) => props.theme.clickable.bg};
   position: relative;
   border: 1px solid #494b4f;
   border-radius: 5px;
   margin-bottom: 15px;
+
+  transition: all 0.2s;
+
+  :hover {
+    border: 1px solid #7a7b80;
+  }
+
   animation: fadeIn 0.3s 0s;
-  display: flex;
-  justify-content: space-between;
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+`;
+
+const DBIcon = styled.img<{ opacity?: string; height?: string }>`
+  margin-left: 2px;
+  height: ${(props) => props.height || "14px"};
+  opacity: ${(props) => props.opacity || 1};
+  filter: grayscale(100%);
+  margin-right: 10px;
 `;

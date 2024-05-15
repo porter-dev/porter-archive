@@ -7,16 +7,17 @@ import { match } from "ts-pattern";
 import Spacer from "components/porter/Spacer";
 import { type ClientAddon } from "lib/addons";
 
+import box from "assets/box.png";
 import postgresql from "assets/postgresql.svg";
 import redis from "assets/redis.svg";
 
-import { type AppTemplateFormData } from "../cluster-dashboard/preview-environments/v2/setup-app/PreviewAppDataContainer";
+import { type AppTemplateFormData } from "../cluster-dashboard/preview-environments/v2/EnvTemplateContextProvider";
 import { PostgresTabs } from "./tabs/PostgresTabs";
 import { RedisTabs } from "./tabs/RedisTabs";
 
 type AddonRowProps = {
   index: number;
-  addon: ClientAddon;
+  addon: Omit<ClientAddon, "template">;
   update: UseFieldArrayUpdate<AppTemplateFormData, "addons">;
   remove: (index: number) => void;
 };
@@ -31,7 +32,7 @@ export const AddonListRow: React.FC<AddonRowProps> = ({
     match(type)
       .with("postgres", () => <Icon src={postgresql} />)
       .with("redis", () => <Icon src={redis} />)
-      .exhaustive();
+      .otherwise(() => <Icon src={box} />);
 
   return (
     <>
@@ -98,7 +99,7 @@ export const AddonListRow: React.FC<AddonRowProps> = ({
                 .with({ config: { type: "redis" } }, (ao) => (
                   <RedisTabs index={index} addon={ao} />
                 ))
-                .exhaustive()}
+                .otherwise(() => null)}
             </div>
           </StyledSourceBox>
         )}

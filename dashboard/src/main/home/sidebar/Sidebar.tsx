@@ -281,7 +281,7 @@ class Sidebar extends Component<PropsType, StateType> {
               <Container row spaced style={{ width: "100%" }}>
                 <Container row>
                   <Img src={pr_icon} />
-                  Preview apps
+                  Preview environments
                 </Container>
                 {(currentProject.sandbox_enabled ||
                   !currentProject.preview_envs_enabled) && (
@@ -385,7 +385,7 @@ class Sidebar extends Component<PropsType, StateType> {
               <Container row spaced style={{ width: "100%" }}>
                 <Container row>
                   <Img src={pr_icon} />
-                  Preview apps
+                  Preview environments
                 </Container>
                 {!currentProject.preview_envs_enabled && <Badge>Beta</Badge>}
               </Container>

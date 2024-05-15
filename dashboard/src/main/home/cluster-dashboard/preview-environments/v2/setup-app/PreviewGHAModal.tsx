@@ -16,23 +16,19 @@ import Select from "components/porter/Select";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import YamlEditor from "components/YamlEditor";
+import { useLatestRevision } from "main/home/app-dashboard/app-view/LatestRevisionContext";
 import RepositorySelector from "main/home/app-dashboard/build-settings/RepositorySelector";
 import { getPreviewGithubAction } from "main/home/app-dashboard/new-app-flow/utils";
 import FileSelector from "main/home/app-dashboard/validate-apply/build-settings/FileSelector";
 import { Code } from "main/home/managed-addons/tabs/shared";
-import { type SourceOptions } from "lib/porter-apps";
 
 import api from "shared/api";
 
-import { type RepoOverrides } from "./PreviewAppDataContainer";
+import { type RepoOverrides } from "../EnvTemplateContextProvider";
 
 type PreviewGHAModalProps = {
-  projectId: number;
-  clusterId: number;
-  appName: string;
-  latestSource: SourceOptions;
   onClose: () => void;
-  savePreviewConfig: ({ repo }: { repo?: RepoOverrides }) => Promise<boolean>;
+  savePreviewConfig: ({ repo }: { repo?: RepoOverrides }) => Promise<void>;
   error: string;
 };
 
@@ -46,21 +42,24 @@ const previewActionFormValidator = z.object({
 type PreviewActionForm = z.infer<typeof previewActionFormValidator>;
 
 export const PreviewGHAModal: React.FC<PreviewGHAModalProps> = ({
-  projectId,
-  clusterId,
-  appName,
-  latestSource,
   onClose,
   savePreviewConfig,
   error,
 }) => {
+  const history = useHistory();
+  const {
+    projectId,
+    clusterId,
+    latestSource,
+    porterApp: { name: appName },
+  } = useLatestRevision();
+
   const [step, setStep] = useState<"repo" | "confirm">(
     latestSource.type === "github" ? "confirm" : "repo"
   );
   const [showFileSelector, setShowFileSelector] = useState<boolean>(false);
   const [changePorterYamlPath, setChangePorterYamlPath] = useState(false);
 
-  const history = useHistory();
   const queryClient = useQueryClient();
   const {
     watch,

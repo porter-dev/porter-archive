@@ -15,7 +15,11 @@ import { z } from "zod";
 
 import { Error as ErrorComponent } from "components/porter/Error";
 import { clientAddonToProto, clientAddonValidator } from "lib/addons";
-import { basePorterAppFormValidator, clientAppToProto } from "lib/porter-apps";
+import {
+  APP_CREATE_FORM_DEFAULTS,
+  basePorterAppFormValidator,
+  clientAppToProto,
+} from "lib/porter-apps";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
@@ -95,33 +99,7 @@ export const EnvTemplateContextProvider: React.FC<{
     reValidateMode: "onSubmit",
     resolver: zodResolver(appTemplateClientValidator),
     defaultValues: {
-      app: {
-        name: {
-          value: "",
-          readOnly: false,
-        },
-        build: {
-          method: "pack",
-          context: "./",
-          builder: "",
-          buildpacks: [],
-        },
-        env: [],
-        efsStorage: {
-          enabled: false,
-        },
-      },
-      source: {
-        git_repo_name: "",
-        git_branch: "",
-        porter_yaml_path: "",
-      },
-      deletions: {
-        serviceNames: [],
-        envGroupNames: [],
-        predeploy: [],
-        initialDeploy: [],
-      },
+      ...APP_CREATE_FORM_DEFAULTS,
       addons: [],
     },
   });

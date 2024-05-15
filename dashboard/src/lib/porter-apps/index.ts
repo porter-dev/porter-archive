@@ -193,6 +193,36 @@ export const porterAppFormValidator = basePorterAppFormValidator
   );
 export type PorterAppFormData = z.infer<typeof porterAppFormValidator>;
 
+export const APP_CREATE_FORM_DEFAULTS = {
+  app: {
+    name: {
+      value: "",
+      readOnly: false,
+    },
+    build: {
+      method: "pack" as const,
+      context: "./",
+      builder: "",
+      buildpacks: [],
+    },
+    env: [],
+    efsStorage: {
+      enabled: false,
+    },
+  },
+  source: {
+    git_repo_name: "",
+    git_branch: "",
+    porter_yaml_path: "",
+  },
+  deletions: {
+    serviceNames: [],
+    envGroupNames: [],
+    predeploy: [],
+    initialDeploy: [],
+  },
+};
+
 // serviceOverrides is used to generate the services overrides for an app from porter.yaml
 // this method is only called when a porter.yaml is present and has services defined
 export function serviceOverrides({

@@ -56,7 +56,7 @@ const PreviewEnvs: React.FC = () => {
       return (
         <DashboardPlaceholder>
           <Text size={16}>
-            Preview apps are coming soon to the Porter Cloud
+            Preview environments are coming soon to the Porter Cloud
           </Text>
           <Spacer y={0.5} />
           <Text color={"helper"}>
@@ -76,15 +76,18 @@ const PreviewEnvs: React.FC = () => {
     if (!currentProject?.preview_envs_enabled) {
       return (
         <DashboardPlaceholder>
-          <Text size={16}>Preview apps are not enabled for this project</Text>
+          <Text size={16}>
+            Preview environments are not enabled for this project
+          </Text>
           <Spacer y={0.5} />
           <Text color={"helper"}>
-            Reach out to the Porter team to enable preview apps on your project.
+            Reach out to the Porter team to enable preview environments on your
+            project.
           </Text>
           <Spacer y={1} />
           <ShowIntercomButton
             alt
-            message="I would like to enable preview apps on my project"
+            message="I would like to enable preview environments on my project"
             height="35px"
           >
             Request to enable
@@ -122,13 +125,13 @@ const PreviewEnvs: React.FC = () => {
         image={prGrad}
         title={
           <Container row>
-            Preview apps
+            Preview environments
             <Spacer inline x={1} />
             <Badge>Beta</Badge>
           </Container>
         }
         capitalize={false}
-        description="Preview apps are created for each pull request. They are automatically deleted when the pull request is closed."
+        description="Preview environments are created for each pull request. They are automatically deleted when the pull request is closed."
         disableLineBreak
       />
       {renderContents()}

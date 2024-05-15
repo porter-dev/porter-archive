@@ -101,8 +101,8 @@ const SetupApp: React.FC<Props> = ({ location }) => {
                 <Back to="/preview-environments" />
                 <DashboardHeader
                   prefix={<Icon src={pull_request} />}
-                  title={`Preview apps for ${appName}`}
-                  description="Set preview specific configuration for this app below. Any newly created preview apps will use these settings."
+                  title={`Preview environments for ${appName}`}
+                  description="Set preview specific configuration for this app below. Any newly created preview environments will use these settings."
                   capitalize={false}
                   disableLineBreak
                 />

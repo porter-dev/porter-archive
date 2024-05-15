@@ -102,7 +102,7 @@ export const CreateTemplate: React.FC = () => {
 
   return (
     <>
-      <Back to="/apps" />
+      <Back to="/preview-environments" />
       <DashboardHeader
         prefix={<Icon src={addOns} />}
         title="Create a new preview template"
@@ -127,7 +127,8 @@ export const CreateTemplate: React.FC = () => {
               <Text size={16}>Datastore Addons</Text>
               <Spacer y={0.5} />
               <Text color="helper">
-                Ephemeral datastores will be created for each preview app
+                Ephemeral datastores will be created for each preview
+                environment
               </Text>
               <Spacer y={0.5} />
               <AddonsList />
@@ -189,6 +190,7 @@ export const CreateTemplate: React.FC = () => {
             </>,
           ].filter((x) => x)}
         />
+        <Spacer y={3} />
       </div>
     </>
   );

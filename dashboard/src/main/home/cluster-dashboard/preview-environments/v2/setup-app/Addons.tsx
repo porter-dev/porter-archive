@@ -24,9 +24,9 @@ export const Addons: React.FC<Props> = ({ buttonStatus }) => {
       <Text size={16}>Add-ons</Text>
       <Spacer y={0.5} />
       <Text color="helper">
-        Include any add-ons you would like to be created with your preview app.
-        These are also ephemeral and will only be accessible for the lifetime of
-        the preview app.
+        Include any add-ons you would like to be created with your preview
+        environment. These are also ephemeral and will only be accessible for
+        the lifetime of the preview environment.
       </Text>
       <Spacer y={0.5} />
       <AddonsList />

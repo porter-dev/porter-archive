@@ -112,7 +112,6 @@ func (c *InstallAgentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 			"clusterID":     fmt.Sprintf("%d", cluster.ID),
 			"projectID":     fmt.Sprintf("%d", proj.ID),
 			"prometheusURL": c.Config().ServerConf.PrometheusUrl,
-			"metronomeKey":  c.Config().ServerConf.LagoAPIKey,
 		},
 		"loki": map[string]interface{}{},
 	}

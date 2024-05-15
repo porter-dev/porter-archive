@@ -99,7 +99,7 @@ func (p *ProjectCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		)
 	}
 
-	// Create Metronome customer and add to starter plan
+	// Create Lago customer and add to starter plan
 	if p.Config().BillingManager.LagoConfigLoaded && proj.GetFeatureFlag(models.LagoEnabled, p.Config().LaunchDarklyClient) {
 		err := p.Config().BillingManager.LagoClient.CreateCustomerWithPlan(ctx, user.Email, proj.Name, proj.ID, proj.BillingID, proj.EnableSandbox)
 		if err != nil {

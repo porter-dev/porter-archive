@@ -147,7 +147,7 @@ func (c *CreateBillingHandler) grantRewardIfReferral(ctx context.Context, referr
 	}
 
 	if referral != nil && referral.Status != models.ReferralStatusCompleted {
-		// Metronome requires an expiration to be passed in, so we set it to 5 years which in
+		// Lago requires an expiration to be passed in, so we set it to 5 years which in
 		// practice will mean the credits will most likely run out before expiring
 		expiresAt := time.Now().AddDate(5, 0, 0)
 		name := "Referral reward"

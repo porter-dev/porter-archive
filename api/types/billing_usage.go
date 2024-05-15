@@ -49,7 +49,7 @@ type Trial struct {
 	EndingBefore string `json:"ending_before"`
 }
 
-// BillingEvent represents a Metronome billing event.
+// BillingEvent represents a Lago billing event.
 type BillingEvent struct {
 	CustomerID    string                 `json:"customer_id"`
 	EventType     string                 `json:"event_type"`

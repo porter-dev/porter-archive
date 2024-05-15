@@ -64,7 +64,7 @@ func (c *IngestEventsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		telemetry.AttributeKV{Key: "usage-events-count", Value: len(ingestEventsRequest.Events)},
 	)
 
-	// For Porter Cloud events, we apend a prefix to avoid collisions before sending to Metronome
+	// For Porter Cloud events, we apend a prefix to avoid collisions before sending to Lago
 	if proj.EnableSandbox {
 		for i := range ingestEventsRequest.Events {
 			ingestEventsRequest.Events[i].CustomerID = fmt.Sprintf("porter-cloud-%s", ingestEventsRequest.Events[i].CustomerID)

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useContext } from "react";
 import { useHistory, useParams } from "react-router";
 import styled from "styled-components";
 import { match } from "ts-pattern";
@@ -12,44 +12,29 @@ import Text from "components/porter/Text";
 
 import { models } from "./models";
 import Gpt2Form from "./TemplateForms/Gpt2Form";
+import { Context } from "shared/Context";
+import { SUPPORTED_MODEL_ADDON_TEMPLATES } from "lib/models/template";
+import AddonForm from "../add-on-dashboard/AddonForm";
+import AddonFormContextProvider from "../add-on-dashboard/AddonFormContextProvider";
 
 const InferenceForm: React.FC = () => {
-  const { templateId } = useParams<{
-    templateId: string;
+  const { modelType } = useParams<{
+    modelType: string;
   }>();
+
+  const { currentProject } = useContext(Context);
   const history = useHistory();
 
-  const template = models[templateId] || {
-    name: "",
-    icon: "",
-    description: "",
-    tags: [],
-  };
+  const templateMatch = SUPPORTED_MODEL_ADDON_TEMPLATES.find((t) => t.type === modelType);
 
-  const renderForm = (): React.ReactElement => {
-    return match(templateId)
-      .returnType<JSX.Element>()
-      .with("gpt-2", () => <Gpt2Form />)
-      .otherwise(() => <div>Template not found</div>);
-  };
+  if (templateMatch === undefined) {
+    return null;
+  }
 
   return (
-    <CenterWrapper>
-      <Back
-        onClick={() => {
-          history.push(`/inference/templates/${templateId}`);
-        }}
-      />
-      <Container row>
-        <FloatIn>
-          <Image size={24} src={template.icon} />
-        </FloatIn>
-        <Spacer inline x={1} />
-        <Text size={21}>Configure new {template.name} instance</Text>
-      </Container>
-      <Spacer y={1} />
-      {renderForm()}
-    </CenterWrapper>
+    <AddonFormContextProvider projectId={currentProject?.id} redirectOnSubmit>
+      <AddonForm template={templateMatch} />
+    </AddonFormContextProvider>
   );
 };
 

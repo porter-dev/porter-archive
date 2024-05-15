@@ -5,15 +5,35 @@ import styled from "styled-components";
 import Back from "components/porter/Back";
 import Container from "components/porter/Container";
 import Spacer from "components/porter/Spacer";
-import Tag from "components/porter/Tag";
 
 import inferenceGrad from "assets/inference-grad.svg";
 
 import DashboardHeader from "../cluster-dashboard/DashboardHeader";
-import { models, tagColor } from "./models";
+import { Context } from "shared/Context";
+import { SUPPORTED_MODEL_ADDON_TEMPLATES } from "lib/models/template";
+import AddonFormContextProvider from "../add-on-dashboard/AddonFormContextProvider";
+import AddonForm from "../add-on-dashboard/AddonForm";
+import { AddonTemplate, AddonTemplateTagColor } from "lib/addons/template";
+import { ClientAddonType } from "lib/addons";
 
 const ModelTemplates: React.FC = () => {
+  const { currentProject } = useContext(Context);
+  const { search } = useLocation();
+  const queryParams = new URLSearchParams(search);
   const history = useHistory();
+
+  const templateMatch = useMemo(() => {
+    const addonName = queryParams.get("addon_name");
+    return SUPPORTED_MODEL_ADDON_TEMPLATES.find((t) => t.type === addonName);
+  }, [queryParams]);
+
+  if (templateMatch) {
+    return (
+      <AddonFormContextProvider projectId={currentProject?.id} redirectOnSubmit>
+        <AddonForm template={templateMatch} />
+      </AddonFormContextProvider>
+    );
+  }
 
   return (
     <StyledTemplateComponent>
@@ -26,40 +46,42 @@ const ModelTemplates: React.FC = () => {
         disableLineBreak
       />
       <TemplateListWrapper>
-        {Array.from(Object.keys(models)).map((id: string) => {
-          const template = models[id];
-          return (
-            <TemplateBlock
-              key={id}
-              onClick={() => {
-                history.push(`/inference/templates/${id}`);
-              }}
-            >
-              <Icon src={template.icon} />
-              <TemplateTitle>{template.name}</TemplateTitle>
-              <TemplateDescription>{template.description}</TemplateDescription>
-              <Spacer y={0.25} />
-              <Container row>
-                {template.tags?.map((t) => (
-                  <>
-                    <Tag
-                      backgroundColor={tagColor[t]}
-                      key={t}
-                      size={11}
-                      hoverable={false}
-                    >
-                      {t}
-                    </Tag>
-                    {template.tags.indexOf(t) !== template.tags.length - 1 && (
-                      <Spacer inline x={0.5} />
-                    )}
-                  </>
-                ))}
-              </Container>
-              <Spacer y={0.5} />
-            </TemplateBlock>
-          );
-        })}
+        {
+          SUPPORTED_MODEL_ADDON_TEMPLATES.map(
+            (template: AddonTemplate<ClientAddonType>) => {
+              return (
+                <TemplateBlock
+                  key={template.type}
+                  onClick={() => {
+                    history.push(`/inference/expanded/${template.type}`);
+                  }}
+                >
+                  <Icon src={template.icon} />
+                  <TemplateTitle>{template.displayName}</TemplateTitle>
+                  <TemplateDescription>{template.description}</TemplateDescription>
+                  <Spacer y={0.25} />
+                  <Container row>
+                    {template.tags?.map((t) => (
+                      <>
+                        <Tag
+                          bottom="10px"
+                          left="12px"
+                          style={{ background: AddonTemplateTagColor[t] }}
+                          key={t}
+                        >
+                          {t}
+                        </Tag>
+                        {template.tags.indexOf(t) !== template.tags.length - 1 && (
+                          <Spacer inline x={0.5} />
+                        )}
+                      </>
+                    ))}
+                  </Container>
+                  <Spacer y={0.5} />
+                </TemplateBlock>
+              );
+            }
+          )}
       </TemplateListWrapper>
     </StyledTemplateComponent>
   );
@@ -137,4 +159,21 @@ const Icon = styled.img`
   height: 25px;
   margin-top: 20px;
   margin-bottom: 5px;
+`;
+
+
+const Tag = styled.div<{ size?: string; bottom?: string; left?: string }>`
+  position: absolute;
+  bottom: ${(props) => props.bottom || "auto"};
+  left: ${(props) => props.left || "auto"};
+  font-size: 10px;
+  background: linear-gradient(
+    45deg,
+    rgba(88, 24, 219, 1) 0%,
+    rgba(72, 12, 168, 1) 100%
+  ); // added gradient for shiny effect
+  padding: 10px;
+  border-radius: 4px;
+  opacity: 0.85;
+  box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
 `;

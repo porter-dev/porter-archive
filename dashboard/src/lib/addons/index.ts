@@ -3,6 +3,7 @@ import {
   Addon,
   AddonType,
   Datadog,
+  Deepgram,
   Metabase,
   Mezmo,
   Newrelic,
@@ -22,6 +23,7 @@ import { newrelicConfigValidator } from "./newrelic";
 import { defaultPostgresAddon, postgresConfigValidator } from "./postgres";
 import { redisConfigValidator } from "./redis";
 import { tailscaleConfigValidator } from "./tailscale";
+import { deepgramConfigValidator } from "lib/models/deepgram";
 import {
   ADDON_TEMPLATE_DATADOG,
   ADDON_TEMPLATE_METABASE,
@@ -32,6 +34,7 @@ import {
   ADDON_TEMPLATE_TAILSCALE,
   type AddonTemplate,
 } from "./template";
+import { ADDON_TEMPLATE_DEEPGRAM } from "lib/models/template";
 
 export const clientAddonValidator = z.object({
   expanded: z.boolean().default(false),
@@ -55,6 +58,7 @@ export const clientAddonValidator = z.object({
     metabaseConfigValidator,
     newrelicConfigValidator,
     tailscaleConfigValidator,
+    deepgramConfigValidator,
   ]),
 });
 export type ClientAddonType = z.infer<
@@ -153,6 +157,16 @@ export function defaultClientAddon(
       }),
       template: ADDON_TEMPLATE_TAILSCALE,
     }))
+    .with("deepgram", () => ({
+      ...clientAddonValidator.parse({
+        expanded: true,
+        name: { readOnly: false, value: "deepgram" },
+        config: deepgramConfigValidator.parse({
+          type: "deepgram",
+        }),
+      }),
+      template: ADDON_TEMPLATE_DEEPGRAM,
+    }))
     .exhaustive();
 }
 
@@ -165,6 +179,7 @@ function addonTypeEnumProto(type: ClientAddon["config"]["type"]): AddonType {
     .with("metabase", () => AddonType.METABASE)
     .with("newrelic", () => AddonType.NEWRELIC)
     .with("tailscale", () => AddonType.TAILSCALE)
+    .with("deepgram", () => AddonType.DEEPGRAM)
     .exhaustive();
 }
 
@@ -253,6 +268,16 @@ export function clientAddonToProto(
           .filter((r) => r !== ""),
       }),
       case: "tailscale" as const,
+    }))
+    .with({ type: "deepgram" }, (data) => ({
+      value: new Deepgram({
+        apiKey: data.deepgramAPIKey,
+        ecrUsername: data.quayUsername,
+        ecrPassword: data.quaySecret,
+        ecrEmail: data.quayEmail,
+        instanceType: data.instanceType,
+      }),
+      case: "deepgram" as const,
     }))
     .exhaustive();
 
@@ -365,6 +390,14 @@ export function clientAddonFromProto({
       authKey: data.value.authKey ?? "",
       subnetRoutes: data.value.subnetRoutes.map((r) => ({ route: r })),
     }))
+    .with({ case: "deepgram" }, (data) => ({
+      type: "deepgram" as const,
+      deepgramAPIKey: data.value.apiKey ?? "",
+      quayUsername: data.value.ecrUsername ?? "",
+      quaySecret: data.value.ecrPassword ?? "",
+      quayEmail: data.value.ecrEmail ?? "",
+      instanceType: "g4dn.xlarge" as const,
+    }))
     .exhaustive();
 
   const template = match(addon.config)
@@ -375,6 +408,7 @@ export function clientAddonFromProto({
     .with({ case: "metabase" }, () => ADDON_TEMPLATE_METABASE)
     .with({ case: "newrelic" }, () => ADDON_TEMPLATE_NEWRELIC)
     .with({ case: "tailscale" }, () => ADDON_TEMPLATE_TAILSCALE)
+    .with({ case: "deepgram" }, () => ADDON_TEMPLATE_DEEPGRAM)
     .exhaustive();
 
   const clientAddon = {

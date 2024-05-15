@@ -30,7 +30,7 @@ const PreviewEnvs: React.FC = () => {
 
           <Text color={"helper"}>Get started by deploying a model.</Text>
           <Spacer y={1} />
-          <Link to="/inference/templates">
+          <Link to="/inference/models">
             <Button onClick={() => ({})} height="35px" alt>
               Deploy a new model <Spacer inline x={1} />{" "}
               <i className="material-icons" style={{ fontSize: "18px" }}>

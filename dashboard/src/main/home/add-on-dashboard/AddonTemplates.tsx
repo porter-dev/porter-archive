@@ -89,7 +89,7 @@ const StyledTemplateComponent = styled.div`
   height: 100%;
 `;
 
-const Tag = styled.div<{ size?: string; bottom?: string; left?: string }>`
+export const Tag = styled.div<{ size?: string; bottom?: string; left?: string }>`
   position: absolute;
   bottom: ${(props) => props.bottom || "auto"};
   left: ${(props) => props.left || "auto"};

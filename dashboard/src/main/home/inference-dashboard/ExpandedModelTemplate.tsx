@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useContext, useMemo } from "react";
 import AceEditor from "react-ace";
 import { useHistory, useParams } from "react-router";
 import styled from "styled-components";
@@ -12,33 +12,41 @@ import InfoSection from "components/porter/InfoSection";
 import Line from "components/porter/Line";
 import Link from "components/porter/Link";
 import Spacer from "components/porter/Spacer";
-import Tag from "components/porter/Tag";
-import Text from "components/porter/Text";
+import Text from "components/porter/Text"
+
+import { Tag } from "../add-on-dashboard/AddonTemplates"
 
 import DashboardHeader from "../cluster-dashboard/DashboardHeader";
 import { models, tagColor } from "./models";
+import { Context } from "shared/Context";
+import { SUPPORTED_MODEL_ADDON_TEMPLATES } from "lib/models/template";
+import AddonFormContextProvider from "../add-on-dashboard/AddonFormContextProvider";
+import { AddonTemplateTagColor } from "lib/addons/template";
 
 const ExpandedModelTemplate: React.FC = () => {
-  const { templateId } = useParams<{
-    templateId: string;
+  const { modelType } = useParams<{
+    modelType: string;
   }>();
 
-  const template = models[templateId] || {
-    name: "",
-    description: "",
-    tags: [],
-  };
+  const { currentProject } = useContext(Context);
+  const history = useHistory();
+
+  const templateMatch = SUPPORTED_MODEL_ADDON_TEMPLATES.find((t) => t.type === modelType);
+
+  if (templateMatch === undefined) {
+    return null;
+  }
 
   return (
     <Container style={{ width: "100%" }}>
-      <Back to="/inference/templates" />
+      <Back to="/inference/models" />
       <Container row spaced>
         <Container row>
-          <Image size={24} src={template.icon} />
+          <Image size={24} src={templateMatch.icon} />
           <Spacer inline x={1} />
-          <Text size={21}>{template.name}</Text>
+          <Text size={21}>{templateMatch.displayName}</Text>
         </Container>
-        <Link to={`/inference/templates/${templateId}/new`}>
+        <Link to={`/inference/new/${modelType}`}>
           <Button>
             <I size={14}>add</I>
             <Spacer inline x={0.5} />
@@ -47,15 +55,22 @@ const ExpandedModelTemplate: React.FC = () => {
         </Link>
       </Container>
       <Spacer y={1} />
-      <InfoSection text={template.description} />
+      <InfoSection text={templateMatch.description} />
       <Spacer y={1} />
       <Container row>
-        {template.tags?.map((t) => (
+        {templateMatch.tags?.map((t) => (
           <>
-            <Tag key={t} backgroundColor={tagColor[t]} hoverable={false}>
+            <Tag
+              bottom="10px"
+              left="12px"
+              style={{ background: AddonTemplateTagColor[t] }}
+              key={t}
+            >
               {t}
             </Tag>
-            <Spacer inline x={1} />
+            {templateMatch.tags.indexOf(t) !== templateMatch.tags.length - 1 && (
+              <Spacer inline x={0.5} />
+            )}
           </>
         ))}
       </Container>

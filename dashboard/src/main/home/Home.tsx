@@ -73,6 +73,8 @@ import { NewProjectFC } from "./new-project/NewProject";
 import Onboarding from "./onboarding/Onboarding";
 import ProjectSettings from "./project-settings/ProjectSettings";
 import Sidebar from "./sidebar/Sidebar";
+import AddonFormContextProvider from "./add-on-dashboard/AddonFormContextProvider";
+import AddonForm from "./add-on-dashboard/AddonForm";
 
 dayjs.extend(relativeTime);
 
@@ -494,25 +496,6 @@ const Home: React.FC<Props> = (props) => {
                 <Apps />
               </Route>
 
-              <Route path="/inference/templates/:templateId/new">
-                <ModelForm />
-              </Route>
-              <Route path="/inference/templates/:templateId">
-                <ExpandedModelTemplate />
-              </Route>
-              <Route path="/inference/templates">
-                <ModelTemplates />
-              </Route>
-              <Route path="/inference/:modelName/:tab">
-                <AppView />
-              </Route>
-              <Route path="/inference/:modelName">
-                <AppView />
-              </Route>
-              <Route path="/inference">
-                <InferenceDashboard />
-              </Route>
-
               <Route path="/environment-groups/new">
                 <CreateEnvGroup />
               </Route>
@@ -565,6 +548,24 @@ const Home: React.FC<Props> = (props) => {
                 ) : (
                   <LegacyAddOnDashboard />
                 )}
+              </Route>
+              <Route path="/inference/models">
+                <ModelTemplates />
+              </Route>
+              <Route path="/inference/expanded/:modelType">
+                <ExpandedModelTemplate />
+              </Route>
+              <Route path="/inference/new/:modelType">
+                <ModelForm />
+              </Route>
+              <Route path="/inference/:modelType">
+                <AddonView />
+              </Route>
+              <Route path="/inference/:modelType/:tab">
+                <AddonView />
+              </Route>
+              <Route path="/inference">
+                <InferenceDashboard />
               </Route>
               <Route
                 path="/new-project"

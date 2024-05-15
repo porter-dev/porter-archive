@@ -8,6 +8,7 @@ import MetabaseForm from "../metabase/MetabaseForm";
 import MezmoForm from "../mezmo/MezmoForm";
 import NewRelicForm from "../newrelic/NewRelicForm";
 import TailscaleForm from "../tailscale/TailscaleForm";
+import DeepgramForm from "main/home/inference-dashboard/TemplateForms/DeepgramForm";
 
 type Props = {
   type: ClientAddon["config"]["type"];
@@ -20,6 +21,7 @@ const Configuration: React.FC<Props> = ({ type }) => {
     .with("metabase", () => <MetabaseForm />)
     .with("newrelic", () => <NewRelicForm />)
     .with("tailscale", () => <TailscaleForm />)
+    .with("deepgram", () => <DeepgramForm />)
     .otherwise(() => null);
 };
 

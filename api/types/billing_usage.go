@@ -1,5 +1,7 @@
 package types
 
+import "github.com/google/uuid"
+
 // ListCreditGrantsResponse returns the total remaining and granted credits for a customer.
 type ListCreditGrantsResponse struct {
 	RemainingBalanceCents int `json:"remaining_credits"`
@@ -60,10 +62,12 @@ type BillingEvent struct {
 
 // Wallet represents a customer credits wallet
 type Wallet struct {
-	Status                   string `json:"status"`
-	BalanceCents             int    `json:"balance_cents,omitempty"`
-	OngoingBalanceCents      int    `json:"ongoing_balance_cents,omitempty"`
-	OngoingUsageBalanceCents int    `json:"ongoing_usage_balance_cents,omitempty"`
+	LagoID                   uuid.UUID `json:"lago_id,omitempty"`
+	Status                   string    `json:"status"`
+	BalanceCents             int       `json:"balance_cents,omitempty"`
+	CreditsOngoingBalance    string    `json:"credits_ongoing_balance,omitempty"`
+	OngoingBalanceCents      int       `json:"ongoing_balance_cents,omitempty"`
+	OngoingUsageBalanceCents int       `json:"ongoing_usage_balance_cents,omitempty"`
 }
 
 // Invoice represents an invoice in the billing system.

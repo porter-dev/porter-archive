@@ -33,13 +33,13 @@ func (c *GetProjectReferralDetailsHandler) ServeHTTP(w http.ResponseWriter, r *h
 
 	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "lago-config-exists", Value: c.Config().BillingManager.LagoConfigLoaded},
+		telemetry.AttributeKV{Key: "lago-enabled", Value: proj.GetFeatureFlag(models.LagoEnabled, c.Config().LaunchDarklyClient)},
+	)
+
 	if !c.Config().BillingManager.LagoConfigLoaded || !proj.GetFeatureFlag(models.LagoEnabled, c.Config().LaunchDarklyClient) || !proj.EnableSandbox {
 		c.WriteResult(w, r, "")
-
-		telemetry.WithAttributes(span,
-			telemetry.AttributeKV{Key: "lago-config-exists", Value: c.Config().BillingManager.LagoConfigLoaded},
-			telemetry.AttributeKV{Key: "lago-enabled", Value: proj.GetFeatureFlag(models.LagoEnabled, c.Config().LaunchDarklyClient)},
-		)
 		return
 	}
 

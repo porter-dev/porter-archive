@@ -78,7 +78,7 @@ function UsagePage(): JSX.Element {
 
     const totalCost = periodUsage?.total_amount_cents
       ? (periodUsage.total_amount_cents / 100).toFixed(4)
-      : "";
+      : "0";
     const totalCpuHours =
       periodUsage?.charges_usage.find((x) =>
         x.billable_metric.name.includes("CPU")
@@ -88,6 +88,11 @@ function UsagePage(): JSX.Element {
         x.billable_metric.name.includes("GiB")
       )?.units ?? "";
     const currency = periodUsage?.charges_usage[0].amount_currency ?? "";
+
+    if (totalCpuHours === "" || totalGibHours === "") {
+      return null;
+    }
+
     return {
       total_cost: totalCost,
       total_cpu_hours: totalCpuHours,

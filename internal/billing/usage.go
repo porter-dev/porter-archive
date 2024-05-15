@@ -99,10 +99,10 @@ func (m LagoClient) CreateCustomerWithPlan(ctx context.Context, userEmail string
 			return telemetry.Error(ctx, span, err, fmt.Sprintf("error while adding customer to plan %s", m.PorterCloudPlanCode))
 		}
 
-		starterWalletName := "Free Starter Credits"
+		walletName := "Porter Credits"
 		expiresAt := time.Now().UTC().AddDate(0, 1, 0).Truncate(24 * time.Hour)
 
-		err = m.CreateCreditsGrant(ctx, projectID, starterWalletName, defaultStarterCreditsCents, &expiresAt, sandboxEnabled)
+		err = m.CreateCreditsGrant(ctx, projectID, walletName, defaultStarterCreditsCents, &expiresAt, sandboxEnabled)
 		if err != nil {
 			return telemetry.Error(ctx, span, err, "error while creating starter credits grant")
 		}
@@ -216,45 +216,19 @@ func (m LagoClient) ListCustomerCredits(ctx context.Context, projectID uint, san
 	}
 	customerID := m.generateLagoID(CustomerIDPrefix, projectID, sandboxEnabled)
 
-	// We manually do the request in this function because the Lago client has an issue
-	// with types for this specific request
-	url := fmt.Sprintf("%s/api/v1/wallets?external_customer_id=%s", lagoBaseURL, customerID)
-	req, err := http.NewRequest("GET", url, nil)
+	walletList, err := m.listCustomerWallets(ctx, customerID)
 	if err != nil {
-		return credits, telemetry.Error(ctx, span, err, "failed to create wallets request")
-	}
-
-	req.Header.Set("Authorization", "Bearer "+m.lagoApiKey)
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return credits, telemetry.Error(ctx, span, err, "failed to get customer credits")
-	}
-
-	type ListWalletsResponse struct {
-		Wallets []types.Wallet `json:"wallets"`
-	}
-
-	var walletList ListWalletsResponse
-	err = json.NewDecoder(resp.Body).Decode(&walletList)
-	if err != nil {
-		return credits, telemetry.Error(ctx, span, err, "failed to decode wallet list response")
+		return credits, telemetry.Error(ctx, span, err, "failed to list customer wallets")
 	}
 
 	var response types.ListCreditGrantsResponse
-	for _, wallet := range walletList.Wallets {
+	for _, wallet := range walletList {
 		if wallet.Status != string(lago.Active) {
 			continue
 		}
 
 		response.GrantedBalanceCents += wallet.BalanceCents
 		response.RemainingBalanceCents += wallet.OngoingBalanceCents
-	}
-
-	err = resp.Body.Close()
-	if err != nil {
-		return credits, telemetry.Error(ctx, span, err, "failed to close response body")
 	}
 
 	return response, nil
@@ -270,19 +244,42 @@ func (m LagoClient) CreateCreditsGrant(ctx context.Context, projectID uint, name
 	}
 
 	customerID := m.generateLagoID(CustomerIDPrefix, projectID, sandboxEnabled)
-	walletInput := &lago.WalletInput{
-		ExternalCustomerID: customerID,
-		Name:               name,
-		Currency:           lago.USD,
-		GrantedCredits:     strconv.FormatInt(grantAmount, 10),
-		// Rate is 1 credit = 1 cent
-		RateAmount:   "0.01",
-		ExpirationAt: expiresAt,
+
+	walletList, err := m.listCustomerWallets(ctx, customerID)
+	if err != nil {
+		return telemetry.Error(ctx, span, err, "failed to list customer wallets")
 	}
 
-	_, lagoErr := m.client.Wallet().Create(ctx, walletInput)
+	if len(walletList) == 0 {
+		walletInput := &lago.WalletInput{
+			ExternalCustomerID: customerID,
+			Name:               name,
+			Currency:           lago.USD,
+			GrantedCredits:     strconv.FormatInt(grantAmount, 10),
+			// Rate is 1 credit = 1 cent
+			RateAmount:   "0.01",
+			ExpirationAt: expiresAt,
+		}
+
+		_, lagoErr := m.client.Wallet().Create(ctx, walletInput)
+		if lagoErr != nil {
+			return telemetry.Error(ctx, span, fmt.Errorf(lagoErr.ErrorCode), "failed to create credits grant")
+		}
+
+		return nil
+	}
+
+	// Currently only one wallet per customer is supported in Lago
+	wallet := walletList[0]
+	walletTransactionInput := &lago.WalletTransactionInput{
+		WalletID:       wallet.LagoID.String(),
+		GrantedCredits: strconv.FormatInt(grantAmount, 10),
+	}
+
+	// If the wallet already exists, we need to update the balance
+	_, lagoErr := m.client.WalletTransaction().Create(ctx, walletTransactionInput)
 	if lagoErr != nil {
-		return telemetry.Error(ctx, span, fmt.Errorf(lagoErr.ErrorCode), "failed to create credits grant")
+		return telemetry.Error(ctx, span, fmt.Errorf(lagoErr.ErrorCode), "failed to update credits grant")
 	}
 
 	return nil
@@ -360,20 +357,9 @@ func (m LagoClient) IngestEvents(ctx context.Context, subscriptionID string, eve
 		batch := events[i:end]
 		var batchInput []lago.EventInput
 		for i := range batch {
-			externalSubscriptionID := subscriptionID
-			if enableSandbox {
-				// This hack has to be done because we can't infer the project id from the
-				// context in Porter Cloud
-				customerID, err := strconv.ParseUint(batch[i].CustomerID, 10, 64)
-				if err != nil {
-					return telemetry.Error(ctx, span, err, "failed to parse customer ID")
-				}
-				externalSubscriptionID = m.generateLagoID(SubscriptionIDPrefix, uint(customerID), enableSandbox)
-			}
-
 			event := lago.EventInput{
 				TransactionID:          batch[i].TransactionID,
-				ExternalSubscriptionID: externalSubscriptionID,
+				ExternalSubscriptionID: subscriptionID,
 				Code:                   batch[i].EventType,
 				Properties:             batch[i].Properties,
 			}
@@ -490,6 +476,43 @@ func (m LagoClient) addCustomerPlan(ctx context.Context, customerID string, plan
 	}
 
 	return nil
+}
+
+func (m LagoClient) listCustomerWallets(ctx context.Context, customerID string) (walletList []types.Wallet, err error) {
+	ctx, span := telemetry.NewSpan(ctx, "list-lago-customer-wallets")
+	defer span.End()
+
+	// We manually do the request in this function because the Lago client has an issue
+	// with types for this specific request
+	url := fmt.Sprintf("%s/api/v1/wallets?external_customer_id=%s", lagoBaseURL, customerID)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return walletList, telemetry.Error(ctx, span, err, "failed to create wallets list request")
+	}
+
+	req.Header.Set("Authorization", "Bearer "+m.lagoApiKey)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return walletList, telemetry.Error(ctx, span, err, "failed to get customer credits")
+	}
+
+	response := struct {
+		Wallets []types.Wallet `json:"wallets"`
+	}{}
+
+	err = json.NewDecoder(resp.Body).Decode(&response)
+	if err != nil {
+		return walletList, telemetry.Error(ctx, span, err, "failed to decode wallet list response")
+	}
+
+	err = resp.Body.Close()
+	if err != nil {
+		return walletList, telemetry.Error(ctx, span, err, "failed to close response body")
+	}
+
+	return response.Wallets, nil
 }
 
 func createUsageFromLagoUsage(lagoUsage lago.CustomerUsage) types.Usage {

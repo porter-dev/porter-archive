@@ -94,7 +94,7 @@ const AppHeader: React.FC = () => {
         <ImageTagContainer hoverable={false}>
           <TagContainer>
             <StatusDot color="#FFA500" />
-            <Code>Awaiting Build</Code>
+            <Code>Awaiting dgieploy</Code>
           </TagContainer>
         </ImageTagContainer>
       );

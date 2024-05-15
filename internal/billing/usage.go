@@ -237,6 +237,7 @@ func (m LagoClient) ListCustomerCredits(ctx context.Context, projectID uint, san
 	return response, nil
 }
 
+// CheckCustomerCouponExpiration will return the expiration date of the customer's coupon
 func (m LagoClient) CheckCustomerCouponExpiration(ctx context.Context, projectID uint, sandboxEnabled bool) (trialEndDate string, err error) {
 	ctx, span := telemetry.NewSpan(ctx, "list-customer-coupons")
 	defer span.End()

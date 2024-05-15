@@ -188,21 +188,17 @@ func (m LagoClient) GetCustomeActivePlan(ctx context.Context, projectID uint, sa
 	return plan, nil
 }
 
-// EndCustomerPlan will immediately end the plan for the given customer
-func (m LagoClient) EndCustomerPlan(ctx context.Context, projectID uint) (err error) {
-	ctx, span := telemetry.NewSpan(ctx, "end-lago-customer-plan")
+// DeleteCustomer will delete the customer and terminate all subscriptions
+func (m LagoClient) DeleteCustomer(ctx context.Context, projectID uint, sandboxEnabled bool) (err error) {
+	ctx, span := telemetry.NewSpan(ctx, "delete-lago-customer")
 	defer span.End()
 
 	if projectID == 0 {
 		return telemetry.Error(ctx, span, err, "subscription id empty")
 	}
 
-	subscriptionID := m.generateLagoID(SubscriptionIDPrefix, projectID, false)
-	subscriptionTerminateInput := lago.SubscriptionTerminateInput{
-		ExternalID: subscriptionID,
-	}
-
-	_, lagoErr := m.client.Subscription().Terminate(ctx, subscriptionTerminateInput)
+	customerID := m.generateLagoID(CustomerIDPrefix, projectID, sandboxEnabled)
+	_, lagoErr := m.client.Customer().Delete(ctx, customerID)
 	if lagoErr != nil {
 		return telemetry.Error(ctx, span, fmt.Errorf(lagoErr.ErrorCode), "failed to terminate subscription")
 	}
@@ -388,11 +384,9 @@ func (m LagoClient) IngestEvents(ctx context.Context, subscriptionID string, eve
 		var currentAttempts int
 		for currentAttempts := 0; currentAttempts < defaultMaxRetries; currentAttempts++ {
 			_, lagoErr := m.client.Event().Batch(ctx, &batchInput)
-			if lagoErr != nil {
-				telemetry.Error(ctx, span, err, "failed to send ingest events")
-				continue
+			if lagoErr == nil {
+				return nil
 			}
-			break
 		}
 
 		if currentAttempts == defaultMaxRetries {

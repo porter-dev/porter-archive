@@ -93,9 +93,19 @@ func (p *ProjectDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	}
 
 	if p.Config().BillingManager.LagoConfigLoaded && proj.GetFeatureFlag(models.LagoEnabled, p.Config().LaunchDarklyClient) {
-		err = p.Config().BillingManager.LagoClient.EndCustomerPlan(ctx, proj.ID)
+		err = p.Config().BillingManager.LagoClient.DeleteCustomer(ctx, proj.ID, proj.EnableSandbox)
 		if err != nil {
 			e := "error ending billing plan"
+			err = telemetry.Error(ctx, span, err, e)
+			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+	}
+
+	if p.Config().BillingManager.StripeConfigLoaded && proj.GetFeatureFlag(models.BillingEnabled, p.Config().LaunchDarklyClient) {
+		err = p.Config().BillingManager.StripeClient.DeleteCustomer(ctx, proj.BillingID)
+		if err != nil {
+			e := "error deleting stripe customer"
 			err = telemetry.Error(ctx, span, err, e)
 			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 			return

@@ -149,7 +149,7 @@ func (c *ListCustomerUsageHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		telemetry.AttributeKV{Key: "subscription_id", Value: plan.ID},
 	)
 
-	usage, err := c.Config().BillingManager.LagoClient.ListCustomerUsage(ctx, plan.CustomerID, plan.ID, req.CurrentPeriod)
+	usage, err := c.Config().BillingManager.LagoClient.ListCustomerUsage(ctx, plan.CustomerID, plan.ID, req.CurrentPeriod, req.PreviousPeriods)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error listing customer usage")
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))

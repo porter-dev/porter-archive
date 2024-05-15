@@ -15,6 +15,7 @@ import (
 )
 
 const (
+	lagoBaseURL                = "https://api.getlago.com"
 	defaultStarterCreditsCents = 500
 	defaultRewardAmountCents   = 1000
 	maxReferralRewards         = 10
@@ -58,7 +59,6 @@ func NewLagoClient(lagoApiKey string, porterCloudPlanCode string, porterStandard
 	if lagoClient == nil {
 		return client, fmt.Errorf("failed to create lago client")
 	}
-	// lagoClient.Debug = true
 
 	return LagoClient{
 		lagoApiKey:               lagoApiKey,
@@ -151,11 +151,6 @@ func (m LagoClient) GetCustomeActivePlan(ctx context.Context, projectID uint, sa
 		return plan, telemetry.Error(ctx, span, err, "project id empty")
 	}
 
-	if sandboxEnabled {
-		subscriptionID := m.generateLagoID(SubscriptionIDPrefix, projectID, sandboxEnabled)
-		return types.Plan{ID: subscriptionID}, nil
-	}
-
 	customerID := m.generateLagoID(CustomerIDPrefix, projectID, sandboxEnabled)
 	subscriptionListInput := lago.SubscriptionListInput{
 		ExternalCustomerID: customerID,
@@ -178,7 +173,10 @@ func (m LagoClient) GetCustomeActivePlan(ctx context.Context, projectID uint, sa
 		plan.ID = subscription.ExternalID
 		plan.CustomerID = subscription.ExternalCustomerID
 		plan.StartingOn = subscription.SubscriptionAt.Format(time.RFC3339)
-		plan.EndingBefore = subscription.EndingAt.Format(time.RFC3339)
+
+		if subscription.EndingAt != nil {
+			plan.EndingBefore = subscription.EndingAt.Format(time.RFC3339)
+		}
 
 		if strings.Contains(subscription.ExternalID, TrialIDPrefix) {
 			plan.TrialInfo.EndingBefore = subscription.EndingAt.Format(time.RFC3339)
@@ -224,7 +222,6 @@ func (m LagoClient) ListCustomerCredits(ctx context.Context, projectID uint, san
 
 	// We manually do the request in this function because the Lago client has an issue
 	// with types for this specific request
-	lagoBaseURL := "https://api.getlago.com"
 	url := fmt.Sprintf("%s/api/v1/wallets?external_customer_id=%s", lagoBaseURL, customerID)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -296,12 +293,12 @@ func (m LagoClient) CreateCreditsGrant(ctx context.Context, projectID uint, name
 }
 
 // ListCustomerUsage will return the aggregated usage for a customer
-func (m LagoClient) ListCustomerUsage(ctx context.Context, customerID string, subscriptionID string, currentPeriod bool) (usage types.Usage, err error) {
+func (m LagoClient) ListCustomerUsage(ctx context.Context, customerID string, subscriptionID string, currentPeriod bool, previousPeriods int) (usageList []types.Usage, err error) {
 	ctx, span := telemetry.NewSpan(ctx, "list-customer-usage")
 	defer span.End()
 
 	if subscriptionID == "" {
-		return usage, telemetry.Error(ctx, span, err, "subscription id empty")
+		return usageList, telemetry.Error(ctx, span, err, "subscription id empty")
 	}
 
 	if currentPeriod {
@@ -311,27 +308,42 @@ func (m LagoClient) ListCustomerUsage(ctx context.Context, customerID string, su
 
 		currentUsage, lagoErr := m.client.Customer().CurrentUsage(ctx, customerID, customerUsageInput)
 		if lagoErr != nil {
-			return usage, telemetry.Error(ctx, span, fmt.Errorf(lagoErr.ErrorCode), "failed to get customer usage")
+			return usageList, telemetry.Error(ctx, span, fmt.Errorf(lagoErr.ErrorCode), "failed to get customer usage")
 		}
 
-		usage.FromDatetime = currentUsage.FromDatetime.Format(time.RFC3339)
-		usage.ToDatetime = currentUsage.ToDatetime.Format(time.RFC3339)
-		usage.TotalAmountCents = int64(currentUsage.TotalAmountCents)
-		usage.ChargesUsage = make([]types.ChargeUsage, len(currentUsage.ChargesUsage))
+		if currentUsage == nil {
+			return usageList, nil
+		}
 
-		for i, charge := range currentUsage.ChargesUsage {
-			usage.ChargesUsage[i] = types.ChargeUsage{
-				Units:          charge.Units,
-				AmountCents:    int64(charge.AmountCents),
-				AmountCurrency: string(charge.AmountCurrency),
-				BillableMetric: types.BillableMetric{
-					Name: charge.BillableMetric.Name,
-				},
-			}
+		usage := createUsageFromLagoUsage(*currentUsage)
+		usageList = append(usageList, usage)
+	} else {
+		url := fmt.Sprintf("%s/api/v1/customers/%s/past_usage?external_subscription_id=%s&periods_count=%d", lagoBaseURL, customerID, subscriptionID, previousPeriods)
+		req, err := http.NewRequest("GET", url, nil)
+		if err != nil {
+			return usageList, telemetry.Error(ctx, span, err, "failed to create wallets request")
+		}
+
+		req.Header.Set("Authorization", "Bearer "+m.lagoApiKey)
+
+		client := &http.Client{}
+		resp, err := client.Do(req)
+		if err != nil {
+			return usageList, telemetry.Error(ctx, span, err, "failed to get customer credits")
+		}
+
+		var previousUsage lago.CustomerPastUsageResult
+		err = json.NewDecoder(resp.Body).Decode(&previousUsage)
+		if err != nil {
+			return usageList, telemetry.Error(ctx, span, err, "failed to decode usage list response")
+		}
+
+		for _, pastUsage := range previousUsage.UsagePeriods {
+			usage := createUsageFromLagoUsage(pastUsage)
+			usageList = append(usageList, usage)
 		}
 	}
-
-	return usage, nil
+	return usageList, nil
 }
 
 // IngestEvents sends a list of billing events to Lago's ingest endpoint
@@ -484,6 +496,27 @@ func (m LagoClient) addCustomerPlan(ctx context.Context, customerID string, plan
 	}
 
 	return nil
+}
+
+func createUsageFromLagoUsage(lagoUsage lago.CustomerUsage) types.Usage {
+	usage := types.Usage{}
+	usage.FromDatetime = lagoUsage.FromDatetime.Format(time.RFC3339)
+	usage.ToDatetime = lagoUsage.ToDatetime.Format(time.RFC3339)
+	usage.TotalAmountCents = int64(lagoUsage.TotalAmountCents)
+	usage.ChargesUsage = make([]types.ChargeUsage, len(lagoUsage.ChargesUsage))
+
+	for i, charge := range lagoUsage.ChargesUsage {
+		usage.ChargesUsage[i] = types.ChargeUsage{
+			Units:          charge.Units,
+			AmountCents:    int64(charge.AmountCents),
+			AmountCurrency: string(charge.AmountCurrency),
+			BillableMetric: types.BillableMetric{
+				Name: charge.BillableMetric.Name,
+			},
+		}
+	}
+
+	return usage
 }
 
 func (m LagoClient) generateLagoID(prefix string, projectID uint, sandboxEnabled bool) string {

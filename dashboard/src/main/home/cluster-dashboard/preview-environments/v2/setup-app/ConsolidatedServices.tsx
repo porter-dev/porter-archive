@@ -7,7 +7,7 @@ import ServiceList from "main/home/app-dashboard/validate-apply/services-setting
 
 import { useDeploymentTarget } from "shared/DeploymentTargetContext";
 
-import { type AppTemplateFormData } from "./PreviewAppDataContainer";
+import { type AppTemplateFormData } from "../EnvTemplateContextProvider";
 
 export const ConsolidatedServices: React.FC = () => {
   const { watch } = useFormContext<AppTemplateFormData>();

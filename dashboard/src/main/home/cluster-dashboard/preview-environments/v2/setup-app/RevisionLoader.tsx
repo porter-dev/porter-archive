@@ -4,7 +4,7 @@ import { useFormContext } from "react-hook-form";
 import { useLatestRevision } from "main/home/app-dashboard/app-view/LatestRevisionContext";
 import { useAppWithPreviewOverrides } from "lib/hooks/useAppWithPreviewOverrides";
 
-import { type AppTemplateFormData } from "./PreviewAppDataContainer";
+import { type AppTemplateFormData } from "../EnvTemplateContextProvider";
 
 export const RevisionLoader: React.FC<{
   children: React.ReactNode;

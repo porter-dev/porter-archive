@@ -618,8 +618,8 @@ export function clientAppFromProto({
       value: proto.name,
     },
     services,
-    predeploy: predeployList.length ? predeployList : undefined,
-    initialDeploy: initialDeployList.length ? initialDeployList : undefined,
+    predeploy: predeployList,
+    initialDeploy: initialDeployList,
     env: parsedEnv,
     envGroups: proto.envGroups.map((eg) => ({
       name: eg.name,

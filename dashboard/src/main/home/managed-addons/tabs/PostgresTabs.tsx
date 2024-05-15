@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { Controller, useFormContext } from "react-hook-form";
-import { match } from "ts-pattern";
+import { match, P } from "ts-pattern";
 
 import CopyToClipboard from "components/CopyToClipboard";
 import { ControlledInput } from "components/porter/ControlledInput";
@@ -8,7 +8,7 @@ import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import TabSelector from "components/TabSelector";
 import IntelligentSlider from "main/home/app-dashboard/validate-apply/services-settings/tabs/IntelligentSlider";
-import { type AppTemplateFormData } from "main/home/cluster-dashboard/preview-environments/v2/setup-app/PreviewAppDataContainer";
+import { type AppTemplateFormData } from "main/home/cluster-dashboard/preview-environments/v2/EnvTemplateContextProvider";
 import { useClusterContext } from "main/home/infrastructure-dashboard/ClusterContextProvider";
 import { type ClientAddon } from "lib/addons";
 import { getServiceResourceAllowances } from "lib/porter-apps/services";
@@ -19,7 +19,7 @@ import { Code, CopyContainer, CopyIcon, IdContainer } from "./shared";
 
 type Props = {
   index: number;
-  addon: ClientAddon & {
+  addon: Omit<ClientAddon, "template"> & {
     config: {
       type: "postgres";
     };
@@ -102,56 +102,101 @@ export const PostgresTabs: React.FC<Props> = ({ index }) => {
             <Controller
               name={`addons.${index}.config.cpuCores`}
               control={control}
-              render={({ field: { value, onChange } }) => (
-                <IntelligentSlider
-                  label="CPUs: "
-                  unit="Cores"
-                  min={0.01}
-                  max={maxCpuCores}
-                  color={"#3f51b5"}
-                  value={value.value.toString()}
-                  setValue={(e) => {
-                    onChange({
-                      ...value,
-                      value: e,
-                    });
-                  }}
-                  step={0.1}
-                  disabled={value.readOnly}
-                  disabledTooltip={
-                    "You may only edit this field in your porter.yaml."
-                  }
-                  isSmartOptimizationOn={false}
-                  decimalsToRoundTo={2}
-                />
-              )}
+              render={({ field: { value, onChange } }) =>
+                match(value)
+                  .with(P.number, (v) => (
+                    <IntelligentSlider
+                      label="CPUs: "
+                      unit="Cores"
+                      min={0.01}
+                      max={maxCpuCores}
+                      color={"#3f51b5"}
+                      value={v.toString()}
+                      setValue={(e) => {
+                        onChange(e);
+                      }}
+                      step={0.1}
+                      disabled={false}
+                      disabledTooltip={
+                        "You may only edit this field in your porter.yaml."
+                      }
+                      isSmartOptimizationOn={false}
+                      decimalsToRoundTo={2}
+                    />
+                  ))
+                  .otherwise((v) => (
+                    <IntelligentSlider
+                      label="CPUs: "
+                      unit="Cores"
+                      min={0.01}
+                      max={maxCpuCores}
+                      color={"#3f51b5"}
+                      value={v.value.toString()}
+                      setValue={(e) => {
+                        onChange({
+                          ...v,
+                          value: e,
+                        });
+                      }}
+                      step={0.1}
+                      disabled={v.readOnly}
+                      disabledTooltip={
+                        "You may only edit this field in your porter.yaml."
+                      }
+                      isSmartOptimizationOn={false}
+                      decimalsToRoundTo={2}
+                    />
+                  ))
+              }
             />
             <Spacer y={1} />
             <Controller
               name={`addons.${index}.config.ramMegabytes`}
               control={control}
-              render={({ field: { value, onChange } }) => (
-                <IntelligentSlider
-                  label="RAM: "
-                  unit="MB"
-                  min={1}
-                  max={maxRamMegabytes}
-                  color={"#3f51b5"}
-                  value={value.value.toString()}
-                  setValue={(e) => {
-                    onChange({
-                      ...value,
-                      value: e,
-                    });
-                  }}
-                  step={10}
-                  disabled={value.readOnly}
-                  disabledTooltip={
-                    "You may only edit this field in your porter.yaml."
-                  }
-                  isSmartOptimizationOn={false}
-                />
-              )}
+              render={({ field: { value, onChange } }) =>
+                match(value)
+                  .with(P.number, (v) => (
+                    <IntelligentSlider
+                      label="RAM: "
+                      unit="MB"
+                      min={1}
+                      max={maxRamMegabytes}
+                      color={"#3f51b5"}
+                      value={v.toString()}
+                      setValue={(e) => {
+                        onChange(e);
+                      }}
+                      step={10}
+                      disabled={false}
+                      disabledTooltip={
+                        "You may only edit this field in your porter.yaml."
+                      }
+                      isSmartOptimizationOn={false}
+                    />
+                  ))
+                  .otherwise((v) => (
+                    <IntelligentSlider
+                      label="RAM: "
+                      unit="MB"
+                      min={1}
+                      max={maxRamMegabytes}
+                      color={"#3f51b5"}
+                      value={v.value.toString()}
+                      setValue={(e) => {
+                        onChange({
+                          ...v,
+                          value: e,
+                        });
+                      }}
+                      step={10}
+                      disabled={v.readOnly}
+                      disabledTooltip={
+                        "You may only edit this field in your porter.yaml."
+                      }
+                      isSmartOptimizationOn={false}
+                    />
+                  ))
+              }
             />
           </>
         ))

@@ -24,11 +24,11 @@ import { Code } from "main/home/managed-addons/tabs/shared";
 
 import api from "shared/api";
 
-import { type RepoOverrides } from "./PreviewAppDataContainer";
+import { type RepoOverrides } from "../EnvTemplateContextProvider";
 
 type PreviewGHAModalProps = {
   onClose: () => void;
-  savePreviewConfig: ({ repo }: { repo?: RepoOverrides }) => Promise<boolean>;
+  savePreviewConfig: ({ repo }: { repo?: RepoOverrides }) => Promise<void>;
   error: string;
 };
 

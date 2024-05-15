@@ -15,6 +15,7 @@ import api from "shared/api";
 import { Context } from "shared/Context";
 import pull_request from "assets/pull_request_icon.svg";
 
+import { EnvTemplateContextProvider } from "../EnvTemplateContextProvider";
 import { existingTemplateWithEnvValidator } from "../types";
 import { CreateTemplate } from "./CreateTemplate";
 import { PreviewAppDataContainer } from "./PreviewAppDataContainer";
@@ -81,7 +82,9 @@ const SetupApp: React.FC<Props> = ({ location }) => {
       >
         <CenterWrapper>
           <Div>
-            <CreateTemplate />
+            <EnvTemplateContextProvider shouldShowGHAModal>
+              <CreateTemplate />
+            </EnvTemplateContextProvider>
           </Div>
         </CenterWrapper>
       </ClusterContextProvider>
@@ -90,30 +93,32 @@ const SetupApp: React.FC<Props> = ({ location }) => {
 
   return (
     <ClusterContextProvider clusterId={currentCluster?.id} refetchInterval={0}>
-      <LatestRevisionProvider appName={appName}>
-        <CenterWrapper>
-          <Div>
-            <StyledConfigureTemplate>
-              <Back to="/preview-environments" />
-              <DashboardHeader
-                prefix={<Icon src={pull_request} />}
-                title={`Preview apps for ${appName}`}
-                description="Set preview specific configuration for this app below. Any newly created preview apps will use these settings."
-                capitalize={false}
-                disableLineBreak
-              />
-              <DarkMatter />
-              {match(templateRes)
-                .with({ status: "loading" }, () => <Loading />)
-                .with({ status: "success" }, ({ data }) => {
-                  return <PreviewAppDataContainer existingTemplate={data} />;
-                })
-                .otherwise(() => null)}
-              <Spacer y={3} />
-            </StyledConfigureTemplate>
-          </Div>
-        </CenterWrapper>
-      </LatestRevisionProvider>
+      <EnvTemplateContextProvider>
+        <LatestRevisionProvider appName={appName}>
+          <CenterWrapper>
+            <Div>
+              <StyledConfigureTemplate>
+                <Back to="/preview-environments" />
+                <DashboardHeader
+                  prefix={<Icon src={pull_request} />}
+                  title={`Preview apps for ${appName}`}
+                  description="Set preview specific configuration for this app below. Any newly created preview apps will use these settings."
+                  capitalize={false}
+                  disableLineBreak
+                />
+                <DarkMatter />
+                {match(templateRes)
+                  .with({ status: "loading" }, () => <Loading />)
+                  .with({ status: "success" }, ({ data }) => {
+                    return <PreviewAppDataContainer existingTemplate={data} />;
+                  })
+                  .otherwise(() => null)}
+                <Spacer y={3} />
+              </StyledConfigureTemplate>
+            </Div>
+          </CenterWrapper>
+        </LatestRevisionProvider>
+      </EnvTemplateContextProvider>
     </ClusterContextProvider>
   );
 };

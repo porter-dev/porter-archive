@@ -69,11 +69,12 @@ type ServerConf struct {
 	SendgridDeleteProjectTemplateID    string `env:"SENDGRID_DELETE_PROJECT_TEMPLATE_ID"`
 	SendgridSenderEmail                string `env:"SENDGRID_SENDER_EMAIL"`
 
-	StripeSecretKey      string `env:"STRIPE_SECRET_KEY"`
-	StripePublishableKey string `env:"STRIPE_PUBLISHABLE_KEY"`
-	MetronomeAPIKey      string `env:"METRONOME_API_KEY"`
-	PorterCloudPlanID    string `env:"PORTER_CLOUD_PLAN_ID"`
-	PorterStandardPlanID string `env:"PORTER_STANDARD_PLAN_ID"`
+	StripeSecretKey        string `env:"STRIPE_SECRET_KEY"`
+	StripePublishableKey   string `env:"STRIPE_PUBLISHABLE_KEY"`
+	LagoAPIKey             string `env:"LAGO_API_KEY"`
+	PorterCloudPlanCode    string `env:"PORTER_CLOUD_PLAN_CODE"`
+	PorterStandardPlanCode string `env:"PORTER_STANDARD_PLAN_CODE"`
+	PorterTrialCode        string `env:"PORTER_TRIAL_CODE"`
 
 	// The URL of the webhook to verify ingesting events works
 	IngestStatusWebhookUrl string `env:"INGEST_STATUS_WEBHOOK_URL"`

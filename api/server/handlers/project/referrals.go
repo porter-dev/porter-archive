@@ -3,7 +3,6 @@ package project
 import (
 	"net/http"
 
-	"github.com/google/uuid"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
@@ -34,14 +33,13 @@ func (c *GetProjectReferralDetailsHandler) ServeHTTP(w http.ResponseWriter, r *h
 
 	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
-	if !c.Config().BillingManager.MetronomeConfigLoaded || !proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient) ||
-		proj.UsageID == uuid.Nil || !proj.EnableSandbox {
-		c.WriteResult(w, r, "")
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "lago-config-exists", Value: c.Config().BillingManager.LagoConfigLoaded},
+		telemetry.AttributeKV{Key: "lago-enabled", Value: proj.GetFeatureFlag(models.LagoEnabled, c.Config().LaunchDarklyClient)},
+	)
 
-		telemetry.WithAttributes(span,
-			telemetry.AttributeKV{Key: "metronome-config-exists", Value: c.Config().BillingManager.MetronomeConfigLoaded},
-			telemetry.AttributeKV{Key: "metronome-enabled", Value: proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient)},
-		)
+	if !c.Config().BillingManager.LagoConfigLoaded || !proj.GetFeatureFlag(models.LagoEnabled, c.Config().LaunchDarklyClient) || !proj.EnableSandbox {
+		c.WriteResult(w, r, "")
 		return
 	}
 
@@ -74,7 +72,7 @@ func (c *GetProjectReferralDetailsHandler) ServeHTTP(w http.ResponseWriter, r *h
 	}{
 		Code:              proj.ReferralCode,
 		ReferralCount:     referralCount,
-		MaxAllowedRewards: c.Config().BillingManager.MetronomeClient.MaxReferralRewards,
+		MaxAllowedRewards: c.Config().BillingManager.LagoClient.MaxReferralRewards,
 	}
 
 	c.WriteResult(w, r, referralCodeResponse)

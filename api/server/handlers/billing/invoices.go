@@ -1,7 +1,6 @@
 package billing
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -25,7 +24,7 @@ func NewListCustomerInvoicesHandler(
 	writer shared.ResultWriter,
 ) *ListCustomerInvoicesHandler {
 	return &ListCustomerInvoicesHandler{
-		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
+		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, nil, writer),
 	}
 }
 
@@ -36,31 +35,22 @@ func (c *ListCustomerInvoicesHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
 	telemetry.WithAttributes(span,
-		telemetry.AttributeKV{Key: "billing-config-exists", Value: c.Config().BillingManager.StripeConfigLoaded},
-		telemetry.AttributeKV{Key: "billing-enabled", Value: proj.GetFeatureFlag(models.BillingEnabled, c.Config().LaunchDarklyClient)},
+		telemetry.AttributeKV{Key: "lago-config-exists", Value: c.Config().BillingManager.LagoConfigLoaded},
+		telemetry.AttributeKV{Key: "lago-enabled", Value: proj.GetFeatureFlag(models.LagoEnabled, c.Config().LaunchDarklyClient)},
 		telemetry.AttributeKV{Key: "porter-cloud-enabled", Value: proj.EnableSandbox},
 	)
 
-	if !c.Config().BillingManager.StripeConfigLoaded || !proj.GetFeatureFlag(models.BillingEnabled, c.Config().LaunchDarklyClient) {
+	if !c.Config().BillingManager.LagoConfigLoaded || !proj.GetFeatureFlag(models.LagoEnabled, c.Config().LaunchDarklyClient) {
 		c.WriteResult(w, r, "")
 		return
 	}
 
-	req := &types.ListCustomerInvoicesRequest{}
-
-	if ok := c.DecodeAndValidate(w, r, req); !ok {
-		err := telemetry.Error(ctx, span, nil, "error decoding list customer usage request")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-		return
-	}
-
-	invoices, err := c.Config().BillingManager.StripeClient.ListCustomerInvoices(ctx, proj.BillingID, req.Status)
+	invoices, err := c.Config().BillingManager.LagoClient.ListCustomerFinalizedInvoices(ctx, proj.ID, proj.EnableSandbox)
 	if err != nil {
-		err = telemetry.Error(ctx, span, err, fmt.Sprintf("error listing invoices for customer %s", proj.BillingID))
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+		err = telemetry.Error(ctx, span, err, "error listing invoices")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
-	// Write the response to the frontend
 	c.WriteResult(w, r, invoices)
 }

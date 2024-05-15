@@ -34,7 +34,7 @@ import {
   useDeploymentTargetList,
   type DeploymentTarget,
 } from "lib/hooks/useDeploymentTarget";
-import { useCustomerPlan } from "lib/hooks/useMetronome";
+import { useCustomerPlan } from "lib/hooks/useLago";
 import { checkIfProjectHasPayment } from "lib/hooks/useStripe";
 
 import api from "shared/api";
@@ -486,6 +486,7 @@ const Apps: React.FC = () => {
         />
       )}
       {!currentProject?.sandbox_enabled &&
+        currentProject?.billing_enabled &&
         trialExpired &&
         !hasPaymentEnabled &&
         showBillingModal && (

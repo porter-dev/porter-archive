@@ -1,27 +1,29 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
-import { Context } from "shared/Context";
-import api from "shared/api";
-import styled from "styled-components";
-import Loading from "components/Loading";
 import _ from "lodash";
-import DeploymentCard from "./DeploymentCard";
-import { Environment, PRDeployment, PullRequest } from "../types";
-import { useRouting } from "shared/routing";
 import { useHistory, useLocation, useParams } from "react-router";
-import { deployments, pull_requests } from "../mocks";
+import styled from "styled-components";
+
 import DynamicLink from "components/DynamicLink";
-import DashboardHeader from "../../DashboardHeader";
-import RadioFilter from "components/RadioFilter";
+import Loading from "components/Loading";
 import Placeholder from "components/Placeholder";
 import Banner from "components/porter/Banner";
+import RadioFilter from "components/RadioFilter";
 
-import pullRequestIcon from "assets/pull_request_icon.svg";
-import filterOutline from "assets/filter-outline.svg";
-import sort from "assets/sort.svg";
+import api from "shared/api";
+import { Context } from "shared/Context";
+import { useRouting } from "shared/routing";
 import { search } from "shared/search";
-import { getPRDeploymentList, validatePorterYAML } from "../utils";
-import { PorterYAMLErrors } from "../errors";
+import filterOutline from "assets/filter-outline.svg";
+import pullRequestIcon from "assets/pull_request_icon.svg";
+import sort from "assets/sort.svg";
+
+import DashboardHeader from "../../DashboardHeader";
 import PorterYAMLErrorsModal from "../components/PorterYAMLErrorsModal";
+import { PorterYAMLErrors } from "../errors";
+import { deployments, pull_requests } from "../mocks";
+import { Environment, type PRDeployment, type PullRequest } from "../types";
+import { getPRDeploymentList, validatePorterYAML } from "../utils";
+import DeploymentCard from "./DeploymentCard";
 
 const AvailableStatusFilters = [
   "all",
@@ -32,7 +34,7 @@ const AvailableStatusFilters = [
   "updating",
 ];
 
-type AvailableStatusFiltersType = typeof AvailableStatusFilters[number];
+type AvailableStatusFiltersType = (typeof AvailableStatusFilters)[number];
 
 const DeploymentList = () => {
   const [sortOrder, setSortOrder] = useState("Newest");
@@ -47,14 +49,11 @@ const DeploymentList = () => {
     string[]
   >([]);
 
-  const [
-    statusSelectorVal,
-    setStatusSelectorVal,
-  ] = useState<AvailableStatusFiltersType>("all");
+  const [statusSelectorVal, setStatusSelectorVal] =
+    useState<AvailableStatusFiltersType>("all");
 
-  const { currentProject, currentCluster, setCurrentError } = useContext(
-    Context
-  );
+  const { currentProject, currentCluster, setCurrentError } =
+    useContext(Context);
   const { getQueryParam, pushQueryParams } = useRouting();
   const location = useLocation();
   const history = useHistory();
@@ -66,8 +65,8 @@ const DeploymentList = () => {
 
   const selectedRepo = `${repo_owner}/${repo_name}`;
 
-  const getEnvironment = () => {
-    return api.getEnvironment(
+  const getEnvironment = async () => {
+    return await api.getEnvironment(
       "<token>",
       {},
       {
@@ -241,7 +240,7 @@ const DeploymentList = () => {
       return (
         <Placeholder height="calc(100vh - 400px)">
           No preview developments have been found. Open a PR to create a new
-          preview app.
+          preview environment.
         </Placeholder>
       );
     }
@@ -279,7 +278,9 @@ const DeploymentList = () => {
     <>
       <PorterYAMLErrorsModal
         errors={expandedPorterYAMLErrors}
-        onClose={() => setExpandedPorterYAMLErrors([])}
+        onClose={() => {
+          setExpandedPorterYAMLErrors([]);
+        }}
         repo={selectedRepo}
       />
 
@@ -380,15 +381,13 @@ const DeploymentList = () => {
 
 export default DeploymentList;
 
-const mockRequest = () =>
-  new Promise((res) => {
-    setTimeout(
-      () =>
-        res({
-          data: { deployments: deployments, pull_requests: pull_requests },
-        }),
-      1000
-    );
+const mockRequest = async () =>
+  await new Promise((res) => {
+    setTimeout(() => {
+      res({
+        data: { deployments, pull_requests },
+      });
+    }, 1000);
   });
 
 const LoadingWrapper = styled.div`

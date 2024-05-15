@@ -34,12 +34,15 @@ const DeploymentTargetProvider = ({
 }: {
   children: JSX.Element;
 }): JSX.Element => {
-  const { search } = useLocation();
+  const location = useLocation();
   const { currentProject, currentCluster, setCurrentCluster } =
     useContext(Context);
-  const queryParams = new URLSearchParams(search);
 
-  const deploymentTargetID = queryParams.get("target");
+  const deploymentTargetID = useMemo(() => {
+    const queryParams = new URLSearchParams(location.search);
+    return queryParams.get("target");
+  }, [location.search]);
+
   const { defaultDeploymentTarget, isDefaultDeploymentTargetLoading } =
     useDefaultDeploymentTarget();
 

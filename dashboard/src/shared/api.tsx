@@ -1075,6 +1075,16 @@ const createAppTemplate = baseApi<
   return `/api/projects/${project_id}/clusters/${cluster_id}/apps/${porter_app_name}/templates`;
 });
 
+const listTemplateEnvironments = baseApi<
+  Record<string, unknown>,
+  {
+    project_id: number;
+    cluster_id: number;
+  }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/apps/templates`;
+});
+
 const updateApp = baseApi<
   {
     deployment_target_id: string;
@@ -3876,6 +3886,7 @@ export default {
   getBranchHead,
   createApp,
   createAppTemplate,
+  listTemplateEnvironments,
   updateApp,
   appRun,
   updateBuildSettings,

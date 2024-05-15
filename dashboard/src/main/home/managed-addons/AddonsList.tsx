@@ -16,12 +16,12 @@ import Modal from "components/porter/Modal";
 import Select from "components/porter/Select";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
-import { type AppTemplateFormData } from "main/home/cluster-dashboard/preview-environments/v2/setup-app/PreviewAppDataContainer";
 import { defaultClientAddon } from "lib/addons";
 
 import postgresql from "assets/postgresql.svg";
 import redis from "assets/redis.svg";
 
+import { type AppTemplateFormData } from "../cluster-dashboard/preview-environments/v2/EnvTemplateContextProvider";
 import { AddonListRow } from "./AddonListRow";
 
 const addAddonFormValidator = z.object({

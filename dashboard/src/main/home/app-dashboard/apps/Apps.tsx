@@ -346,7 +346,7 @@ const Apps: React.FC = () => {
                 }}
               >
                 <div>
-                  {currentDeploymentTarget?.namespace ?? "Preview Apps"}
+                  {currentDeploymentTarget?.namespace ?? "Preview Environments"}
                 </div>
                 <Badge>Preview</Badge>
               </div>

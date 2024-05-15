@@ -3542,9 +3542,7 @@ const getPublishableKey = baseApi<
 
 const getCustomerUsage = baseApi<
   {
-    window_size: string;
-    starting_on?: string;
-    ending_before?: string;
+    previous_periods?: number;
     current_period?: boolean;
   },
   {
@@ -3567,9 +3565,7 @@ const getCustomerCosts = baseApi<
 );
 
 const getCustomerInvoices = baseApi<
-  {
-    status: string;
-  },
+  {},
   {
     project_id?: number;
   }

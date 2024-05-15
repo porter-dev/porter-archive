@@ -39,21 +39,16 @@ func (c *IngestEventsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 
 	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
-	if !c.Config().BillingManager.MetronomeConfigLoaded || !proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient) {
-		c.WriteResult(w, r, "")
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "lago-config-exists", Value: c.Config().BillingManager.LagoConfigLoaded},
+		telemetry.AttributeKV{Key: "lago-enabled", Value: proj.GetFeatureFlag(models.LagoEnabled, c.Config().LaunchDarklyClient)},
+		telemetry.AttributeKV{Key: "porter-cloud-enabled", Value: proj.EnableSandbox},
+	)
 
-		telemetry.WithAttributes(span,
-			telemetry.AttributeKV{Key: "metronome-config-exists", Value: c.Config().BillingManager.MetronomeConfigLoaded},
-			telemetry.AttributeKV{Key: "metronome-enabled", Value: proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient)},
-			telemetry.AttributeKV{Key: "porter-cloud-enabled", Value: proj.EnableSandbox},
-		)
+	if !c.Config().BillingManager.LagoConfigLoaded || !proj.GetFeatureFlag(models.LagoEnabled, c.Config().LaunchDarklyClient) {
+		c.WriteResult(w, r, "")
 		return
 	}
-
-	telemetry.WithAttributes(span,
-		telemetry.AttributeKV{Key: "metronome-enabled", Value: true},
-		telemetry.AttributeKV{Key: "usage-id", Value: proj.UsageID},
-	)
 
 	ingestEventsRequest := struct {
 		Events []types.BillingEvent `json:"billing_events"`
@@ -69,14 +64,25 @@ func (c *IngestEventsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		telemetry.AttributeKV{Key: "usage-events-count", Value: len(ingestEventsRequest.Events)},
 	)
 
-	// For Porter Cloud events, we apend a prefix to avoid collisions before sending to Metronome
+	// For Porter Cloud events, we apend a prefix to avoid collisions before sending to Lago
 	if proj.EnableSandbox {
 		for i := range ingestEventsRequest.Events {
 			ingestEventsRequest.Events[i].CustomerID = fmt.Sprintf("porter-cloud-%s", ingestEventsRequest.Events[i].CustomerID)
 		}
 	}
 
-	err := c.Config().BillingManager.MetronomeClient.IngestEvents(ctx, ingestEventsRequest.Events)
+	plan, err := c.Config().BillingManager.LagoClient.GetCustomeActivePlan(ctx, proj.ID, proj.EnableSandbox)
+	if err != nil {
+		err := telemetry.Error(ctx, span, err, "error getting active subscription")
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "subscription_id", Value: plan.ID},
+	)
+
+	err = c.Config().BillingManager.LagoClient.IngestEvents(ctx, plan.ID, ingestEventsRequest.Events, proj.EnableSandbox)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error ingesting events")
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))

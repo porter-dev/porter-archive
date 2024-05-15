@@ -20,6 +20,9 @@ const AddonHeader: React.FC = () => {
       .with({ type: "metabase" }, (config) => {
         return config.customDomain || config.porterDomain;
       })
+      .with({ type: "quivr" }, (config) => {
+        return config.customDomain || config.porterDomain;
+      })
       .otherwise(() => "");
   }, [addon]);
 

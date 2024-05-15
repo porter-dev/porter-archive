@@ -54,6 +54,22 @@ func (c *ListPlansHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		telemetry.AttributeKV{Key: "subscription_id", Value: plan.ID},
 	)
 
+	endingBefore, err := c.Config().BillingManager.LagoClient.CheckCustomerCouponExpiration(ctx, proj.ID, proj.EnableSandbox)
+	if err != nil {
+		err := telemetry.Error(ctx, span, err, "error listing active coupons")
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	// If the customer has a coupon, use its end date instead of the trial end date
+	if endingBefore != "" {
+		plan.TrialInfo.EndingBefore = endingBefore
+	}
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "trial-ending-at", Value: plan.TrialInfo.EndingBefore},
+	)
+
 	c.WriteResult(w, r, plan)
 }
 

@@ -60,6 +60,14 @@ type BillingEvent struct {
 	Timestamp     string                 `json:"timestamp"`
 }
 
+// AppliedCoupon represents an applied coupon in the billing system.
+type AppliedCoupon struct {
+	Status                     string `json:"status"`
+	FrequencyDuration          int    `json:"frequency_duration"`
+	FrequencyDurationRemaining int    `json:"frequency_duration_remaining"`
+	CreatedAt                  string `json:"created_at"`
+}
+
 // Wallet represents a customer credits wallet
 type Wallet struct {
 	LagoID                   uuid.UUID `json:"lago_id,omitempty"`

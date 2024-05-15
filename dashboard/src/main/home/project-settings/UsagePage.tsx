@@ -16,7 +16,7 @@ function UsagePage(): JSX.Element {
   const planStartDate = dayjs.utc(plan?.starting_on).startOf("month");
 
   const [currentPeriod, setCurrentPeriod] = useState(
-    dayjs().utc().startOf("month")
+    dayjs().utc().format("MMMM YYYY")
   );
   const [options, setOptions] = useState<
     Array<{ value: string; label: string }>
@@ -43,7 +43,7 @@ function UsagePage(): JSX.Element {
 
     if (monthsElapsed <= 0) {
       options.push({
-        value: currentPeriod.month().toString(),
+        value: currentPeriod,
         label: dayjs().utc().format("MMMM YYYY"),
       });
       setShowCurrentPeriod(true);
@@ -54,7 +54,7 @@ function UsagePage(): JSX.Element {
     for (let i = 0; i <= monthsElapsed; i++) {
       const optionDate = planStartDate.add(i, "month");
       options.push({
-        value: optionDate.month().toString(),
+        value: optionDate.format("MMMM YYYY"),
         label: optionDate.format("MMMM YYYY"),
       });
     }
@@ -69,7 +69,8 @@ function UsagePage(): JSX.Element {
 
     const periodUsage = usageList.find(
       (usage) =>
-        dayjs(usage.from_datetime).utc().month() === currentPeriod.month()
+        dayjs(usage.from_datetime).utc().month() ===
+        dayjs(currentPeriod).month()
     );
 
     if (!periodUsage) {
@@ -105,10 +106,10 @@ function UsagePage(): JSX.Element {
     <>
       <Select
         options={options}
-        value={currentPeriod.month().toString()}
+        value={currentPeriod}
         setValue={(value) => {
-          setCurrentPeriod(dayjs.utc(value));
-          if (dayjs(value).isSame(dayjs(), "month")) {
+          setCurrentPeriod(value);
+          if (dayjs().format("MMMM YYYY") === value) {
             setShowCurrentPeriod(true);
           } else {
             setShowCurrentPeriod(false);

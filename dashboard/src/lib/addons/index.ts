@@ -165,7 +165,7 @@ export function defaultClientAddon(
           type: "quivr",
         }),
       }),
-      template: ADDON_TEMPLATE_TAILSCALE,
+      template: ADDON_TEMPLATE_QUIVR,
     }))
     .exhaustive();
 }

@@ -100,9 +100,7 @@ func (m LagoClient) CreateCustomerWithPlan(ctx context.Context, userEmail string
 		}
 
 		walletName := "Porter Credits"
-		expiresAt := time.Now().UTC().AddDate(0, 1, 0).Truncate(24 * time.Hour)
-
-		err = m.CreateCreditsGrant(ctx, projectID, walletName, defaultStarterCreditsCents, &expiresAt, sandboxEnabled)
+		err = m.CreateCreditsGrant(ctx, projectID, walletName, defaultStarterCreditsCents, sandboxEnabled)
 		if err != nil {
 			return telemetry.Error(ctx, span, err, "error while creating starter credits grant")
 		}
@@ -261,7 +259,7 @@ func (m LagoClient) CheckCustomerCouponExpiration(ctx context.Context, projectID
 }
 
 // CreateCreditsGrant will create a new credit grant for the customer with the specified amount
-func (m LagoClient) CreateCreditsGrant(ctx context.Context, projectID uint, name string, grantAmount int64, expiresAt *time.Time, sandboxEnabled bool) (err error) {
+func (m LagoClient) CreateCreditsGrant(ctx context.Context, projectID uint, name string, grantAmount int64, sandboxEnabled bool) (err error) {
 	ctx, span := telemetry.NewSpan(ctx, "create-credits-grant")
 	defer span.End()
 

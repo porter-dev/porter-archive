@@ -119,35 +119,6 @@ func getLegacyDeploymentTargetRoutes(
 		Router:   r,
 	})
 
-	// DELETE /api/projects/{project_id}/clusters/{cluster_id}/deployment-targets/{deployment_target_id} -> deployment_target.DeleteDeploymentTargetHandler
-	deleteDeploymentTargetEndpoint := factory.NewAPIEndpoint(
-		&types.APIRequestMetadata{
-			Verb:   types.APIVerbDelete,
-			Method: types.HTTPVerbDelete,
-			Path: &types.Path{
-				Parent:       basePath,
-				RelativePath: fmt.Sprintf("%s/{%s}", relPath, types.URLParamDeploymentTargetID),
-			},
-			Scopes: []types.PermissionScope{
-				types.UserScope,
-				types.ProjectScope,
-				types.ClusterScope,
-			},
-		},
-	)
-
-	deleteDeploymentTargetHandler := deployment_target.NewDeleteDeploymentTargetHandler(
-		config,
-		factory.GetDecoderValidator(),
-		factory.GetResultWriter(),
-	)
-
-	routes = append(routes, &router.Route{
-		Endpoint: deleteDeploymentTargetEndpoint,
-		Handler:  deleteDeploymentTargetHandler,
-		Router:   r,
-	})
-
 	// GET /api/projects/{project_id}/clusters/{cluster_id}/deployment-targets/{deployment_target_id} -> deployment_target.GetDeploymentTargetHandler
 	getDeploymentTargetEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

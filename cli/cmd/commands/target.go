@@ -61,6 +61,22 @@ If the --preview flag is set, only deployment targets for preview environments w
 	listTargetCmd.Flags().BoolVar(&includePreviews, "preview", false, "List preview environments")
 	targetCmd.AddCommand(listTargetCmd)
 
+	deleteTargetCmd := &cobra.Command{
+		Use:   "delete",
+		Short: "Deletes a deployment target",
+		Long:  `Deletes a deployment target in the project. Currently, this command only supports the deletion of preview environments.`,
+		Run: func(cmd *cobra.Command, args []string) {
+			err := checkLoginAndRunWithConfig(cmd, cliConf, args, deleteTarget)
+			if err != nil {
+				os.Exit(1)
+			}
+		},
+	}
+
+	deleteTargetCmd.Flags().StringVar(&targetName, "name", "", "Name of deployment target")
+	deleteTargetCmd.MarkFlagRequired("name")
+	targetCmd.AddCommand(deleteTargetCmd)
+
 	return targetCmd
 }
 
@@ -122,6 +138,22 @@ func listTargets(ctx context.Context, user *types.GetAuthenticatedUserResponse, 
 	}
 
 	_ = w.Flush()
+
+	return nil
+}
+
+func deleteTarget(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
+	name, err := cmd.Flags().GetString("name")
+	if err != nil {
+		return fmt.Errorf("error finding name flag: %w", err)
+	}
+
+	err = client.DeleteDeploymentTarget(ctx, cliConf.Project, name)
+	if err != nil {
+		return fmt.Errorf("error deleting target: %w", err)
+	}
+
+	color.New(color.FgGreen).Printf("Deleted target '%s'\n", name) // nolint:errcheck
 
 	return nil
 }

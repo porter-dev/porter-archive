@@ -10,13 +10,12 @@ import (
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
-	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
-// DeleteDeploymentTargetHandler is the handler for DELETE /api/projects/{project_id}/clusters/{cluster_id}/deployment-targets/{deployment_target_id}
+// DeleteDeploymentTargetHandler is the handler for DELETE /api/projects/{project_id}/targets/{deployment_target_identifier}
 type DeleteDeploymentTargetHandler struct {
 	handlers.PorterHandlerReadWriter
 	authz.KubernetesAgentGetter
@@ -34,28 +33,20 @@ func NewDeleteDeploymentTargetHandler(
 	}
 }
 
-// ServeHTTP deletes the deployment target from the cluster
+// ServeHTTP deletes the deployment target from the project
 func (c *DeleteDeploymentTargetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx, span := telemetry.NewSpan(r.Context(), "server-delete-deployment-target-by-id")
+	ctx, span := telemetry.NewSpan(r.Context(), "server-delete-deployment-target")
 	defer span.End()
 
 	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
-
-	deploymentTargetID, reqErr := requestutils.GetURLParamString(r, types.URLParamDeploymentTargetID)
-	if reqErr != nil {
-		err := telemetry.Error(ctx, span, reqErr, "error parsing deployment target id")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-		return
-	}
-	if deploymentTargetID == "" {
-		err := telemetry.Error(ctx, span, nil, "deployment target id cannot be empty")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-		return
-	}
+	deploymentTarget, _ := ctx.Value(types.DeploymentTargetScope).(types.DeploymentTarget)
 
 	deleteReq := connect.NewRequest(&porterv1.DeleteDeploymentTargetRequest{
-		ProjectId:          int64(project.ID),
-		DeploymentTargetId: deploymentTargetID,
+		ProjectId: int64(project.ID),
+		DeploymentTargetIdentifier: &porterv1.DeploymentTargetIdentifier{
+			Id:   deploymentTarget.ID.String(),
+			Name: deploymentTarget.Name,
+		},
 	})
 
 	_, err := c.Config().ClusterControlPlaneClient.DeleteDeploymentTarget(ctx, deleteReq)

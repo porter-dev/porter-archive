@@ -226,7 +226,6 @@ const Apps: React.FC = () => {
         {},
         {
           project_id: currentProject.id,
-          cluster_id: currentCluster.id,
           deployment_target_id: currentDeploymentTarget.id,
         }
       );

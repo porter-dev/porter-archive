@@ -145,8 +145,8 @@ func (m LagoClient) CheckIfCustomerExists(ctx context.Context, projectID uint, e
 	return true, nil
 }
 
-// GetCustomeActivePlan will return the active plan for the customer
-func (m LagoClient) GetCustomeActivePlan(ctx context.Context, projectID uint, sandboxEnabled bool) (plan types.Plan, err error) {
+// GetCustomerActivePlan will return the active plan for the customer
+func (m LagoClient) GetCustomerActivePlan(ctx context.Context, projectID uint, sandboxEnabled bool) (plan types.Plan, err error) {
 	ctx, span := telemetry.NewSpan(ctx, "get-active-subscription")
 	defer span.End()
 
@@ -283,13 +283,12 @@ func (m LagoClient) CreateCreditsGrant(ctx context.Context, projectID uint, name
 			Currency:           lago.USD,
 			GrantedCredits:     strconv.FormatInt(grantAmount, 10),
 			// Rate is 1 credit = 1 cent
-			RateAmount:   "0.01",
-			ExpirationAt: expiresAt,
+			RateAmount: "0.01",
 		}
 
 		_, lagoErr := m.client.Wallet().Create(ctx, walletInput)
 		if lagoErr != nil {
-			return telemetry.Error(ctx, span, fmt.Errorf(lagoErr.ErrorCode), "failed to create credits grant")
+			return telemetry.Error(ctx, span, fmt.Errorf(lagoErr.ErrorCode), "failed to create wallet")
 		}
 
 		return nil

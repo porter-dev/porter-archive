@@ -43,7 +43,7 @@ func (c *ListPlansHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	plan, err := c.Config().BillingManager.LagoClient.GetCustomeActivePlan(ctx, proj.ID, proj.EnableSandbox)
+	plan, err := c.Config().BillingManager.LagoClient.GetCustomerActivePlan(ctx, proj.ID, proj.EnableSandbox)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error getting active subscription")
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
@@ -154,7 +154,7 @@ func (c *ListCustomerUsageHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	plan, err := c.Config().BillingManager.LagoClient.GetCustomeActivePlan(ctx, proj.ID, proj.EnableSandbox)
+	plan, err := c.Config().BillingManager.LagoClient.GetCustomerActivePlan(ctx, proj.ID, proj.EnableSandbox)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error getting active subscription")
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))

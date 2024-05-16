@@ -71,7 +71,7 @@ func (c *IngestEventsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		}
 	}
 
-	plan, err := c.Config().BillingManager.LagoClient.GetCustomeActivePlan(ctx, proj.ID, proj.EnableSandbox)
+	plan, err := c.Config().BillingManager.LagoClient.GetCustomerActivePlan(ctx, proj.ID, proj.EnableSandbox)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error getting active subscription")
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))

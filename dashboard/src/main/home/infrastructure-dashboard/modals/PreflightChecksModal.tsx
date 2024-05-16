@@ -122,7 +122,7 @@ const PreflightChecksModal: React.FC<Props> = ({
   );
 
   const acceptChanges = async (): Promise<void> => {
-    void submitAndPatchCheckSuggestions({
+    await submitAndPatchCheckSuggestions({
       preflightChecks: checksWithSuggestions,
     });
     onClose();
@@ -140,8 +140,8 @@ const PreflightChecksModal: React.FC<Props> = ({
         </Text>
         <PorterOperatorComponent>
           <Button
-            onClick={async () => {
-              await submitSkippingPreflightChecks();
+            onClick={() => {
+              void submitSkippingPreflightChecks();
             }}
             color="red"
           >
@@ -162,8 +162,8 @@ const PreflightChecksModal: React.FC<Props> = ({
         <ButtonContainer>
           {allHaveSuggestions ? (
             <Button
-              onClick={async () => {
-                await acceptChanges();
+              onClick={() => {
+                void acceptChanges();
               }}
             >
               <Icon src={file_diff} height={"15px"} />

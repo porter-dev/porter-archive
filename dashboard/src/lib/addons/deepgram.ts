@@ -5,7 +5,7 @@ export const deepgramConfigValidator = z.object({
   deepgramAPIKey: z.string().nonempty().default("*********"),
   quayUsername: z.string().nonempty().default("username"),
   quaySecret: z.string().nonempty().default("secret"),
-  quayEmail: z.string(),
+  quayEmail: z.string().nonempty().default(""),
   releaseTag: z.string().nonempty().default("release-240426"),
 });
 

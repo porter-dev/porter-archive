@@ -2,6 +2,7 @@ import Logs from "main/home/add-on-dashboard/common/Logs";
 import Settings from "main/home/add-on-dashboard/common/Settings";
 import DatadogForm from "main/home/add-on-dashboard/datadog/DatadogForm";
 import DeepgramForm from "main/home/add-on-dashboard/deepgram/DeepgramForm";
+import DeepgramOverview from "main/home/add-on-dashboard/deepgram/DeepgramOverview";
 import MetabaseForm from "main/home/add-on-dashboard/metabase/MetabaseForm";
 import MezmoForm from "main/home/add-on-dashboard/mezmo/MezmoForm";
 import NewRelicForm from "main/home/add-on-dashboard/newrelic/NewRelicForm";
@@ -292,6 +293,11 @@ export const ADDON_TEMPLATE_DEEPGRAM: AddonTemplate<"deepgram"> = {
   tags: ["Networking"],
   tabs: [
     {
+      name: "overview",
+      displayName: "Overview",
+      component: DeepgramOverview,
+    },
+    {
       name: "configuration",
       displayName: "Configuration",
       component: DeepgramForm,
@@ -314,7 +320,7 @@ export const ADDON_TEMPLATE_DEEPGRAM: AddonTemplate<"deepgram"> = {
     quayUsername: "",
     quaySecret: "",
     quayEmail: "",
-    releaseTag: "v1.0.0",
+    releaseTag: "",
   },
   isModelTemplate: true,
 };

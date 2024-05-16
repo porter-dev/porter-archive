@@ -14,22 +14,6 @@ const DeepgramForm: React.FC = () => {
   } = useFormContext<ClientAddon>();
   return (
     <div>
-      <Text size={16}> Instance type </Text>
-      <Spacer y={0.5} />
-      <Text color="helper">
-        The instance type to run the model on. Deepgram runs only on T4 GPUs and
-        we have prefilled a preferred instance type for now. Make sure the AWS
-        quota is properly set.{" "}
-      </Text>
-      <Spacer y={0.5} />
-      <ControlledInput
-        type="text"
-        width="300px"
-        {...register("config.instanceType")}
-        placeholder="g4dn-xlarge"
-        error={errors.config?.instanceType?.message}
-      />
-      <Spacer y={1} />
       <Text size={16}> Release tag </Text>
       <Spacer y={0.5} />
       <Text color="helper">
@@ -51,9 +35,9 @@ const DeepgramForm: React.FC = () => {
       <ControlledInput
         type="password"
         width="300px"
-        {...register("config.deepgramApiKey")}
+        {...register("config.deepgramAPIKey")}
         placeholder="deepgram-api-key"
-        error={errors.config?.deepgramApiKey?.message}
+        error={errors.config?.deepgramAPIKey?.message}
       />
       <Spacer y={1} />
       <Text size={16}> Quay.io Username </Text>

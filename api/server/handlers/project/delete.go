@@ -92,19 +92,24 @@ func (p *ProjectDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	if p.Config().BillingManager.MetronomeConfigLoaded && proj.GetFeatureFlag(models.MetronomeEnabled, p.Config().LaunchDarklyClient) {
-		err = p.Config().BillingManager.MetronomeClient.EndCustomerPlan(ctx, proj.UsageID, proj.UsagePlanID)
+	if p.Config().BillingManager.LagoConfigLoaded && proj.GetFeatureFlag(models.LagoEnabled, p.Config().LaunchDarklyClient) {
+		err = p.Config().BillingManager.LagoClient.DeleteCustomer(ctx, proj.ID, proj.EnableSandbox)
 		if err != nil {
 			e := "error ending billing plan"
 			err = telemetry.Error(ctx, span, err, e)
 			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 			return
 		}
-		telemetry.WithAttributes(span,
-			telemetry.AttributeKV{Key: "project-id", Value: proj.ID},
-			telemetry.AttributeKV{Key: "usage-id", Value: proj.UsageID},
-			telemetry.AttributeKV{Key: "usage-plan-id", Value: proj.UsagePlanID},
-		)
+	}
+
+	if p.Config().BillingManager.StripeConfigLoaded && proj.GetFeatureFlag(models.BillingEnabled, p.Config().LaunchDarklyClient) {
+		err = p.Config().BillingManager.StripeClient.DeleteCustomer(ctx, proj.BillingID)
+		if err != nil {
+			e := "error deleting stripe customer"
+			err = telemetry.Error(ctx, span, err, e)
+			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
 	}
 
 	deletedProject, err := p.Repo().Project().DeleteProject(proj)

@@ -19,7 +19,7 @@ import Link from "components/porter/Link";
 import Modal from "components/porter/Modal";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
-import { useCustomerPlan } from "lib/hooks/useMetronome";
+import { useCustomerPlan } from "lib/hooks/useLago";
 import { checkIfProjectHasPayment } from "lib/hooks/useStripe";
 
 import api from "shared/api";
@@ -65,6 +65,7 @@ import CreateClusterForm from "./infrastructure-dashboard/forms/CreateClusterFor
 import Integrations from "./integrations/Integrations";
 import LaunchWrapper from "./launch/LaunchWrapper";
 import ModalHandler from "./ModalHandler";
+import BillingModal from "./modals/BillingModal";
 import Navbar from "./navbar/Navbar";
 import { NewProjectFC } from "./new-project/NewProject";
 import Onboarding from "./onboarding/Onboarding";
@@ -400,13 +401,14 @@ const Home: React.FC<Props> = (props) => {
       <DeploymentTargetProvider>
         <StyledHome
           padTop={
-            !currentProject?.sandbox_enabled &&
-            showCardBanner &&
-            currentProject?.billing_enabled &&
-            currentProject?.metronome_enabled &&
-            !trialExpired &&
-            plan &&
-            true
+            (!currentProject?.sandbox_enabled &&
+              showCardBanner &&
+              currentProject?.billing_enabled &&
+              currentProject?.metronome_enabled &&
+              !trialExpired &&
+              plan &&
+              true) ||
+            currentProject?.freeze_enabled
           }
         >
           {!currentProject?.sandbox_enabled &&
@@ -433,6 +435,14 @@ const Home: React.FC<Props> = (props) => {
                 )}
               </>
             )}
+          {currentProject?.freeze_enabled && (
+            <GlobalBanner>
+              <i className="material-icons-round">warning</i>
+              This project has been disabled due to recurring issues with the
+              connected payment method. Please contact support@porter.run to
+              reenable this project.
+            </GlobalBanner>
+          )}
           {showBillingModal && (
             <BillingModal
               back={() => {
@@ -716,6 +726,7 @@ export default withRouter(withAuth(Home));
 const GlobalBanner = styled.div`
   width: 100vw;
   z-index: 999;
+  padding: 20px;
   position: fixed;
   top: 0;
   color: #fefefe;

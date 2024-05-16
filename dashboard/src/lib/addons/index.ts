@@ -8,6 +8,7 @@ import {
   Mezmo,
   Newrelic,
   Postgres,
+  Quivr,
   Redis,
   Tailscale,
 } from "@porter-dev/api-contracts/src/porter/v1/addons_pb";
@@ -22,6 +23,7 @@ import { metabaseConfigValidator } from "./metabase";
 import { mezmoConfigValidator } from "./mezmo";
 import { newrelicConfigValidator } from "./newrelic";
 import { defaultPostgresAddon, postgresConfigValidator } from "./postgres";
+import { quivrConfigValidator } from "./quivr";
 import { redisConfigValidator } from "./redis";
 import { tailscaleConfigValidator } from "./tailscale";
 import {
@@ -31,6 +33,7 @@ import {
   ADDON_TEMPLATE_MEZMO,
   ADDON_TEMPLATE_NEWRELIC,
   ADDON_TEMPLATE_POSTGRES,
+  ADDON_TEMPLATE_QUIVR,
   ADDON_TEMPLATE_REDIS,
   ADDON_TEMPLATE_TAILSCALE,
   type AddonTemplate,
@@ -59,6 +62,7 @@ export const clientAddonValidator = z.object({
     newrelicConfigValidator,
     tailscaleConfigValidator,
     deepgramConfigValidator,
+    quivrConfigValidator,
   ]),
 });
 export type ClientAddonType = z.infer<
@@ -174,6 +178,16 @@ export function defaultClientAddon(
       }),
       template: ADDON_TEMPLATE_DEEPGRAM,
     }))
+    .with("quivr", () => ({
+      ...clientAddonValidator.parse({
+        expanded: true,
+        name: { readOnly: false, value: "quivr" },
+        config: quivrConfigValidator.parse({
+          type: "quivr",
+        }),
+      }),
+      template: ADDON_TEMPLATE_QUIVR,
+    }))
     .exhaustive();
 }
 
@@ -187,6 +201,7 @@ function addonTypeEnumProto(type: ClientAddon["config"]["type"]): AddonType {
     .with("newrelic", () => AddonType.NEWRELIC)
     .with("tailscale", () => AddonType.TAILSCALE)
     .with("deepgram", () => AddonType.DEEPGRAM)
+    .with("quivr", () => AddonType.QUIVR)
     .exhaustive();
 }
 
@@ -282,10 +297,34 @@ export function clientAddonToProto(
         ecrUsername: data.quayUsername,
         ecrPassword: data.quaySecret,
         ecrEmail: data.quayEmail,
-        instanceType: data.instanceType,
         releaseTag: data.releaseTag,
       }),
       case: "deepgram" as const,
+    }))
+    .with({ type: "quivr" }, (data) => ({
+      value: new Quivr({
+        ingressEnabled: data.exposedToExternalTraffic,
+        domains: [
+          {
+            name: data.customDomain,
+            type: DomainType.UNSPECIFIED,
+          },
+          {
+            name: data.porterDomain,
+            type: DomainType.PORTER,
+          },
+          // if not exposed, remove all domains
+        ].filter((d) => d.name !== "" && data.exposedToExternalTraffic),
+        openaiApiKey: data.openAiApiKey,
+        supabaseUrl: data.supabaseUrl,
+        supabaseServiceKey: data.supabaseServiceKey,
+        pgDatabaseUrl: data.pgDatabaseUrl,
+        jwtSecretKey: data.jwtSecretKey,
+        quivrDomain: data.quivrDomain,
+        anthropicApiKey: data.anthropicApiKey,
+        cohereApiKey: data.cohereApiKey,
+      }),
+      case: "quivr" as const,
     }))
     .exhaustive();
 
@@ -405,7 +444,25 @@ export function clientAddonFromProto({
       quaySecret: data.value.ecrPassword ?? "",
       quayEmail: data.value.ecrEmail ?? "",
       releaseTag: data.value.releaseTag ?? "",
-      instanceType: "g4dn.xlarge" as const,
+    }))
+    .with({ case: "quivr" }, (data) => ({
+      type: "quivr" as const,
+      exposedToExternalTraffic: data.value.ingressEnabled ?? false,
+      porterDomain:
+        data.value.domains.find((domain) => domain.type === DomainType.PORTER)
+          ?.name ?? "",
+      customDomain:
+        data.value.domains.find(
+          (domain) => domain.type === DomainType.UNSPECIFIED
+        )?.name ?? "",
+      openAiApiKey: data.value.openaiApiKey ?? "",
+      supabaseUrl: data.value.supabaseUrl ?? "",
+      supabaseServiceKey: data.value.supabaseServiceKey ?? "",
+      pgDatabaseUrl: data.value.pgDatabaseUrl ?? "",
+      jwtSecretKey: data.value.jwtSecretKey ?? "",
+      quivrDomain: data.value.quivrDomain ?? "",
+      anthropicApiKey: data.value.anthropicApiKey ?? "",
+      cohereApiKey: data.value.cohereApiKey ?? "",
     }))
     .exhaustive();
 
@@ -418,6 +475,7 @@ export function clientAddonFromProto({
     .with({ case: "newrelic" }, () => ADDON_TEMPLATE_NEWRELIC)
     .with({ case: "tailscale" }, () => ADDON_TEMPLATE_TAILSCALE)
     .with({ case: "deepgram" }, () => ADDON_TEMPLATE_DEEPGRAM)
+    .with({ case: "quivr" }, () => ADDON_TEMPLATE_QUIVR)
     .exhaustive();
 
   const clientAddon = {

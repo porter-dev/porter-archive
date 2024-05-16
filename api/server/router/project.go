@@ -4,6 +4,8 @@ import (
 	"fmt"
 
 	"github.com/porter-dev/porter/api/server/handlers/cloud_provider"
+	"github.com/porter-dev/porter/api/server/handlers/neon_integration"
+	"github.com/porter-dev/porter/api/server/handlers/upstash_integration"
 
 	"github.com/porter-dev/porter/api/server/handlers/deployment_target"
 
@@ -449,34 +451,6 @@ func getProjectRoutes(
 	routes = append(routes, &router.Route{
 		Endpoint: listCustomerUsageEndpoint,
 		Handler:  listCustomerUsageHandler,
-		Router:   r,
-	})
-
-	// GET /api/projects/{project_id}/billing/costs -> project.NewListCustomerCostsHandler
-	listCustomerCostsEndpoint := factory.NewAPIEndpoint(
-		&types.APIRequestMetadata{
-			Verb:   types.APIVerbGet,
-			Method: types.HTTPVerbGet,
-			Path: &types.Path{
-				Parent:       basePath,
-				RelativePath: relPath + "/billing/costs",
-			},
-			Scopes: []types.PermissionScope{
-				types.UserScope,
-				types.ProjectScope,
-			},
-		},
-	)
-
-	listCustomerCostsHandler := billing.NewListCustomerCostsHandler(
-		config,
-		factory.GetDecoderValidator(),
-		factory.GetResultWriter(),
-	)
-
-	routes = append(routes, &router.Route{
-		Endpoint: listCustomerCostsEndpoint,
-		Handler:  listCustomerCostsHandler,
 		Router:   r,
 	})
 
@@ -2018,6 +1992,60 @@ func getProjectRoutes(
 	routes = append(routes, &router.Route{
 		Endpoint: createDeploymentTargetEndpoint,
 		Handler:  createDeploymentTargetHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/neon-integrations -> apiContract.NewListNeonIntegrationsHandler
+	listNeonIntegrationsEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/neon-integrations",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	listNeonIntegrationsHandler := neon_integration.NewListNeonIntegrationsHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+	routes = append(routes, &router.Route{
+		Endpoint: listNeonIntegrationsEndpoint,
+		Handler:  listNeonIntegrationsHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/upstash-integrations -> apiContract.NewListUpstashIntegrationsHandler
+	listUpstashIntegrationsEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/upstash-integrations",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	listUpstashIntegrationsHandler := upstash_integration.NewListUpstashIntegrationsHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+	routes = append(routes, &router.Route{
+		Endpoint: listUpstashIntegrationsEndpoint,
+		Handler:  listUpstashIntegrationsHandler,
 		Router:   r,
 	})
 

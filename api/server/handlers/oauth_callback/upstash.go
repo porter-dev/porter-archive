@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/golang-jwt/jwt"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
@@ -100,6 +101,25 @@ func (p *OAuthCallbackUpstashHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		return
 	}
 
+	t, _, err := new(jwt.Parser).ParseUnverified(token.AccessToken, jwt.MapClaims{}) // safe to use because we validated the token above
+	if err != nil {
+		err = telemetry.Error(ctx, span, err, "error parsing token")
+		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+
+	var email string
+	if claims, ok := t.Claims.(jwt.MapClaims); ok {
+		if emailVal, ok := claims["https://user.io/email"].(string); ok {
+			email = emailVal
+		}
+	}
+	if email == "" {
+		err = telemetry.Error(ctx, span, nil, "email not found in token")
+		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+
 	// make an http call to https://api.upstash.com/apikey with authorization: bearer <access_token>
 	// to get the api key
 	apiKey, err := fetchUpstashApiKey(ctx, token.AccessToken)
@@ -111,12 +131,14 @@ func (p *OAuthCallbackUpstashHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 
 	oauthInt := integrations.UpstashIntegration{
 		SharedOAuthModel: integrations.SharedOAuthModel{
+			ClientID:     []byte(p.Config().UpstashConf.ClientID),
 			AccessToken:  []byte(token.AccessToken),
 			RefreshToken: []byte(token.RefreshToken),
 			Expiry:       token.Expiry,
 		},
 		ProjectID:       projID,
 		DeveloperApiKey: []byte(apiKey),
+		UpstashEmail:    email,
 	}
 
 	_, err = p.Repo().UpstashIntegration().Insert(ctx, oauthInt)

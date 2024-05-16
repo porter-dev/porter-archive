@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/google/uuid"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
@@ -100,10 +99,9 @@ func (c *CheckPaymentEnabledHandler) ensureBillingSetup(ctx context.Context, pro
 
 	telemetry.WithAttributes(span,
 		telemetry.AttributeKV{Key: "billing-id", Value: proj.BillingID},
-		telemetry.AttributeKV{Key: "usage-id", Value: proj.UsageID},
 	)
 
-	if proj.BillingID == "" || proj.UsageID == uuid.Nil {
+	if proj.BillingID == "" {
 		adminUser, err := c.getAdminUser(ctx, proj.ID)
 		if err != nil {
 			return telemetry.Error(ctx, span, err, "error getting admin user")
@@ -119,11 +117,19 @@ func (c *CheckPaymentEnabledHandler) ensureBillingSetup(ctx context.Context, pro
 		if err != nil {
 			return telemetry.Error(ctx, span, err, "error ensuring Stripe customer exists")
 		}
+	}
+
+	lagoCustomerExists := false
+	if !lagoCustomerExists {
+		adminUser, err := c.getAdminUser(ctx, proj.ID)
+		if err != nil {
+			return telemetry.Error(ctx, span, err, "error getting admin user")
+		}
 
 		// Create usage customer for project and set the usage ID if it doesn't exist
-		err = c.ensureMetronomeCustomerExists(ctx, adminUser.Email, proj)
+		err = c.ensureLagoCustomerExists(ctx, adminUser.Email, proj)
 		if err != nil {
-			return telemetry.Error(ctx, span, err, "error ensuring Metronome customer exists")
+			return telemetry.Error(ctx, span, err, "error ensuring Lago customer exists")
 		}
 	}
 
@@ -189,30 +195,31 @@ func (c *CheckPaymentEnabledHandler) ensureStripeCustomerExists(ctx context.Cont
 	return nil
 }
 
-func (c *CheckPaymentEnabledHandler) ensureMetronomeCustomerExists(ctx context.Context, adminUserEmail string, proj *models.Project) (err error) {
-	ctx, span := telemetry.NewSpan(ctx, "ensure-metronome-customer-exists")
+func (c *CheckPaymentEnabledHandler) ensureLagoCustomerExists(ctx context.Context, adminUserEmail string, proj *models.Project) (err error) {
+	ctx, span := telemetry.NewSpan(ctx, "ensure-lago-customer-exists")
 	defer span.End()
 
-	if !c.Config().BillingManager.MetronomeConfigLoaded || !proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient) || proj.UsageID != uuid.Nil {
+	if !c.Config().BillingManager.LagoConfigLoaded || !proj.GetFeatureFlag(models.LagoEnabled, c.Config().LaunchDarklyClient) {
 		return nil
 	}
 
-	customerID, customerPlanID, err := c.Config().BillingManager.MetronomeClient.CreateCustomerWithPlan(ctx, adminUserEmail, proj.Name, proj.ID, proj.BillingID, proj.EnableSandbox)
+	// Check if the customer already exists
+	exists, err := c.Config().BillingManager.LagoClient.CheckIfCustomerExists(ctx, proj.ID, proj.EnableSandbox)
 	if err != nil {
-		return telemetry.Error(ctx, span, err, "error creating Metronome customer")
+		return telemetry.Error(ctx, span, err, "error while checking if customer exists")
 	}
 
 	telemetry.WithAttributes(span,
-		telemetry.AttributeKV{Key: "usage-id", Value: proj.UsageID},
-		telemetry.AttributeKV{Key: "usage-plan-id", Value: proj.UsagePlanID},
+		telemetry.AttributeKV{Key: "customer-exists", Value: exists},
 	)
 
-	proj.UsageID = customerID
-	proj.UsagePlanID = customerPlanID
+	if exists {
+		return nil
+	}
 
-	_, err = c.Repo().Project().UpdateProject(proj)
+	err = c.Config().BillingManager.LagoClient.CreateCustomerWithPlan(ctx, adminUserEmail, proj.Name, proj.ID, proj.BillingID, proj.EnableSandbox)
 	if err != nil {
-		return telemetry.Error(ctx, span, err, "error updating project")
+		return telemetry.Error(ctx, span, err, "error creating Lago customer")
 	}
 
 	return nil

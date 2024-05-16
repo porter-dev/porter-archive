@@ -93,6 +93,7 @@ func (p *OAuthCallbackNeonHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 
 	oauthInt := integrations.NeonIntegration{
 		SharedOAuthModel: integrations.SharedOAuthModel{
+			ClientID:     []byte(p.Config().NeonConf.ClientID),
 			AccessToken:  []byte(token.AccessToken),
 			RefreshToken: []byte(token.RefreshToken),
 			Expiry:       token.Expiry,

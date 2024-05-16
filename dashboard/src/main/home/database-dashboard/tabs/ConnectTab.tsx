@@ -59,7 +59,7 @@ const ConnectTab: React.FC = () => {
         <Spacer y={0.5} />
         <ConnectionInfo
           connectionInfo={datastore.credential}
-          engine={datastore.template.engine}
+          template={datastore.template}
         />
         <Spacer y={0.5} />
         <Text color="warner">
@@ -124,14 +124,14 @@ const ConnectTab: React.FC = () => {
 
 export default ConnectTab;
 
-const ConnectTabContainer = styled.div`
+export const ConnectTabContainer = styled.div`
   width: 100%;
   height: 100%;
   display: flex;
   flex-direction: row;
 `;
 
-const IdContainer = styled.div`
+export const IdContainer = styled.div`
   width: fit-content;
   background: #000000;
   border-radius: 5px;

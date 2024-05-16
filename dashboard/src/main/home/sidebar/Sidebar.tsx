@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 import { withRouter, type RouteComponentProps } from "react-router";
 import styled from "styled-components";
+import { match } from "ts-pattern";
 
 import Container from "components/porter/Container";
 import Image from "components/porter/Image";
@@ -204,8 +205,12 @@ class Sidebar extends Component<PropsType, StateType> {
                   <Img src={database} />
                   Datastores
                 </Container>
-                {(currentProject.sandbox_enabled ||
-                  !currentProject.db_enabled) && <Image size={15} src={lock} />}
+                {match(currentProject)
+                  .with({ sandbox_enabled: true }, () => <Badge>NEW</Badge>)
+                  .with({ db_enabled: false }, () => (
+                    <Image size={15} src={lock}></Image>
+                  ))
+                  .otherwise(() => null)}
               </Container>
             </NavButton>
             {this.props.isAuthorized("settings", "", [
@@ -277,7 +282,7 @@ class Sidebar extends Component<PropsType, StateType> {
               <Container row spaced style={{ width: "100%" }}>
                 <Container row>
                   <Img src={pr_icon} />
-                  Preview apps
+                  Preview environments
                 </Container>
                 {(currentProject.sandbox_enabled ||
                   !currentProject.preview_envs_enabled) && (
@@ -315,6 +320,12 @@ class Sidebar extends Component<PropsType, StateType> {
                   <Img src={database} />
                   Datastores
                 </Container>
+                {match(currentProject)
+                  .with({ sandbox_enabled: true }, () => <Badge>NEW</Badge>)
+                  .with({ db_enabled: false }, () => (
+                    <Image size={15} src={lock}></Image>
+                  ))
+                  .otherwise(() => null)}
               </Container>
             </NavButton>
             <NavButton
@@ -358,17 +369,6 @@ class Sidebar extends Component<PropsType, StateType> {
                 </Container>
               </NavButton>
             )}
-
-            <NavButton path="/preview-environments">
-              <Container row spaced style={{ width: "100%" }}>
-                <Container row>
-                  <Img src={pr_icon} />
-                  Preview apps
-                </Container>
-                {!currentProject.preview_envs_enabled && <Badge>Beta</Badge>}
-              </Container>
-            </NavButton>
-
             {!currentProject.sandbox_enabled && (
               <NavButton
                 path={
@@ -392,6 +392,15 @@ class Sidebar extends Component<PropsType, StateType> {
                 </Container>
               </NavButton>
             )}
+            <NavButton path="/preview-environments">
+              <Container row spaced style={{ width: "100%" }}>
+                <Container row>
+                  <Img src={pr_icon} />
+                  Preview environments
+                </Container>
+                {!currentProject.preview_envs_enabled && <Badge>Beta</Badge>}
+              </Container>
+            </NavButton>
 
             <NavButton path="/compliance">
               <Container row spaced style={{ width: "100%" }}>

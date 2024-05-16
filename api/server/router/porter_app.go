@@ -1589,6 +1589,35 @@ func getPorterAppRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/apps/templates -> porter_app.NewListEnvironmentTemplatesHandler
+	listEnvironmentTemplatesEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbList,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/templates", relPathV2),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	listEnvironmentTemplatesHandler := porter_app.NewListEnvironmentTemplatesHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: listEnvironmentTemplatesEndpoint,
+		Handler:  listEnvironmentTemplatesHandler,
+		Router:   r,
+	})
+
 	// GET /api/projects/{project_id}/clusters/{cluster_id}/apps/{porter_app_name}/templates -> porter_app.NewGetAppTemplateHandler
 	getAppTemplateEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

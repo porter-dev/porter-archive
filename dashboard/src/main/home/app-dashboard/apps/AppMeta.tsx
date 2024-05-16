@@ -4,6 +4,7 @@ import styled from "styled-components";
 import Container from "components/porter/Container";
 import Icon from "components/porter/Icon";
 import Text from "components/porter/Text";
+import { type ClientPorterApp } from "lib/porter-apps";
 
 import box from "assets/box.png";
 import git_scm from "assets/git-scm.svg";
@@ -26,13 +27,49 @@ type IconProps = {
 };
 
 type SourceProps = {
-  source: AppRevisionWithSource["source"];
+  source:
+    | {
+        from: "porter_apps";
+        details: AppRevisionWithSource["source"];
+      }
+    | {
+        from: "app_contract";
+        details: ClientPorterApp;
+      };
 };
 
 export const AppSource: React.FC<SourceProps> = ({ source }) => {
+  if (source.from === "app_contract") {
+    const build = source.details.build;
+    const repoFullName = build.repo
+      ? new URL(build.repo).pathname.substring(1)
+      : "";
+    return (
+      <>
+        {build.repo ? (
+          <Container row>
+            <SmallIcon opacity="0.6" src={github} />
+            <Text truncate={true} size={13} color="#ffffff44">
+              {repoFullName.endsWith(".git")
+                ? repoFullName.slice(0, -4)
+                : repoFullName}
+            </Text>
+          </Container>
+        ) : (
+          <Container row>
+            <SmallIcon opacity="0.6" height="18px" src={box} />
+            <Text truncate={true} size={13} color="#ffffff44">
+              {source.details.name.value}
+            </Text>
+          </Container>
+        )}
+      </>
+    );
+  }
+
   return (
     <>
-      {source.image_repo_uri ? (
+      {source.details.image_repo_uri ? (
         <Container row>
           <SmallIcon
             opacity="0.7"
@@ -40,21 +77,21 @@ export const AppSource: React.FC<SourceProps> = ({ source }) => {
             src="https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/97_Docker_logo_logos-512.png"
           />
           <Text truncate={true} size={13} color="#ffffff44">
-            {source.image_repo_uri}
+            {source.details.image_repo_uri}
           </Text>
         </Container>
-      ) : source.repo_name ? (
+      ) : source.details.repo_name ? (
         <Container row>
           <SmallIcon opacity="0.6" src={github} />
           <Text truncate={true} size={13} color="#ffffff44">
-            {source.repo_name}
+            {source.details.repo_name}
           </Text>
         </Container>
       ) : (
         <Container row>
           <SmallIcon src={git_scm} />
           <Text truncate={true} size={13} color="#ffffff44">
-            {source.name}
+            {source.details.name}
           </Text>
         </Container>
       )}

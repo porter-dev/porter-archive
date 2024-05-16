@@ -193,6 +193,36 @@ export const porterAppFormValidator = basePorterAppFormValidator
   );
 export type PorterAppFormData = z.infer<typeof porterAppFormValidator>;
 
+export const APP_CREATE_FORM_DEFAULTS = {
+  app: {
+    name: {
+      value: "",
+      readOnly: false,
+    },
+    build: {
+      method: "pack" as const,
+      context: "./",
+      builder: "",
+      buildpacks: [],
+    },
+    env: [],
+    efsStorage: {
+      enabled: false,
+    },
+  },
+  source: {
+    git_repo_name: "",
+    git_branch: "",
+    porter_yaml_path: "",
+  },
+  deletions: {
+    serviceNames: [],
+    envGroupNames: [],
+    predeploy: [],
+    initialDeploy: [],
+  },
+};
+
 // serviceOverrides is used to generate the services overrides for an app from porter.yaml
 // this method is only called when a porter.yaml is present and has services defined
 export function serviceOverrides({
@@ -350,6 +380,7 @@ const clientBuildToProto = (build: BuildOptions): Build => {
           context: b.context,
           buildpacks: b.buildpacks.map((b) => b.buildpack),
           builder: b.builder,
+          repo: b.repo,
         })
     )
     .with(
@@ -359,6 +390,7 @@ const clientBuildToProto = (build: BuildOptions): Build => {
           method: "docker",
           context: b.context,
           dockerfile: b.dockerfile,
+          repo: b.repo,
         })
     )
     .exhaustive();
@@ -479,11 +511,13 @@ const clientBuildFromProto = (proto?: Build): BuildOptions | undefined => {
         context: z.string(),
         buildpacks: z.array(z.string()).default([]),
         builder: z.string(),
+        repo: z.string().optional(),
       }),
       z.object({
         method: z.literal("docker"),
         context: z.string(),
         dockerfile: z.string(),
+        repo: z.string().optional(),
       }),
     ])
     .safeParse(proto);
@@ -504,6 +538,7 @@ const clientBuildFromProto = (proto?: Build): BuildOptions | undefined => {
           buildpack: b,
         })),
         builder: b.builder,
+        repo: b.repo,
       })
     )
     .with({ method: "docker" }, (b) =>
@@ -511,6 +546,7 @@ const clientBuildFromProto = (proto?: Build): BuildOptions | undefined => {
         method: b.method,
         context: b.context,
         dockerfile: b.dockerfile,
+        repo: b.repo,
       })
     )
     .exhaustive();
@@ -612,8 +648,8 @@ export function clientAppFromProto({
       value: proto.name,
     },
     services,
-    predeploy: predeployList.length ? predeployList : undefined,
-    initialDeploy: initialDeployList.length ? initialDeployList : undefined,
+    predeploy: predeployList,
+    initialDeploy: initialDeployList,
     env: parsedEnv,
     envGroups: proto.envGroups.map((eg) => ({
       name: eg.name,

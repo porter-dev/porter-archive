@@ -3,7 +3,6 @@ package project
 import (
 	"net/http"
 
-	"github.com/google/uuid"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
@@ -100,23 +99,17 @@ func (p *ProjectCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		)
 	}
 
-	// Create Metronome customer and add to starter plan
-	if p.Config().BillingManager.MetronomeConfigLoaded && proj.GetFeatureFlag(models.MetronomeEnabled, p.Config().LaunchDarklyClient) {
-		customerID, customerPlanID, err := p.Config().BillingManager.MetronomeClient.CreateCustomerWithPlan(ctx, user.Email, proj.Name, proj.ID, proj.BillingID, proj.EnableSandbox)
+	// Create Lago customer and add to starter plan
+	if p.Config().BillingManager.LagoConfigLoaded && proj.GetFeatureFlag(models.LagoEnabled, p.Config().LaunchDarklyClient) {
+		err := p.Config().BillingManager.LagoClient.CreateCustomerWithPlan(ctx, user.Email, proj.Name, proj.ID, proj.BillingID, proj.EnableSandbox)
 		if err != nil {
-			err = telemetry.Error(ctx, span, err, "error creating Metronome customer")
+			err = telemetry.Error(ctx, span, err, "error creating usage customer")
 			p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 			return
 		}
-		proj.UsageID = customerID
-		proj.UsagePlanID = customerPlanID
-		telemetry.WithAttributes(span,
-			telemetry.AttributeKV{Key: "usage-id", Value: proj.UsageID},
-			telemetry.AttributeKV{Key: "usage-plan-id", Value: proj.UsagePlanID},
-		)
 	}
 
-	if proj.BillingID != "" || proj.UsageID != uuid.Nil {
+	if proj.BillingID != "" {
 		_, err = p.Repo().Project().UpdateProject(proj)
 		if err != nil {
 			err := telemetry.Error(ctx, span, err, "error updating project")

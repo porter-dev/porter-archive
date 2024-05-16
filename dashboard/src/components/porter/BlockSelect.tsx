@@ -100,6 +100,7 @@ const Block = styled.div<{ selected?: boolean; disabled?: boolean }>`
   display: flex;
   flex-direction: column;
   height: 100%;
+  width: 100%;
   align-items: left;
   user-select: none;
   font-size: 13px;

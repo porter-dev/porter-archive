@@ -8,6 +8,7 @@ import DatadogForm from "../datadog/DatadogForm";
 import MetabaseForm from "../metabase/MetabaseForm";
 import MezmoForm from "../mezmo/MezmoForm";
 import NewRelicForm from "../newrelic/NewRelicForm";
+import QuivrForm from "../quivr/QuivrForm";
 import TailscaleForm from "../tailscale/TailscaleForm";
 
 type Props = {
@@ -22,6 +23,7 @@ const Configuration: React.FC<Props> = ({ type }) => {
     .with("newrelic", () => <NewRelicForm />)
     .with("tailscale", () => <TailscaleForm />)
     .with("deepgram", () => <DeepgramForm />)
+    .with("quivr", () => <QuivrForm />)
     .otherwise(() => null);
 };
 

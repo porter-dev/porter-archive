@@ -2,6 +2,9 @@
 package billing
 
 import (
+	"bytes"
+	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -36,21 +39,16 @@ func (c *IngestEventsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 
 	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
-	if !c.Config().BillingManager.MetronomeConfigLoaded || !proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient) {
-		c.WriteResult(w, r, "")
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "lago-config-exists", Value: c.Config().BillingManager.LagoConfigLoaded},
+		telemetry.AttributeKV{Key: "lago-enabled", Value: proj.GetFeatureFlag(models.LagoEnabled, c.Config().LaunchDarklyClient)},
+		telemetry.AttributeKV{Key: "porter-cloud-enabled", Value: proj.EnableSandbox},
+	)
 
-		telemetry.WithAttributes(span,
-			telemetry.AttributeKV{Key: "metronome-config-exists", Value: c.Config().BillingManager.MetronomeConfigLoaded},
-			telemetry.AttributeKV{Key: "metronome-enabled", Value: proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient)},
-			telemetry.AttributeKV{Key: "porter-cloud-enabled", Value: proj.EnableSandbox},
-		)
+	if !c.Config().BillingManager.LagoConfigLoaded || !proj.GetFeatureFlag(models.LagoEnabled, c.Config().LaunchDarklyClient) {
+		c.WriteResult(w, r, "")
 		return
 	}
-
-	telemetry.WithAttributes(span,
-		telemetry.AttributeKV{Key: "metronome-enabled", Value: true},
-		telemetry.AttributeKV{Key: "usage-id", Value: proj.UsageID},
-	)
 
 	ingestEventsRequest := struct {
 		Events []types.BillingEvent `json:"billing_events"`
@@ -66,19 +64,69 @@ func (c *IngestEventsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		telemetry.AttributeKV{Key: "usage-events-count", Value: len(ingestEventsRequest.Events)},
 	)
 
-	// For Porter Cloud events, we apend a prefix to avoid collisions before sending to Metronome
+	// For Porter Cloud events, we apend a prefix to avoid collisions before sending to Lago
 	if proj.EnableSandbox {
 		for i := range ingestEventsRequest.Events {
 			ingestEventsRequest.Events[i].CustomerID = fmt.Sprintf("porter-cloud-%s", ingestEventsRequest.Events[i].CustomerID)
 		}
 	}
 
-	err := c.Config().BillingManager.MetronomeClient.IngestEvents(ctx, ingestEventsRequest.Events)
+	plan, err := c.Config().BillingManager.LagoClient.GetCustomerActivePlan(ctx, proj.ID, proj.EnableSandbox)
+	if err != nil {
+		err := telemetry.Error(ctx, span, err, "error getting active subscription")
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "subscription_id", Value: plan.ID},
+	)
+
+	err = c.Config().BillingManager.LagoClient.IngestEvents(ctx, plan.ID, ingestEventsRequest.Events, proj.EnableSandbox)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error ingesting events")
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
+	// Call the ingest health endpoint
+	err = c.postIngestHealthEndpoint(ctx, proj.ID)
+	if err != nil {
+		err := telemetry.Error(ctx, span, err, "error calling ingest health endpoint")
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		return
+	}
+
 	c.WriteResult(w, r, "")
+}
+
+func (c *IngestEventsHandler) postIngestHealthEndpoint(ctx context.Context, projectID uint) (err error) {
+	ctx, span := telemetry.NewSpan(ctx, "post-ingest-health-endpoint")
+	defer span.End()
+
+	// Call the ingest check webhook
+	webhookUrl := c.Config().ServerConf.IngestStatusWebhookUrl
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "ingest-status-webhook-url", Value: webhookUrl})
+
+	if webhookUrl == "" {
+		return nil
+	}
+
+	req := struct {
+		ProjectID uint `json:"project_id"`
+	}{
+		ProjectID: projectID,
+	}
+
+	reqBody, err := json.Marshal(req)
+	if err != nil {
+		return telemetry.Error(ctx, span, err, "error marshalling ingest status webhook request")
+	}
+
+	client := &http.Client{}
+	resp, err := client.Post(webhookUrl, "application/json", bytes.NewBuffer(reqBody))
+	if err != nil || resp.StatusCode != http.StatusOK {
+		return telemetry.Error(ctx, span, err, "error sending ingest status webhook request")
+	}
+	return nil
 }

@@ -1,28 +1,19 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { type PorterApp } from "@porter-dev/api-contracts";
-import axios from "axios";
+import React, { useEffect, useMemo, useState } from "react";
 import _ from "lodash";
-import { FormProvider, useForm } from "react-hook-form";
-import { useHistory } from "react-router";
+import { useFormContext } from "react-hook-form";
 import { match } from "ts-pattern";
-import { z } from "zod";
 
-import Error from "components/porter/Error";
 import Spacer from "components/porter/Spacer";
 import TabSelector from "components/TabSelector";
 import { useLatestRevision } from "main/home/app-dashboard/app-view/LatestRevisionContext";
 import Environment from "main/home/app-dashboard/app-view/tabs/Environment";
-import {
-  clientAddonFromProto,
-  clientAddonToProto,
-  clientAddonValidator,
-} from "lib/addons";
+import { clientAddonFromProto } from "lib/addons";
 import { useAppWithPreviewOverrides } from "lib/hooks/useAppWithPreviewOverrides";
-import { basePorterAppFormValidator, clientAppToProto } from "lib/porter-apps";
 
-import api from "shared/api";
-
+import {
+  useEnvTemplate,
+  type AppTemplateFormData,
+} from "../EnvTemplateContextProvider";
 import { type ExistingTemplateWithEnv } from "../types";
 import { Addons } from "./Addons";
 import { PreviewGHAModal } from "./PreviewGHAModal";
@@ -42,47 +33,22 @@ const previewEnvSettingsTabs = [
 
 type PreviewEnvSettingsTab = (typeof previewEnvSettingsTabs)[number];
 
-const appTemplateClientValidator = basePorterAppFormValidator.extend({
-  addons: z.array(clientAddonValidator).default([]),
-});
-export type AppTemplateFormData = z.infer<typeof appTemplateClientValidator>;
-
-type EncodedAddonWithEnv = {
-  base64_addon: string;
-  variables: Record<string, string>;
-  secrets: Record<string, string>;
-};
-
 export const PreviewAppDataContainer: React.FC<Props> = ({
   existingTemplate,
 }) => {
-  const history = useHistory();
-
   const [tab, setTab] = useState<PreviewEnvSettingsTab>("services");
-  const [validatedAppProto, setValidatedAppProto] = useState<PorterApp | null>(
-    null
-  );
-  const [createError, setCreateError] = useState("");
-  const [showGHAModal, setShowGHAModal] = useState(false);
-  const [{ variables, secrets }, setFinalizedAppEnv] = useState<{
-    variables: Record<string, string>;
-    secrets: Record<string, string>;
-  }>({
-    variables: {},
-    secrets: {},
-  });
-  const [encodedAddons, setEncodedAddons] = useState<EncodedAddonWithEnv[]>([]);
-
   const {
-    porterApp,
-    appEnv,
-    latestProto,
-    servicesFromYaml,
-    clusterId,
-    projectId,
-    deploymentTarget,
-    latestSource,
-  } = useLatestRevision();
+    showGHAModal,
+    setShowGHAModal,
+    createError,
+    buttonStatus,
+    savePreviewConfig,
+  } = useEnvTemplate();
+
+  const { appEnv, latestProto, servicesFromYaml, latestSource } =
+    useLatestRevision();
+
+  const { reset } = useFormContext<AppTemplateFormData>();
 
   const withPreviewOverrides = useAppWithPreviewOverrides({
     latestApp: latestProto,
@@ -108,174 +74,6 @@ export const PreviewAppDataContainer: React.FC<Props> = ({
     return existingAddons;
   }, [existingTemplate?.addons]);
 
-  const porterAppFormMethods = useForm<AppTemplateFormData>({
-    reValidateMode: "onSubmit",
-    resolver: zodResolver(appTemplateClientValidator),
-    defaultValues: {
-      app: withPreviewOverrides,
-      source: latestSource,
-      deletions: {
-        serviceNames: [],
-        envGroupNames: [],
-        predeploy: [],
-        initialDeploy: [],
-      },
-      addons: [],
-    },
-  });
-
-  const {
-    reset,
-    handleSubmit,
-    formState: { errors, isSubmitting, isSubmitSuccessful },
-  } = porterAppFormMethods;
-
-  const errorMessagesDeep = useMemo(() => {
-    return Object.values(_.mapValues(errors, (error) => error?.message));
-  }, [errors]);
-
-  const buttonStatus = useMemo(() => {
-    if (isSubmitting) {
-      return "loading";
-    }
-
-    if (errorMessagesDeep.length > 0) {
-      return <Error message={`App update failed. ${errorMessagesDeep[0]}`} />;
-    }
-
-    if (isSubmitSuccessful) {
-      return "success";
-    }
-
-    return "";
-  }, [isSubmitting, errorMessagesDeep]);
-
-  const onSubmit = handleSubmit(async (data) => {
-    try {
-      setCreateError("");
-
-      const proto = clientAppToProto(data);
-      setValidatedAppProto(proto);
-
-      const addons = data.addons.map((addon) => {
-        const variables = match(addon.config)
-          .returnType<Record<string, string>>()
-          .with({ type: "postgres" }, (conf) => ({
-            POSTGRESQL_USERNAME: conf.username,
-          }))
-          .with({ type: "redis" }, (conf) => ({
-            REDIS_PASSWORD: conf.password,
-          }))
-          .otherwise(() => ({}));
-        const secrets = match(addon.config)
-          .returnType<Record<string, string>>()
-          .with({ type: "postgres" }, (conf) => ({
-            POSTGRESQL_PASSWORD: conf.password,
-          }))
-          .with({ type: "redis" }, (conf) => ({
-            REDIS_PASSWORD: conf.password,
-          }))
-          .otherwise(() => ({}));
-
-        const proto = clientAddonToProto(addon);
-
-        return {
-          base64_addon: btoa(proto.toJsonString()),
-          variables,
-          secrets,
-        };
-      });
-      setEncodedAddons(addons);
-
-      const { env } = data.app;
-      const variables = env
-        .filter((e) => !e.hidden && !e.deleted)
-        .reduce((acc: Record<string, string>, item) => {
-          acc[item.key] = item.value;
-          return acc;
-        }, {});
-      const secrets = env
-        .filter((e) => !e.deleted)
-        .reduce((acc: Record<string, string>, item) => {
-          if (item.hidden) {
-            acc[item.key] = item.value;
-          }
-          return acc;
-        }, {});
-      setFinalizedAppEnv({ variables, secrets });
-
-      if (!existingTemplate) {
-        setShowGHAModal(true);
-        return;
-      }
-
-      await createTemplateAndWorkflow({
-        app: proto,
-        variables,
-        secrets,
-        addons,
-      });
-      history.push(`/preview-environments`);
-    } catch (err) {
-      if (axios.isAxiosError(err) && err.response?.data?.error) {
-        setCreateError(err.response?.data?.error);
-        return;
-      }
-      setCreateError(
-        "An error occurred while validating your application. Please try again."
-      );
-    }
-  });
-
-  const createTemplateAndWorkflow = useCallback(
-    async ({
-      app,
-      variables,
-      secrets,
-      addons = [],
-    }: {
-      app: PorterApp | null;
-      variables: Record<string, string>;
-      secrets: Record<string, string>;
-      addons?: EncodedAddonWithEnv[];
-    }) => {
-      try {
-        if (!app) {
-          return false;
-        }
-
-        await api.createAppTemplate(
-          "<token>",
-          {
-            b64_app_proto: btoa(app.toJsonString()),
-            variables,
-            secrets,
-            base_deployment_target_id: deploymentTarget.id,
-            addons,
-          },
-          {
-            project_id: projectId,
-            cluster_id: clusterId,
-            porter_app_name: porterApp.name,
-          }
-        );
-
-        return true;
-      } catch (err) {
-        if (axios.isAxiosError(err) && err.response?.data?.error) {
-          setCreateError(err.response?.data?.error);
-          return false;
-        }
-
-        setCreateError(
-          "An error occurred while creating the CI workflow. Please try again."
-        );
-        return false;
-      }
-    },
-    []
-  );
-
   useEffect(() => {
     reset({
       app: withPreviewOverrides,
@@ -291,7 +89,7 @@ export const PreviewAppDataContainer: React.FC<Props> = ({
   }, [withPreviewOverrides, latestSource, existingAddonsWithEnv]);
 
   return (
-    <FormProvider {...porterAppFormMethods}>
+    <>
       <TabSelector
         noBuffer
         options={[
@@ -314,38 +112,23 @@ export const PreviewAppDataContainer: React.FC<Props> = ({
         }}
       />
       <Spacer y={1} />
-      <form onSubmit={onSubmit}>
-        {match(tab)
-          .with("services", () => (
-            <ServiceSettings buttonStatus={buttonStatus} />
-          ))
-          .with("variables", () => <Environment buttonStatus={buttonStatus} />)
-          .with("required-apps", () => (
-            <RequiredApps buttonStatus={buttonStatus} />
-          ))
-          .with("addons", () => <Addons buttonStatus={buttonStatus} />)
-          .exhaustive()}
-      </form>
+      {match(tab)
+        .with("services", () => <ServiceSettings buttonStatus={buttonStatus} />)
+        .with("variables", () => <Environment buttonStatus={buttonStatus} />)
+        .with("required-apps", () => (
+          <RequiredApps buttonStatus={buttonStatus} />
+        ))
+        .with("addons", () => <Addons buttonStatus={buttonStatus} />)
+        .exhaustive()}
       {showGHAModal && (
         <PreviewGHAModal
-          projectId={projectId}
-          clusterId={clusterId}
           onClose={() => {
             setShowGHAModal(false);
           }}
-          latestSource={latestSource}
-          appName={porterApp.name}
-          savePreviewConfig={async () =>
-            await createTemplateAndWorkflow({
-              app: validatedAppProto,
-              variables,
-              secrets,
-              addons: encodedAddons,
-            })
-          }
+          savePreviewConfig={savePreviewConfig}
           error={createError}
         />
       )}
-    </FormProvider>
+    </>
   );
 };

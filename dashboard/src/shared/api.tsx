@@ -1060,6 +1060,11 @@ const createAppTemplate = baseApi<
       variables: Record<string, string>;
       secrets: Record<string, string>;
     }>;
+    git_overrides?: {
+      git_branch?: string;
+      git_repo_id: number;
+      git_repo_name: string;
+    };
   },
   {
     project_id: number;
@@ -1068,6 +1073,16 @@ const createAppTemplate = baseApi<
   }
 >("POST", ({ project_id, cluster_id, porter_app_name }) => {
   return `/api/projects/${project_id}/clusters/${cluster_id}/apps/${porter_app_name}/templates`;
+});
+
+const listTemplateEnvironments = baseApi<
+  Record<string, unknown>,
+  {
+    project_id: number;
+    cluster_id: number;
+  }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/apps/templates`;
 });
 
 const updateApp = baseApi<
@@ -2061,6 +2076,20 @@ const getSlackIntegrations = baseApi<{}, { id: number }>(
   }
 );
 
+const getNeonIntegrations = baseApi<{}, { projectId: number }>(
+  "GET",
+  ({ projectId }) => {
+    return `/api/projects/${projectId}/neon-integrations`;
+  }
+);
+
+const getUpstashIntegrations = baseApi<{}, { projectId: number }>(
+  "GET",
+  ({ projectId }) => {
+    return `/api/projects/${projectId}/upstash-integrations`;
+  }
+);
+
 const getRevisions = baseApi<
   {},
   { id: number; cluster_id: number; namespace: string; name: string }
@@ -2882,7 +2911,13 @@ const getDatastoreCredential = baseApi<
 const updateDatastore = baseApi<
   {
     name: string;
-    type: "RDS" | "ELASTICACHE" | "MANAGED-POSTGRES" | "MANAGED-REDIS";
+    type:
+      | "RDS"
+      | "ELASTICACHE"
+      | "MANAGED-POSTGRES"
+      | "MANAGED-REDIS"
+      | "NEON"
+      | "UPSTASH";
     engine: "POSTGRES" | "AURORA-POSTGRES" | "REDIS";
 
     values: any;
@@ -3517,9 +3552,7 @@ const getPublishableKey = baseApi<
 
 const getCustomerUsage = baseApi<
   {
-    window_size: string;
-    starting_on?: string;
-    ending_before?: string;
+    previous_periods?: number;
     current_period?: boolean;
   },
   {
@@ -3542,9 +3575,7 @@ const getCustomerCosts = baseApi<
 );
 
 const getCustomerInvoices = baseApi<
-  {
-    status: string;
-  },
+  {},
   {
     project_id?: number;
   }
@@ -3855,6 +3886,7 @@ export default {
   getBranchHead,
   createApp,
   createAppTemplate,
+  listTemplateEnvironments,
   updateApp,
   appRun,
   updateBuildSettings,
@@ -3887,6 +3919,8 @@ export default {
   getReleaseSteps,
   getRepoIntegrations,
   getSlackIntegrations,
+  getNeonIntegrations,
+  getUpstashIntegrations,
   getRepos,
   getRevisions,
   getTemplateInfo,

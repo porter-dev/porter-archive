@@ -33,27 +33,42 @@ func (c *ListPlansHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
-	if !c.Config().BillingManager.MetronomeConfigLoaded || !proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient) {
-		c.WriteResult(w, r, "")
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "lago-config-exists", Value: c.Config().BillingManager.LagoConfigLoaded},
+		telemetry.AttributeKV{Key: "lago-enabled", Value: proj.GetFeatureFlag(models.LagoEnabled, c.Config().LaunchDarklyClient)},
+	)
 
-		telemetry.WithAttributes(span,
-			telemetry.AttributeKV{Key: "metronome-config-exists", Value: c.Config().BillingManager.MetronomeConfigLoaded},
-			telemetry.AttributeKV{Key: "metronome-enabled", Value: proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient)},
-		)
+	if !c.Config().BillingManager.LagoConfigLoaded || !proj.GetFeatureFlag(models.LagoEnabled, c.Config().LaunchDarklyClient) {
+		c.WriteResult(w, r, "")
+		return
+	}
+
+	plan, err := c.Config().BillingManager.LagoClient.GetCustomerActivePlan(ctx, proj.ID, proj.EnableSandbox)
+	if err != nil {
+		err := telemetry.Error(ctx, span, err, "error getting active subscription")
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
 	telemetry.WithAttributes(span,
-		telemetry.AttributeKV{Key: "metronome-enabled", Value: true},
-		telemetry.AttributeKV{Key: "usage-id", Value: proj.UsageID},
+		telemetry.AttributeKV{Key: "subscription_id", Value: plan.ID},
 	)
 
-	plan, err := c.Config().BillingManager.MetronomeClient.ListCustomerPlan(ctx, proj.UsageID)
+	endingBefore, err := c.Config().BillingManager.LagoClient.CheckCustomerCouponExpiration(ctx, proj.ID, proj.EnableSandbox)
 	if err != nil {
-		err := telemetry.Error(ctx, span, err, "error listing plans")
+		err := telemetry.Error(ctx, span, err, "error listing active coupons")
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
+
+	// If the customer has a coupon, use its end date instead of the trial end date
+	if endingBefore != "" {
+		plan.TrialInfo.EndingBefore = endingBefore
+	}
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "trial-ending-at", Value: plan.TrialInfo.EndingBefore},
+	)
 
 	c.WriteResult(w, r, plan)
 }
@@ -79,27 +94,22 @@ func (c *ListCreditsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
-	if !c.Config().BillingManager.MetronomeConfigLoaded || !proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient) {
-		c.WriteResult(w, r, "")
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "lago-config-exists", Value: c.Config().BillingManager.LagoConfigLoaded},
+		telemetry.AttributeKV{Key: "lago-enabled", Value: proj.GetFeatureFlag(models.LagoEnabled, c.Config().LaunchDarklyClient)},
+	)
 
-		telemetry.WithAttributes(span,
-			telemetry.AttributeKV{Key: "metronome-config-exists", Value: c.Config().BillingManager.MetronomeConfigLoaded},
-			telemetry.AttributeKV{Key: "metronome-enabled", Value: proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient)},
-		)
+	if !c.Config().BillingManager.LagoConfigLoaded || !proj.GetFeatureFlag(models.LagoEnabled, c.Config().LaunchDarklyClient) {
+		c.WriteResult(w, r, "")
 		return
 	}
 
-	credits, err := c.Config().BillingManager.MetronomeClient.ListCustomerCredits(ctx, proj.UsageID)
+	credits, err := c.Config().BillingManager.LagoClient.ListCustomerCredits(ctx, proj.ID, proj.EnableSandbox)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error listing credits")
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
-
-	telemetry.WithAttributes(span,
-		telemetry.AttributeKV{Key: "metronome-enabled", Value: true},
-		telemetry.AttributeKV{Key: "usage-id", Value: proj.UsageID},
-	)
 
 	c.WriteResult(w, r, credits)
 }
@@ -127,12 +137,11 @@ func (c *ListCustomerUsageHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
 	telemetry.WithAttributes(span,
-		telemetry.AttributeKV{Key: "metronome-config-exists", Value: c.Config().BillingManager.MetronomeConfigLoaded},
-		telemetry.AttributeKV{Key: "metronome-enabled", Value: proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient)},
-		telemetry.AttributeKV{Key: "usage-id", Value: proj.UsageID},
+		telemetry.AttributeKV{Key: "lago-config-exists", Value: c.Config().BillingManager.LagoConfigLoaded},
+		telemetry.AttributeKV{Key: "lago-enabled", Value: proj.GetFeatureFlag(models.LagoEnabled, c.Config().LaunchDarklyClient)},
 	)
 
-	if !c.Config().BillingManager.MetronomeConfigLoaded || !proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient) {
+	if !c.Config().BillingManager.LagoConfigLoaded || !proj.GetFeatureFlag(models.LagoEnabled, c.Config().LaunchDarklyClient) {
 		c.WriteResult(w, r, "")
 		return
 	}
@@ -145,59 +154,20 @@ func (c *ListCustomerUsageHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	usage, err := c.Config().BillingManager.MetronomeClient.ListCustomerUsage(ctx, proj.UsageID, req.StartingOn, req.EndingBefore, req.WindowSize, req.CurrentPeriod)
+	plan, err := c.Config().BillingManager.LagoClient.GetCustomerActivePlan(ctx, proj.ID, proj.EnableSandbox)
 	if err != nil {
-		err := telemetry.Error(ctx, span, err, "error listing customer usage")
+		err := telemetry.Error(ctx, span, err, "error getting active subscription")
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
-	c.WriteResult(w, r, usage)
-}
-
-// ListCustomerCostsHandler returns customer usage aggregations like CPU and RAM hours.
-type ListCustomerCostsHandler struct {
-	handlers.PorterHandlerReadWriter
-}
-
-// NewListCustomerCostsHandler returns a new ListCustomerCostsHandler
-func NewListCustomerCostsHandler(
-	config *config.Config,
-	decoderValidator shared.RequestDecoderValidator,
-	writer shared.ResultWriter,
-) *ListCustomerCostsHandler {
-	return &ListCustomerCostsHandler{
-		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
-	}
-}
-
-func (c *ListCustomerCostsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx, span := telemetry.NewSpan(r.Context(), "serve-list-customer-costs")
-	defer span.End()
-
-	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
 	telemetry.WithAttributes(span,
-		telemetry.AttributeKV{Key: "metronome-config-exists", Value: c.Config().BillingManager.MetronomeConfigLoaded},
-		telemetry.AttributeKV{Key: "metronome-enabled", Value: proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient)},
-		telemetry.AttributeKV{Key: "usage-id", Value: proj.UsageID},
+		telemetry.AttributeKV{Key: "subscription_id", Value: plan.ID},
 	)
 
-	if !c.Config().BillingManager.MetronomeConfigLoaded || !proj.GetFeatureFlag(models.MetronomeEnabled, c.Config().LaunchDarklyClient) {
-		c.WriteResult(w, r, "")
-		return
-	}
-
-	req := &types.ListCustomerCostsRequest{}
-
-	if ok := c.DecodeAndValidate(w, r, req); !ok {
-		err := telemetry.Error(ctx, span, nil, "error decoding list customer costs request")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-		return
-	}
-
-	usage, err := c.Config().BillingManager.MetronomeClient.ListCustomerCosts(ctx, proj.UsageID, req.StartingOn, req.EndingBefore, req.Limit)
+	usage, err := c.Config().BillingManager.LagoClient.ListCustomerUsage(ctx, plan.CustomerID, plan.ID, req.CurrentPeriod, req.PreviousPeriods)
 	if err != nil {
-		err := telemetry.Error(ctx, span, err, "error listing customer costs")
+		err := telemetry.Error(ctx, span, err, "error listing customer usage")
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}

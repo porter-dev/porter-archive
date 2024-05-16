@@ -1,10 +1,12 @@
 package commands
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"os"
 	"sort"
+	"strings"
 	"text/tabwriter"
 
 	"github.com/fatih/color"
@@ -74,7 +76,8 @@ If the --preview flag is set, only deployment targets for preview environments w
 	}
 
 	deleteTargetCmd.Flags().StringVar(&targetName, "name", "", "Name of deployment target")
-	deleteTargetCmd.MarkFlagRequired("name")
+	deleteTargetCmd.Flags().BoolP("force", "f", false, "Force deletion without confirmation")
+	deleteTargetCmd.MarkFlagRequired("name") // nolint:errcheck,gosec
 	targetCmd.AddCommand(deleteTargetCmd)
 
 	return targetCmd
@@ -148,14 +151,44 @@ func deleteTarget(ctx context.Context, _ *types.GetAuthenticatedUserResponse, cl
 		return fmt.Errorf("error finding name flag: %w", err)
 	}
 
+	force, err := cmd.Flags().GetBool("force")
+	if err != nil {
+		return fmt.Errorf("error finding force flag: %w", err)
+	}
+
+	confirmed, err := confirmAction(fmt.Sprintf("Are you sure you want to delete target '%s'?", name))
+	if err != nil {
+		return fmt.Errorf("error confirming action: %w", err)
+	}
+
+	if !confirmed && !force {
+		color.New(color.FgYellow).Println("Deletion aborted") // nolint:errcheck,gosec
+		return nil
+	}
+
 	err = client.DeleteDeploymentTarget(ctx, cliConf.Project, name)
 	if err != nil {
 		return fmt.Errorf("error deleting target: %w", err)
 	}
 
-	color.New(color.FgGreen).Printf("Deleted target '%s'\n", name) // nolint:errcheck
+	color.New(color.FgGreen).Printf("Deleted target '%s'\n", name) // nolint:errcheck,gosec
 
 	return nil
+}
+
+func confirmAction(prompt string) (bool, error) {
+	reader := bufio.NewReader(os.Stdin)
+	fmt.Printf("%s [Y/n]: ", prompt)
+
+	response, err := reader.ReadString('\n')
+	if err != nil {
+		return false, fmt.Errorf("error reading input: %w", err)
+	}
+
+	response = strings.TrimSpace(response)
+	confirmed := strings.ToLower(response) == "y" || response == ""
+
+	return confirmed, nil
 }
 
 func checkmark(b bool) string {

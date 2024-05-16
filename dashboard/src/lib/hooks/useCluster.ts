@@ -1,5 +1,9 @@
 import { useContext, useState } from "react";
-import { Contract, PreflightCheckRequest } from "@porter-dev/api-contracts";
+import {
+  Contract,
+  EnumCloudProvider,
+  PreflightCheckRequest,
+} from "@porter-dev/api-contracts";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { match } from "ts-pattern";
@@ -334,6 +338,80 @@ export const useClusterState = ({
   };
 };
 
+export const preflightChecks = async (
+  contract: Contract,
+  projectId: number
+): Promise<UpdateClusterResponse["preflightChecks"]> => {
+  if (!contract.cluster) {
+    throw new Error("Cluster is missing");
+  }
+
+  let preflightCheckResp;
+  if (
+    contract.cluster.cloudProvider === EnumCloudProvider.AWS ||
+    contract.cluster.cloudProvider === EnumCloudProvider.AZURE
+  ) {
+    preflightCheckResp = await api.cloudContractPreflightCheck(
+      "<token>",
+      contract,
+      {
+        project_id: projectId,
+      }
+    );
+  } else {
+    preflightCheckResp = await api.legacyPreflightCheck(
+      "<token>",
+      new PreflightCheckRequest({
+        contract,
+      }),
+      {
+        id: projectId,
+      }
+    );
+  }
+
+  const parsed = await preflightCheckValidator.parseAsync(
+    preflightCheckResp.data
+  );
+
+  if (parsed.errors.length > 0) {
+    const cloudProviderSpecificChecks = match(contract.cluster.cloudProvider)
+      .with(EnumCloudProvider.AWS, () => CloudProviderAWS.preflightChecks)
+      .with(EnumCloudProvider.GCP, () => CloudProviderGCP.preflightChecks)
+      .with(EnumCloudProvider.AZURE, () => CloudProviderAzure.preflightChecks)
+      .otherwise(() => []);
+
+    return parsed.errors.map((e) => {
+      return match(
+        cloudProviderSpecificChecks.find(
+          (cloudProviderCheck) => e.name === cloudProviderCheck.name
+        )
+      )
+        .returnType<ClientPreflightCheck>()
+        .with(undefined, () => ({
+          title: "Unknown preflight check",
+          status: "failure" as const,
+          name: "UNKNOWN" as const,
+          error: {
+            detail:
+              "Your cloud provider returned an unknown error. Please reach out to Porter support.",
+            metadata: {},
+          },
+        }))
+        .otherwise((preflightCheckMatch) => ({
+          title: preflightCheckMatch.displayName,
+          status: "failure" as const,
+          name: preflightCheckMatch.name,
+          error: {
+            detail: e.error.message,
+            metadata: e.error.metadata,
+            resolution: preflightCheckMatch.resolution,
+          },
+        }));
+    });
+  }
+};
+
 type TUseUpdateCluster = {
   updateCluster: (
     clientContract: ClientClusterContract,
@@ -343,6 +421,7 @@ type TUseUpdateCluster = {
   isHandlingPreflightChecks: boolean;
   isCreatingContract: boolean;
 };
+
 export const useUpdateCluster = ({
   projectId,
 }: {
@@ -374,76 +453,12 @@ export const useUpdateCluster = ({
     if (!skipPreflightChecks) {
       setIsHandlingPreflightChecks(true);
       try {
-        let preflightCheckResp;
-        if (
-          clientContract.cluster.cloudProvider === "AWS" ||
-          clientContract.cluster.cloudProvider === "Azure"
-        ) {
-          preflightCheckResp = await api.cloudContractPreflightCheck(
-            "<token>",
-            newContract,
-            {
-              project_id: projectId,
-            }
-          );
-        } else {
-          preflightCheckResp = await api.legacyPreflightCheck(
-            "<token>",
-            new PreflightCheckRequest({
-              contract: newContract,
-            }),
-            {
-              id: projectId,
-            }
-          );
-        }
-
-        const parsed = await preflightCheckValidator.parseAsync(
-          preflightCheckResp.data
+        const preflightCheckResults = await preflightChecks(
+          newContract,
+          projectId
         );
-
-        if (parsed.errors.length > 0) {
-          const cloudProviderSpecificChecks = match(
-            clientContract.cluster.cloudProvider
-          )
-            .with("AWS", () => CloudProviderAWS.preflightChecks)
-            .with("GCP", () => CloudProviderGCP.preflightChecks)
-            .with("Azure", () => CloudProviderAzure.preflightChecks)
-            .otherwise(() => []);
-
-          const clientPreflightChecks: ClientPreflightCheck[] = parsed.errors
-            .map((e) => {
-              const preflightCheckMatch = cloudProviderSpecificChecks.find(
-                (cloudProviderCheck) => e.name === cloudProviderCheck.name
-              );
-              if (!preflightCheckMatch) {
-                return {
-                  title: "Unknown preflight check",
-                  status: "failure" as const,
-                  name: "UNKNOWN" as const,
-                  error: {
-                    detail:
-                      "Your cloud provider returned an unknown error. Please reach out to Porter support.",
-                    metadata: {},
-                  },
-                };
-              }
-              return {
-                title: preflightCheckMatch.displayName,
-                status: "failure" as const,
-                name: preflightCheckMatch.name,
-                error: {
-                  detail: e.error.message,
-                  metadata: e.error.metadata,
-                  resolution: preflightCheckMatch.resolution,
-                },
-              };
-            })
-            .filter(valueExists);
-
-          return {
-            preflightChecks: clientPreflightChecks,
-          };
+        if (preflightCheckResults) {
+          return { preflightChecks: preflightCheckResults };
         }
         // otherwise, continue to create the contract
       } catch (err) {

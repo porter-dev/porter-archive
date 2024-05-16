@@ -14,9 +14,11 @@ import AddonFormContextProvider from "./AddonFormContextProvider";
 import AddonHeader from "./AddonHeader";
 import AddonTabs from "./AddonTabs";
 
-type Props = RouteComponentProps;
+type Props = RouteComponentProps & {
+  filterModels?: boolean;
+};
 
-const AddonView: React.FC<Props> = ({ match }) => {
+const AddonView: React.FC<Props> = ({ match, filterModels }) => {
   const { currentProject, currentCluster } = useContext(Context);
   const params = useMemo(() => {
     const { params } = match;
@@ -41,7 +43,7 @@ const AddonView: React.FC<Props> = ({ match }) => {
       <AddonContextProvider addonName={params.addonName}>
         <AddonFormContextProvider projectId={currentProject?.id}>
           <StyledExpandedAddon>
-            <Back to="/addons" />
+            <Back to={filterModels ? "/inference" : "/addons"} />
             <AddonHeader />
             <Spacer y={1} />
             <AddonTabs tabParam={params.tab} />

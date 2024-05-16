@@ -17,15 +17,16 @@ import { z } from "zod";
 import { serviceStringValidator } from "lib/porter-apps/values";
 
 import { datadogConfigValidator } from "./datadog";
+import { deepgramConfigValidator } from "./deepgram";
 import { metabaseConfigValidator } from "./metabase";
 import { mezmoConfigValidator } from "./mezmo";
 import { newrelicConfigValidator } from "./newrelic";
 import { defaultPostgresAddon, postgresConfigValidator } from "./postgres";
 import { redisConfigValidator } from "./redis";
 import { tailscaleConfigValidator } from "./tailscale";
-import { deepgramConfigValidator } from "lib/models/deepgram";
 import {
   ADDON_TEMPLATE_DATADOG,
+  ADDON_TEMPLATE_DEEPGRAM,
   ADDON_TEMPLATE_METABASE,
   ADDON_TEMPLATE_MEZMO,
   ADDON_TEMPLATE_NEWRELIC,
@@ -34,7 +35,6 @@ import {
   ADDON_TEMPLATE_TAILSCALE,
   type AddonTemplate,
 } from "./template";
-import { ADDON_TEMPLATE_DEEPGRAM } from "lib/models/template";
 
 export const clientAddonValidator = z.object({
   expanded: z.boolean().default(false),
@@ -67,6 +67,13 @@ export type ClientAddonType = z.infer<
 export type ClientAddon = z.infer<typeof clientAddonValidator> & {
   template: AddonTemplate<ClientAddonType>;
 };
+export type ClientModelAddon = ClientAddon & {
+  template: AddonTemplate<ClientAddonType> & { isModelTemplate: true };
+};
+export const isClientModelAddon = (
+  addon: ClientAddon
+): addon is ClientModelAddon => addon.template.isModelTemplate ?? false;
+
 export const legacyAddonValidator = z.object({
   name: z.string(),
   namespace: z.string(),
@@ -276,6 +283,7 @@ export function clientAddonToProto(
         ecrPassword: data.quaySecret,
         ecrEmail: data.quayEmail,
         instanceType: data.instanceType,
+        releaseTag: data.releaseTag,
       }),
       case: "deepgram" as const,
     }))
@@ -396,6 +404,7 @@ export function clientAddonFromProto({
       quayUsername: data.value.ecrUsername ?? "",
       quaySecret: data.value.ecrPassword ?? "",
       quayEmail: data.value.ecrEmail ?? "",
+      releaseTag: data.value.releaseTag ?? "",
       instanceType: "g4dn.xlarge" as const,
     }))
     .exhaustive();

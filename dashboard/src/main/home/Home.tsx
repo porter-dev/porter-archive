@@ -41,6 +41,7 @@ import OryLogin from "../auth/OryLogin";
 import AddonDashboard from "./add-on-dashboard/AddOnDashboard";
 import AddonTemplates from "./add-on-dashboard/AddonTemplates";
 import AddonView from "./add-on-dashboard/AddonView";
+import InferenceDashboard from "./add-on-dashboard/InferenceDashboard";
 import LegacyAddOnDashboard from "./add-on-dashboard/legacy_AddOnDashboard";
 import LegacyNewAddOnFlow from "./add-on-dashboard/legacy_NewAddOnFlow";
 import AppView from "./app-dashboard/app-view/AppView";
@@ -57,10 +58,6 @@ import CreateDatastore from "./database-dashboard/forms/CreateDatastore";
 import CreateEnvGroup from "./env-dashboard/CreateEnvGroup";
 import EnvDashboard from "./env-dashboard/EnvDashboard";
 import ExpandedEnv from "./env-dashboard/ExpandedEnv";
-import ExpandedModelTemplate from "./inference-dashboard/ExpandedModelTemplate";
-import InferenceDashboard from "./inference-dashboard/InferenceDashboard";
-import ModelForm from "./inference-dashboard/ModelForm";
-import ModelTemplates from "./inference-dashboard/ModelTemplates";
 import ClusterContextProvider from "./infrastructure-dashboard/ClusterContextProvider";
 import ClusterDashboard from "./infrastructure-dashboard/ClusterDashboard";
 import ClusterView from "./infrastructure-dashboard/ClusterView";
@@ -73,8 +70,6 @@ import { NewProjectFC } from "./new-project/NewProject";
 import Onboarding from "./onboarding/Onboarding";
 import ProjectSettings from "./project-settings/ProjectSettings";
 import Sidebar from "./sidebar/Sidebar";
-import AddonFormContextProvider from "./add-on-dashboard/AddonFormContextProvider";
-import AddonForm from "./add-on-dashboard/AddonForm";
 
 dayjs.extend(relativeTime);
 
@@ -549,20 +544,14 @@ const Home: React.FC<Props> = (props) => {
                   <LegacyAddOnDashboard />
                 )}
               </Route>
-              <Route path="/inference/models">
-                <ModelTemplates />
+              <Route path="/inference/new">
+                <AddonTemplates filterModels />
               </Route>
-              <Route path="/inference/expanded/:modelType">
-                <ExpandedModelTemplate />
+              <Route path="/inference/:addonName">
+                <AddonView filterModels />
               </Route>
-              <Route path="/inference/new/:modelType">
-                <ModelForm />
-              </Route>
-              <Route path="/inference/:modelType">
-                <AddonView />
-              </Route>
-              <Route path="/inference/:modelType/:tab">
-                <AddonView />
+              <Route path="/inference/:addonName/:tab">
+                <AddonView filterModels />
               </Route>
               <Route path="/inference">
                 <InferenceDashboard />

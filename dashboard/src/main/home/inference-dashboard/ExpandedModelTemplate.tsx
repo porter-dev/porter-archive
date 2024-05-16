@@ -12,16 +12,18 @@ import InfoSection from "components/porter/InfoSection";
 import Line from "components/porter/Line";
 import Link from "components/porter/Link";
 import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text"
+import Text from "components/porter/Text";
+import {
+  AddonTemplateTagColor,
+  SUPPORTED_MODEL_ADDON_TEMPLATES,
+} from "lib/addons/template";
 
-import { Tag } from "../add-on-dashboard/AddonTemplates"
+import { Context } from "shared/Context";
 
+import AddonFormContextProvider from "../add-on-dashboard/AddonFormContextProvider";
+import { Tag } from "../add-on-dashboard/AddonTemplates";
 import DashboardHeader from "../cluster-dashboard/DashboardHeader";
 import { models, tagColor } from "./models";
-import { Context } from "shared/Context";
-import { SUPPORTED_MODEL_ADDON_TEMPLATES } from "lib/models/template";
-import AddonFormContextProvider from "../add-on-dashboard/AddonFormContextProvider";
-import { AddonTemplateTagColor } from "lib/addons/template";
 
 const ExpandedModelTemplate: React.FC = () => {
   const { modelType } = useParams<{
@@ -31,7 +33,9 @@ const ExpandedModelTemplate: React.FC = () => {
   const { currentProject } = useContext(Context);
   const history = useHistory();
 
-  const templateMatch = SUPPORTED_MODEL_ADDON_TEMPLATES.find((t) => t.type === modelType);
+  const templateMatch = SUPPORTED_MODEL_ADDON_TEMPLATES.find(
+    (t) => t.type === modelType
+  );
 
   if (templateMatch === undefined) {
     return null;
@@ -68,9 +72,8 @@ const ExpandedModelTemplate: React.FC = () => {
             >
               {t}
             </Tag>
-            {templateMatch.tags.indexOf(t) !== templateMatch.tags.length - 1 && (
-              <Spacer inline x={0.5} />
-            )}
+            {templateMatch.tags.indexOf(t) !==
+              templateMatch.tags.length - 1 && <Spacer inline x={0.5} />}
           </>
         ))}
       </Container>

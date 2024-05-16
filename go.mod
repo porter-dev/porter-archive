@@ -87,7 +87,7 @@ require (
 	github.com/nats-io/nats.go v1.24.0
 	github.com/open-policy-agent/opa v0.44.0
 	github.com/ory/client-go v1.9.0
-	github.com/porter-dev/api-contracts v0.2.158
+	github.com/porter-dev/api-contracts v0.2.166
 	github.com/riandyrn/otelchi v0.5.1
 	github.com/santhosh-tekuri/jsonschema/v5 v5.0.1
 	github.com/stefanmcshane/helm v0.0.0-20221213002717-88a4a2c6e77d
@@ -387,5 +387,3 @@ require (
 	sigs.k8s.io/kustomize/kyaml v0.13.9 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.3 // indirect
 )
-
-replace github.com/porter-dev/api-contracts => ../api-contracts

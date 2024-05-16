@@ -35,7 +35,7 @@ func NewDeleteDeploymentTargetHandler(
 
 // ServeHTTP deletes the deployment target from the project
 func (c *DeleteDeploymentTargetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx, span := telemetry.NewSpan(r.Context(), "server-delete-deployment-target")
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-delete-deployment-target")
 	defer span.End()
 
 	project, _ := ctx.Value(types.ProjectScope).(*models.Project)

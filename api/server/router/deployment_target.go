@@ -89,6 +89,35 @@ func getDeploymentTargetRoutes(
 		Router:   r,
 	})
 
+	// DELETE /api/projects/{project_id}/targets/{deployment_target_identifier} -> deployment_target.DeleteDeploymentTargetHandler
+	deleteDeploymentTargetEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbDelete,
+			Method: types.HTTPVerbDelete,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath,
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.DeploymentTargetScope,
+			},
+		},
+	)
+
+	deleteDeploymentTargetHandler := deployment_target.NewDeleteDeploymentTargetHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: deleteDeploymentTargetEndpoint,
+		Handler:  deleteDeploymentTargetHandler,
+		Router:   r,
+	})
+
 	// GET /api/projects/{project_id}/targets/{deployment_target_identifier}/apps/{porter_app_name}/cloudsql -> porter_app.GetCloudSqlSecretHandler
 	getCloudSqlSecretEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

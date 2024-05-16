@@ -997,11 +997,10 @@ const deleteDeploymentTarget = baseApi<
   {},
   {
     project_id: number;
-    cluster_id: number;
     deployment_target_id: string;
   }
->("DELETE", ({ project_id, cluster_id, deployment_target_id }) => {
-  return `/api/projects/${project_id}/clusters/${cluster_id}/deployment-targets/${deployment_target_id}`;
+>("DELETE", ({ project_id, deployment_target_id }) => {
+  return `/api/projects/${project_id}/targets/${deployment_target_id}`;
 });
 
 const getBranchHead = baseApi<

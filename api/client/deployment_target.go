@@ -44,3 +44,16 @@ func (c *Client) ListDeploymentTargets(
 
 	return resp, err
 }
+
+// DeleteDeploymentTarget deletes a deployment target in a project
+func (c *Client) DeleteDeploymentTarget(
+	ctx context.Context,
+	projectId uint,
+	deploymentTargetName string,
+) error {
+	return c.deleteRequest(
+		fmt.Sprintf("/projects/%d/targets/%s", projectId, deploymentTargetName),
+		nil,
+		nil,
+	)
+}

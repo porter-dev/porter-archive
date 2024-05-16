@@ -381,37 +381,34 @@ export const preflightChecks = async (
       .with(EnumCloudProvider.AZURE, () => CloudProviderAzure.preflightChecks)
       .otherwise(() => []);
 
-    const clientPreflightChecks: ClientPreflightCheck[] = parsed.errors
-      .map((e) => {
-        return match(
-          cloudProviderSpecificChecks.find(
-            (cloudProviderCheck) => e.name === cloudProviderCheck.name
-          )
+    return parsed.errors.map((e) => {
+      return match(
+        cloudProviderSpecificChecks.find(
+          (cloudProviderCheck) => e.name === cloudProviderCheck.name
         )
-          .with(undefined, () => ({
-            title: "Unknown preflight check",
-            status: "failure" as const,
-            name: "UNKNOWN" as const,
-            error: {
-              detail:
-                "Your cloud provider returned an unknown error. Please reach out to Porter support.",
-              metadata: {},
-            },
-          }))
-          .otherwise((preflightCheckMatch) => ({
-            title: preflightCheckMatch.displayName,
-            status: "failure" as const,
-            name: preflightCheckMatch.name,
-            error: {
-              detail: e.error.message,
-              metadata: e.error.metadata,
-              resolution: preflightCheckMatch.resolution,
-            },
-          }));
-      })
-      .filter(valueExists);
-
-    return clientPreflightChecks;
+      )
+        .returnType<ClientPreflightCheck>()
+        .with(undefined, () => ({
+          title: "Unknown preflight check",
+          status: "failure" as const,
+          name: "UNKNOWN" as const,
+          error: {
+            detail:
+              "Your cloud provider returned an unknown error. Please reach out to Porter support.",
+            metadata: {},
+          },
+        }))
+        .otherwise((preflightCheckMatch) => ({
+          title: preflightCheckMatch.displayName,
+          status: "failure" as const,
+          name: preflightCheckMatch.name,
+          error: {
+            detail: e.error.message,
+            metadata: e.error.metadata,
+            resolution: preflightCheckMatch.resolution,
+          },
+        }));
+    });
   }
 };
 
@@ -463,6 +460,7 @@ export const useUpdateCluster = ({
         if (preflightCheckResults) {
           return { preflightChecks: preflightCheckResults };
         }
+        // otherwise, continue to create the contract
       } catch (err) {
         throw new Error(
           getErrorMessageFromNetworkCall(

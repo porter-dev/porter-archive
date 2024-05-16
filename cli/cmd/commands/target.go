@@ -150,17 +150,22 @@ func deleteTarget(ctx context.Context, _ *types.GetAuthenticatedUserResponse, cl
 	if err != nil {
 		return fmt.Errorf("error finding name flag: %w", err)
 	}
+	if name == "" {
+		return fmt.Errorf("name flag must be set")
+	}
 
 	force, err := cmd.Flags().GetBool("force")
 	if err != nil {
 		return fmt.Errorf("error finding force flag: %w", err)
 	}
 
-	confirmed, err := confirmAction(fmt.Sprintf("Are you sure you want to delete target '%s'?", name))
-	if err != nil {
-		return fmt.Errorf("error confirming action: %w", err)
+	var confirmed bool
+	if !force {
+		confirmed, err = confirmAction(fmt.Sprintf("Are you sure you want to delete target '%s'?", name))
+		if err != nil {
+			return fmt.Errorf("error confirming action: %w", err)
+		}
 	}
-
 	if !confirmed && !force {
 		color.New(color.FgYellow).Println("Deletion aborted") // nolint:errcheck,gosec
 		return nil

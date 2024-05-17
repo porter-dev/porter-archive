@@ -19,19 +19,31 @@ type Invite struct {
 	// Kind is the role kind that this refers to
 	Kind string
 
-	ProjectID uint
-	UserID    uint
+	ProjectID      uint
+	UserID         uint
+	InvitingUserID uint
+	Status         InviteStatus
 }
+
+type InviteStatus string
+
+const (
+	InvitePending  InviteStatus = "pending"
+	InviteAccepted InviteStatus = "accepted"
+	InviteDeclined InviteStatus = "declined"
+)
 
 // ToInviteType generates an external Invite to be shared over REST
 func (i *Invite) ToInviteType() *types.Invite {
 	return &types.Invite{
-		ID:       i.Model.ID,
-		Token:    i.Token,
-		Email:    i.Email,
-		Expired:  i.IsExpired(),
-		Accepted: i.IsAccepted(),
-		Kind:     i.Kind,
+		ID:             i.Model.ID,
+		Token:          i.Token,
+		Email:          i.Email,
+		Expired:        i.IsExpired(),
+		Accepted:       i.IsAccepted(),
+		Kind:           i.Kind,
+		Status:         string(i.Status),
+		InvitingUserID: i.InvitingUserID,
 	}
 }
 

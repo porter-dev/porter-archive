@@ -3,11 +3,12 @@ package router
 import (
 	"fmt"
 
+	"github.com/porter-dev/porter/api/server/handlers/user"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/porter-dev/porter/api/server/handlers/gitinstallation"
 	"github.com/porter-dev/porter/api/server/handlers/project"
 	"github.com/porter-dev/porter/api/server/handlers/template"
-	"github.com/porter-dev/porter/api/server/handlers/user"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/server/shared/router"
@@ -167,6 +168,54 @@ func getUserRoutes(
 	routes = append(routes, &router.Route{
 		Endpoint: authCheckEndpoint,
 		Handler:  authCheckHandler,
+		Router:   r,
+	})
+
+	// GET /api/users/invites -> user.NewUserGetCurrentHandler
+	listUserInvitesEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: "/users/invites",
+			},
+			Scopes: []types.PermissionScope{types.UserScope},
+		},
+	)
+
+	listUserInvitesHandler := user.NewUserListInvitesHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: listUserInvitesEndpoint,
+		Handler:  listUserInvitesHandler,
+		Router:   r,
+	})
+
+	// POST /api/users/invites/respond -> user.NewUserGetCurrentHandler
+	userInvitesRespondEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbUpdate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: "/users/invites/response",
+			},
+			Scopes: []types.PermissionScope{types.UserScope},
+		},
+	)
+
+	userInvitesRespondHandler := user.NewInviteResponseHandler(
+		config,
+		factory.GetDecoderValidator(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: userInvitesRespondEndpoint,
+		Handler:  userInvitesRespondHandler,
 		Router:   r,
 	})
 

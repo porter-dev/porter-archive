@@ -177,6 +177,8 @@ type ServerConf struct {
 	OryEnabled bool   `env:"ORY_ENABLED,default=false"`
 	OryUrl     string `env:"ORY_URL,default=http://localhost:4000"`
 	OryApiKey  string `env:"ORY_API_KEY"`
+	// OryActionKey is the key used to authenticate api requests from Ory Actions to the Porter API
+	OryActionKey string `env:"ORY_ACTION_KEY"`
 }
 
 // DBConf is the database configuration: if generated from environment variables,

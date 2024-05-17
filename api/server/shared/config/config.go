@@ -126,6 +126,7 @@ type Config struct {
 
 	Ory                     ory.APIClient
 	OryApiKeyContextWrapper func(ctx context.Context) context.Context
+	OryActionKey            string
 }
 
 type ConfigLoader interface {

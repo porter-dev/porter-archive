@@ -4,12 +4,13 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/porter-dev/porter/internal/analytics"
+
 	"github.com/porter-dev/porter/internal/telemetry"
 
 	"gorm.io/gorm"
 
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
-	"github.com/porter-dev/porter/internal/analytics"
 	"github.com/porter-dev/porter/internal/models"
 
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -109,9 +110,20 @@ func (u *OryUserCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 			u.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 			return
 		}
+
+		u.Config().AnalyticsClient.Identify(analytics.CreateSegmentIdentifyUser(user))
+
+		u.Config().AnalyticsClient.Track(analytics.UserCreateTrack(&analytics.UserCreateTrackOpts{
+			UserScopedTrackOpts: analytics.GetUserScopedTrackOpts(user.ID),
+			Email:               user.Email,
+			FirstName:           user.FirstName,
+			LastName:            user.LastName,
+			CompanyName:         user.CompanyName,
+			ReferralMethod:      request.Referral,
+		}))
 	} else {
 		existingUser.AuthProvider = models.AuthProvider_Ory
-		existingUser.ExternalId = request.UserId
+		existingUser.ExternalId = request.OryId
 		_, err = u.Repo().User().UpdateUser(existingUser)
 		if err != nil {
 			err = telemetry.Error(ctx, span, err, "error updating user")
@@ -119,15 +131,4 @@ func (u *OryUserCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 			return
 		}
 	}
-
-	u.Config().AnalyticsClient.Identify(analytics.CreateSegmentIdentifyUser(user))
-
-	u.Config().AnalyticsClient.Track(analytics.UserCreateTrack(&analytics.UserCreateTrackOpts{
-		UserScopedTrackOpts: analytics.GetUserScopedTrackOpts(user.ID),
-		Email:               user.Email,
-		FirstName:           user.FirstName,
-		LastName:            user.LastName,
-		CompanyName:         user.CompanyName,
-		ReferralMethod:      request.Referral,
-	}))
 }

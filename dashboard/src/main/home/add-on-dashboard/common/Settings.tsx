@@ -8,6 +8,7 @@ import Icon from "components/porter/Icon";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import { Code } from "main/home/managed-addons/tabs/shared";
+import { useAddon } from "lib/hooks/useAddon";
 import { getErrorMessageFromNetworkCall } from "lib/hooks/useCluster";
 import { useIntercom } from "lib/hooks/useIntercom";
 
@@ -18,7 +19,8 @@ import { useAddonContext } from "../AddonContextProvider";
 import { useAddonFormContext } from "../AddonFormContextProvider";
 
 const Settings: React.FC = () => {
-  const { addon, deleteAddon } = useAddonContext();
+  const { deleteAddon } = useAddon();
+  const { addon, projectId, deploymentTarget } = useAddonContext();
   const { updateAddonButtonProps } = useAddonFormContext();
   const history = useHistory();
   const { setCurrentOverlay = () => ({}) } = useContext(Context);
@@ -30,7 +32,11 @@ const Settings: React.FC = () => {
     try {
       setCurrentOverlay(null);
       setIsDeleting(true);
-      await deleteAddon();
+      await deleteAddon({
+        projectId,
+        deploymentTargetId: deploymentTarget.id,
+        addon,
+      });
       history.push("/addons");
     } catch (err) {
       showIntercomWithMessage({

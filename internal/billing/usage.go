@@ -137,7 +137,7 @@ func (m LagoClient) CheckIfCustomerExists(ctx context.Context, projectID uint, e
 		if lagoErr.ErrorCode == "customer_not_found" {
 			return false, nil
 		}
-		return exists, telemetry.Error(ctx, span, fmt.Errorf(lagoErr.ErrorCode), "failed to get customer")
+		return exists, telemetry.Error(ctx, span, lagoErr.Err, "failed to get customer")
 	}
 
 	return true, nil
@@ -157,9 +157,13 @@ func (m LagoClient) GetCustomerActivePlan(ctx context.Context, projectID uint, s
 		ExternalCustomerID: customerID,
 	}
 
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "customer_id", Value: customerID},
+	)
+
 	activeSubscriptions, lagoErr := m.client.Subscription().GetList(ctx, subscriptionListInput)
 	if lagoErr != nil {
-		return plan, telemetry.Error(ctx, span, fmt.Errorf(lagoErr.ErrorCode), "failed to get active subscription")
+		return plan, telemetry.Error(ctx, span, lagoErr.Err, "failed to get active subscription")
 	}
 
 	if activeSubscriptions == nil {
@@ -201,7 +205,7 @@ func (m LagoClient) DeleteCustomer(ctx context.Context, projectID uint, sandboxE
 	customerID := m.generateLagoID(CustomerIDPrefix, projectID, sandboxEnabled)
 	_, lagoErr := m.client.Customer().Delete(ctx, customerID)
 	if lagoErr != nil {
-		return telemetry.Error(ctx, span, fmt.Errorf(lagoErr.ErrorCode), "failed to terminate subscription")
+		return telemetry.Error(ctx, span, lagoErr.Err, "failed to terminate subscription")
 	}
 
 	return nil
@@ -286,7 +290,7 @@ func (m LagoClient) CreateCreditsGrant(ctx context.Context, projectID uint, name
 
 		_, lagoErr := m.client.Wallet().Create(ctx, walletInput)
 		if lagoErr != nil {
-			return telemetry.Error(ctx, span, fmt.Errorf(lagoErr.ErrorCode), "failed to create wallet")
+			return telemetry.Error(ctx, span, lagoErr.Err, "failed to create wallet")
 		}
 
 		return nil
@@ -302,7 +306,7 @@ func (m LagoClient) CreateCreditsGrant(ctx context.Context, projectID uint, name
 	// If the wallet already exists, we need to update the balance
 	_, lagoErr := m.client.WalletTransaction().Create(ctx, walletTransactionInput)
 	if lagoErr != nil {
-		return telemetry.Error(ctx, span, fmt.Errorf(lagoErr.ErrorCode), "failed to update credits grant")
+		return telemetry.Error(ctx, span, lagoErr.Err, "failed to update credits grant")
 	}
 
 	return nil
@@ -324,7 +328,7 @@ func (m LagoClient) ListCustomerUsage(ctx context.Context, customerID string, su
 
 		currentUsage, lagoErr := m.client.Customer().CurrentUsage(ctx, customerID, customerUsageInput)
 		if lagoErr != nil {
-			return usageList, telemetry.Error(ctx, span, fmt.Errorf(lagoErr.ErrorCode), "failed to get customer usage")
+			return usageList, telemetry.Error(ctx, span, lagoErr.Err, "failed to get customer usage")
 		}
 
 		if currentUsage == nil {
@@ -423,13 +427,13 @@ func (m LagoClient) ListCustomerFinalizedInvoices(ctx context.Context, projectID
 
 	invoices, lagoErr := m.client.Invoice().GetList(ctx, invoiceListInput)
 	if lagoErr != nil {
-		return invoiceList, telemetry.Error(ctx, span, fmt.Errorf(lagoErr.ErrorCode), "failed to list invoices")
+		return invoiceList, telemetry.Error(ctx, span, lagoErr.Err, "failed to list invoices")
 	}
 
 	for _, invoice := range invoices.Invoices {
 		invoiceReq, lagoErr := m.client.Invoice().Download(ctx, invoice.LagoID.String())
 		if lagoErr != nil {
-			return invoiceList, telemetry.Error(ctx, span, fmt.Errorf(lagoErr.ErrorCode), "failed to download invoice")
+			return invoiceList, telemetry.Error(ctx, span, lagoErr.Err, "failed to download invoice")
 		}
 
 		var fileURL string
@@ -470,7 +474,7 @@ func (m LagoClient) createCustomer(ctx context.Context, userEmail string, projec
 
 	_, lagoErr := m.client.Customer().Create(ctx, customerInput)
 	if lagoErr != nil {
-		return customerID, telemetry.Error(ctx, span, fmt.Errorf(lagoErr.ErrorCode), "failed to create lago customer")
+		return customerID, telemetry.Error(ctx, span, lagoErr.Err, "failed to create lago customer")
 	}
 	return customerID, nil
 }
@@ -495,7 +499,7 @@ func (m LagoClient) addCustomerPlan(ctx context.Context, customerID string, plan
 
 	_, lagoErr := m.client.Subscription().Create(ctx, subscriptionInput)
 	if lagoErr != nil {
-		return telemetry.Error(ctx, span, fmt.Errorf(lagoErr.ErrorCode), "failed to create subscription")
+		return telemetry.Error(ctx, span, lagoErr.Err, "failed to create subscription")
 	}
 
 	return nil

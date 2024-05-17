@@ -51,15 +51,13 @@ func (u *OryUserCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	oryActionCookie, err := r.Cookie("ory_action")
 	if err != nil {
 		err = telemetry.Error(ctx, span, err, "invalid ory action cookie")
-		reqErr := apierrors.NewErrForbidden(err)
-		apierrors.HandleAPIError(u.Config().Logger, u.Config().Alerter, w, r, reqErr, true)
+		u.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusForbidden))
 		return
 	}
 
 	if oryActionCookie.Value != u.Config().OryActionKey {
 		err = telemetry.Error(ctx, span, nil, "cookie does not match")
-		reqErr := apierrors.NewErrForbidden(err)
-		apierrors.HandleAPIError(u.Config().Logger, u.Config().Alerter, w, r, reqErr, true)
+		u.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusForbidden))
 		return
 	}
 

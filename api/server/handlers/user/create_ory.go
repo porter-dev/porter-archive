@@ -34,7 +34,7 @@ func NewOryUserCreateHandler(
 	}
 }
 
-// CreateOryUserRequest is the expected request body for creating a user
+// CreateOryUserRequest is the expected request body for user creation triggered by an ory action
 type CreateOryUserRequest struct {
 	OryId    string `json:"ory_id"`
 	Email    string `json:"email"`

@@ -17,6 +17,7 @@ import addOnGrad from "assets/add-on-grad.svg";
 import inferenceGrad from "assets/inference-grad.svg";
 
 import DashboardHeader from "../cluster-dashboard/DashboardHeader";
+import ClusterContextProvider from "../infrastructure-dashboard/ClusterContextProvider";
 import AddonForm from "./AddonForm";
 import AddonFormContextProvider from "./AddonFormContextProvider";
 
@@ -24,7 +25,7 @@ type Props = {
   filterModels?: boolean;
 };
 const AddonTemplates: React.FC<Props> = ({ filterModels }) => {
-  const { currentProject } = useContext(Context);
+  const { currentProject, currentCluster } = useContext(Context);
   const { search } = useLocation();
   const queryParams = new URLSearchParams(search);
   const history = useHistory();
@@ -40,9 +41,17 @@ const AddonTemplates: React.FC<Props> = ({ filterModels }) => {
 
   if (templateMatch) {
     return (
-      <AddonFormContextProvider projectId={currentProject?.id} redirectOnSubmit>
-        <AddonForm template={templateMatch} filterModels={filterModels} />
-      </AddonFormContextProvider>
+      <ClusterContextProvider
+        clusterId={currentCluster?.id}
+        refetchInterval={0}
+      >
+        <AddonFormContextProvider
+          projectId={currentProject?.id}
+          redirectOnSubmit
+        >
+          <AddonForm template={templateMatch} filterModels={filterModels} />
+        </AddonFormContextProvider>
+      </ClusterContextProvider>
     );
   }
 

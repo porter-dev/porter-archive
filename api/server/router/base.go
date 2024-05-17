@@ -200,8 +200,8 @@ func GetBaseRoutes(
 	// POST /api/users/ory -> user.NewOryUserCreateHandler
 	createOryUserEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
-			Verb:   types.APIVerbGet,
-			Method: types.HTTPVerbGet,
+			Verb:   types.APIVerbUpdate,
+			Method: types.HTTPVerbPost,
 			Path: &types.Path{
 				Parent:       basePath,
 				RelativePath: "/users/ory",

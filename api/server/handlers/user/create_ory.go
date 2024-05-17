@@ -2,7 +2,6 @@ package user
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/porter-dev/porter/internal/telemetry"
@@ -18,10 +17,12 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 )
 
+// OryUserCreateHandler is the handler for user creation triggered by an ory action
 type OryUserCreateHandler struct {
 	handlers.PorterHandlerReadWriter
 }
 
+// NewOryUserCreateHandler generates a new OryUserCreateHandler
 func NewOryUserCreateHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
@@ -32,12 +33,14 @@ func NewOryUserCreateHandler(
 	}
 }
 
+// CreateOryUserRequest is the expected request body for creating a user
 type CreateOryUserRequest struct {
-	UserId   string `json:"user_id"`
+	OryId    string `json:"ory_id"`
 	Email    string `json:"email"`
 	Referral string `json:"referral"`
 }
 
+// ServeHTTP handles the user creation triggered by an ory action
 func (u *OryUserCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, span := telemetry.NewSpan(r.Context(), "serve-create-ory-user")
 	defer span.End()
@@ -67,13 +70,19 @@ func (u *OryUserCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "email", Value: request.Email},
+		telemetry.AttributeKV{Key: "ory-id", Value: request.OryId},
+		telemetry.AttributeKV{Key: "referral", Value: request.Referral},
+	)
+
 	if request.Email == "" {
 		err = telemetry.Error(ctx, span, nil, "email is required")
 		u.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
-	if request.UserId == "" {
-		err = telemetry.Error(ctx, span, nil, "user_id is required")
+	if request.OryId == "" {
+		err = telemetry.Error(ctx, span, nil, "ory_id is required")
 		u.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
@@ -83,7 +92,7 @@ func (u *OryUserCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		Email:         request.Email,
 		EmailVerified: false,
 		AuthProvider:  models.AuthProvider_Ory,
-		ExternalId:    request.UserId,
+		ExternalId:    request.OryId,
 	}
 
 	existingUser, err := u.Repo().User().ReadUserByEmail(user.Email)
@@ -121,6 +130,4 @@ func (u *OryUserCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		CompanyName:         user.CompanyName,
 		ReferralMethod:      request.Referral,
 	}))
-
-	fmt.Println("triggered by ory")
 }

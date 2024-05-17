@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Addon, AddonWithEnvVars } from "@porter-dev/api-contracts";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Anser, { type AnserJsonEntry } from "anser";
 import { match } from "ts-pattern";
 import { z } from "zod";
@@ -194,6 +194,8 @@ export const useAddon = (): {
     isError: boolean;
   };
 } => {
+  const queryClient = useQueryClient();
+
   const updateAddon = async ({
     projectId,
     deploymentTargetId,
@@ -235,6 +237,8 @@ export const useAddon = (): {
         addonName: addon.name.value,
       }
     );
+
+    await queryClient.invalidateQueries(["listAddons"]);
   };
 
   const getAddon = ({

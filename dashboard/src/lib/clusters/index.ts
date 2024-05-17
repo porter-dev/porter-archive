@@ -42,6 +42,7 @@ export function updateExistingClusterContract(
       clientClusterContract.cluster.cloudProviderCredentialsId,
     projectId: clientClusterContract.cluster.projectId,
   });
+  console.log(clientClusterContract.cluster.config);
   match(clientClusterContract.cluster.config)
     .with({ kind: "EKS" }, (config) => {
       if (cluster.kindValues.case !== "eksKind") {
@@ -71,6 +72,8 @@ export function updateExistingClusterContract(
       );
     });
 
+  console.log(cluster);
+
   return cluster;
 }
 
@@ -93,7 +96,10 @@ function clientEKSConfigToProto(
           .with("MONITORING", () => NodeGroupType.MONITORING)
           .with("APPLICATION", () => NodeGroupType.APPLICATION)
           .with("CUSTOM", () => NodeGroupType.CUSTOM)
+          .with("USER", () => NodeGroupType.USER)
           .otherwise(() => NodeGroupType.UNSPECIFIED),
+        nodeGroupName: ng.nodeGroupName,
+        nodeGroupId: ng.nodeGroupId,
       });
     }),
     network: new AWSClusterNetwork({
@@ -159,7 +165,10 @@ function clientGKEConfigToProto(
             () => GKENodePoolType.GKE_NODE_POOL_TYPE_APPLICATION
           )
           .with("CUSTOM", () => GKENodePoolType.GKE_NODE_POOL_TYPE_CUSTOM)
+          .with("USER", () => GKENodePoolType.GKE_NODE_POOL_TYPE_CUSTOM)
           .otherwise(() => GKENodePoolType.GKE_NODE_POOL_TYPE_UNSPECIFIED),
+        nodePoolName: ng.nodeGroupName,
+        nodePoolId: ng.nodeGroupId,
       });
     }),
     network: new GKENetwork({
@@ -189,7 +198,10 @@ function clientAKSConfigToProto(
           .with("MONITORING", () => NodePoolType.MONITORING)
           .with("APPLICATION", () => NodePoolType.APPLICATION)
           .with("CUSTOM", () => NodePoolType.CUSTOM)
+          .with("USER", () => NodePoolType.USER)
           .otherwise(() => NodePoolType.UNSPECIFIED),
+        nodePoolName: ng.nodeGroupName,
+        nodePoolId: ng.nodeGroupId,
       });
     }),
     skuTier: match(clientConfig.skuTier)
@@ -249,7 +261,10 @@ const clientEKSConfigFromProto = (value: EKS): EKSClientClusterConfig => {
           .with(NodeGroupType.MONITORING, () => "MONITORING" as const)
           .with(NodeGroupType.APPLICATION, () => "APPLICATION" as const)
           .with(NodeGroupType.CUSTOM, () => "CUSTOM" as const)
+          .with(NodeGroupType.USER, () => "USER" as const)
           .otherwise(() => "UNKNOWN" as const),
+        nodeGroupName: ng.nodeGroupName,
+        nodeGroupId: ng.nodeGroupId,
       };
     }),
     cidrRange: value.network?.vpcCidr ?? value.cidrRange ?? "", // network will always be provided in one of those fields
@@ -320,7 +335,10 @@ const clientGKEConfigFromProto = (value: GKE): GKEClientClusterConfig => {
             GKENodePoolType.GKE_NODE_POOL_TYPE_CUSTOM,
             () => "CUSTOM" as const
           )
+          .with(GKENodePoolType.GKE_NODE_POOL_TYPE_USER, () => "USER" as const)
           .otherwise(() => "UNKNOWN" as const),
+        nodeGroupName: ng.nodePoolName,
+        nodeGroupIdId: ng.nodePoolId,
       };
     }),
     cidrRange: value.network?.cidrRange ?? "", // network will always be provided
@@ -345,7 +363,10 @@ const clientAKSConfigFromProto = (value: AKS): AKSClientClusterConfig => {
           .with(NodePoolType.MONITORING, () => "MONITORING" as const)
           .with(NodePoolType.APPLICATION, () => "APPLICATION" as const)
           .with(NodePoolType.CUSTOM, () => "CUSTOM" as const)
+          .with(NodePoolType.USER, () => "USER" as const)
           .otherwise(() => "UNKNOWN" as const),
+        nodeGroupName: ng.nodePoolName,
+        nodeGroupId: ng.nodePoolId,
       };
     }),
     skuTier: match(value.skuTier)

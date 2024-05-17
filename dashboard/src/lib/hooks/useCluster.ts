@@ -24,12 +24,14 @@ import {
   clusterValidator,
   contractValidator,
   createContractResponseValidator,
+  nodeGroupValidator,
   nodeValidator,
   preflightCheckValidator,
   type APIContract,
   type ClientCluster,
   type ClientClusterContract,
   type ClientNode,
+  type ClientNodeGroup,
   type ClientPreflightCheck,
   type ClusterState,
   type ContractCondition,
@@ -585,6 +587,61 @@ export const useClusterNodeList = ({
   return {
     nodes: clusterNodesReq.data ?? [],
     isLoading: clusterNodesReq.isLoading,
+  };
+};
+
+type TUseClusterNodeGroups = {
+  nodeGroups: ClientNodeGroup[];
+  isLoading: boolean;
+};
+export const useClusterNodeGroups = ({
+  clusterId,
+  refetchInterval = 3000,
+}: {
+  clusterId: number | undefined;
+  refetchInterval?: number;
+}): TUseClusterNodeGroups => {
+  const { currentProject } = useContext(Context);
+
+  const { data, isLoading } = useQuery(
+    ["getClusterNodeList", currentProject?.id, clusterId],
+    async () => {
+      if (
+        !currentProject?.id ||
+        currentProject.id === -1 ||
+        !clusterId ||
+        clusterId === -1
+      ) {
+        return;
+      }
+
+      const res = await api.getNodeGroups(
+        "<token>",
+        {},
+        { project_id: currentProject.id, cluster_id: clusterId }
+      );
+
+      const parsed = await z
+        .object({
+          node_groups: z.array(nodeGroupValidator).nullish().default([]),
+        })
+        .parseAsync(res.data);
+
+      return parsed;
+    },
+    {
+      refetchInterval,
+      enabled:
+        !!currentProject &&
+        currentProject.id !== -1 &&
+        !!clusterId &&
+        clusterId !== -1,
+    }
+  );
+
+  return {
+    nodeGroups: data?.node_groups ?? [],
+    isLoading,
   };
 };
 

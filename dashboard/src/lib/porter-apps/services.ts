@@ -120,6 +120,9 @@ export const serviceValidator = z.object({
   smartOptimization: serviceBooleanValidator.optional(),
   terminationGracePeriodSeconds: serviceNumberValidator.optional(),
   sleep: serviceBooleanValidator.optional(),
+  computeResources: z.object({
+    id: z.string(),
+  }).array(),
   config: z.discriminatedUnion("type", [
     webConfigValidator,
     workerConfigValidator,
@@ -160,6 +163,9 @@ export type SerializedService = {
   };
   terminationGracePeriodSeconds?: number;
   sleep?: boolean;
+  computeResources?: Array<{
+    id: string;
+  }>;
   config:
     | {
         type: "web";
@@ -342,6 +348,7 @@ export function serializeService(service: ClientService): SerializedService {
     },
     terminationGracePeriodSeconds: service.terminationGracePeriodSeconds?.value,
     sleep: service.sleep?.value,
+    computeResources: service.computeResources,
     config: match(service.config)
       .with({ type: "web" }, (config) =>
         Object.freeze({
@@ -420,6 +427,7 @@ export function deserializeService({
     port: ServiceField.number(service.port, override?.port),
     cpuCores: ServiceField.number(service.cpuCores, override?.cpuCores),
     sleep: ServiceField.boolean(service.sleep, override?.sleep),
+    computeResources: service.computeResources ?? [],
     gpu: {
       enabled: ServiceField.boolean(
         service.gpu?.enabled,
@@ -642,6 +650,9 @@ export function serviceProto(service: SerializedService): Service {
           instancesOptional: service.instances,
           type: serviceTypeEnumProto(config.type),
           sleep: service.sleep,
+          computeResources: {
+            computeResources: service.computeResources,
+          },
           config: {
             value: {
               ...config,
@@ -659,6 +670,9 @@ export function serviceProto(service: SerializedService): Service {
           instancesOptional: service.instances,
           type: serviceTypeEnumProto(config.type),
           sleep: service.sleep,
+          computeResources: {
+            computeResources: service.computeResources,
+          },
           config: {
             value: {
               ...config,
@@ -675,6 +689,9 @@ export function serviceProto(service: SerializedService): Service {
           runOptional: service.run,
           instancesOptional: service.instances,
           type: serviceTypeEnumProto(config.type),
+          computeResources: {
+            computeResources: service.computeResources,
+          },
           config: {
             value: {
               ...config,
@@ -693,6 +710,9 @@ export function serviceProto(service: SerializedService): Service {
           runOptional: service.run,
           instancesOptional: service.instances,
           type: serviceTypeEnumProto(config.type),
+          computeResources: {
+            computeResources: service.computeResources,
+          },
           config: {
             value: {},
             case: "jobConfig",
@@ -706,6 +726,9 @@ export function serviceProto(service: SerializedService): Service {
           ...service,
           runOptional: service.run,
           instancesOptional: service.instances,
+          computeResources: {
+            computeResources: service.computeResources,
+          },
           type: serviceTypeEnumProto(config.type),
           config: {
             value: {},
@@ -738,6 +761,7 @@ export function serializedServiceFromProto({
       run: service.runOptional ?? service.run,
       instances: service.instancesOptional ?? service.instances,
       sleep: service.sleep,
+      computeResources: service.computeResources?.computeResources,
       config: {
         type: "web" as const,
         autoscaling: value.autoscaling ? value.autoscaling : undefined,
@@ -751,6 +775,7 @@ export function serializedServiceFromProto({
       run: service.runOptional ?? service.run,
       instances: service.instancesOptional ?? service.instances,
       sleep: service.sleep,
+      computeResources: service.computeResources?.computeResources,
       config: {
         type: "worker" as const,
         autoscaling: value.autoscaling ? value.autoscaling : undefined,
@@ -763,6 +788,7 @@ export function serializedServiceFromProto({
         ? {
             ...service,
             run: service.runOptional ?? service.run,
+            computeResources: service.computeResources?.computeResources,
             instances: service.instancesOptional ?? service.instances,
             config: {
               type: "predeploy" as const,
@@ -772,6 +798,7 @@ export function serializedServiceFromProto({
         ? {
             ...service,
             run: service.runOptional ?? service.run,
+            computeResources: service.computeResources?.computeResources,
             instances: service.instancesOptional ?? service.instances,
             config: {
               type: "initdeploy" as const,
@@ -780,6 +807,7 @@ export function serializedServiceFromProto({
         : {
             ...service,
             run: service.runOptional ?? service.run,
+            computeResources: service.computeResources?.computeResources,
             instances: service.instancesOptional ?? service.instances,
             config: {
               type: "job" as const,

@@ -109,9 +109,9 @@ func (u *OryUserCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 			return
 		}
 
-		u.Config().AnalyticsClient.Identify(analytics.CreateSegmentIdentifyUser(user))
+		_ = u.Config().AnalyticsClient.Identify(analytics.CreateSegmentIdentifyUser(user))
 
-		u.Config().AnalyticsClient.Track(analytics.UserCreateTrack(&analytics.UserCreateTrackOpts{
+		_ = u.Config().AnalyticsClient.Track(analytics.UserCreateTrack(&analytics.UserCreateTrackOpts{
 			UserScopedTrackOpts: analytics.GetUserScopedTrackOpts(user.ID),
 			Email:               user.Email,
 			FirstName:           user.FirstName,

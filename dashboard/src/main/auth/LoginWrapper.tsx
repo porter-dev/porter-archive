@@ -1,14 +1,28 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import styled from "styled-components";
 
 import DynamicLink from "components/DynamicLink";
+import Heading from "components/form-components/Heading";
+import Button from "components/porter/Button";
 import Container from "components/porter/Container";
+import Input from "components/porter/Input";
+import Link from "components/porter/Link";
 import Spacer from "components/porter/Spacer";
-import blog from "assets/blog.png";
-import docs from "assets/docs.png";
-import logo from "assets/logo.png";
+import Text from "components/porter/Text";
 
+import api from "shared/api";
+import { Context } from "shared/Context";
+import { emailRegex } from "shared/regex";
+import blog from "assets/blog.png";
+import community from "assets/community.png";
+import docs from "assets/docs.png";
+import github from "assets/github-icon.png";
+import GoogleIcon from "assets/GoogleIcon";
+import logo from "assets/logo.png";
 import Login from "./Login";
+import OryLogin from "./OryLogin";
+import Helper from "../../components/form-components/Helper";
+import ToggleRow from "../../components/porter/ToggleRow";
 
 type Props = {
   authenticate: () => Promise<void>;
@@ -20,8 +34,9 @@ const getWindowDimensions = () => {
 };
 
 const LoginWrapper: React.FC<Props> = ({ authenticate }) => {
+  const [legacyLogin, setLegacyLogin] = useState(false);
   const [windowDimensions, setWindowDimensions] = useState(
-    getWindowDimensions()
+      getWindowDimensions()
   );
 
   const handleResize = () => {
@@ -52,6 +67,13 @@ const LoginWrapper: React.FC<Props> = ({ authenticate }) => {
             <Shiny>Welcome back to Porter</Shiny>
           </Jumbotron>
           <Spacer y={1} />
+          <ToggleRow
+              isToggled={legacyLogin}
+              onToggle={() => {setLegacyLogin(!legacyLogin)}}
+          >
+            <Helper>Legacy log-in flow</Helper>
+          </ToggleRow>
+          <Spacer y={1} />
           <LinkRow to="https://porter.run/docs" target="_blank">
             <img src={docs} /> Read the Porter docs
           </LinkRow>
@@ -71,7 +93,11 @@ const LoginWrapper: React.FC<Props> = ({ authenticate }) => {
           </Flex>
         )}
         <Spacer y={2} />
-        <Login authenticate={authenticate} />
+        {legacyLogin ? (
+          <Login authenticate={authenticate} />
+        ) : (
+            <OryLogin authenticate={authenticate} />
+        )}
       </Wrapper>
     </StyledLogin>
   );

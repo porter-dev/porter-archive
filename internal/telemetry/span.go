@@ -92,6 +92,8 @@ func WithAttributes(span trace.Span, attrs ...AttributeKV) {
 				zone, offset := val.Zone()
 				span.SetAttributes(attribute.String(prefixSpanKey(fmt.Sprintf("%s-timezone", string(attr.Key))), zone))
 				span.SetAttributes(attribute.Int(prefixSpanKey(fmt.Sprintf("%s-offset", string(attr.Key))), offset))
+			default:
+				span.SetAttributes(attribute.String(prefixSpanKey(string(attr.Key)), fmt.Sprintf("%v", val)))
 			}
 		}
 	}

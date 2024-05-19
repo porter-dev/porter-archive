@@ -544,6 +544,20 @@ const createGCPIntegration = baseApi<
   return `/api/projects/${pathParams.project_id}/integrations/gcp`;
 });
 
+const listUserInvites = baseApi<{}, { id: number }>("GET", () => {
+    return `/api/users/invites`;
+});
+
+const respondUserInvites = baseApi<
+    {
+    accepted_invite_ids: number[];
+    declined_invite_ids: number[];
+    },
+    {}
+>("POST", () => {
+    return `/api/users/invites/response`;
+});
+
 const createInvite = baseApi<
   {
     email: string;
@@ -2196,6 +2210,8 @@ const registerUser = baseApi<{
   company_name: string;
   referral_method?: string;
   referred_by_code?: string;
+  auth_provider?: string;
+  external_id?: string;
 }>("POST", "/api/users");
 
 const rollbackChart = baseApi<
@@ -4065,4 +4081,8 @@ export default {
 
   // system status
   systemStatusHistory,
+
+
+  listUserInvites,
+  respondUserInvites,
 };

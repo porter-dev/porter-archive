@@ -87,6 +87,14 @@ func (repo *InviteRepository) ListInvitesByProjectID(
 	return res, nil
 }
 
+// ListInvitesByEmail finds all invites
+// for a given email
+func (repo *InviteRepository) ListInvitesByEmail(
+	email string,
+) ([]*models.Invite, error) {
+	return nil, errors.New("Cannot read from database")
+}
+
 // UpdateInvite updates an invitation in the DB
 func (repo *InviteRepository) UpdateInvite(
 	invite *models.Invite,

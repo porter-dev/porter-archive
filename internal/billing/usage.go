@@ -380,6 +380,16 @@ func (m LagoClient) IngestEvents(ctx context.Context, subscriptionID string, eve
 		batch := events[i:end]
 		var batchInput []lago.EventInput
 		for i := range batch {
+			if enableSandbox {
+				// For Porter Cloud, we can't infer the project ID from the request, so we
+				// instead extract it from the billing events
+				projectID, err := strconv.ParseUint(batch[i].CustomerID, 10, 64)
+				if err != nil {
+					return telemetry.Error(ctx, span, err, "failed to parse project id")
+				}
+				subscriptionID = m.generateLagoID(SubscriptionIDPrefix, uint(projectID), enableSandbox)
+			}
+
 			event := lago.EventInput{
 				TransactionID:          batch[i].TransactionID,
 				ExternalSubscriptionID: subscriptionID,

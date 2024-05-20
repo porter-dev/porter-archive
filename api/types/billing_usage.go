@@ -16,6 +16,15 @@ type ListCustomerUsageRequest struct {
 	CurrentPeriod bool `json:"current_period,omitempty"`
 }
 
+// Subscription is the subscription for a customer
+type Subscription struct {
+	ExternalID         string `json:"external_id"`
+	ExternalCustomerID string `json:"external_customer_id"`
+	Status             string `json:"status"`
+	SubscriptionAt     string `json:"subscription_at"`
+	EndingAt           string `json:"ending_at"`
+}
+
 // Usage is the aggregated usage for a customer
 type Usage struct {
 	FromDatetime     string        `json:"from_datetime"`

@@ -402,6 +402,7 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 		res.OryApiKeyContextWrapper = func(ctx context.Context) context.Context {
 			return context.WithValue(ctx, ory.ContextAccessToken, InstanceEnvConf.ServerConf.OryApiKey)
 		}
+		res.OryActionKey = InstanceEnvConf.ServerConf.OryActionKey
 		res.Logger.Info().Msg("Created Ory client")
 	}
 

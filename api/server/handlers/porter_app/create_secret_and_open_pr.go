@@ -151,12 +151,17 @@ func (c *OpenStackPRHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if request.DeleteWorkflowFilename != "" {
 			openPRInput.PRAction = actions.GithubPRAction_DeleteAppWorkflow
 			openPRInput.WorkflowFileName = request.DeleteWorkflowFilename
-			openPRInput.PRBranch = "porter-stack-delete"
+			openPRInput.PRBranch = fmt.Sprintf("porter-stack-delete-%s", randStr)
 		}
 		if request.PreviewsWorkflowFilename != "" {
 			openPRInput.PRAction = actions.GithubPRAction_PreviewAppWorkflow
 			openPRInput.WorkflowFileName = request.PreviewsWorkflowFilename
-			openPRInput.PRBranch = "porter-stack-preview"
+			openPRInput.PRBranch = fmt.Sprintf("porter-previews-%s", randStr)
+		}
+		if request.ManualWorkflowFilename != "" {
+			openPRInput.PRAction = actions.GithubPRAction_ManualPreviewDeploy
+			openPRInput.WorkflowFileName = request.ManualWorkflowFilename
+			openPRInput.PRBranch = fmt.Sprintf("porter-manual-previews-%s", randStr)
 		}
 
 		pr, err = actions.OpenGithubPR(openPRInput)

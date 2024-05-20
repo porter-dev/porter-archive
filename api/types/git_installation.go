@@ -70,6 +70,7 @@ type GetBuildpackRequest struct {
 
 type GetContentsRequest struct {
 	GithubDirectoryRequest
+	ForceDefaultBranch bool `schema:"force_default_branch,omitempty"`
 }
 
 type GithubDirectoryItem struct {

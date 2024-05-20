@@ -61,6 +61,22 @@ func (c *GithubGetContentsHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	if request.ForceDefaultBranch {
+		repo, _, err := client.Repositories.Get(ctx, owner, name)
+		if err != nil {
+			err = telemetry.Error(ctx, span, err, "could not get repo")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+		if repo == nil || repo.DefaultBranch == nil {
+			err := telemetry.Error(ctx, span, nil, "repo or default branch not found")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+
+		branch = *repo.DefaultBranch
+	}
+
 	telemetry.WithAttributes(
 		span,
 		telemetry.AttributeKV{Key: "repo-owner", Value: owner},

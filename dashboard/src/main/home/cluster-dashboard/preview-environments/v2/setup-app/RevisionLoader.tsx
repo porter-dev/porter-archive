@@ -1,17 +1,24 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useFormContext } from "react-hook-form";
 
 import { useLatestRevision } from "main/home/app-dashboard/app-view/LatestRevisionContext";
 import { useAppWithPreviewOverrides } from "lib/hooks/useAppWithPreviewOverrides";
+
+import { valueExists } from "shared/util";
 
 import { type AppTemplateFormData } from "../EnvTemplateContextProvider";
 
 export const RevisionLoader: React.FC<{
   children: React.ReactNode;
 }> = ({ children }) => {
+  const [detectedServices, setDetectedServices] = useState<{
+    detected: boolean;
+    count: number;
+  }>({ detected: false, count: 0 });
+
   const { latestProto, porterApp, latestSource, servicesFromYaml, appEnv } =
     useLatestRevision();
-  const { reset } = useFormContext<AppTemplateFormData>();
+  const { reset, setValue } = useFormContext<AppTemplateFormData>();
 
   const withPreviewOverrides = useAppWithPreviewOverrides({
     latestApp: latestProto,
@@ -45,6 +52,7 @@ export const RevisionLoader: React.FC<{
       redeployOnSave: false,
     });
   }, [withPreviewOverrides]);
+
 
   return <>{children}</>;
 };

@@ -19,6 +19,8 @@ const (
 	GithubPRAction_DeleteAppWorkflow GithubPRAction = "delete-app-workflow"
 	// GithubPRAction_PreviewAppWorkflow is the action for creating the preview app workflow
 	GithubPRAction_PreviewAppWorkflow GithubPRAction = "preview-app-workflow"
+	// GithubPRAction_ManualPreviewDeploy is the action for manually deploying a preview environment
+	GithubPRAction_ManualPreviewDeploy GithubPRAction = "manual-preview-deploy"
 )
 
 type GithubPROpts struct {
@@ -97,6 +99,8 @@ func getPRTitle(action GithubPRAction, stackName string) string {
 		return fmt.Sprintf("Delete Porter Application %s", stackName)
 	case GithubPRAction_PreviewAppWorkflow:
 		return "Enable Preview Environments on Porter"
+	case GithubPRAction_ManualPreviewDeploy:
+		return "Deploy Preview Environments Manually"
 	default:
 		return ""
 	}
@@ -171,9 +175,91 @@ func commitChange(prBranchName string, opts GithubPROpts) error {
 		}
 
 		return nil
+	case GithubPRAction_ManualPreviewDeploy:
+		manualPreviewWorkflowYaml, err := getManualPreviewActionYAML(&GetStackApplyActionYAMLOpts{
+			ServerURL:          opts.ServerURL,
+			ClusterID:          opts.ClusterID,
+			ProjectID:          opts.ProjectID,
+			StackName:          opts.StackName,
+			DefaultBranch:      opts.DefaultBranch,
+			SecretName:         opts.SecretName,
+			PorterYamlPath:     opts.PorterYamlPath,
+			DeploymentTargetId: opts.DeploymentTargetId,
+			Preview:            true,
+		})
+		if err != nil {
+			return err
+		}
+
+		_, err = commitWorkflowFile(
+			opts.Client,
+			fmt.Sprintf("porter_manual_preview_%s.yml", strings.ToLower(opts.StackName)),
+			manualPreviewWorkflowYaml, opts.GitRepoOwner,
+			opts.GitRepoName, prBranchName, false,
+		)
+		if err != nil {
+			return fmt.Errorf("error committing file: %w", err)
+		}
+
+		return nil
 	default:
 		return fmt.Errorf("invalid PR action: %s", opts.PRAction)
 	}
+}
+
+func getManualPreviewActionYAML(opts *GetStackApplyActionYAMLOpts) ([]byte, error) {
+	checkoutWithUsesRef := GithubActionYAMLStep{
+		Name: "Checkout code",
+		Uses: "actions/checkout@v3",
+		With: map[string]string{
+			"ref": "${{ github.event.inputs.branch }}",
+		},
+	}
+
+	gaSteps := []GithubActionYAMLStep{
+		checkoutWithUsesRef,
+		getSetTagStep(),
+		getSetupPorterStep(),
+		getDeployStackStep(
+			opts.ServerURL,
+			opts.SecretName,
+			opts.StackName,
+			"v0.1.0",
+			opts.PorterYamlPath,
+			opts.ProjectID,
+			opts.ClusterID,
+			opts.DeploymentTargetId,
+			true,
+		),
+	}
+
+	actionYAML := GithubActionYAML{
+		On: map[string]interface{}{
+			"workflow_dispatch": map[string]interface{}{
+				"inputs": map[string]interface{}{
+					"branch": map[string]interface{}{
+						"description": "Base branch tod deploy",
+						"type":        "string",
+						"required":    true,
+					},
+				},
+			},
+		},
+		Name: fmt.Sprintf("Deploy Preview for %s", opts.StackName),
+		Jobs: map[string]GithubActionYAMLJob{
+			"porter-deploy": {
+				RunsOn: "ubuntu-latest",
+				Steps:  gaSteps,
+			},
+		},
+	}
+
+	by, err := yaml.Marshal(actionYAML)
+	if err != nil {
+		return nil, fmt.Errorf("error marshalling yaml: %w", err)
+	}
+
+	return by, nil
 }
 
 func getStackApplyActionYAML(opts *GetStackApplyActionYAMLOpts) ([]byte, error) {

@@ -38,14 +38,19 @@ export const useAppWithPreviewOverrides = ({
       ? templateEnv.secret_variables
       : appEnv?.secret_variables;
 
+    console.log("detectedServices", detectedServices);
+
+    const clientApp = clientAppFromProto({
+      proto,
+      overrides: detectedServices,
+      variables,
+      secrets,
+      lockServiceDeletions: true,
+    });
+    console.log("clientAppFromProto", clientApp);
+
     return applyPreviewOverrides({
-      app: clientAppFromProto({
-        proto,
-        overrides: detectedServices,
-        variables,
-        secrets,
-        lockServiceDeletions: true,
-      }),
+      app: clientApp,
       overrides: detectedServices?.previews,
     });
   }, [

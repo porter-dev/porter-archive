@@ -101,6 +101,30 @@ export const ConfigurableAppList: React.FC = () => {
       </Container>
       <Spacer y={1} />
       <List>
+        {environments.length === 0 && (
+          <DashboardPlaceholder>
+            <Text size={16}>
+              Preview environments have not been set up yet.
+            </Text>
+            <Spacer y={0.5} />
+            <Text color={"helper"}>
+              Get started by creating a new environment template - a blueprint
+              for your preview environments.
+            </Text>
+            <Spacer y={1} />
+            <Button
+              alt
+              height="35px"
+              onClick={() => {
+                history.push({
+                  pathname: "/preview-environments/configure",
+                });
+              }}
+            >
+              Create Template
+            </Button>
+          </DashboardPlaceholder>
+        )}
         {envsWithExistingAppInstance.map((ev) => (
           <ConfigurableAppRow
             key={ev.name}

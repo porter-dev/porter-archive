@@ -901,6 +901,7 @@ const detectGitlabBuildpack = baseApi<
 const getBranchContents = baseApi<
   {
     dir: string;
+    force_default_branch?: boolean;
   },
   {
     project_id: number;
@@ -3662,6 +3663,7 @@ const createSecretAndOpenGitHubPullRequest = baseApi<
     porter_yaml_path?: string;
     delete_workflow_filename?: string;
     previews_workflow_filename?: string;
+    manual_workflow_filename?: string;
     deployment_target_id?: string;
   },
   {

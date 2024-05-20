@@ -33,10 +33,6 @@ export const CreateTemplate: React.FC = () => {
 
   const [step, setStep] = useState(0);
   const [selectedApp, setSelectedApp] = useState<AppInstance | null>(null);
-  const [detectedServices, setDetectedServices] = useState<{
-    detected: boolean;
-    count: number;
-  }>({ detected: false, count: 0 });
 
   const {
     showGHAModal,
@@ -53,36 +49,9 @@ export const CreateTemplate: React.FC = () => {
   } = useFormContext<AppTemplateFormData>();
 
   const source = watch("source");
+  const build = watch("app.build");
 
-  const { detectedServices: servicesFromYaml, detectedName } = usePorterYaml({
-    source: source.type === "github" ? source : null,
-    appName: "",
-  });
-
-  useEffect(() => {
-    if (servicesFromYaml && !detectedServices.detected) {
-      const { services, predeploy, build: detectedBuild } = servicesFromYaml;
-      setValue("app.services", services);
-      setValue("app.predeploy", [predeploy].filter(valueExists));
-
-      if (detectedBuild) {
-        setValue("app.build", detectedBuild);
-      }
-      setDetectedServices({
-        detected: true,
-        count: services.length,
-      });
-    }
-
-    if (!servicesFromYaml && detectedServices.detected) {
-      setValue("app.services", []);
-      setValue("app.predeploy", []);
-      setDetectedServices({
-        detected: false,
-        count: 0,
-      });
-    }
-  }, [servicesFromYaml, detectedName, detectedServices.detected]);
+  console.log("build", build);
 
   useEffect(() => {
     if (selectedApp?.deployment_target.id) {
@@ -99,6 +68,13 @@ export const CreateTemplate: React.FC = () => {
       setStep(3);
     }
   }, [selectedApp?.id]);
+
+  // useEffect(() => {
+  //   console.log("source", source);
+  //   if (source?.type === "github") {
+  //     setValue("app.build.repo", source.git_repo_name);
+  //   }
+  // }, [source?.type]);
 
   return (
     <>

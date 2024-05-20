@@ -7,14 +7,20 @@ import React, {
 } from "react";
 import { PorterApp } from "@porter-dev/api-contracts";
 import styled from "styled-components";
+import { match } from "ts-pattern";
 
+import Loading from "components/Loading";
+import Icon from "components/porter/Icon";
 import SearchBar from "components/porter/SearchBar";
 import { AppIcon } from "main/home/app-dashboard/apps/AppMeta";
 import { type AppInstance } from "main/home/app-dashboard/apps/types";
+import { type Environment } from "lib/environments/types";
 import { useLatestAppRevisions } from "lib/hooks/useLatestAppRevisions";
+import { useTemplateEnvs } from "lib/hooks/useTemplateEnvs";
 
 import { Context } from "shared/Context";
 import { search } from "shared/search";
+import addOns from "assets/add-ons.svg";
 
 type Props = {
   selectedApp: AppInstance | null;
@@ -96,6 +102,45 @@ export const AppSelector: React.FC<Props> = ({
   );
 };
 
+type TemplateSelectorProps = {
+  selectedTemplate: Environment | null;
+  setSelectedTemplate: Dispatch<SetStateAction<Environment | null>>;
+};
+
+export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
+  selectedTemplate,
+  setSelectedTemplate,
+}) => {
+  const { environments, status } = useTemplateEnvs();
+
+  return (
+    <ListContainer>
+      <ListWrapper maxHeight="156px">
+        {match(status)
+          .with("loading", () => {
+            return <Loading />;
+          })
+          .otherwise(() => {
+            return environments.map((env, i) => {
+              return (
+                <AppItem
+                  key={i}
+                  onClick={() => {
+                    setSelectedTemplate(env);
+                  }}
+                  isSelected={selectedTemplate?.name === env.name}
+                >
+                  <Icon height="18px" src={addOns} />
+                  {env.name}
+                </AppItem>
+              );
+            });
+          })}
+      </ListWrapper>
+    </ListContainer>
+  );
+};
+
 const ExpandedWrapper = styled.div`
   margin-top: 10px;
   width: 100%;
@@ -109,11 +154,11 @@ const ListContainer = styled.div`
   overflow-y: auto;
 `;
 
-const ListWrapper = styled.div`
+const ListWrapper = styled.div<{ maxHeight?: string }>`
   width: 100%;
   border-radius: 3px;
   border: 0px solid #ffffff44;
-  max-height: 221px;
+  max-height: ${(props) => props.maxHeight ?? "221px"};
   top: 40px;
 
   > i {

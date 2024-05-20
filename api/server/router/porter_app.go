@@ -1738,7 +1738,7 @@ func getPorterAppRoutes(
 	// GET /api/projects/{project_id}/clusters/{cluster_id}/apps/{porter_app_name}/events/id -> porter_app.NewGetPorterAppEventHandler
 	getPorterAppEventEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
-			Verb:   types.APIVerbCreate,
+			Verb:   types.APIVerbGet,
 			Method: types.HTTPVerbGet,
 			Path: &types.Path{
 				Parent:       basePath,

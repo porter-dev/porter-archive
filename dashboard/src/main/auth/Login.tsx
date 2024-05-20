@@ -7,6 +7,7 @@ import Container from "components/porter/Container";
 import Input from "components/porter/Input";
 import Link from "components/porter/Link";
 import Spacer from "components/porter/Spacer";
+import Text from "components/porter/Text";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
@@ -167,6 +168,12 @@ const Login: React.FC<Props> = ({ authenticate }) => {
           </Button>
         </>
       )}
+      <Spacer y={1} />
+      <Text size={13} color="helper">
+        Don't have an account?
+        <Spacer width="5px" inline />
+        <Link to="/register">Sign up</Link>
+      </Text>
     </Container>
   );
 };

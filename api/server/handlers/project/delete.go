@@ -51,6 +51,24 @@ func (p *ProjectDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 					continue
 				}
 
+				if cluster.CloudProvider == "Hosted" {
+					req := connect.NewRequest(&porterv1.DeletePorterCloudClusterRequest{
+						ClusterId: int64(cluster.ID),
+						ProjectId: int64(cluster.ProjectID),
+					})
+
+					_, err = p.Config().ClusterControlPlaneClient.DeletePorterCloudCluster(ctx, req)
+					if err != nil {
+						e := "error deleting cluster"
+						err = telemetry.Error(ctx, span, err, e)
+						p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+						return
+					}
+
+					// technically multiple clusters shouldn't exist in a porter cloud project.
+					continue
+				}
+
 				contractRevision, err := p.Config().Repo.APIContractRevisioner().List(ctx, proj.ID, repository.WithClusterID(cluster.ID))
 				if err != nil {
 					e := "error finding contract revisions for cluster"

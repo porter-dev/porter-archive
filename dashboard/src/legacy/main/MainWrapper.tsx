@@ -6,7 +6,7 @@ import { withRouter, type RouteComponentProps } from "react-router";
 import AuthzProvider from "shared/auth/AuthzContext";
 
 import AuthnProvider from "../shared/auth/AuthnContext";
-import { ContextProvider } from "../shared/Context";
+import { ContextProvider } from "shared/Context";
 import Main from "./Main";
 // required styles for Ory Elements
 import "@ory/elements/style.css";

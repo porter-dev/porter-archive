@@ -3,7 +3,7 @@ import branch_icon from "legacy/assets/branch.png";
 import styled from "styled-components";
 
 import api from "../../shared/api";
-import { Context } from "../../shared/Context";
+import { Context } from "shared/Context";
 import { ActionConfigType } from "../../shared/types";
 import Loading from "../Loading";
 import SearchBar from "../SearchBar";

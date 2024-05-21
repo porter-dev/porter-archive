@@ -5,7 +5,7 @@ import styled from "styled-components";
 
 import ConfirmOverlay from "../../../components/ConfirmOverlay";
 import api from "../../../shared/api";
-import { Context } from "../../../shared/Context";
+import { Context } from "shared/Context";
 
 interface Props {
   gitlabData: any[];

@@ -7,7 +7,7 @@ import {
 import Selector from "../../Selector";
 import styled from "styled-components";
 import useFormField from "../hooks/useFormField";
-import { Context } from "../../../shared/Context";
+import { Context } from "shared/Context";
 import { hasSetValue } from "../utils";
 
 const Select: React.FC<SelectField> = (props) => {

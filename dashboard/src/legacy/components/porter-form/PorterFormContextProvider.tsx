@@ -20,7 +20,7 @@ import {
   getFinalVariablesForKeyValueArray,
   getMetadata as getMetadataForKeyValueArray,
 } from "./field-components/KeyValueArray";
-import { Context } from "../../shared/Context";
+import { Context } from "shared/Context";
 import { getFinalVariablesForArrayInput } from "./field-components/ArrayInput";
 import { getFinalVariablesForCheckbox } from "./field-components/Checkbox";
 import { getFinalVariablesForSelect } from "./field-components/Select";

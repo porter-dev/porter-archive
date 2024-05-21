@@ -17,7 +17,7 @@ import styled from "styled-components";
 
 import Loading from "../../../components/Loading";
 import api from "../../../shared/api";
-import { Context } from "../../../shared/Context";
+import { Context } from "shared/Context";
 
 type Props = {};
 

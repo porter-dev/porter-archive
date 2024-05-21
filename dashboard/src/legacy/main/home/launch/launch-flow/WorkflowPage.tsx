@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from "react";
 import { FullActionConfigType } from "../../../../shared/types";
 import api from "../../../../shared/api";
-import { Context } from "../../../../shared/Context";
+import { Context } from "shared/Context";
 import styled from "styled-components";
 import YamlEditor from "../../../../components/YamlEditor";
 import Loading from "../../../../components/Loading";

@@ -1,6 +1,7 @@
-import { stackFramesToString } from "./stack_trace_utils";
-import StackTrace from "stacktrace-js";
 import * as Sentry from "@sentry/react";
+import StackTrace from "stacktrace-js";
+
+import { stackFramesToString } from "./stack_trace_utils";
 
 export function EnableErrorHandling() {
   window.onerror = function (msg, file, line, col, err) {
@@ -11,7 +12,7 @@ export function EnableErrorHandling() {
       // Update the error stack with the StackTrace stack (this helps for minified environments)
       err.stack = stackFramesStringify;
 
-      if (process.env.ENABLE_SENTRY) {
+      if (import.meta.env.ENABLE_SENTRY) {
         Sentry.captureException(err, (scope) => {
           scope.setTags({
             error_boundary_location: "window_error_handling",

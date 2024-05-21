@@ -3,9 +3,11 @@ import "regenerator-runtime/runtime";
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-import App from "./App";
+
 import { SetupSentry } from "shared/error_handling/sentry/setup";
 import { EnableErrorHandling } from "shared/error_handling/window_error_handling";
+
+import App from "./App";
 
 declare global {
   interface Window {
@@ -14,7 +16,7 @@ declare global {
   }
 }
 
-if (process.env.ENABLE_SENTRY) {
+if (import.meta.env.ENABLE_SENTRY) {
   SetupSentry();
 }
 

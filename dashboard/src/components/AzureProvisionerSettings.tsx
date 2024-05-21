@@ -9,13 +9,11 @@ import {
   EnumKubernetesKind,
   NodePoolType,
 } from "@porter-dev/api-contracts";
-import { Label } from "@tanstack/react-query-devtools/build/lib/Explorer";
 import { withRouter, type RouteComponentProps } from "react-router";
 import styled from "styled-components";
 
 import Heading from "components/form-components/Heading";
 import SelectRow from "components/form-components/SelectRow";
-import { OFState } from "main/home/onboarding/state";
 import { useIntercom } from "lib/hooks/useIntercom";
 
 import api from "shared/api";
@@ -288,7 +286,6 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
             if (cluster.id === res.data.contract_revision?.cluster_id) {
               // setHasFinishedOnboarding(true);
               setCurrentCluster(cluster);
-              OFState.actions.goTo("clean_up");
               pushFiltered(props, "/cluster-dashboard", ["project_id"], {
                 cluster: cluster.name,
               });

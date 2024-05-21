@@ -4,7 +4,6 @@ import { BrowserRouter } from "react-router-dom";
 import styled, { createGlobalStyle, ThemeProvider } from "styled-components";
 
 import PorterErrorBoundary from "shared/error_handling/PorterErrorBoundary";
-import midnight from "shared/themes/midnight";
 import standard from "shared/themes/standard";
 
 import MainWrapper from "./main/MainWrapper";

@@ -1,5 +1,4 @@
 import React, { useContext, useMemo, useState } from "react";
-import _ from "lodash";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
 

@@ -1,5 +1,5 @@
 import type React from "react";
-import { MutableRefObject, RefObject, useEffect, useRef } from "react";
+import { useEffect } from "react";
 
 /**
  * Hook that alerts clicks outside of the passed ref

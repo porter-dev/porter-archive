@@ -11,8 +11,6 @@ import Text from "components/porter/Text";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
-import { emailRegex } from "shared/regex";
-import github from "assets/github-icon.png";
 import GoogleIcon from "assets/GoogleIcon";
 import logo from "assets/logo.png";
 

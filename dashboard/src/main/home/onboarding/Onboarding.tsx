@@ -3,12 +3,6 @@ import styled from "styled-components";
 import { devtools } from "valtio/utils";
 
 import Loading from "components/Loading";
-import Banner from "components/porter/Banner";
-import Button from "components/porter/Button";
-import DashboardPlaceholder from "components/porter/DashboardPlaceholder";
-import Link from "components/porter/Link";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
 import ProvisionerFlow from "components/ProvisionerFlow";
 
 import api from "shared/api";

@@ -12,7 +12,6 @@ import Loading from "components/Loading";
 
 import loading from "assets/loading.gif";
 
-import Button from "./porter/Button";
 import Selector from "./Selector";
 
 const GlobalFilter: React.FunctionComponent<any> = ({

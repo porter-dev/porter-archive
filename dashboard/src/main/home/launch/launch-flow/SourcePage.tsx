@@ -12,7 +12,6 @@ import { isAlphanumeric } from "shared/common";
 import { Context } from "shared/Context";
 import { pushFiltered } from "shared/routing";
 import { type ActionConfigType } from "shared/types";
-import close from "assets/close.png";
 
 type PropsType = RouteComponentProps & {
   templateName: string;

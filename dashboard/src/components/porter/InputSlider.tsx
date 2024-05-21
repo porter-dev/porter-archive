@@ -1,12 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import Slider, { type Mark } from "@material-ui/core/Slider";
 import { withStyles } from "@material-ui/core/styles";
 import Tooltip from "@material-ui/core/Tooltip";
-import Typography from "@material-ui/core/Typography";
 import styled from "styled-components";
 
 import Spacer from "./Spacer";
-import Text from "./Text";
 
 type InputSliderProps = {
   label?: string;

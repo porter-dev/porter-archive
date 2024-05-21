@@ -2,8 +2,6 @@ import React, { Component } from "react";
 import { withRouter, type RouteComponentProps } from "react-router";
 import styled from "styled-components";
 
-import Heading from "components/form-components/Heading";
-import Helper from "components/form-components/Helper";
 
 import api from "shared/api";
 import { Context } from "shared/Context";

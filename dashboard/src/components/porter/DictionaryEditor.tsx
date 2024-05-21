@@ -1,8 +1,6 @@
-import { ok } from "assert";
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 
-import Container from "./Container";
 import Spacer from "./Spacer";
 import Text from "./Text";
 

@@ -1,4 +1,4 @@
-import React, { Component, useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import styled from "styled-components";
 
 import CheckboxList from "components/form-components/CheckboxList";
@@ -9,7 +9,6 @@ import InputRow from "components/form-components/InputRow";
 import SelectRow from "components/form-components/SelectRow";
 import SaveButton from "components/SaveButton";
 
-import api from "shared/api";
 import { isAlphanumeric } from "shared/common";
 import { Context } from "shared/Context";
 import { type InfraType } from "shared/types";

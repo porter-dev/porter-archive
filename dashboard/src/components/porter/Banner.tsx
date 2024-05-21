@@ -2,7 +2,6 @@ import React from "react";
 import styled from "styled-components";
 
 import info from "assets/info.svg";
-import warning from "assets/warning.png";
 
 type Props = {
   type?: string;

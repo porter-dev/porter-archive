@@ -1,5 +1,4 @@
 import React, { useMemo } from "react";
-import _ from "lodash";
 import pluralize from "pluralize";
 import styled from "styled-components";
 

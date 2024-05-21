@@ -7,7 +7,6 @@ import SaveButton from "components/SaveButton";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
-import close from "assets/close.png";
 
 const EditCollaboratorModal = () => {
   const {

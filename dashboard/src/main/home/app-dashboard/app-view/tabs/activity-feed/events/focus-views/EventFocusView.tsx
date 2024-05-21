@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import _ from "lodash";
 import { useLocation } from "react-router";
 import styled from "styled-components";
 import { match } from "ts-pattern";

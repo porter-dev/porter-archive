@@ -1,4 +1,3 @@
-import { log } from "console";
 import React, { useContext, useEffect, useState } from "react";
 import {
   Cluster,
@@ -16,7 +15,6 @@ import { withRouter, type RouteComponentProps } from "react-router";
 import styled from "styled-components";
 
 import Heading from "components/form-components/Heading";
-import Helper from "components/form-components/Helper";
 import SelectRow from "components/form-components/SelectRow";
 import Loading from "components/Loading";
 import { OFState } from "main/home/onboarding/state";
@@ -26,20 +24,13 @@ import api from "shared/api";
 import { Context } from "shared/Context";
 import { pushFiltered } from "shared/routing";
 import { type ClusterType } from "shared/types";
-import failure from "assets/failure.svg";
-import healthy from "assets/status-healthy.png";
 
 import InputRow from "./form-components/InputRow";
-import Placeholder from "./Placeholder";
 import Button from "./porter/Button";
 import Error from "./porter/Error";
-import ExpandableSection from "./porter/ExpandableSection";
-import Fieldset from "./porter/Fieldset";
 import InputSlider from "./porter/InputSlider";
-import Link from "./porter/Link";
 import Select from "./porter/Select";
 import Spacer from "./porter/Spacer";
-import Step from "./porter/Step";
 import Text from "./porter/Text";
 import VerticalSteps from "./porter/VerticalSteps";
 import PreflightChecks from "./PreflightChecks";

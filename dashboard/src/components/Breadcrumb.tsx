@@ -1,7 +1,6 @@
-import React, { Fragment, useState } from "react";
+import React, { Fragment } from "react";
 import styled from "styled-components";
 
-import { Steps } from "main/home/onboarding/types";
 
 type Props = {
   currentStep: string;

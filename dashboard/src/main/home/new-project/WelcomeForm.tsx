@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
-import styled from "styled-components";
 import { CSSTransition } from "react-transition-group";
+import styled from "styled-components";
 
 const WelcomeForm = (props: any) => {
   const queryParams = new URLSearchParams(window.location.search);
@@ -34,7 +34,7 @@ const WelcomeForm = (props: any) => {
       .then(() => {
         setIsDone(true);
         axios.post(
-          process.env.DISCORD_WEBHOOK_URL,
+          import.meta.env.DISCORD_WEBHOOK_URL,
           {
             username: "Demo Request",
             content: `**${email}** from **${company}** (website: ${companySite})`,
@@ -46,7 +46,7 @@ const WelcomeForm = (props: any) => {
           }
         );
 
-        axios.get(process.env.ZAPIER_WEBHOOK_URL, {
+        axios.get(import.meta.env.ZAPIER_WEBHOOK_URL, {
           params: {
             email,
             isCompany: true,
@@ -55,7 +55,9 @@ const WelcomeForm = (props: any) => {
           },
         });
       })
-      .catch((error) => alert(error));
+      .catch((error) => {
+        alert(error);
+      });
 
     e.preventDefault();
   };
@@ -66,8 +68,12 @@ const WelcomeForm = (props: any) => {
       timeout={500}
       classNames="alert"
       unmountOnExit
-      onEnter={() => setActive(true)}
-      onExited={() => setActive(false)}
+      onEnter={() => {
+        setActive(true);
+      }}
+      onExited={() => {
+        setActive(false);
+      }}
     >
       <StyledWelcomeForm>
         {isDone ? (
@@ -88,7 +94,9 @@ const WelcomeForm = (props: any) => {
               type="email"
               placeholder="ex: sophon@acme.com"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value);
+              }}
             />
             <SubtitleAlt>
               <Num>2</Num> What is your company name? *
@@ -97,7 +105,9 @@ const WelcomeForm = (props: any) => {
               type="text"
               placeholder="ex: Acme"
               value={company}
-              onChange={(e) => setCompany(e.target.value)}
+              onChange={(e) => {
+                setCompany(e.target.value);
+              }}
             />
             <SubtitleAlt>
               <Num>3</Num> What is your company website? *
@@ -107,7 +117,9 @@ const WelcomeForm = (props: any) => {
               name="website"
               placeholder="ex: https://acme.com"
               value={companySite}
-              onChange={(e) => setCompanySite(e.target.value)}
+              onChange={(e) => {
+                setCompanySite(e.target.value);
+              }}
             />
             <Submit
               type="submit"
@@ -292,6 +304,8 @@ const StyledWelcomeForm = styled.div`
   &.alert-exit-active {
     opacity: 0;
     transform: translateY(-100px);
-    transition: opacity 500ms, transform 1000ms;
+    transition:
+      opacity 500ms,
+      transform 1000ms;
   }
 `;

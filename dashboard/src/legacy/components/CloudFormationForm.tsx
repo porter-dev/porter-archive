@@ -82,8 +82,8 @@ const CloudFormationForm: React.FC<Props> = ({
       if (currentProject == null) {
         return false;
       }
-      let externalId = getExternalId();
-      let targetARN = `arn:aws:iam::${AWSAccountID}:role/porter-manager`;
+      const externalId = getExternalId();
+      const targetARN = `arn:aws:iam::${AWSAccountID}:role/porter-manager`;
       await api.createAWSIntegration(
         "<token>",
         {
@@ -121,8 +121,8 @@ const CloudFormationForm: React.FC<Props> = ({
       if (currentProject == null) {
         return false;
       }
-      let externalId = getExternalId();
-      let targetARN = `arn:aws:iam::${AWSAccountID}:role/porter-manager`;
+      const externalId = getExternalId();
+      const targetARN = `arn:aws:iam::${AWSAccountID}:role/porter-manager`;
       await api.createAWSIntegration(
         "<token>",
         {
@@ -237,11 +237,11 @@ const CloudFormationForm: React.FC<Props> = ({
   const directToCloudFormation = () => {
     setCurrentStep(3);
     const externalId = getExternalId();
-    let trustArn = process.env.TRUST_ARN
-      ? process.env.TRUST_ARN
+    const trustArn = import.meta.env.TRUST_ARN
+      ? import.meta.env.TRUST_ARN
       : "arn:aws:iam::108458755588:role/CAPIManagement";
     let cloudformation_url = `https://console.aws.amazon.com/cloudformation/home?#/stacks/create/review?templateURL=https://porter-role.s3.us-east-2.amazonaws.com/cloudformation-policy.json&stackName=PorterRole&param_ExternalIdParameter=${externalId}&param_TrustArnParameter=${trustArn}`;
-    if (currentProject.aws_ack_auth_enabled === true) {
+    if (currentProject.aws_ack_auth_enabled) {
       cloudformation_url = `https://console.aws.amazon.com/cloudformation/home?#/stacks/create/review?templateURL=https://porter-role.s3.us-east-2.amazonaws.com/cloudformation-access-policy.json&stackName=PorterRole&param_TrustArnParameter=${trustArn}`;
     }
     markStepStarted({
@@ -285,7 +285,13 @@ const CloudFormationForm: React.FC<Props> = ({
                 </Button>
               </AWSButtonContainer>
               <Spacer y={1} />
-              <Button onClick={() => setCurrentStep(1)}>Continue</Button>
+              <Button
+                onClick={() => {
+                  setCurrentStep(1);
+                }}
+              >
+                Continue
+              </Button>
             </>,
             <>
               <Text size={16}>Enter your AWS account ID</Text>
@@ -328,7 +334,12 @@ const CloudFormationForm: React.FC<Props> = ({
                   Continue
                 </Button>
                 <Spacer inline x={0.5} />
-                <Button onClick={() => setCurrentStep(0)} color="#222222">
+                <Button
+                  onClick={() => {
+                    setCurrentStep(0);
+                  }}
+                  color="#222222"
+                >
                   Back
                 </Button>
               </StepChangeButtonsContainer>
@@ -364,10 +375,18 @@ const CloudFormationForm: React.FC<Props> = ({
               </AWSButtonContainer>
               <Spacer y={1} />
               <StepChangeButtonsContainer>
-                <Button onClick={() => setCurrentStep(3)}>Continue</Button>
+                <Button
+                  onClick={() => {
+                    setCurrentStep(3);
+                  }}
+                >
+                  Continue
+                </Button>
                 <Spacer inline x={0.5} />
                 <Button
-                  onClick={() => setCurrentStep(1)}
+                  onClick={() => {
+                    setCurrentStep(1);
+                  }}
                   color="#222222"
                   // status={canProceed ? "success" : hasClickedCloudformationButton ? "loading" : undefined}
                   loadingText={`Checking if Porter can access AWS account ID ${AWSAccountID}...`}
@@ -384,7 +403,12 @@ const CloudFormationForm: React.FC<Props> = ({
                 Checking if Porter can access AWS account with ID {AWSAccountID}
                 . This can take up to a minute.
                 <Spacer inline width="10px" />
-                <Link hasunderline onClick={() => setShowNeedHelpModal(true)}>
+                <Link
+                  hasunderline
+                  onClick={() => {
+                    setShowNeedHelpModal(true);
+                  }}
+                >
                   Need help?
                 </Link>
               </Text>
@@ -402,7 +426,12 @@ const CloudFormationForm: React.FC<Props> = ({
                   Continue
                 </Button>
                 <Spacer inline x={0.5} />
-                <Button onClick={() => setCurrentStep(2)} color="#222222">
+                <Button
+                  onClick={() => {
+                    setCurrentStep(2);
+                  }}
+                  color="#222222"
+                >
                   Back
                 </Button>
               </Container>
@@ -410,7 +439,12 @@ const CloudFormationForm: React.FC<Props> = ({
           ]}
         />
         {showNeedHelpModal && (
-          <Modal closeModal={() => setShowNeedHelpModal(false)} width={"800px"}>
+          <Modal
+            closeModal={() => {
+              setShowNeedHelpModal(false);
+            }}
+            width={"800px"}
+          >
             <Text size={16}>Granting Porter access to AWS</Text>
             <Spacer y={1} />
             <Text color="helper">

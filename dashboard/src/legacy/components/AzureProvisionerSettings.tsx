@@ -9,7 +9,6 @@ import {
   EnumKubernetesKind,
   NodePoolType,
 } from "@porter-dev/api-contracts";
-import { Label } from "@tanstack/react-query-devtools/build/lib/Explorer";
 import dotVertical from "legacy/assets/dot-vertical.svg";
 import Heading from "legacy/components/form-components/Heading";
 import SelectRow from "legacy/components/form-components/SelectRow";

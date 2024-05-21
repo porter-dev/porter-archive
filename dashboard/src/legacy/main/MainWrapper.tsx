@@ -9,7 +9,7 @@ import AuthnProvider from "../shared/auth/AuthnContext";
 import { ContextProvider } from "../shared/Context";
 import Main from "./Main";
 // required styles for Ory Elements
-import "@ory/elements/dist/style.css";
+import "@ory/elements/style.css";
 
 type PropsType = RouteComponentProps;
 

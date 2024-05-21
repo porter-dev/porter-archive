@@ -93,9 +93,8 @@
   },
   "scripts": {
     "test": "jest",
-    "start": "./node_modules/webpack-dev-server/bin/webpack-dev-server.js",
-    "build": "NODE_ENV=\"production\" webpack",
-    "build-and-analyze": "ENABLE_ANALYZER=true NODE_ENV=\"production\" ./node_modules/webpack/bin/webpack.js",
+    "start": "NODE_ENV=\"development\" vite",
+    "build": "NODE_ENV=\"production\" vite build",
     "prepare": "cd .. && husky install dashboard/.husky",
     "lint-staged": "lint-staged"
   },
@@ -170,9 +169,7 @@
     "ts-loader": "^8.0.4",
     "type-fest": "^4.3.1",
     "typescript": "^5.2.2",
-    "webpack": "^4.44.2",
     "webpack-bundle-analyzer": "^4.4.2",
-    "webpack-cli": "^3.3.12",
     "webpack-dev-server": "^3.11.0"
   },
   "lint-staged": {

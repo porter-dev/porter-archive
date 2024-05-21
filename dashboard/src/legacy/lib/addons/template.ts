@@ -1,14 +1,13 @@
 import quivr from "legacy/assets/quivr.png";
-
-import Logs from "main/home/add-on-dashboard/common/Logs";
-import Settings from "main/home/add-on-dashboard/common/Settings";
-import DatadogForm from "main/home/add-on-dashboard/datadog/DatadogForm";
-import MetabaseForm from "main/home/add-on-dashboard/metabase/MetabaseForm";
-import MezmoForm from "main/home/add-on-dashboard/mezmo/MezmoForm";
-import NewRelicForm from "main/home/add-on-dashboard/newrelic/NewRelicForm";
-import QuivrForm from "main/home/add-on-dashboard/quivr/QuivrForm";
-import TailscaleForm from "main/home/add-on-dashboard/tailscale/TailscaleForm";
-import TailscaleOverview from "main/home/add-on-dashboard/tailscale/TailscaleOverview";
+import Logs from "legacy/main/home/add-on-dashboard/common/Logs";
+import Settings from "legacy/main/home/add-on-dashboard/common/Settings";
+import DatadogForm from "legacy/main/home/add-on-dashboard/datadog/DatadogForm";
+import MetabaseForm from "legacy/main/home/add-on-dashboard/metabase/MetabaseForm";
+import MezmoForm from "legacy/main/home/add-on-dashboard/mezmo/MezmoForm";
+import NewRelicForm from "legacy/main/home/add-on-dashboard/newrelic/NewRelicForm";
+import QuivrForm from "legacy/main/home/add-on-dashboard/quivr/QuivrForm";
+import TailscaleForm from "legacy/main/home/add-on-dashboard/tailscale/TailscaleForm";
+import TailscaleOverview from "legacy/main/home/add-on-dashboard/tailscale/TailscaleOverview";
 
 import { type ClientAddon, type ClientAddonType } from ".";
 

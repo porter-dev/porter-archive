@@ -222,8 +222,8 @@ const GrantAWSPermissions: React.FC<Props> = ({
       // todo: handle error here
     }
 
-    const trustArn = process.env.TRUST_ARN
-      ? process.env.TRUST_ARN
+    const trustArn = import.meta.env.TRUST_ARN
+      ? import.meta.env.TRUST_ARN
       : "arn:aws:iam::108458755588:role/CAPIManagement";
     const cloudFormationUrl = `https://console.aws.amazon.com/cloudformation/home?#/stacks/create/review?templateURL=https://porter-role.s3.us-east-2.amazonaws.com/cloudformation-access-policy.json&stackName=PorterRole&param_TrustArnParameter=${trustArn}`;
     void reportToAnalytics({

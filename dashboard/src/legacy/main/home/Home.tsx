@@ -482,53 +482,6 @@ const Home: React.FC<Props> = (props) => {
             />
 
             <Switch>
-              <Route path="/apps/new/app">
-                <ClusterContextProvider
-                  clusterId={currentCluster?.id}
-                  refetchInterval={0}
-                >
-                  <CreateApp />
-                </ClusterContextProvider>
-              </Route>
-              <Route path="/apps/:appName/:tab">
-                <AppView />
-              </Route>
-              <Route path="/apps/:appName">
-                <AppView />
-              </Route>
-              <Route path="/apps">
-                <Apps />
-              </Route>
-
-              <Route path="/environment-groups/new">
-                <CreateEnvGroup />
-              </Route>
-              <Route path="/environment-groups/:envGroupName/:tab">
-                <ExpandedEnv />
-              </Route>
-              <Route path="/environment-groups/:envGroupName">
-                <ExpandedEnv />
-              </Route>
-              <Route path="/environment-groups">
-                <EnvDashboard />
-              </Route>
-              <Route path="/datastores/new">
-                <CreateDatastore />
-              </Route>
-              <Route path="/datastores/:datastoreName/:tab">
-                <DatabaseView />
-              </Route>
-              <Route path="/datastores/:datastoreName">
-                <DatabaseView />
-              </Route>
-              <Route path="/datastores">
-                <DatabaseDashboard />
-              </Route>
-
-              <Route path="/compliance">
-                <ComplianceDashboard />
-              </Route>
-
               <Route path="/addons/new">
                 {currentProject?.capi_provisioner_enabled &&
                 currentProject?.simplified_view_enabled &&
@@ -575,18 +528,6 @@ const Home: React.FC<Props> = (props) => {
                   return <Onboarding />;
                 }}
               />
-              <Route path="/infrastructure/new">
-                <CreateClusterForm />
-              </Route>
-              <Route path="/infrastructure/:clusterId/:tab">
-                <ClusterView />
-              </Route>
-              <Route path="/infrastructure/:clusterId">
-                <ClusterView />
-              </Route>
-              <Route path="/infrastructure">
-                <ClusterDashboard />
-              </Route>
               <Route
                 path="/dashboard"
                 render={() => {
@@ -608,9 +549,7 @@ const Home: React.FC<Props> = (props) => {
                   "/env-groups",
                   "/datastores",
                   "/stacks",
-                  ...(!currentProject?.simplified_view_enabled
-                    ? ["/preview-environments"]
-                    : []),
+                  "/preview-environments",
                 ]}
                 render={() => {
                   if (currentCluster?.id === -1) {
@@ -642,28 +581,6 @@ const Home: React.FC<Props> = (props) => {
                 path={"/project-settings"}
                 render={() => <GuardedProjectSettings />}
               />
-              {currentProject?.simplified_view_enabled && (
-                <>
-                  <Route exact path="/preview-environments/configure">
-                    <SetupApp />
-                  </Route>
-                  <Route
-                    exact
-                    path={`/preview-environments/apps/:appName/:tab`}
-                  >
-                    <AppView preview />
-                  </Route>
-                  <Route exact path="/preview-environments/apps/:appName">
-                    <AppView preview />
-                  </Route>
-                  <Route exact path={`/preview-environments/apps`}>
-                    <Apps />
-                  </Route>
-                  <Route exact path={`/preview-environments`}>
-                    <PreviewEnvs />
-                  </Route>
-                </>
-              )}
               <Route path={"*"} render={() => <LaunchWrapper />} />
             </Switch>
           </ViewWrapper>

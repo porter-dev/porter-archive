@@ -1,10 +1,10 @@
 import React, { useContext } from "react";
+import sidebarHighlight from "legacy/assets/sidebar-highlight.png";
+import { useRouting } from "legacy/shared/routing";
 import { NavLink, useParams, type NavLinkProps } from "react-router-dom";
 import styled from "styled-components";
 
 import { Context } from "shared/Context";
-import { useRouting } from "shared/routing";
-import sidebarHighlight from "assets/sidebar-highlight.png";
 
 const SidebarLink: React.FC<
   {

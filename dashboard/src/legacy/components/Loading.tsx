@@ -1,6 +1,6 @@
 import React, { Component } from "react";
+import loading from "legacy/assets/loading.gif";
 import styled from "styled-components";
-import loading from "assets/loading.gif";
 
 type PropsType = {
   offset?: string;

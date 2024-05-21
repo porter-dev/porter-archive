@@ -1,26 +1,25 @@
 import React, { useCallback, useMemo, useState } from "react";
+import alert from "legacy/assets/alert-warning.svg";
+import deploy from "legacy/assets/deploy.png";
+import view_changes from "legacy/assets/edit-contained.svg";
+import revert from "legacy/assets/fast-backward.svg";
+import pull_request_icon from "legacy/assets/pull_request_icon.svg";
+import run_for from "legacy/assets/run_for.png";
+import tag_icon from "legacy/assets/tag.png";
+import Container from "legacy/components/porter/Container";
+import Icon from "legacy/components/porter/Icon";
+import Link from "legacy/components/porter/Link";
+import Spacer from "legacy/components/porter/Spacer";
+import Tag from "legacy/components/porter/Tag";
+import Text from "legacy/components/porter/Text";
+import { useRevisionList } from "legacy/lib/hooks/useRevisionList";
+import { isClientRevisionNotification } from "legacy/lib/porter-apps/notification";
+import api from "legacy/shared/api";
 import AnimateHeight from "react-animate-height";
 import styled from "styled-components";
 import { match } from "ts-pattern";
 
-import Container from "components/porter/Container";
-import Icon from "components/porter/Icon";
-import Link from "components/porter/Link";
-import Spacer from "components/porter/Spacer";
-import Tag from "components/porter/Tag";
-import Text from "components/porter/Text";
 import { useLatestRevision } from "main/home/app-dashboard/app-view/LatestRevisionContext";
-import { useRevisionList } from "lib/hooks/useRevisionList";
-import { isClientRevisionNotification } from "lib/porter-apps/notification";
-
-import api from "shared/api";
-import alert from "assets/alert-warning.svg";
-import deploy from "assets/deploy.png";
-import view_changes from "assets/edit-contained.svg";
-import revert from "assets/fast-backward.svg";
-import pull_request_icon from "assets/pull_request_icon.svg";
-import run_for from "assets/run_for.png";
-import tag_icon from "assets/tag.png";
 
 import RevisionDiffModal from "../modals/RevisionDiffModal";
 import { type PorterAppDeployEvent } from "../types";

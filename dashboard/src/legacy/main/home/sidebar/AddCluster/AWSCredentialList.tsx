@@ -1,15 +1,17 @@
 import React, { useContext, useEffect, useState } from "react";
-import { Context } from "shared/Context";
-import api from "shared/api";
+import CloudFormationForm from "legacy/components/CloudFormationForm";
+import Description from "legacy/components/Description";
+import Loading from "legacy/components/Loading";
+import Placeholder from "legacy/components/OldPlaceholder";
+import ProvisionerFlow from "legacy/components/ProvisionerFlow";
+import ProvisionerForm from "legacy/components/ProvisionerForm";
+import api from "legacy/shared/api";
 import styled from "styled-components";
-import Loading from "components/Loading";
-import Placeholder from "components/OldPlaceholder";
+
+import { Context } from "shared/Context";
+
 import AWSCredentialForm from "./AWSCredentialForm";
 import CredentialList from "./CredentialList";
-import Description from "components/Description";
-import ProvisionerForm from "components/ProvisionerForm";
-import CloudFormationForm from "components/CloudFormationForm";
-import ProvisionerFlow from "components/ProvisionerFlow";
 
 type Props = {
   selectCredential: (aws_integration_id: number) => void;
@@ -58,7 +60,6 @@ const AWSCredentialsList: React.FunctionComponent<Props> = ({
         setHasError(true);
         setCurrentError(err.response?.data?.error);
         setIsLoading(false);
-
       });
   }, [currentProject]);
 
@@ -76,9 +77,7 @@ const AWSCredentialsList: React.FunctionComponent<Props> = ({
 
   const renderContents = () => {
     if (shouldCreateCred) {
-      return (
-        <ProvisionerFlow />
-      );
+      return <ProvisionerFlow />;
     }
 
     return (

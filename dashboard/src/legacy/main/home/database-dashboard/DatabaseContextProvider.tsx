@@ -1,18 +1,20 @@
 import React, { createContext, useContext } from "react";
 import { useQuery } from "@tanstack/react-query";
+import notFound from "legacy/assets/not-found.png";
+import Loading from "legacy/components/Loading";
+import Container from "legacy/components/porter/Container";
+import Link from "legacy/components/porter/Link";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import {
+  datastoreValidator,
+  type ClientDatastore,
+} from "legacy/lib/databases/types";
+import api from "legacy/shared/api";
 import styled from "styled-components";
 import { z } from "zod";
 
-import Loading from "components/Loading";
-import Container from "components/porter/Container";
-import Link from "components/porter/Link";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import { datastoreValidator, type ClientDatastore } from "lib/databases/types";
-
-import api from "shared/api";
 import { Context } from "shared/Context";
-import notFound from "assets/not-found.png";
 
 import { SUPPORTED_DATASTORE_TEMPLATES } from "./constants";
 

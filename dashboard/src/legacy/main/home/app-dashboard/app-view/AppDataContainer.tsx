@@ -9,6 +9,26 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { PorterApp } from "@porter-dev/api-contracts";
 import { useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
+import alert from "legacy/assets/alert-warning.svg";
+import Banner from "legacy/components/porter/Banner";
+import { Error as ErrorComponent } from "legacy/components/porter/Error";
+import Link from "legacy/components/porter/Link";
+import Spacer from "legacy/components/porter/Spacer";
+import Tag from "legacy/components/porter/Tag";
+import TabSelector from "legacy/components/TabSelector";
+import {
+  runGithubWorkflow,
+  type GithubResultErrorCode,
+} from "legacy/lib/github/workflows";
+import { useAppAnalytics } from "legacy/lib/hooks/useAppAnalytics";
+import { useAppValidation } from "legacy/lib/hooks/useAppValidation";
+import { useIntercom } from "legacy/lib/hooks/useIntercom";
+import {
+  clientAppFromProto,
+  porterAppFormValidator,
+  type PorterAppFormData,
+} from "legacy/lib/porter-apps";
+import api from "legacy/shared/api";
 import AnimateHeight from "react-animate-height";
 import { FormProvider, useForm } from "react-hook-form";
 import { useHistory } from "react-router";
@@ -16,28 +36,7 @@ import styled from "styled-components";
 import { match } from "ts-pattern";
 import { z } from "zod";
 
-import Banner from "components/porter/Banner";
-import { Error as ErrorComponent } from "components/porter/Error";
-import Link from "components/porter/Link";
-import Spacer from "components/porter/Spacer";
-import Tag from "components/porter/Tag";
-import TabSelector from "components/TabSelector";
-import {
-  runGithubWorkflow,
-  type GithubResultErrorCode,
-} from "lib/github/workflows";
-import { useAppAnalytics } from "lib/hooks/useAppAnalytics";
-import { useAppValidation } from "lib/hooks/useAppValidation";
-import { useIntercom } from "lib/hooks/useIntercom";
-import {
-  clientAppFromProto,
-  porterAppFormValidator,
-  type PorterAppFormData,
-} from "lib/porter-apps";
-
-import api from "shared/api";
 import { Context } from "shared/Context";
-import alert from "assets/alert-warning.svg";
 
 import AppSaveButton from "./AppSaveButton";
 import ConfirmRedeployModal from "./ConfirmRedeployModal";

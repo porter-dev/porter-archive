@@ -1,14 +1,12 @@
 import React, { useMemo } from "react";
+import linkExternal from "legacy/assets/link-external.svg";
+import oneleet from "legacy/assets/oneleet.svg";
+import vanta from "legacy/assets/vanta.svg";
+import Container from "legacy/components/porter/Container";
+import Image from "legacy/components/porter/Image";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
 import { match } from "ts-pattern";
-
-import Container from "components/porter/Container";
-import Image from "components/porter/Image";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-
-import linkExternal from "assets/link-external.svg";
-import oneleet from "assets/oneleet.svg";
-import vanta from "assets/vanta.svg";
 
 import { useCompliance } from "./ComplianceContext";
 

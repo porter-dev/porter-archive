@@ -1,12 +1,11 @@
 import React, { useMemo } from "react";
+import Container from "legacy/components/porter/Container";
+import Spacer from "legacy/components/porter/Spacer";
+import StatusDot from "legacy/components/porter/StatusDot";
+import Text from "legacy/components/porter/Text";
 import _ from "lodash";
 import pluralize from "pluralize";
 import styled from "styled-components";
-
-import Container from "components/porter/Container";
-import Spacer from "components/porter/Spacer";
-import StatusDot from "components/porter/StatusDot";
-import Text from "components/porter/Text";
 
 import { useClusterContext } from "./ClusterContextProvider";
 

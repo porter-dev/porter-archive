@@ -1,16 +1,15 @@
 import React from "react";
+import addOns from "legacy/assets/add-ons.svg";
+import database from "legacy/assets/database.svg";
+import Container from "legacy/components/porter/Container";
+import Icon from "legacy/components/porter/Icon";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import { type Environment } from "legacy/lib/environments/types";
 import pluralize from "pluralize";
 import styled from "styled-components";
 
-import Container from "components/porter/Container";
-import Icon from "components/porter/Icon";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
 import { AppSource } from "main/home/app-dashboard/apps/AppMeta";
-import { type Environment } from "lib/environments/types";
-
-import addOns from "assets/add-ons.svg";
-import database from "assets/database.svg";
 
 type Props = {
   env: Environment;

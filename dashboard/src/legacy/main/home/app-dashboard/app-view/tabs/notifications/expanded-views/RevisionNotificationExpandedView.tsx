@@ -1,30 +1,28 @@
 import React, { useMemo } from "react";
 import { PorterApp } from "@porter-dev/api-contracts";
-import styled from "styled-components";
-import { match } from "ts-pattern";
-
-import Button from "components/porter/Button";
-import Container from "components/porter/Container";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import { useIntercom } from "lib/hooks/useIntercom";
-import { useRevisionList } from "lib/hooks/useRevisionList";
-import { clientAppFromProto } from "lib/porter-apps";
-import { ERROR_CODE_TO_SUMMARY } from "lib/porter-apps/error";
+import chat from "legacy/assets/chat.svg";
+import document from "legacy/assets/document.svg";
+import job from "legacy/assets/job.png";
+import time from "legacy/assets/time.svg";
+import web from "legacy/assets/web.png";
+import worker from "legacy/assets/worker.png";
+import Button from "legacy/components/porter/Button";
+import Container from "legacy/components/porter/Container";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import { useIntercom } from "legacy/lib/hooks/useIntercom";
+import { useRevisionList } from "legacy/lib/hooks/useRevisionList";
+import { clientAppFromProto } from "legacy/lib/porter-apps";
+import { ERROR_CODE_TO_SUMMARY } from "legacy/lib/porter-apps/error";
 import {
   deserializeNotifications,
   isClientServiceNotification,
   type ClientRevisionNotification,
-} from "lib/porter-apps/notification";
-
-import { feedDate } from "shared/string_utils";
-import { valueExists } from "shared/util";
-import chat from "assets/chat.svg";
-import document from "assets/document.svg";
-import job from "assets/job.png";
-import time from "assets/time.svg";
-import web from "assets/web.png";
-import worker from "assets/worker.png";
+} from "legacy/lib/porter-apps/notification";
+import { feedDate } from "legacy/shared/string_utils";
+import { valueExists } from "legacy/shared/util";
+import styled from "styled-components";
+import { match } from "ts-pattern";
 
 import { useLatestRevision } from "../../../LatestRevisionContext";
 import {

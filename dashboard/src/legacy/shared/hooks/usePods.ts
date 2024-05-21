@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import api from "shared/api";
+import api from "legacy/shared/api";
+
 import { NewWebsocketOptions, useWebsockets } from "./useWebsockets";
 
 interface Props {
@@ -30,12 +31,8 @@ export const usePods: UsePods = ({
   const [pods, setPods] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const {
-    newWebsocket,
-    openWebsocket,
-    closeAllWebsockets,
-    closeWebsocket,
-  } = useWebsockets();
+  const { newWebsocket, openWebsocket, closeAllWebsockets, closeWebsocket } =
+    useWebsockets();
 
   const setupWebsocket = () => {
     let apiEndpoint = `/api/projects/${project_id}/clusters/${cluster_id}/pod/status?`;

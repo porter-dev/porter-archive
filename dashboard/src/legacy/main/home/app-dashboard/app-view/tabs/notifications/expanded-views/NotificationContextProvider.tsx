@@ -1,18 +1,16 @@
 import React, { createContext } from "react";
 import { useQuery } from "@tanstack/react-query";
-import styled from "styled-components";
-
-import Loading from "components/Loading";
-import Container from "components/porter/Container";
-import Link from "components/porter/Link";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
+import notFound from "legacy/assets/not-found.png";
+import Loading from "legacy/components/Loading";
+import Container from "legacy/components/porter/Container";
+import Link from "legacy/components/porter/Link";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
 import {
   getClientNotificationById,
   type ClientNotification,
-} from "lib/porter-apps/notification";
-
-import notFound from "assets/not-found.png";
+} from "legacy/lib/porter-apps/notification";
+import styled from "styled-components";
 
 import { useLatestRevision } from "../../../LatestRevisionContext";
 

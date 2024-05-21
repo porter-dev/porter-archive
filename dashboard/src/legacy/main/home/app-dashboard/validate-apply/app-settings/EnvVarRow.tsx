@@ -1,14 +1,13 @@
 import React from "react";
+import warning from "legacy/assets/warning.svg";
+import Image from "legacy/components/porter/Image";
+import Spacer from "legacy/components/porter/Spacer";
+import Tooltip from "legacy/components/porter/Tooltip";
+import { type PorterAppFormData } from "legacy/lib/porter-apps";
 import { Controller, useFormContext } from "react-hook-form";
 import styled from "styled-components";
 
-import Image from "components/porter/Image";
-import Spacer from "components/porter/Spacer";
-import Tooltip from "components/porter/Tooltip";
 import { type KeyValueType } from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
-import { type PorterAppFormData } from "lib/porter-apps";
-
-import warning from "assets/warning.svg";
 
 type Props = {
   entry: KeyValueType;

@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
+import api from "legacy/shared/api";
 import { z } from "zod";
-
-import api from "shared/api";
 
 export function useCloudSqlSecret({
   appName,
@@ -13,12 +12,7 @@ export function useCloudSqlSecret({
   projectId: number;
 }): boolean {
   const { data } = useQuery(
-    [
-      "getCloudSqlSecret",
-      projectId,
-      appName,
-      deploymentTargetId,
-    ],
+    ["getCloudSqlSecret", projectId, appName, deploymentTargetId],
     async () => {
       const res = await api.getCloudSqlSecret(
         "<token>",

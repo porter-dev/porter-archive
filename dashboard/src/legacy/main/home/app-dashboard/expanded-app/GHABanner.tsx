@@ -1,16 +1,14 @@
-import React, { useEffect, useState, useContext } from "react";
+import React, { useContext, useEffect, useState } from "react";
+import refresh from "legacy/assets/refresh.png";
+import Banner from "legacy/components/porter/Banner";
+import Container from "legacy/components/porter/Container";
+import Link from "legacy/components/porter/Link";
+import Spacer from "legacy/components/porter/Spacer";
 import styled from "styled-components";
-
-import refresh from "assets/refresh.png";
 
 import { Context } from "shared/Context";
 
-import Banner from "components/porter/Banner";
-import Spacer from "components/porter/Spacer";
-import Link from "components/porter/Link";
 import GithubActionModal from "../new-app-flow/GithubActionModal";
-import Container from "components/porter/Container";
-
 
 type Props = {
   pullRequestUrl: string;
@@ -39,18 +37,19 @@ const GHABanner: React.FC<Props> = ({
             <Banner
               type="warning"
               suffix={
-                <RefreshButton onClick={() => window.location.reload()}>
+                <RefreshButton
+                  onClick={() => {
+                    window.location.reload();
+                  }}
+                >
                   <img src={refresh} /> Refresh
                 </RefreshButton>
               }
             >
-              Your application will not be available until you merge the Porter PR.
+              Your application will not be available until you merge the Porter
+              PR.
               <Spacer inline width="5px" />
-              <Link
-                to={pullRequestUrl}
-                target="_blank"
-                hasunderline
-              >
+              <Link to={pullRequestUrl} target="_blank" hasunderline>
                 Merge PR
               </Link>
             </Banner>
@@ -58,15 +57,22 @@ const GHABanner: React.FC<Props> = ({
             <Banner
               type="warning"
               suffix={
-                <RefreshButton onClick={() => window.location.reload()}>
+                <RefreshButton
+                  onClick={() => {
+                    window.location.reload();
+                  }}
+                >
                   <img src={refresh} /> Refresh
                 </RefreshButton>
               }
             >
-              Your application will not be available until you add the Porter workflow to your branch.
+              Your application will not be available until you add the Porter
+              workflow to your branch.
               <Spacer inline width="5px" />
               <Link
-                onClick={() => setShowGHAModal(true)}
+                onClick={() => {
+                  setShowGHAModal(true);
+                }}
                 target="_blank"
                 hasunderline
               >
@@ -78,7 +84,9 @@ const GHABanner: React.FC<Props> = ({
       </StyledGHABanner>
       {showGHAModal && (
         <GithubActionModal
-          closeModal={() => setShowGHAModal(false)}
+          closeModal={() => {
+            setShowGHAModal(false);
+          }}
           githubAppInstallationID={gitRepoId}
           githubRepoOwner={repoName.split("/")[0]}
           githubRepoName={repoName.split("/")[1]}
@@ -95,8 +103,7 @@ const GHABanner: React.FC<Props> = ({
 
 export default GHABanner;
 
-const StyledGHABanner = styled.div`
-`;
+const StyledGHABanner = styled.div``;
 
 const RefreshButton = styled.div`
   color: #ffffff;

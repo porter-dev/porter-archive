@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import api from "legacy/shared/api";
 import { z } from "zod";
 
 import {
@@ -7,8 +8,6 @@ import {
   type AppInstance,
   type AppRevisionWithSource,
 } from "main/home/app-dashboard/apps/types";
-
-import api from "shared/api";
 
 // use this hook to get the latest revision of every app in the project/cluster
 export const useLatestAppRevisions = ({

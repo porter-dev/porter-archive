@@ -1,7 +1,6 @@
-import React, { useEffect, useState, useRef } from "react";
-
+import React, { useEffect, useRef, useState } from "react";
+import arrow from "legacy/assets/arrow-down.svg";
 import styled from "styled-components";
-import arrow from "assets/arrow-down.svg";
 
 type Props = {
   name: string;

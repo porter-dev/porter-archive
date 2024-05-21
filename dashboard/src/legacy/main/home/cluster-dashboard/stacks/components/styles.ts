@@ -1,4 +1,4 @@
-import DynamicLink from "components/DynamicLink";
+import DynamicLink from "legacy/components/DynamicLink";
 import styled from "styled-components";
 
 const StatusBase = styled.div`

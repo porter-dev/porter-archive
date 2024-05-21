@@ -1,23 +1,21 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
-
-import { useRouting } from "shared/routing";
-import api from "shared/api";
-import SaveButton from "components/SaveButton";
-
-import backArrow from "assets/back_arrow.png";
+import backArrow from "legacy/assets/back_arrow.png";
+import gradient from "legacy/assets/gradient.png";
+import Helper from "legacy/components/form-components/Helper";
+import InputRow from "legacy/components/form-components/InputRow";
+import PageIllustration from "legacy/components/PageIllustration";
+import SaveButton from "legacy/components/SaveButton";
+import TitleSection from "legacy/components/TitleSection";
+import { trackCreateNewProject } from "legacy/shared/anayltics";
+import api from "legacy/shared/api";
+import { isAlphanumeric } from "legacy/shared/common";
+import { useRouting } from "legacy/shared/routing";
+import { ProjectListType } from "legacy/shared/types";
 import styled from "styled-components";
 
-import gradient from "assets/gradient.png";
-import PageIllustration from "components/PageIllustration";
 import { Context } from "shared/Context";
-import { isAlphanumeric } from "shared/common";
 
-import InputRow from "components/form-components/InputRow";
-import Helper from "components/form-components/Helper";
-import TitleSection from "components/TitleSection";
 import WelcomeForm from "./WelcomeForm";
-import { trackCreateNewProject } from "shared/anayltics";
-import { ProjectListType } from "shared/types";
 
 type ValidationError = {
   hasError: boolean;
@@ -25,13 +23,8 @@ type ValidationError = {
 };
 
 export const NewProjectFC = () => {
-  const {
-    user,
-    setProjects,
-    setCurrentProject,
-    canCreateProject,
-    projects,
-  } = useContext(Context);
+  const { user, setProjects, setCurrentProject, canCreateProject, projects } =
+    useContext(Context);
   const { pushFiltered } = useRouting();
   const [buttonStatus, setButtonStatus] = useState("");
   const [name, setName] = useState("");
@@ -102,27 +95,20 @@ export const NewProjectFC = () => {
       trackCreateNewProject();
 
       if (project?.sandbox_enabled) {
-        await api.connectProjectToCluster(
-          "<token>",
-          {},
-          { id: project.id }
-        )
-        .then(() => {
-          api.inviteAdmin(
-            "<token>",
-            {},
-            { project_id: project.id }
-          )
+        await api
+          .connectProjectToCluster("<token>", {}, { id: project.id })
           .then(() => {
-            setButtonStatus("successful");
-            pushFiltered("/apps", []);
+            api
+              .inviteAdmin("<token>", {}, { project_id: project.id })
+              .then(() => {
+                setButtonStatus("successful");
+                pushFiltered("/apps", []);
+              });
           })
-        })
-        .catch((err) => {
-          setButtonStatus("Couldn't create project, try again.");
-          console.log(err)
-        })
-
+          .catch((err) => {
+            setButtonStatus("Couldn't create project, try again.");
+            console.log(err);
+          });
       } else {
         setButtonStatus("successful");
         pushFiltered("/onboarding", []);
@@ -161,9 +147,7 @@ export const NewProjectFC = () => {
           <InputWrapper>
             <ProjectIcon>
               <ProjectImage src={gradient} />
-              <Letter>
-                {name ? name.toUpperCase().substring(0, 1) : "-"}
-              </Letter>
+              <Letter>{name ? name.toUpperCase().substring(0, 1) : "-"}</Letter>
             </ProjectIcon>
             <InputRow
               type="string"

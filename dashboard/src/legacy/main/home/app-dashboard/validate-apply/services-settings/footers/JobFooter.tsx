@@ -1,11 +1,10 @@
 import React from "react";
+import Button from "legacy/components/porter/Button";
+import Container from "legacy/components/porter/Container";
+import Link from "legacy/components/porter/Link";
+import Spacer from "legacy/components/porter/Spacer";
 import _ from "lodash";
 import styled from "styled-components";
-
-import Button from "components/porter/Button";
-import Container from "components/porter/Container";
-import Link from "components/porter/Link";
-import Spacer from "components/porter/Spacer";
 
 import { useLatestRevision } from "../../../app-view/LatestRevisionContext";
 import TriggerJobButton from "../../jobs/TriggerJobButton";

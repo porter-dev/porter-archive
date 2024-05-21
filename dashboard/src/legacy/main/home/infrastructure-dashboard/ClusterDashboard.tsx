@@ -1,41 +1,40 @@
 import React, { useContext, useMemo, useState } from "react";
-import _ from "lodash";
-import { Link } from "react-router-dom";
-import styled from "styled-components";
-
-import Loading from "components/Loading";
-import Button from "components/porter/Button";
-import Container from "components/porter/Container";
-import DashboardPlaceholder from "components/porter/DashboardPlaceholder";
-import Fieldset from "components/porter/Fieldset";
-import Icon from "components/porter/Icon";
-import Image from "components/porter/Image";
-import PorterLink from "components/porter/Link";
-import SearchBar from "components/porter/SearchBar";
-import Select from "components/porter/Select";
-import Spacer from "components/porter/Spacer";
-import StatusDot from "components/porter/StatusDot";
-import Tag from "components/porter/Tag";
-import Text from "components/porter/Text";
-import Toggle from "components/porter/Toggle";
+import infra from "legacy/assets/cluster.svg";
+import globe from "legacy/assets/globe.svg";
+import grid from "legacy/assets/grid.png";
+import infraGrad from "legacy/assets/infra-grad.svg";
+import list from "legacy/assets/list.png";
+import notFound from "legacy/assets/not-found.png";
+import time from "legacy/assets/time.png";
+import Loading from "legacy/components/Loading";
+import Button from "legacy/components/porter/Button";
+import Container from "legacy/components/porter/Container";
+import DashboardPlaceholder from "legacy/components/porter/DashboardPlaceholder";
+import Fieldset from "legacy/components/porter/Fieldset";
+import Icon from "legacy/components/porter/Icon";
+import Image from "legacy/components/porter/Image";
+import PorterLink from "legacy/components/porter/Link";
+import SearchBar from "legacy/components/porter/SearchBar";
+import Select from "legacy/components/porter/Select";
+import Spacer from "legacy/components/porter/Spacer";
+import StatusDot from "legacy/components/porter/StatusDot";
+import Tag from "legacy/components/porter/Tag";
+import Text from "legacy/components/porter/Text";
+import Toggle from "legacy/components/porter/Toggle";
 import {
   CloudProviderAWS,
   CloudProviderAzure,
   CloudProviderGCP,
-} from "lib/clusters/constants";
-import { type ClientCluster } from "lib/clusters/types";
-import { useClusterList } from "lib/hooks/useCluster";
+} from "legacy/lib/clusters/constants";
+import { type ClientCluster } from "legacy/lib/clusters/types";
+import { useClusterList } from "legacy/lib/hooks/useCluster";
+import { search } from "legacy/shared/search";
+import { readableDate } from "legacy/shared/string_utils";
+import _ from "lodash";
+import { Link } from "react-router-dom";
+import styled from "styled-components";
 
 import { Context } from "shared/Context";
-import { search } from "shared/search";
-import { readableDate } from "shared/string_utils";
-import infra from "assets/cluster.svg";
-import globe from "assets/globe.svg";
-import grid from "assets/grid.png";
-import infraGrad from "assets/infra-grad.svg";
-import list from "assets/list.png";
-import notFound from "assets/not-found.png";
-import time from "assets/time.png";
 
 import DashboardHeader from "../cluster-dashboard/DashboardHeader";
 
@@ -79,7 +78,9 @@ const ClusterDashboard: React.FC = () => {
           disableLineBreak
         />
         <DashboardPlaceholder>
-          <Text size={16}>Infrastructure is not enabled on the Porter Cloud</Text>
+          <Text size={16}>
+            Infrastructure is not enabled on the Porter Cloud
+          </Text>
           <Spacer y={0.5} />
           <Text color={"helper"}>
             Eject to your own cloud account to enable infrastructure.

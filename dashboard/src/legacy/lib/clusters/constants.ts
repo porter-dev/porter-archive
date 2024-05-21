@@ -6,11 +6,10 @@ import {
   GKENetwork,
   LoadBalancerType,
 } from "@porter-dev/api-contracts";
-
-import aws from "assets/aws.png";
-import azure from "assets/azure.png";
-import infra from "assets/cluster.svg";
-import gcp from "assets/gcp.png";
+import aws from "legacy/assets/aws.png";
+import azure from "legacy/assets/azure.png";
+import infra from "legacy/assets/cluster.svg";
+import gcp from "legacy/assets/gcp.png";
 
 import {
   type ClientCloudProvider,

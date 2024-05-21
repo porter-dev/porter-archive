@@ -1,17 +1,19 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
-import styled from "styled-components";
 import { Tooltip } from "@material-ui/core";
-import Modal from "main/home/modals/Modal";
-import { TwitterPicker } from "react-color";
-import InputRow from "components/form-components/InputRow";
-import SaveButton from "components/SaveButton";
-import api from "shared/api";
 import Color from "color";
-import { Context } from "shared/Context";
-import { ChartType } from "shared/types";
-import Helper from "components/form-components/Helper";
+import Helper from "legacy/components/form-components/Helper";
+import InputRow from "legacy/components/form-components/InputRow";
+import SaveButton from "legacy/components/SaveButton";
+import SearchSelector from "legacy/components/SearchSelector";
+import api from "legacy/shared/api";
+import { type ChartType } from "legacy/shared/types";
 import { differenceBy } from "lodash";
-import SearchSelector from "components/SearchSelector";
+import { TwitterPicker } from "react-color";
+import styled from "styled-components";
+
+import Modal from "main/home/modals/Modal";
+
+import { Context } from "shared/Context";
 
 type Props = {
   onSave: ((values: any[]) => void) | ((values: any[]) => Promise<void>);
@@ -19,9 +21,8 @@ type Props = {
 };
 
 const TagSelector = ({ onSave, release }: Props) => {
-  const { currentProject, currentCluster, setCurrentError } = useContext(
-    Context
-  );
+  const { currentProject, currentCluster, setCurrentError } =
+    useContext(Context);
   const [values, setValues] = useState([]);
   const [availableTags, setAvailableTags] = useState([]);
   const [openModal, setOpenModal] = useState(false);
@@ -74,8 +75,8 @@ const TagSelector = ({ onSave, release }: Props) => {
         { project_id: currentProject.id }
       )
       .then(({ data }) => {
-        const releaseTags = data.filter((tag) =>
-          release.tags?.includes(tag.name)
+        const releaseTags = data.filter(
+          (tag) => release.tags?.includes(tag.name)
         );
         const tmpAvailableTags = differenceBy(data, releaseTags, "name");
 
@@ -109,7 +110,9 @@ const TagSelector = ({ onSave, release }: Props) => {
             await onSave(newValues);
             setValues(newValues);
           }}
-          onClose={() => setOpenModal(false)}
+          onClose={() => {
+            setOpenModal(false);
+          }}
           release={release}
         />
       ) : null}
@@ -120,7 +123,12 @@ const TagSelector = ({ onSave, release }: Props) => {
               <Tooltip title={val.name}>
                 <TagText>{val.name}</TagText>
               </Tooltip>
-              <i className="material-icons" onClick={() => onDelete(index)}>
+              <i
+                className="material-icons"
+                onClick={() => {
+                  onDelete(index);
+                }}
+              >
                 cancel
               </i>
             </Tag>
@@ -160,7 +168,9 @@ const TagSelector = ({ onSave, release }: Props) => {
           clearPosition
           statusPosition="right"
           text="Save changes"
-          onClick={() => handleSave()}
+          onClick={async () => {
+            await handleSave();
+          }}
           status={buttonStatus}
           disabled={!hasUnsavedChanges || buttonStatus === "loading"}
         ></SaveButton>
@@ -196,9 +206,8 @@ const CreateTagModal = ({
   onClose: () => void;
   release: ChartType;
 }) => {
-  const { currentCluster, currentProject, setCurrentError } = useContext(
-    Context
-  );
+  const { currentCluster, currentProject, setCurrentError } =
+    useContext(Context);
 
   const [color, setColor] = useState("#ffffff");
   const [name, setName] = useState("some-random-tag");
@@ -243,7 +252,6 @@ const CreateTagModal = ({
         "We couldn't link the tag to the release, please link it manually from the settings tab."
       );
       setButtonStatus("Couldn't link the tag to the release");
-      return;
     }
   };
 
@@ -258,7 +266,9 @@ const CreateTagModal = ({
         type="text"
         label="Tag name"
         value={name}
-        setValue={(val) => setName(val as string)}
+        setValue={(val) => {
+          setName(val as string);
+        }}
         isRequired
         width="300px"
       ></InputRow>
@@ -266,7 +276,9 @@ const CreateTagModal = ({
       <TwitterPicker
         triangle="hide"
         color={color}
-        onChange={(newColor) => setColor(newColor.hex)}
+        onChange={(newColor) => {
+          setColor(newColor.hex);
+        }}
       ></TwitterPicker>
 
       <Label style={{ marginTop: "15px" }}>Result</Label>
@@ -280,7 +292,9 @@ const CreateTagModal = ({
       >
         <SaveButton
           clearPosition
-          onClick={() => createTag()}
+          onClick={async () => {
+            await createTag();
+          }}
           text={"Create Tag"}
           disabled={!name.length || buttonStatus === "loading"}
         ></SaveButton>

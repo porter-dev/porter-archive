@@ -1,6 +1,5 @@
 import React from "react";
-
-import Button from "components/porter/Button";
+import Button from "legacy/components/porter/Button";
 
 import { useAddonFormContext } from "./AddonFormContextProvider";
 

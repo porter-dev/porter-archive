@@ -1,13 +1,12 @@
 import React, { Component } from "react";
-import styled from "styled-components";
 import yaml from "js-yaml";
+import Loading from "legacy/components/Loading";
+import ResourceTab from "legacy/components/ResourceTab";
+import YamlEditor from "legacy/components/YamlEditor";
+import { type ChartType, type ResourceType } from "legacy/shared/types";
+import styled from "styled-components";
 
 import { Context } from "shared/Context";
-import { ChartType, ResourceType } from "shared/types";
-
-import Loading from "components/Loading";
-import ResourceTab from "components/ResourceTab";
-import YamlEditor from "components/YamlEditor";
 
 type PropsType = {
   currentChart: ChartType;
@@ -55,7 +54,7 @@ export default class ListSection extends Component<PropsType, StateType> {
           resource.Kind === this.state.selectedResource.kind &&
           resource.Name === this.state.selectedResource.name
         ) {
-          let rawYaml = yaml.dump(resource.RawYAML);
+          const rawYaml = yaml.dump(resource.RawYAML);
           this.setState({ yaml: rawYaml });
           matchingResourceFound = true;
         }
@@ -68,16 +67,16 @@ export default class ListSection extends Component<PropsType, StateType> {
 
   renderResourceList = () => {
     return this.props.components.map((resource: ResourceType, i: number) => {
-      let rawYaml = yaml.dump(resource.RawYAML);
+      const rawYaml = yaml.dump(resource.RawYAML);
       return (
         <ResourceTab
           key={i}
-          handleClick={() =>
+          handleClick={() => {
             this.setState({
               yaml: rawYaml,
               selectedResource: { kind: resource.Kind, name: resource.Name },
-            })
-          }
+            });
+          }}
           selected={this.state.yaml === rawYaml}
           label={resource.Kind}
           name={resource.Name}
@@ -103,7 +102,9 @@ export default class ListSection extends Component<PropsType, StateType> {
           <YamlWrapper>
             <YamlEditor
               value={this.state.yaml}
-              onChange={(e: any) => this.setState({ yaml: e })}
+              onChange={(e: any) => {
+                this.setState({ yaml: e });
+              }}
               height={this.state.wrapperHeight - 2 + "px"}
               border={true}
               readOnly={true}

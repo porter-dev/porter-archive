@@ -1,27 +1,26 @@
 import React, { useCallback, useContext, useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import document from "legacy/assets/document.svg";
+import UploadArea from "legacy/components/form-components/UploadArea";
+import Button from "legacy/components/porter/Button";
+import Checkbox from "legacy/components/porter/Checkbox";
+import Container from "legacy/components/porter/Container";
+import { ControlledInput } from "legacy/components/porter/ControlledInput";
+import Input from "legacy/components/porter/Input";
+import Spacer from "legacy/components/porter/Spacer";
+import Tag from "legacy/components/porter/Tag";
+import Text from "legacy/components/porter/Text";
+import { useAppAnalytics } from "legacy/lib/hooks/useAppAnalytics";
+import { useCloudSqlSecret } from "legacy/lib/hooks/useCloudSqlSecret";
+import { type PorterAppFormData } from "legacy/lib/porter-apps";
+import api from "legacy/shared/api";
 import { Controller, useFormContext } from "react-hook-form";
 import { useHistory } from "react-router";
 import styled from "styled-components";
 import { z } from "zod";
 
-import UploadArea from "components/form-components/UploadArea";
-import Button from "components/porter/Button";
-import Checkbox from "components/porter/Checkbox";
-import Container from "components/porter/Container";
-import { ControlledInput } from "components/porter/ControlledInput";
-import Input from "components/porter/Input";
-import Spacer from "components/porter/Spacer";
-import Tag from "components/porter/Tag";
-import Text from "components/porter/Text";
-import { useAppAnalytics } from "lib/hooks/useAppAnalytics";
-import { useCloudSqlSecret } from "lib/hooks/useCloudSqlSecret";
-import { type PorterAppFormData } from "lib/porter-apps";
-
-import api from "shared/api";
 import { Context } from "shared/Context";
 import { useDeploymentTarget } from "shared/DeploymentTargetContext";
-import document from "assets/document.svg";
 
 import DeleteApplicationModal from "../../expanded-app/DeleteApplicationModal";
 import { useLatestRevision } from "../LatestRevisionContext";
@@ -231,7 +230,7 @@ const Settings: React.FC = () => {
         Configure custom webhooks to trigger on different deployment events.
       </Text>
       <Spacer y={1} />
-      <Webhooks 
+      <Webhooks
         projectId={projectId}
         appName={porterApp.name}
         deploymentTargetId={currentDeploymentTarget.id}

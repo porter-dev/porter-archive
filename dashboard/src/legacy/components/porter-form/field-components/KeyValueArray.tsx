@@ -1,4 +1,20 @@
 import React, { useContext, useEffect, useState } from "react";
+import Heading from "legacy/components/form-components/Heading";
+import Helper from "legacy/components/form-components/Helper";
+import Loading from "legacy/components/Loading";
+import api from "legacy/shared/api";
+import { dotenv_parse } from "legacy/shared/string_utils";
+import _, { differenceBy, isObject, omit } from "lodash";
+import styled, { keyframes } from "styled-components";
+
+import { Context } from "shared/Context";
+
+import sliders from "../../../assets/sliders.svg";
+import upload from "../../../assets/upload.svg";
+import EnvEditorModal from "../../../main/home/modals/EnvEditorModal";
+import LoadEnvGroupModal from "../../../main/home/modals/LoadEnvGroupModal";
+import Modal from "../../../main/home/modals/Modal";
+import useFormField from "../hooks/useFormField";
 import {
   GetFinalVariablesFunction,
   GetMetadataFunction,
@@ -7,21 +23,7 @@ import {
   PartialEnvGroup,
   PopulatedEnvGroup,
 } from "../types";
-import sliders from "../../../assets/sliders.svg";
-import upload from "../../../assets/upload.svg";
-import styled, { keyframes } from "styled-components";
-import useFormField from "../hooks/useFormField";
-import Modal from "../../../main/home/modals/Modal";
-import LoadEnvGroupModal from "../../../main/home/modals/LoadEnvGroupModal";
-import EnvEditorModal from "../../../main/home/modals/EnvEditorModal";
 import { hasSetValue } from "../utils";
-import _, { isObject, differenceBy, omit } from "lodash";
-import Helper from "components/form-components/Helper";
-import Heading from "components/form-components/Heading";
-import Loading from "components/Loading";
-import api from "shared/api";
-import { Context } from "shared/Context";
-import { dotenv_parse } from "shared/string_utils";
 
 interface Props extends KeyValueArrayField {
   id: string;
@@ -32,17 +34,17 @@ const KeyValueArray: React.FC<Props> = (props) => {
     props.id,
     {
       initState: () => {
-        let values = {}
+        let values = {};
         if (props?.value?.length > 0) {
-          values = props.value[0]
+          values = props.value[0];
         }
         const normalValues = Object.entries(values?.normal || {});
         values = omit(values, ["normal", "synced", "build"]);
         return {
           values: hasSetValue(props)
             ? ([...Object.entries(values), ...normalValues]?.map(([k, v]) => {
-              return { key: k, value: v };
-            }) as any[])
+                return { key: k, value: v };
+              }) as any[])
             : [],
           showEnvModal: false,
           showEditorModal: false,
@@ -80,13 +82,13 @@ const KeyValueArray: React.FC<Props> = (props) => {
           .filter(Boolean);
 
         setState(() => ({
-          synced_env_groups: currentProject?.stacks_enabled ?
-            (Array.isArray(values?.synced)
+          synced_env_groups: currentProject?.stacks_enabled
+            ? Array.isArray(values?.synced)
               ? values?.synced
-              : []) :
-            (Array.isArray(populatedEnvGroups)
-              ? populatedEnvGroups
-              : [])
+              : []
+            : Array.isArray(populatedEnvGroups)
+            ? populatedEnvGroups
+            : [],
         }));
         return;
       }
@@ -227,10 +229,13 @@ const KeyValueArray: React.FC<Props> = (props) => {
             setValues={(values) => {
               setState((prev) => {
                 // Transform array to object similar on what we receive from setValues
-                const prevValues = prev.values.reduce((acc, currentValue) => {
-                  acc[currentValue.key] = currentValue.value;
-                  return acc;
-                }, {} as Record<string, string>);
+                const prevValues = prev.values.reduce(
+                  (acc, currentValue) => {
+                    acc[currentValue.key] = currentValue.value;
+                    return acc;
+                  },
+                  {} as Record<string, string>
+                );
 
                 // Deconstruct the two records/objects inside one to merge their values (this will override the old duped vars too)
                 // and convert the new object back to an array usable for the component

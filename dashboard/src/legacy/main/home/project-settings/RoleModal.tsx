@@ -1,17 +1,15 @@
 import React, { useState } from "react";
+import role from "legacy/assets/role.svg";
+import Button from "legacy/components/porter/Button";
+import Checkbox from "legacy/components/porter/Checkbox";
+import Container from "legacy/components/porter/Container";
+import Expandable from "legacy/components/porter/Expandable";
+import Image from "legacy/components/porter/Image";
+import Input from "legacy/components/porter/Input";
+import Modal from "legacy/components/porter/Modal";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
 import styled from "styled-components";
-
-import Button from "components/porter/Button";
-import Checkbox from "components/porter/Checkbox";
-import Container from "components/porter/Container";
-import Expandable from "components/porter/Expandable";
-import Image from "components/porter/Image";
-import Input from "components/porter/Input";
-import Modal from "components/porter/Modal";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-
-import role from "assets/role.svg";
 
 type RoleModalProps = {
   readOnly?: boolean;

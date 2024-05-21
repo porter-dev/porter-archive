@@ -1,14 +1,16 @@
-import DynamicLink from "components/DynamicLink";
-import Loading from "components/Loading";
 import React, { useContext, useEffect, useState } from "react";
-import api from "shared/api";
-import { Context } from "shared/Context";
+import DynamicLink from "legacy/components/DynamicLink";
+import Loading from "legacy/components/Loading";
+import Placeholder from "legacy/components/Placeholder";
+import api from "legacy/shared/api";
 import styled from "styled-components";
+
+import { Context } from "shared/Context";
+
 import ButtonEnablePREnvironments from "../components/ButtonEnablePREnvironments";
 import { PreviewEnvironmentsHeader } from "../components/PreviewEnvironmentsHeader";
-import { Environment } from "../types";
+import { type Environment } from "../types";
 import EnvironmentCard from "./EnvironmentCard";
-import Placeholder from "components/Placeholder";
 
 const EnvironmentsList = () => {
   const { currentCluster, currentProject } = useContext(Context);
@@ -62,7 +64,7 @@ const EnvironmentsList = () => {
   };
 
   useEffect(() => {
-    let subscribedStatus = { subscribed: true };
+    const subscribedStatus = { subscribed: true };
 
     setIsLoading(true);
 

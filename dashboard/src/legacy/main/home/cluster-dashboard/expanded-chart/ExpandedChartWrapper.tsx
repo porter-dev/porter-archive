@@ -1,19 +1,20 @@
 import React, { Component } from "react";
-import styled from "styled-components";
-import { Context } from "shared/Context";
-import { RouteComponentProps, withRouter } from "react-router";
-
+import Loading from "legacy/components/Loading";
+import PageNotFound from "legacy/components/PageNotFound";
+import api from "legacy/shared/api";
+import { pushFiltered } from "legacy/shared/routing";
 import {
-  ChartType,
-  ChartTypeWithExtendedConfig,
   StorageType,
-} from "shared/types";
-import api from "shared/api";
-import { pushFiltered } from "shared/routing";
-import ExpandedJobChart from "./ExpandedJobChart";
+  type ChartType,
+  type ChartTypeWithExtendedConfig,
+} from "legacy/shared/types";
+import { withRouter, type RouteComponentProps } from "react-router";
+import styled from "styled-components";
+
+import { Context } from "shared/Context";
+
 import ExpandedChart from "./ExpandedChart";
-import Loading from "components/Loading";
-import PageNotFound from "components/PageNotFound";
+import ExpandedJobChart from "./ExpandedJobChart";
 
 type PropsType = RouteComponentProps<{
   baseRoute: string;
@@ -36,9 +37,9 @@ class ExpandedChartWrapper extends Component<PropsType, StateType> {
 
   // Retrieve full chart data (includes form and values)
   getChartData = () => {
-    let { match } = this.props;
-    let { namespace, chartName } = match.params as any;
-    let { currentProject, currentCluster } = this.context;
+    const { match } = this.props;
+    const { namespace, chartName } = match.params as any;
+    const { currentProject, currentCluster } = this.context;
     if (currentProject && currentCluster) {
       api
         .getChart<ChartTypeWithExtendedConfig>(
@@ -46,7 +47,7 @@ class ExpandedChartWrapper extends Component<PropsType, StateType> {
           {},
           {
             id: currentProject.id,
-            namespace: namespace,
+            namespace,
             cluster_id: currentCluster.id,
             name: chartName,
             revision: 0,
@@ -56,7 +57,7 @@ class ExpandedChartWrapper extends Component<PropsType, StateType> {
           const chart = res.data;
           this.setState({ currentChart: res.data, loading: false });
           const isJob = res.data.form?.name?.toLowerCase() === "job";
-          let route = `${isJob ? "/jobs" : "/applications"}/${
+          const route = `${isJob ? "/jobs" : "/applications"}/${
             currentCluster.name
           }/${chart.namespace}/${chart.name}`;
 
@@ -73,7 +74,6 @@ class ExpandedChartWrapper extends Component<PropsType, StateType> {
               "project_id",
               "closeChartRedirectUrl",
             ]);
-            return;
           }
         })
         .catch((err) => {
@@ -90,9 +90,9 @@ class ExpandedChartWrapper extends Component<PropsType, StateType> {
   }
 
   render() {
-    let { setSidebar, location, match } = this.props;
-    let { baseRoute, namespace } = match.params as any;
-    let { loading, currentChart } = this.state;
+    const { setSidebar, location, match } = this.props;
+    const { baseRoute, namespace } = match.params as any;
+    const { loading, currentChart } = this.state;
 
     if (loading) {
       return (
@@ -107,7 +107,7 @@ class ExpandedChartWrapper extends Component<PropsType, StateType> {
           currentChart={currentChart}
           currentCluster={this.context.currentCluster}
           closeChart={() => {
-            let urlParams = new URLSearchParams(window.location.search);
+            const urlParams = new URLSearchParams(window.location.search);
 
             if (urlParams.get("closeChartRedirectUrl")) {
               this.props.history.push(urlParams.get("closeChartRedirectUrl"));
@@ -116,7 +116,7 @@ class ExpandedChartWrapper extends Component<PropsType, StateType> {
 
             pushFiltered(this.props, "/jobs", ["project_id"], {
               cluster: this.context.currentCluster.name,
-              namespace: namespace,
+              namespace,
             });
           }}
           setSidebar={setSidebar}
@@ -130,7 +130,7 @@ class ExpandedChartWrapper extends Component<PropsType, StateType> {
           currentChart={currentChart}
           currentCluster={this.context.currentCluster}
           closeChart={() => {
-            let urlParams = new URLSearchParams(window.location.search);
+            const urlParams = new URLSearchParams(window.location.search);
 
             if (urlParams.get("closeChartRedirectUrl")) {
               this.props.history.push(urlParams.get("closeChartRedirectUrl"));
@@ -139,7 +139,7 @@ class ExpandedChartWrapper extends Component<PropsType, StateType> {
 
             pushFiltered(this.props, "/applications", ["project_id"], {
               cluster: this.context.currentCluster.name,
-              namespace: namespace,
+              namespace,
             });
           }}
           setSidebar={setSidebar}

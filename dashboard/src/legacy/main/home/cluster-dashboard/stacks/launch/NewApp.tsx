@@ -1,17 +1,17 @@
-import _ from "lodash";
 import React, { useContext } from "react";
+import { useRouting } from "legacy/shared/routing";
+import _ from "lodash";
 import { useParams } from "react-router";
-import { useRouting } from "shared/routing";
-import { StacksLaunchContext } from "./Store";
 import styled from "styled-components";
+
 import NewAppResourceForm from "../components/NewAppResourceForm";
+import { StacksLaunchContext } from "./Store";
 
 const DEFAULT_STACK_SOURCE_CONFIG_INDEX = 0;
 
 const NewApp = () => {
-  const { addAppResource, newStack, namespace } = useContext(
-    StacksLaunchContext
-  );
+  const { addAppResource, newStack, namespace } =
+    useContext(StacksLaunchContext);
 
   const params = useParams<{
     template_name: string;

@@ -1,15 +1,17 @@
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
 import React from "react";
-import BuildpackList from "./BuildpackList";
-import AddCustomBuildpackComponent from "./AddCustomBuildpack";
-import Button from "components/porter/Button";
-import Modal from "components/porter/Modal";
+import Button from "legacy/components/porter/Button";
+import Modal from "legacy/components/porter/Modal";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import { PorterAppFormData } from "legacy/lib/porter-apps";
+import { BuildOptions } from "legacy/lib/porter-apps/build";
+import { useFieldArray, useFormContext } from "react-hook-form";
 import styled from "styled-components";
+
 import { Buildpack } from "main/home/app-dashboard/types/buildpack";
-import {  useFieldArray, useFormContext } from "react-hook-form";
-import { PorterAppFormData } from "lib/porter-apps";
-import { BuildOptions } from "lib/porter-apps/build";
+
+import AddCustomBuildpackComponent from "./AddCustomBuildpack";
+import BuildpackList from "./BuildpackList";
 
 type Props = {
   build: BuildOptions & {
@@ -61,7 +63,7 @@ const BuildpackConfigurationModal: React.FC<Props> = ({
           onAdd={(bp) => {
             append(bp);
           }}
-        />        
+        />
         <Spacer y={2} />
       </Scrollable>
       <Footer>

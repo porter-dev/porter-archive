@@ -1,12 +1,11 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
+import Heading from "legacy/components/form-components/Heading";
+import Helper from "legacy/components/form-components/Helper";
+import Loading from "legacy/components/Loading";
+import SaveButton from "legacy/components/SaveButton";
+import api from "legacy/shared/api";
 import styled from "styled-components";
 
-import Heading from "components/form-components/Heading";
-import Helper from "components/form-components/Helper";
-import Loading from "components/Loading";
-import SaveButton from "components/SaveButton";
-
-import api from "shared/api";
 import { Context } from "shared/Context";
 
 import CreateAPITokenForm from "./api-tokens/CreateAPITokenForm";

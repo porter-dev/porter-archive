@@ -1,26 +1,24 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import axios from "axios";
 import dayjs, { type Dayjs } from "dayjs";
+import spinner from "legacy/assets/loading.gif";
+import Loading from "legacy/components/Loading";
+import LogQueryModeSelectionToggle from "legacy/components/LogQueryModeSelectionToggle";
+import LogSearchBar from "legacy/components/LogSearchBar";
+import Banner from "legacy/components/porter/Banner";
+import Button from "legacy/components/porter/Button";
+import Container from "legacy/components/porter/Container";
+import Fieldset from "legacy/components/porter/Fieldset";
+import Filter from "legacy/components/porter/Filter";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import { useIntercom } from "legacy/lib/hooks/useIntercom";
+import { useRevisionList } from "legacy/lib/hooks/useRevisionList";
+import api from "legacy/shared/api";
 import _ from "lodash";
 import { useLocation } from "react-router";
 import { useTimer } from "react-timer-hook";
 import styled from "styled-components";
-
-import Loading from "components/Loading";
-import LogQueryModeSelectionToggle from "components/LogQueryModeSelectionToggle";
-import LogSearchBar from "components/LogSearchBar";
-import Banner from "components/porter/Banner";
-import Button from "components/porter/Button";
-import Container from "components/porter/Container";
-import Fieldset from "components/porter/Fieldset";
-import Filter from "components/porter/Filter";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import { useIntercom } from "lib/hooks/useIntercom";
-import { useRevisionList } from "lib/hooks/useRevisionList";
-
-import api from "shared/api";
-import spinner from "assets/loading.gif";
 
 import { useLatestRevision } from "../../app-view/LatestRevisionContext";
 import {

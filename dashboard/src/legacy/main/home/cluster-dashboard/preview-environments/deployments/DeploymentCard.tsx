@@ -1,27 +1,34 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+import MaterialTooltip from "@material-ui/core/Tooltip";
+import pr_icon from "legacy/assets/pull_request_icon.svg";
+import DynamicLink from "legacy/components/DynamicLink";
+import Loading from "legacy/components/Loading";
+import api from "legacy/shared/api";
+import { capitalize, readableDate } from "legacy/shared/string_utils";
+import _ from "lodash";
 import styled, { keyframes } from "styled-components";
-import { DeploymentStatus, PRDeployment } from "../types";
-import pr_icon from "assets/pull_request_icon.svg";
-import DynamicLink from "components/DynamicLink";
-import { capitalize, readableDate } from "shared/string_utils";
-import api from "shared/api";
-import { useContext } from "react";
+
 import { Context } from "shared/Context";
-import Loading from "components/Loading";
+
 import { ActionButton } from "../components/ActionButton";
 import { EllipsisTextWrapper, RepoLink } from "../components/styled";
-import MaterialTooltip from "@material-ui/core/Tooltip";
-import _ from "lodash";
+import { DeploymentStatus, type PRDeployment } from "../types";
 
-interface DeploymentCardAction {
+type DeploymentCardAction = {
   active: boolean;
   label: string;
   action: (...args: any) => void;
-}
+};
 
-interface DeploymentCardActionsDropdownProps {
+type DeploymentCardActionsDropdownProps = {
   options: DeploymentCardAction[];
-}
+};
 
 const DeploymentCardActionsDropdown = ({
   options,
@@ -90,12 +97,8 @@ const DeploymentCard: React.FC<{
   onReEnable: () => void;
   onReRun: () => void;
 }> = ({ deployment, onDelete, onReEnable, onReRun }) => {
-  const {
-    setCurrentOverlay,
-    currentProject,
-    currentCluster,
-    setCurrentError,
-  } = useContext(Context);
+  const { setCurrentOverlay, currentProject, currentCluster, setCurrentError } =
+    useContext(Context);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [hasErrorOnReEnabling, setHasErrorOnReEnabling] = useState(false);
@@ -228,8 +231,12 @@ const DeploymentCard: React.FC<{
           deployment.gh_pr_branch_from !== deployment.gh_pr_branch_into ? (
             <MergeInfoWrapper>
               <MergeInfo
-                onMouseOver={() => setShowMergeInfoTooltip(true)}
-                onMouseOut={() => setShowMergeInfoTooltip(false)}
+                onMouseOver={() => {
+                  setShowMergeInfoTooltip(true);
+                }}
+                onMouseOut={() => {
+                  setShowMergeInfoTooltip(false);
+                }}
               >
                 {deployment.gh_pr_branch_from}
                 <i className="material-icons">arrow_forward</i>
@@ -270,7 +277,9 @@ const DeploymentCard: React.FC<{
               <>
                 <MaterialTooltip title="Re run last github workflow">
                   <ReRunButton
-                    onClick={() => reRunWorkflow()}
+                    onClick={async () => {
+                      await reRunWorkflow();
+                    }}
                     disabled={isReRunningWorkflow}
                     hasError={hasErrorOnReRun}
                   >

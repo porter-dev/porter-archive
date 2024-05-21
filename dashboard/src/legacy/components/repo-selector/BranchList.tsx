@@ -1,11 +1,10 @@
 import React, { useContext, useEffect, useState } from "react";
+import branch_icon from "legacy/assets/branch.png";
 import styled from "styled-components";
-import branch_icon from "assets/branch.png";
 
 import api from "../../shared/api";
 import { Context } from "../../shared/Context";
 import { ActionConfigType } from "../../shared/types";
-
 import Loading from "../Loading";
 import SearchBar from "../SearchBar";
 
@@ -148,19 +147,20 @@ const BranchList: React.FC<Props> = ({
         prompt={"Search branches..."}
       />
       <BranchListWrapper>
-        {actionConfig.git_branch && actionConfig.git_branch !== currentBranch && (
-          <WarningRow lastItem={false} disabled>
-            <i className="material-icons-round">warning</i>
-            <span>
-              You have unsaved changes. Please click save to commit your
-              changes.
-              <p>
-                Current Branch: <b>{actionConfig.git_branch}</b>. New branch:{" "}
-                <b>{currentBranch}</b>
-              </p>
-            </span>
-          </WarningRow>
-        )}
+        {actionConfig.git_branch &&
+          actionConfig.git_branch !== currentBranch && (
+            <WarningRow lastItem={false} disabled>
+              <i className="material-icons-round">warning</i>
+              <span>
+                You have unsaved changes. Please click save to commit your
+                changes.
+                <p>
+                  Current Branch: <b>{actionConfig.git_branch}</b>. New branch:{" "}
+                  <b>{currentBranch}</b>
+                </p>
+              </span>
+            </WarningRow>
+          )}
         <ExpandedWrapper>{renderBranchList()}</ExpandedWrapper>
       </BranchListWrapper>
     </>

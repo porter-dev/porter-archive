@@ -1,12 +1,13 @@
-import Description from "components/Description";
-import Loading from "components/Loading";
-import Placeholder from "components/OldPlaceholder";
 import React, { useContext, useEffect, useState } from "react";
+import Description from "legacy/components/Description";
+import Loading from "legacy/components/Loading";
+import Placeholder from "legacy/components/OldPlaceholder";
+import api from "legacy/shared/api";
+import { readableDate } from "legacy/shared/string_utils";
+import styled from "styled-components";
+
 import { Context } from "shared/Context";
 
-import api from "shared/api";
-import { readableDate } from "shared/string_utils";
-import styled from "styled-components";
 import { APIToken, APITokenMeta } from "../APITokensSection";
 
 type Props = {

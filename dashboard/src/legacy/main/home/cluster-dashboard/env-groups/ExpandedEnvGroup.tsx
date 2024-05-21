@@ -1,30 +1,29 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import yaml from "js-yaml";
-import _, { remove } from "lodash";
-import styled, { keyframes } from "styled-components";
-
-import DocsHelper from "components/DocsHelper";
-import DynamicLink from "components/DynamicLink";
-import Heading from "components/form-components/Heading";
-import Helper from "components/form-components/Helper";
-import InputRow from "components/form-components/InputRow";
+import key from "legacy/assets/key.svg";
+import leftArrow from "legacy/assets/left-arrow.svg";
+import loading from "legacy/assets/loading.gif";
+import DocsHelper from "legacy/components/DocsHelper";
+import DynamicLink from "legacy/components/DynamicLink";
+import Heading from "legacy/components/form-components/Heading";
+import Helper from "legacy/components/form-components/Helper";
+import InputRow from "legacy/components/form-components/InputRow";
 import {
   type NewPopulatedEnvGroup,
   type PopulatedEnvGroup,
-} from "components/porter-form/types";
-import Spacer from "components/porter/Spacer";
-import SaveButton from "components/SaveButton";
-import TabRegion from "components/TabRegion";
-import TitleSection from "components/TitleSection";
+} from "legacy/components/porter-form/types";
+import Spacer from "legacy/components/porter/Spacer";
+import SaveButton from "legacy/components/SaveButton";
+import TabRegion from "legacy/components/TabRegion";
+import TitleSection from "legacy/components/TitleSection";
+import api from "legacy/shared/api";
+import { type ClusterType } from "legacy/shared/types";
+import _, { remove } from "lodash";
+import styled, { keyframes } from "styled-components";
 
-import api from "shared/api";
 import { type WithAuthProps } from "shared/auth/AuthorizationHoc";
 import useAuth from "shared/auth/useAuth";
 import { Context } from "shared/Context";
-import { type ClusterType } from "shared/types";
-import key from "assets/key.svg";
-import leftArrow from "assets/left-arrow.svg";
-import loading from "assets/loading.gif";
 
 import EnvGroupArray, { type KeyValueType } from "./EnvGroupArray";
 

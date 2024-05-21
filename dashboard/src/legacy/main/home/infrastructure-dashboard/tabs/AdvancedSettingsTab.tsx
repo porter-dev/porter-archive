@@ -1,6 +1,5 @@
 import React from "react";
-
-import Spacer from "components/porter/Spacer";
+import Spacer from "legacy/components/porter/Spacer";
 
 import { useClusterContext } from "../ClusterContextProvider";
 import ClusterSaveButton from "../ClusterSaveButton";

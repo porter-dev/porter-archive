@@ -1,13 +1,12 @@
 import React, { useMemo } from "react";
 import { PorterApp } from "@porter-dev/api-contracts";
+import healthy from "legacy/assets/status-healthy.png";
+import Container from "legacy/components/porter/Container";
+import SelectableList from "legacy/components/porter/SelectableList";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
 
-import Container from "components/porter/Container";
-import SelectableList from "components/porter/SelectableList";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
 import { AppIcon, AppSource } from "main/home/app-dashboard/apps/AppMeta";
-
-import healthy from "assets/status-healthy.png";
 
 import { type AppRevisionWithSource } from "./types";
 

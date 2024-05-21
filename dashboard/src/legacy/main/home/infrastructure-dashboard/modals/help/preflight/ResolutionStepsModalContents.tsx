@@ -1,12 +1,11 @@
 import React from "react";
+import Link from "legacy/components/porter/Link";
+import ShowIntercomButton from "legacy/components/porter/ShowIntercomButton";
+import Spacer from "legacy/components/porter/Spacer";
+import Step from "legacy/components/porter/Step";
+import Text from "legacy/components/porter/Text";
+import { type PreflightCheckResolution } from "legacy/lib/clusters/types";
 import styled from "styled-components";
-
-import Link from "components/porter/Link";
-import ShowIntercomButton from "components/porter/ShowIntercomButton";
-import Spacer from "components/porter/Spacer";
-import Step from "components/porter/Step";
-import Text from "components/porter/Text";
-import { type PreflightCheckResolution } from "lib/clusters/types";
 
 type Props = {
   resolution: PreflightCheckResolution;

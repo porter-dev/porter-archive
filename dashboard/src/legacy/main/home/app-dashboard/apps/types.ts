@@ -1,6 +1,5 @@
+import { appRevisionValidator } from "legacy/lib/revisions/types";
 import { z } from "zod";
-
-import { appRevisionValidator } from "lib/revisions/types";
 
 import { porterAppValidator } from "../app-view/AppView";
 

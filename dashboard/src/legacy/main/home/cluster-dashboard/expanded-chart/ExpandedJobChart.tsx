@@ -1,42 +1,44 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
-import styled from "styled-components";
-import yaml from "js-yaml";
-import { RouteComponentProps, withRouter } from "react-router";
-
-import leftArrow from "assets/left-arrow.svg";
-import { cloneDeep, set } from "lodash";
-import loading from "assets/loading.gif";
-
-import { ChartType, ClusterType } from "shared/types";
-import { Context } from "shared/Context";
-
-import TitleSection from "components/TitleSection";
-import SettingsSection from "./SettingsSection";
-import PorterFormWrapper from "components/porter-form/PorterFormWrapper";
-import ValuesYaml from "./ValuesYaml";
-import DeploymentType from "./DeploymentType";
-import RevisionSection from "./RevisionSection";
-import Loading from "components/Loading";
-import JobList from "./jobs/JobList";
-import SaveButton from "components/SaveButton";
-import useAuth from "shared/auth/useAuth";
-import ExpandedJobRun from "./jobs/ExpandedJobRun";
-import { useJobs } from "./jobs/useJobs";
-import { useChart } from "shared/hooks/useChart";
-import ConnectToJobInstructionsModal from "./jobs/ConnectToJobInstructionsModal";
-import CommandLineIcon from "assets/command-line-icon";
 import CronParser from "cron-parser";
 import CronPrettifier from "cronstrue";
+import yaml from "js-yaml";
+import CommandLineIcon from "legacy/assets/command-line-icon";
+import leftArrow from "legacy/assets/left-arrow.svg";
+import loading from "legacy/assets/loading.gif";
+import Loading from "legacy/components/Loading";
+import PorterFormWrapper from "legacy/components/porter-form/PorterFormWrapper";
+import SaveButton from "legacy/components/SaveButton";
+import TitleSection from "legacy/components/TitleSection";
+import api from "legacy/shared/api";
+import { useChart } from "legacy/shared/hooks/useChart";
+import { getQueryParam, pushFiltered } from "legacy/shared/routing";
+import { type ChartType, type ClusterType } from "legacy/shared/types";
+import { cloneDeep, set } from "lodash";
+import {
+  useLocation,
+  withRouter,
+  type RouteComponentProps,
+} from "react-router";
+import styled from "styled-components";
+
+import useAuth from "shared/auth/useAuth";
+import { Context } from "shared/Context";
+
 import BuildSettingsTab from "./build-settings/BuildSettingsTab";
+import DeploymentType from "./DeploymentType";
+import ConnectToJobInstructionsModal from "./jobs/ConnectToJobInstructionsModal";
+import ExpandedJobRun from "./jobs/ExpandedJobRun";
+import JobList from "./jobs/JobList";
+import { useJobs } from "./jobs/useJobs";
+import RevisionSection from "./RevisionSection";
+import SettingsSection from "./SettingsSection";
 import { useStackEnvGroups } from "./useStackEnvGroups";
-import api from "shared/api";
-import { getQueryParam, pushFiltered } from "shared/routing";
-import { useLocation } from "react-router";
+import ValuesYaml from "./ValuesYaml";
 
 const readableDate = (s: string) => {
-  let ts = new Date(s);
-  let date = ts.toLocaleDateString();
-  let time = ts.toLocaleTimeString([], {
+  const ts = new Date(s);
+  const date = ts.toLocaleDateString();
+  const time = ts.toLocaleTimeString([], {
     hour: "numeric",
     minute: "2-digit",
   });
@@ -49,9 +51,14 @@ type PropsType = RouteComponentProps & {
   currentCluster: ClusterType;
   closeChart: () => void;
   setSidebar: (x: boolean) => void;
-}
+};
 
-const ExpandedJobChart: React.FC<PropsType> = ({ currentChart: oldChart, closeChart, currentCluster, ...props }) => {
+const ExpandedJobChart: React.FC<PropsType> = ({
+  currentChart: oldChart,
+  closeChart,
+  currentCluster,
+  ...props
+}) => {
   const { currentProject, setCurrentOverlay } = useContext(Context);
   const [isAuthorized] = useAuth();
   const {
@@ -77,11 +84,8 @@ const ExpandedJobChart: React.FC<PropsType> = ({ currentChart: oldChart, closeCh
     setSelectedJob,
   } = useJobs(chart);
 
-  const {
-    isStack,
-    stackEnvGroups,
-    isLoadingStackEnvGroups,
-  } = useStackEnvGroups(chart);
+  const { isStack, stackEnvGroups, isLoadingStackEnvGroups } =
+    useStackEnvGroups(chart);
 
   const [devOpsMode, setDevOpsMode] = useState(
     () => localStorage.getItem("devOpsMode") === "true"
@@ -89,7 +93,7 @@ const ExpandedJobChart: React.FC<PropsType> = ({ currentChart: oldChart, closeCh
   const [showConnectionModal, setShowConnectionModal] = useState(false);
   const [disableForm, setDisableForm] = useState(false);
 
-  let rightTabOptions = [] as any[];
+  const rightTabOptions = [] as any[];
 
   if (devOpsMode) {
     rightTabOptions.push({ label: "Helm Values", value: "values" });
@@ -108,32 +112,30 @@ const ExpandedJobChart: React.FC<PropsType> = ({ currentChart: oldChart, closeCh
 
   const leftTabOptions = [{ label: "Jobs", value: "jobs" }];
 
-  const processValuesToUpdateChart = (props?: {
-    values: any;
-    metadata: any;
-  }) => (currentChart: ChartType) => {
-    const newConfig = props.values;
-    let conf: string;
-    let values = currentChart.config;
+  const processValuesToUpdateChart =
+    (props?: { values: any; metadata: any }) => (currentChart: ChartType) => {
+      const newConfig = props.values;
+      let conf: string;
+      const values = currentChart.config;
 
-    if (!newConfig) {
-      set(values, "paused", true);
+      if (!newConfig) {
+        set(values, "paused", true);
 
-      conf = yaml.dump(values, { forceQuotes: true });
-    } else {
-      // Convert dotted keys to nested objects
-      for (let key in newConfig) {
-        set(values, key, newConfig[key]);
+        conf = yaml.dump(values, { forceQuotes: true });
+      } else {
+        // Convert dotted keys to nested objects
+        for (const key in newConfig) {
+          set(values, key, newConfig[key]);
+        }
+
+        set(values, "paused", true);
+
+        // Weave in preexisting values and convert to yaml
+        conf = yaml.dump(values, { forceQuotes: true });
       }
 
-      set(values, "paused", true);
-
-      // Weave in preexisting values and convert to yaml
-      conf = yaml.dump(values, { forceQuotes: true });
-    }
-
-    return { yaml: conf, metadata: props.metadata };
-  };
+      return { yaml: conf, metadata: props.metadata };
+    };
 
   const handleDeleteChart = async () => {
     deleteChart();
@@ -167,10 +169,10 @@ const ExpandedJobChart: React.FC<PropsType> = ({ currentChart: oldChart, closeCh
         utc: true,
       });
     }
-    // @ts-ignore
+    // @ts-expect-error
     const rtf = new Intl.DateTimeFormat("en", {
       localeMatcher: "best fit", // other values: "lookup"
-      // @ts-ignore
+      // @ts-expect-error
       dateStyle: "full",
       timeStyle: "long",
     });
@@ -239,7 +241,7 @@ const ExpandedJobChart: React.FC<PropsType> = ({ currentChart: oldChart, closeCh
             <>
               <JobList
                 jobs={jobs}
-                setJobs={() => { }}
+                setJobs={() => {}}
                 expandJob={(job: any) => {
                   setSelectedJob(job);
                 }}
@@ -258,7 +260,9 @@ const ExpandedJobChart: React.FC<PropsType> = ({ currentChart: oldChart, closeCh
       return (
         <ValuesYaml
           currentChart={chart}
-          refreshChart={() => refreshChart()}
+          refreshChart={async () => {
+            await refreshChart();
+          }}
           disabled={!isAuthorized("job", "", ["get", "update"])}
         />
       );
@@ -281,13 +285,17 @@ const ExpandedJobChart: React.FC<PropsType> = ({ currentChart: oldChart, closeCh
       return (
         <SettingsSection
           currentChart={chart}
-          refreshChart={() => refreshChart()}
+          refreshChart={async () => {
+            await refreshChart();
+          }}
           setShowDeleteOverlay={(showOverlay: boolean) => {
             if (showOverlay) {
               setCurrentOverlay({
                 message: `Are you sure you want to delete ${chart?.name}?`,
                 onYes: handleDeleteChart,
-                onNo: () => setCurrentOverlay(null),
+                onNo: () => {
+                  setCurrentOverlay(null);
+                },
               });
             } else {
               setCurrentOverlay(null);
@@ -354,7 +362,9 @@ const ExpandedJobChart: React.FC<PropsType> = ({ currentChart: oldChart, closeCh
     <>
       <ConnectToJobInstructionsModal
         show={showConnectionModal}
-        onClose={() => setShowConnectionModal(false)}
+        onClose={() => {
+          setShowConnectionModal(false);
+        }}
         chartName={chart?.name}
       />
       <StyledExpandedChart>
@@ -371,51 +381,51 @@ const ExpandedJobChart: React.FC<PropsType> = ({ currentChart: oldChart, closeCh
           {(leftTabOptions?.length > 0 ||
             formData.tabs?.length > 0 ||
             rightTabOptions?.length > 0) && (
-              <PorterFormWrapper
-                formData={formData}
-                valuesToOverride={{
-                  namespace: chart?.namespace,
-                  clusterId: currentCluster?.id,
-                }}
-                renderTabContents={renderTabContents}
-                isReadOnly={
-                  hasPorterImageTemplate ||
-                  !isAuthorized("job", "", ["get", "update"]) ||
-                  disableForm
-                }
-                onSubmit={(formValues) =>
-                  updateChart(processValuesToUpdateChart(formValues))
-                }
-                includeMetadata
-                leftTabOptions={leftTabOptions}
-                rightTabOptions={rightTabOptions}
-                saveValuesStatus={saveStatus}
-                saveButtonText="Save config"
-                includeHiddenFields
-                addendum={
-                  <TabButton
-                    onClick={() =>
-                      setDevOpsMode((prev) => {
-                        localStorage.setItem("devOpsMode", prev.toString());
-                        return !prev;
-                      })
-                    }
-                    devOpsMode={devOpsMode}
-                  >
-                    <i className="material-icons">offline_bolt</i> DevOps Mode
-                  </TabButton>
-                }
-                injectedProps={{
-                  "key-value-array": {
-                    availableSyncEnvGroups:
-                      isStack && !disableForm ? stackEnvGroups : undefined,
-                  },
-                  "url-link": {
-                    chart: chart,
-                  },
-                }}
-              />
-            )}
+            <PorterFormWrapper
+              formData={formData}
+              valuesToOverride={{
+                namespace: chart?.namespace,
+                clusterId: currentCluster?.id,
+              }}
+              renderTabContents={renderTabContents}
+              isReadOnly={
+                hasPorterImageTemplate ||
+                !isAuthorized("job", "", ["get", "update"]) ||
+                disableForm
+              }
+              onSubmit={async (formValues) => {
+                await updateChart(processValuesToUpdateChart(formValues));
+              }}
+              includeMetadata
+              leftTabOptions={leftTabOptions}
+              rightTabOptions={rightTabOptions}
+              saveValuesStatus={saveStatus}
+              saveButtonText="Save config"
+              includeHiddenFields
+              addendum={
+                <TabButton
+                  onClick={() => {
+                    setDevOpsMode((prev) => {
+                      localStorage.setItem("devOpsMode", prev.toString());
+                      return !prev;
+                    });
+                  }}
+                  devOpsMode={devOpsMode}
+                >
+                  <i className="material-icons">offline_bolt</i> DevOps Mode
+                </TabButton>
+              }
+              injectedProps={{
+                "key-value-array": {
+                  availableSyncEnvGroups:
+                    isStack && !disableForm ? stackEnvGroups : undefined,
+                },
+                "url-link": {
+                  chart,
+                },
+              }}
+            />
+          )}
         </BodyWrapper>
       </StyledExpandedChart>
     </>
@@ -443,64 +453,71 @@ const ExpandedJobHeader: React.FC<{
   setDisableForm,
   disableRevisions,
 }) => (
-    <>
-      <BreadcrumbRow>
-        <Breadcrumb onClick={closeChart}>
-          <ArrowIcon src={leftArrow} />
-          <Wrap>Back</Wrap>
-        </Breadcrumb>
-      </BreadcrumbRow>
-      <HeaderWrapper>
-        <TitleSection icon={chart?.chart.metadata.icon} iconWidth="33px">
-          {chart?.name}
-          <DeploymentType currentChart={chart} />
-          <TagWrapper>
-            Namespace <NamespaceTag>{chart.namespace.startsWith("porter-stack-") ? chart.namespace.replace("porter-stack-", "") : chart.namespace}</NamespaceTag>
-          </TagWrapper>
-        </TitleSection>
-        {chart?.config?.description ? (
-          <Description>{chart?.config?.description}</Description>
-        ) : null}
+  <>
+    <BreadcrumbRow>
+      <Breadcrumb onClick={closeChart}>
+        <ArrowIcon src={leftArrow} />
+        <Wrap>Back</Wrap>
+      </Breadcrumb>
+    </BreadcrumbRow>
+    <HeaderWrapper>
+      <TitleSection icon={chart?.chart.metadata.icon} iconWidth="33px">
+        {chart?.name}
+        <DeploymentType currentChart={chart} />
+        <TagWrapper>
+          Namespace{" "}
+          <NamespaceTag>
+            {chart.namespace.startsWith("porter-stack-")
+              ? chart.namespace.replace("porter-stack-", "")
+              : chart.namespace}
+          </NamespaceTag>
+        </TagWrapper>
+      </TitleSection>
+      {chart?.config?.description ? (
+        <Description>{chart?.config?.description}</Description>
+      ) : null}
 
-        <InfoWrapper>
-          {chart?.canonical_name !== "" ? (
-            <Url>
-              <Bolded>Helm Release Name:</Bolded>
-              {chart?.name}
-            </Url>
-          ) : null}
-          <LastDeployed>
-            Run {jobs?.length} times <Dot>•</Dot>Last template update at
-            {" " + readableDate(chart.info.last_deployed)}
-          </LastDeployed>
-        </InfoWrapper>
-        {!disableRevisions ? (
-          <RevisionSection
-            chart={chart}
-            refreshChart={() => refreshChart()}
-            setRevision={(chart, isCurrent) => {
-              loadChartWithSpecificRevision(chart?.version);
-              setDisableForm(!isCurrent);
-            }}
-            forceRefreshRevisions={false}
-            refreshRevisionsOff={() => { }}
-            shouldUpdate={
-              chart?.latest_version &&
-              chart?.latest_version !== chart?.chart.metadata.version
-            }
-            latestVersion={chart?.latest_version}
-            upgradeVersion={(_version, cb) => {
-              upgradeChart().then(() => {
-                if (typeof cb === "function") {
-                  cb();
-                }
-              });
-            }}
-          />
+      <InfoWrapper>
+        {chart?.canonical_name !== "" ? (
+          <Url>
+            <Bolded>Helm Release Name:</Bolded>
+            {chart?.name}
+          </Url>
         ) : null}
-      </HeaderWrapper>
-    </>
-  );
+        <LastDeployed>
+          Run {jobs?.length} times <Dot>•</Dot>Last template update at
+          {" " + readableDate(chart.info.last_deployed)}
+        </LastDeployed>
+      </InfoWrapper>
+      {!disableRevisions ? (
+        <RevisionSection
+          chart={chart}
+          refreshChart={async () => {
+            await refreshChart();
+          }}
+          setRevision={(chart, isCurrent) => {
+            loadChartWithSpecificRevision(chart?.version);
+            setDisableForm(!isCurrent);
+          }}
+          forceRefreshRevisions={false}
+          refreshRevisionsOff={() => {}}
+          shouldUpdate={
+            chart?.latest_version &&
+            chart?.latest_version !== chart?.chart.metadata.version
+          }
+          latestVersion={chart?.latest_version}
+          upgradeVersion={(_version, cb) => {
+            upgradeChart().then(() => {
+              if (typeof cb === "function") {
+                cb();
+              }
+            });
+          }}
+        />
+      ) : null}
+    </HeaderWrapper>
+  </>
+);
 
 const ArrowIcon = styled.img`
   width: 15px;
@@ -768,7 +785,11 @@ const TabButton = styled.div`
   position: absolute;
   right: 0px;
   height: 30px;
-  background: linear-gradient(to right, #00000000, ${props => props.theme.bg} 20%);
+  background: linear-gradient(
+    to right,
+    #00000000,
+    ${(props) => props.theme.bg} 20%
+  );
   padding-left: 30px;
   display: flex;
   align-items: center;
@@ -780,11 +801,11 @@ const TabButton = styled.div`
   border-radius: 20px;
   text-shadow: 0px 0px 8px
     ${(props: { devOpsMode: boolean }) =>
-    props.devOpsMode ? "#ffffff66" : "none"};
+      props.devOpsMode ? "#ffffff66" : "none"};
   cursor: pointer;
   :hover {
     color: ${(props: { devOpsMode: boolean }) =>
-    props.devOpsMode ? "" : "#aaaabb99"};
+      props.devOpsMode ? "" : "#aaaabb99"};
   }
 
   > i {

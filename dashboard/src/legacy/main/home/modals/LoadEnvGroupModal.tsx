@@ -1,22 +1,22 @@
 import React, { Component } from "react";
-import styled, { css } from "styled-components";
-import close from "assets/close.png";
-import sliders from "assets/sliders.svg";
-
-import api from "shared/api";
-import { Context } from "shared/Context";
-
-import Loading from "components/Loading";
-import SaveButton from "components/SaveButton";
-import { KeyValue } from "components/form-components/KeyValueArray";
-import CheckboxRow from "components/form-components/CheckboxRow";
+import close from "legacy/assets/close.png";
+import sliders from "legacy/assets/sliders.svg";
+import DocsHelper from "legacy/components/DocsHelper";
+import CheckboxRow from "legacy/components/form-components/CheckboxRow";
+import Helper from "legacy/components/form-components/Helper";
+import { KeyValue } from "legacy/components/form-components/KeyValueArray";
+import Loading from "legacy/components/Loading";
 import {
   PartialEnvGroup,
   PopulatedEnvGroup,
-} from "components/porter-form/types";
-import Helper from "components/form-components/Helper";
-import DocsHelper from "components/DocsHelper";
+} from "legacy/components/porter-form/types";
+import SaveButton from "legacy/components/SaveButton";
+import api from "legacy/shared/api";
 import { isEmpty, isObject } from "lodash";
+import styled, { css } from "styled-components";
+
+import { Context } from "shared/Context";
+
 import { formattedEnvironmentValue } from "../env-dashboard/EnvGroup";
 
 type PropsType = {
@@ -112,7 +112,10 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
   };
 
   componentDidMount() {
-    if (Array.isArray(this.props.availableEnvGroups) && !this.context.currentProject.stacks_enabled) {
+    if (
+      Array.isArray(this.props.availableEnvGroups) &&
+      !this.context.currentProject.stacks_enabled
+    ) {
       this.setState({
         envGroups: this.props.availableEnvGroups,
         loading: false,
@@ -478,7 +481,9 @@ const ModalTitle = styled.div`
   margin: 0px 0px 13px;
   display: flex;
   flex: 1;
-  font-family: Work Sans, sans-serif;
+  font-family:
+    Work Sans,
+    sans-serif;
   font-size: 18px;
   color: #ffffff;
   user-select: none;

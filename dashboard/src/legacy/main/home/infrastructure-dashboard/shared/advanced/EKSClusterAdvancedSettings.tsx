@@ -1,16 +1,15 @@
 import React from "react";
+import Button from "legacy/components/porter/Button";
+import Checkbox from "legacy/components/porter/Checkbox";
+import Container from "legacy/components/porter/Container";
+import { ControlledInput } from "legacy/components/porter/ControlledInput";
+import Select from "legacy/components/porter/Select";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import { type ClientClusterContract } from "legacy/lib/clusters/types";
 import AnimateHeight from "react-animate-height";
 import { Controller, useFieldArray, useFormContext } from "react-hook-form";
 import styled from "styled-components";
-
-import Button from "components/porter/Button";
-import Checkbox from "components/porter/Checkbox";
-import Container from "components/porter/Container";
-import { ControlledInput } from "components/porter/ControlledInput";
-import Select from "components/porter/Select";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import { type ClientClusterContract } from "lib/clusters/types";
 
 const EKSClusterAdvancedSettings: React.FC = () => {
   const { control, watch, register } = useFormContext<ClientClusterContract>();

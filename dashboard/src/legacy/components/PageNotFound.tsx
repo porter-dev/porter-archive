@@ -1,8 +1,7 @@
 import React, { Component } from "react";
-import styled from "styled-components";
+import { pushFiltered } from "legacy/shared/routing";
 import { RouteComponentProps, withRouter } from "react-router";
-
-import { pushFiltered } from "shared/routing";
+import styled from "styled-components";
 
 type PropsType = RouteComponentProps & {};
 

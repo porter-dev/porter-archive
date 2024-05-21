@@ -1,9 +1,8 @@
 import React from "react";
-
-import Link from "components/porter/Link";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import { useReferralDetails } from "lib/hooks/useStripe";
+import Link from "legacy/components/porter/Link";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import { useReferralDetails } from "legacy/lib/hooks/useStripe";
 
 function ReferralsPage(): JSX.Element {
   const { referralDetails } = useReferralDetails();

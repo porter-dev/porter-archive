@@ -1,9 +1,8 @@
 import React from "react";
 import { Contract } from "@porter-dev/api-contracts";
+import ClickToCopy from "legacy/components/porter/ClickToCopy";
+import Modal from "legacy/components/porter/Modal";
 import styled from "styled-components";
-
-import ClickToCopy from "components/porter/ClickToCopy";
-import Modal from "components/porter/Modal";
 
 import { useClusterContext } from "./ClusterContextProvider";
 

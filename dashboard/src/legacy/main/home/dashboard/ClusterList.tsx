@@ -1,19 +1,18 @@
-import React, { useEffect, useState, useContext } from "react";
-import styled from "styled-components";
-import { pushFiltered } from "shared/routing";
+import React, { useContext, useEffect, useState } from "react";
+import loading from "legacy/assets/loading.gif";
+import Heading from "legacy/components/form-components/Heading";
+import Helper from "legacy/components/form-components/Helper";
+import Loading from "legacy/components/Loading";
+import api from "legacy/shared/api";
+import { pushFiltered } from "legacy/shared/routing";
 import { useHistory, useLocation } from "react-router";
-
-import api from "shared/api";
-import loading from "assets/loading.gif";
-import Loading from "components/Loading";
+import styled from "styled-components";
 
 import { Context } from "shared/Context";
-import Heading from "components/form-components/Heading";
-import Helper from "components/form-components/Helper";
 
 type Props = {};
 
-const ClusterList: React.FC<Props> = ({ }) => {
+const ClusterList: React.FC<Props> = ({}) => {
   const { currentProject, setCurrentCluster } = useContext(Context);
   const [isLoading, setIsLoading] = useState(true);
   const [clusters, setClusters] = useState([]);
@@ -21,11 +20,8 @@ const ClusterList: React.FC<Props> = ({ }) => {
   const history = useHistory();
 
   useEffect(() => {
-    api.getClusters(
-      "<token>",
-      {},
-      { id: currentProject.id },
-    )
+    api
+      .getClusters("<token>", {}, { id: currentProject.id })
       .then(({ data }) => {
         setClusters(data);
         setIsLoading(false);
@@ -99,59 +95,62 @@ const ClusterList: React.FC<Props> = ({ }) => {
 
   return (
     <>
-      {
-        isLoading ? (
-          <LoadingWrapper><Loading /></LoadingWrapper>
-        ) : (
-          <>
-            {
-              clusters.length === 0 && (
-                <Placeholder>
-                  <Heading isAtTop>No clusters found</Heading>
-                  <Helper>
-                    Create a cluster to deploy new applications.
-                  </Helper>
-                </Placeholder>
-              )
-            }
-            <StyledClusterList>
-              {clusters.map((cluster: any) => {
-                return (
-                  <ClusterRow
-                    key={cluster.id}
-                    onClick={() => {
-                      setCurrentCluster(cluster);
-                      pushFiltered({ location, history }, "/applications", ["project_id"], {
+      {isLoading ? (
+        <LoadingWrapper>
+          <Loading />
+        </LoadingWrapper>
+      ) : (
+        <>
+          {clusters.length === 0 && (
+            <Placeholder>
+              <Heading isAtTop>No clusters found</Heading>
+              <Helper>Create a cluster to deploy new applications.</Helper>
+            </Placeholder>
+          )}
+          <StyledClusterList>
+            {clusters.map((cluster: any) => {
+              return (
+                <ClusterRow
+                  key={cluster.id}
+                  onClick={() => {
+                    setCurrentCluster(cluster);
+                    pushFiltered(
+                      { location, history },
+                      "/applications",
+                      ["project_id"],
+                      {
                         cluster: cluster.name,
-                      });
-                    }}
-                  >
-                    {renderIcon()}
-                    {cluster.vanity_name || cluster.name}
-                    {
-                      (
-                        cluster.status === "UPDATING" || cluster.status === "UPDATING_UNAVAILABLE"
-                      ) && (
-                        <Status
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setCurrentCluster(cluster);
-                            pushFiltered({ location, history }, "/cluster-dashboard", ["project_id"], {
-                              cluster: cluster.name,
-                            });
-                          }}
-                        >
-                          <Img src={loading} /> Updating
-                        </Status>
-                      )
-                    }
-                  </ClusterRow>
-                )
-              })}
-            </StyledClusterList>
-          </>
-        )
-      }
+                      }
+                    );
+                  }}
+                >
+                  {renderIcon()}
+                  {cluster.vanity_name || cluster.name}
+                  {(cluster.status === "UPDATING" ||
+                    cluster.status === "UPDATING_UNAVAILABLE") && (
+                    <Status
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setCurrentCluster(cluster);
+                        pushFiltered(
+                          { location, history },
+                          "/cluster-dashboard",
+                          ["project_id"],
+                          {
+                            cluster: cluster.name,
+                          }
+                        );
+                      }}
+                    >
+                      <Img src={loading} /> Updating
+                    </Status>
+                  )}
+                </ClusterRow>
+              );
+            })}
+          </StyledClusterList>
+        </>
+      )}
     </>
   );
 };
@@ -219,7 +218,7 @@ const ClusterRow = styled.div`
   color: #ffffff;
   position: relative;
   border-radius: 5px;
-  background: ${props => props.theme.fg};
+  background: ${(props) => props.theme.fg};
   border: 1px solid #494b4f;
   :hover {
     border: 1px solid #7a7b80;
@@ -236,8 +235,7 @@ const ClusterRow = styled.div`
   }
 `;
 
-const StyledClusterList = styled.div`
-`;
+const StyledClusterList = styled.div``;
 
 const LoadingWrapper = styled.div`
   height: calc(100vh - 450px);

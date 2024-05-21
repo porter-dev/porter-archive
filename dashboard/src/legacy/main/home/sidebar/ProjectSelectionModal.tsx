@@ -1,25 +1,28 @@
+import React, { useContext, useEffect, useMemo, useState } from "react";
+import Button from "legacy/components/porter/Button";
+import Container from "legacy/components/porter/Container";
+import Modal from "legacy/components/porter/Modal";
+import SearchBar from "legacy/components/porter/SearchBar";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import api from "legacy/shared/api";
+import { pushFiltered } from "legacy/shared/routing";
+import {
+  DetailedClusterType,
+  ProjectListType,
+  ProjectType,
+} from "legacy/shared/types";
+import _ from "lodash";
 import { RouteComponentProps, withRouter } from "react-router";
 import styled from "styled-components";
-import React, { useContext, useEffect, useState } from "react";
 
-import Modal from "components/porter/Modal";
-import Text from "components/porter/Text";
-import Spacer from "components/porter/Spacer";
 import { Context } from "shared/Context";
-import { DetailedClusterType, ProjectListType, ProjectType } from "shared/types";
-import { pushFiltered } from "shared/routing";
-import SearchBar from "components/porter/SearchBar";
-import _ from 'lodash';
-import { useMemo } from 'react';
-import api from "shared/api";
-import Button from "components/porter/Button";
-import Container from "components/porter/Container";
 
 type Props = RouteComponentProps & {
   closeModal: () => void;
   projects: ProjectListType[];
   currentProject: ProjectType;
-}
+};
 
 const ProjectSelectionModal: React.FC<Props> = ({
   closeModal,
@@ -35,14 +38,19 @@ const ProjectSelectionModal: React.FC<Props> = ({
   const [error, setError] = useState<string>("");
   const filteredProjects = useMemo(() => {
     const filteredBySearch = projects.filter((project) => {
-      return project.id === Number(searchValue) || project.name.toLowerCase().includes(searchValue.toLowerCase());
+      return (
+        project.id === Number(searchValue) ||
+        project.name.toLowerCase().includes(searchValue.toLowerCase())
+      );
     });
 
     // sort and return all the projects
-    const sortedProjects = _.sortBy(filteredBySearch, 'name');
+    const sortedProjects = _.sortBy(filteredBySearch, "name");
 
     // move the selected project to the top
-    const selectedProjectIndex = sortedProjects.findIndex(project => project.id === currentProject.id);
+    const selectedProjectIndex = sortedProjects.findIndex(
+      (project) => project.id === currentProject.id
+    );
     if (selectedProjectIndex !== -1) {
       const selectedProject = sortedProjects.splice(selectedProjectIndex, 1)[0];
       sortedProjects.unshift(selectedProject);
@@ -51,28 +59,24 @@ const ProjectSelectionModal: React.FC<Props> = ({
     return sortedProjects;
   }, [projects, searchValue, currentProject]);
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       const handleKeyDown = (e: KeyboardEvent) => {
         if (e.key === "Escape" || e.keyCode === 27) {
           closeModal();
         }
       };
 
-      window.addEventListener('keydown', handleKeyDown);
+      window.addEventListener("keydown", handleKeyDown);
       return () => {
-        window.removeEventListener('keydown', handleKeyDown);
+        window.removeEventListener("keydown", handleKeyDown);
       };
     }
   }, [closeModal]);
 
   const updateClusterList = async (projectId: number) => {
     try {
-      setLoading(true)
-      const res = await api.getClusters(
-        "<token>",
-        {},
-        { id: projectId }
-      );
+      setLoading(true);
+      const res = await api.getClusters("<token>", {}, { id: projectId });
 
       if (res.data) {
         setClusters(res.data);
@@ -88,46 +92,51 @@ const ProjectSelectionModal: React.FC<Props> = ({
     }
   };
   const renderBlockList = () => {
-    return filteredProjects.map((projectListEntry: ProjectListType, i: number) => {
-      return (
-        <IdContainer
-          key={i}
-          selected={projectListEntry.id === currentProject.id}
-          onClick={async () => {
-            const project = await api
-              .getProject("<token>", {}, { id: projectListEntry.id })
-              .then((res) => res.data as ProjectType);
+    return filteredProjects.map(
+      (projectListEntry: ProjectListType, i: number) => {
+        return (
+          <IdContainer
+            key={i}
+            selected={projectListEntry.id === currentProject.id}
+            onClick={async () => {
+              const project = await api
+                .getProject("<token>", {}, { id: projectListEntry.id })
+                .then((res) => res.data as ProjectType);
 
-            setCurrentProject(project);
+              setCurrentProject(project);
 
-            const clusters_list = await updateClusterList(project.id);
-            if (clusters_list?.length > 0) {
-              setCurrentCluster(clusters_list[0]);
-              setCurrentProject(project, () => {
-                pushFiltered(props, "/dashboard", [], { project_id: project.id });
-              });
-            } else {
-              setCurrentProject(project, () => {
-                pushFiltered(props, "/dashboard", [], { project_id: project.id });
-              });
-            }
-            closeModal();
-          }}
-        >
-          <BlockTitle>{projectListEntry.name}</BlockTitle>
+              const clusters_list = await updateClusterList(project.id);
+              if (clusters_list?.length > 0) {
+                setCurrentCluster(clusters_list[0]);
+                setCurrentProject(project, () => {
+                  pushFiltered(props, "/dashboard", [], {
+                    project_id: project.id,
+                  });
+                });
+              } else {
+                setCurrentProject(project, () => {
+                  pushFiltered(props, "/dashboard", [], {
+                    project_id: project.id,
+                  });
+                });
+              }
+              closeModal();
+            }}
+          >
+            <BlockTitle>{projectListEntry.name}</BlockTitle>
 
-
-          <BlockDescription>
-            Project ID: {projectListEntry.id}
-          </BlockDescription>
-        </IdContainer>
-      );
-    });
+            <BlockDescription>
+              Project ID: {projectListEntry.id}
+            </BlockDescription>
+          </IdContainer>
+        );
+      }
+    );
   };
 
   return (
-    <Modal closeModal={closeModal} width={'600px'}>
-      <Text size={16} style={{ marginRight: '10px' }}>
+    <Modal closeModal={closeModal} width={"600px"}>
+      <Text size={16} style={{ marginRight: "10px" }}>
         Switch Project
       </Text>
       <Spacer y={1} />
@@ -145,56 +154,66 @@ const ProjectSelectionModal: React.FC<Props> = ({
 
         <Spacer inline x={1} />
 
-        {user.isPorterUser && <Button onClick={() =>
-          pushFiltered(props, "/new-project", ["project_id"], {
-            new_project: true,
-          })} height="30px" width="130px">
-          <I className="material-icons">add</I> New Project
-        </Button>}
+        {user.isPorterUser && (
+          <Button
+            onClick={() =>
+              pushFiltered(props, "/new-project", ["project_id"], {
+                new_project: true,
+              })
+            }
+            height="30px"
+            width="130px"
+          >
+            <I className="material-icons">add</I> New Project
+          </Button>
+        )}
       </Container>
 
       <Spacer y={1} />
 
-      <ScrollableContent>  {/* Wrap the block list */}
+      <ScrollableContent>
+        {" "}
+        {/* Wrap the block list */}
         {/* <BlockList>
           {renderBlockList()}
         </BlockList> */}
         {renderBlockList()}
         <Spacer height="15px" />
       </ScrollableContent>
-    </Modal >
-  )
-}
+    </Modal>
+  );
+};
 
 export default withRouter(ProjectSelectionModal);
 
 const IdContainer = styled.div`
-    color: #ffffff;
-    border-radius: 5px;
-    padding: 5px;
-    display: block;
-    width: 100%;
-    border-radius: 5px;
-    background:${(props) => props.theme.clickable.bg};
-    border: 1px solid ${({ theme }) => theme.border};
-    margin-bottom: 10px;
-    margin-top: 5px;
-      border: ${props => props.selected ? "2px solid #8590ff" : "1px solid #494b4f"};
-      :hover {
-        border: ${({ selected }) => (!selected && "1px solid #7a7b80")};
-      }
-      cursor: pointer;
+  color: #ffffff;
+  border-radius: 5px;
+  padding: 5px;
+  display: block;
+  width: 100%;
+  border-radius: 5px;
+  background: ${(props) => props.theme.clickable.bg};
+  border: 1px solid ${({ theme }) => theme.border};
+  margin-bottom: 10px;
+  margin-top: 5px;
+  border: ${(props) =>
+    props.selected ? "2px solid #8590ff" : "1px solid #494b4f"};
+  :hover {
+    border: ${({ selected }) => !selected && "1px solid #7a7b80"};
+  }
+  cursor: pointer;
 
-      animation: fadeIn 0.3s 0s;
-      @keyframes fadeIn {
-        from {
-          opacity: 0;
-        }
-        to {
-          opacity: 1;
-        }
-      }
-    `;
+  animation: fadeIn 0.3s 0s;
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+`;
 
 const BlockDescription = styled.div`
   color: #ffffff66;
@@ -214,7 +233,7 @@ const BlockDescription = styled.div`
 
 const BlockTitle = styled.div`
   margin-top: 12px;
-  width: 100%;  
+  width: 100%;
   margin-left: -10px;
   text-align: center;
   font-size: 16px;

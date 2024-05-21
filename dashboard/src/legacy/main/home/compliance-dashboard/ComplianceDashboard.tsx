@@ -1,17 +1,17 @@
 import React, { useContext, useState } from "react";
+import complianceGrad from "legacy/assets/compliance-grad.svg";
+import ClusterProvisioningPlaceholder from "legacy/components/ClusterProvisioningPlaceholder";
+import Button from "legacy/components/porter/Button";
+import DashboardPlaceholder from "legacy/components/porter/DashboardPlaceholder";
+import PorterLink from "legacy/components/porter/Link";
+import ShowIntercomButton from "legacy/components/porter/ShowIntercomButton";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
 import styled from "styled-components";
 
-import ClusterProvisioningPlaceholder from "components/ClusterProvisioningPlaceholder";
-import Button from "components/porter/Button";
-import DashboardPlaceholder from "components/porter/DashboardPlaceholder";
-import PorterLink from "components/porter/Link";
-import ShowIntercomButton from "components/porter/ShowIntercomButton";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
 import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
 
 import { Context } from "shared/Context";
-import complianceGrad from "assets/compliance-grad.svg";
 
 import { ActionBanner } from "./ActionBanner";
 import { ProjectComplianceProvider } from "./ComplianceContext";
@@ -46,7 +46,8 @@ const ComplianceDashboard: React.FC = () => {
         ) : currentProject?.sandbox_enabled ? (
           <DashboardPlaceholder>
             <Text size={16}>
-              One-Click SOC 2 and HIPAA compliance are not available on the Porter Cloud
+              One-Click SOC 2 and HIPAA compliance are not available on the
+              Porter Cloud
             </Text>
             <Spacer y={0.5} />
             <Text color={"helper"}>

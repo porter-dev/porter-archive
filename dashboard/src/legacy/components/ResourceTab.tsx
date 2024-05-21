@@ -1,7 +1,6 @@
 import React, { Component } from "react";
+import { kindToIcon } from "legacy/shared/rosettaStone";
 import styled from "styled-components";
-
-import { kindToIcon } from "shared/rosettaStone";
 
 type PropsType = {
   label: string;
@@ -143,7 +142,7 @@ const StyledResourceTab = styled.div`
   width: 100%;
   margin-bottom: 2px;
   font-size: 13px;
-  background: ${props => props.theme.fg};
+  background: ${(props) => props.theme.fg};
   border-bottom-left-radius: ${(props: {
     isLast: boolean;
     roundAllCorners: boolean;

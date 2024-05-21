@@ -1,10 +1,9 @@
 import React, { useContext } from "react";
+import info from "legacy/assets/information-circle-contained.svg";
+import Text from "legacy/components/porter/Text";
 import styled from "styled-components";
 
-import Text from "components/porter/Text";
-
 import { Context } from "shared/Context";
-import info from "assets/information-circle-contained.svg";
 
 import Container from "./Container";
 import Icon from "./Icon";

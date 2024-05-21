@@ -6,19 +6,16 @@ import {
 } from "@porter-dev/api-contracts";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
-import { match } from "ts-pattern";
-import { z } from "zod";
-
 import {
   clientClusterContractFromProto,
   updateExistingClusterContract,
-} from "lib/clusters";
+} from "legacy/lib/clusters";
 import {
   CloudProviderAWS,
   CloudProviderAzure,
   CloudProviderGCP,
   SUPPORTED_CLOUD_PROVIDERS,
-} from "lib/clusters/constants";
+} from "legacy/lib/clusters/constants";
 import {
   clusterStateValidator,
   clusterValidator,
@@ -34,11 +31,13 @@ import {
   type ClusterState,
   type ContractCondition,
   type UpdateClusterResponse,
-} from "lib/clusters/types";
+} from "legacy/lib/clusters/types";
+import api from "legacy/shared/api";
+import { valueExists } from "legacy/shared/util";
+import { match } from "ts-pattern";
+import { z } from "zod";
 
-import api from "shared/api";
 import { Context } from "shared/Context";
-import { valueExists } from "shared/util";
 
 type TUseClusterList = {
   clusters: ClientCluster[];

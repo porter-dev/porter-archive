@@ -1,7 +1,8 @@
-import InputRow from "components/form-components/InputRow";
-import { Buildpack } from "main/home/app-dashboard/types/buildpack";
 import React, { useState } from "react";
+import InputRow from "legacy/components/form-components/InputRow";
 import styled, { keyframes } from "styled-components";
+
+import { Buildpack } from "main/home/app-dashboard/types/buildpack";
 
 function isValidBuildpack(url: string): boolean {
   const urnPrefix = "urn:cnb:registry:";

@@ -1,15 +1,16 @@
-import Helper from "components/form-components/Helper";
-import SaveButton from "components/SaveButton";
-import TitleSection from "components/TitleSection";
 import React, { useEffect, useState } from "react";
+import github from "legacy/assets/github.png";
+import DocsHelper from "legacy/components/DocsHelper";
+import Helper from "legacy/components/form-components/Helper";
+import SaveButton from "legacy/components/SaveButton";
+import TitleSection from "legacy/components/TitleSection";
+import { connectSourceTracks } from "legacy/shared/anayltics";
+import api from "legacy/shared/api";
+import { useRouting } from "legacy/shared/routing";
 import { Link } from "react-router-dom";
-import api from "shared/api";
-import { useRouting } from "shared/routing";
 import styled from "styled-components";
+
 import { OFState } from "../state";
-import github from "assets/github.png";
-import { connectSourceTracks } from "shared/anayltics";
-import DocsHelper from "components/DocsHelper";
 
 interface GithubAppAccessData {
   username?: string;

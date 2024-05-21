@@ -1,21 +1,22 @@
-import Helper from "components/form-components/Helper";
-import InputRow from "components/form-components/InputRow";
-import SelectRow from "components/form-components/SelectRow";
-import UploadArea from "components/form-components/UploadArea";
-import Loading from "components/Loading";
-import SaveButton from "components/SaveButton";
+import React, { useEffect, useState } from "react";
+import Helper from "legacy/components/form-components/Helper";
+import InputRow from "legacy/components/form-components/InputRow";
+import SelectRow from "legacy/components/form-components/SelectRow";
+import UploadArea from "legacy/components/form-components/UploadArea";
+import Loading from "legacy/components/Loading";
+import SaveButton from "legacy/components/SaveButton";
+import api from "legacy/shared/api";
+import { readableDate } from "legacy/shared/string_utils";
+import { Infrastructure } from "legacy/shared/types";
+import styled from "styled-components";
+import { useSnapshot } from "valtio";
+
 import { GCP_REGION_OPTIONS } from "main/home/onboarding/constants";
 import { OFState } from "main/home/onboarding/state";
 import {
   GCPProvisionerConfig,
   GCPRegistryConfig,
 } from "main/home/onboarding/types";
-import React, { useEffect, useState } from "react";
-import api from "shared/api";
-import { readableDate } from "shared/string_utils";
-import { Infrastructure } from "shared/types";
-import styled from "styled-components";
-import { useSnapshot } from "valtio";
 
 export const CredentialsForm: React.FC<{
   nextFormStep: (data: Partial<GCPRegistryConfig>) => void;

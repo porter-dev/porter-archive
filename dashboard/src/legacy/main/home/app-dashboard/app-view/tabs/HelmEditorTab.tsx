@@ -1,10 +1,9 @@
 import React from "react";
 import yaml from "js-yaml";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import { type PorterAppFormData } from "legacy/lib/porter-apps";
 import { useFormContext } from "react-hook-form";
-
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import { type PorterAppFormData } from "lib/porter-apps";
 
 import HelmOverrides from "../../validate-apply/helm/HelmOverrides";
 import { type ButtonStatus } from "../AppDataContainer";

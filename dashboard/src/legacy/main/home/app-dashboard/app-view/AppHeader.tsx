@@ -1,22 +1,20 @@
 import React, { useMemo } from "react";
 import { type PorterApp } from "@porter-dev/api-contracts";
+import box from "legacy/assets/box.png";
+import github from "legacy/assets/github-white.png";
+import pull_request_icon from "legacy/assets/pull_request_icon.svg";
+import tag_icon from "legacy/assets/tag.png";
+import web from "legacy/assets/web.png";
+import Container from "legacy/components/porter/Container";
+import Icon from "legacy/components/porter/Icon";
+import Link from "legacy/components/porter/Link";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import { prefixSubdomain } from "legacy/lib/porter-apps/services";
+import PullRequestIcon from "legacy/shared/icons/PullRequest";
+import { readableDate } from "legacy/shared/string_utils";
 import styled from "styled-components";
 import { match } from "ts-pattern";
-
-import Container from "components/porter/Container";
-import Icon from "components/porter/Icon";
-import Link from "components/porter/Link";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import { prefixSubdomain } from "lib/porter-apps/services";
-
-import PullRequestIcon from "shared/icons/PullRequest";
-import { readableDate } from "shared/string_utils";
-import box from "assets/box.png";
-import github from "assets/github-white.png";
-import pull_request_icon from "assets/pull_request_icon.svg";
-import tag_icon from "assets/tag.png";
-import web from "assets/web.png";
 
 import GHStatusBanner from "../validate-apply/revisions-list/GHStatusBanner";
 import { useLatestRevision } from "./LatestRevisionContext";

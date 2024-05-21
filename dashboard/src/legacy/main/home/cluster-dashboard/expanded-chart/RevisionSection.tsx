@@ -1,18 +1,17 @@
 import React, { Component } from "react";
+import loading from "legacy/assets/loading.gif";
+import ConfirmOverlay from "legacy/components/ConfirmOverlay";
+import api from "legacy/shared/api";
+import { readableDate } from "legacy/shared/string_utils";
+import { StorageType, type ChartType } from "legacy/shared/types";
+import { createPortal } from "react-dom";
 import styled from "styled-components";
-import loading from "assets/loading.gif";
-
-import api from "shared/api";
-import { Context } from "shared/Context";
-import { ChartType, StorageType } from "shared/types";
-
-import ConfirmOverlay from "components/ConfirmOverlay";
-import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 
 import Modal from "main/home/modals/Modal";
 import UpgradeChartModal from "main/home/modals/UpgradeChartModal";
-import { readableDate } from "shared/string_utils";
-import { createPortal } from "react-dom";
+
+import { withAuth, type WithAuthProps } from "shared/auth/AuthorizationHoc";
+import { Context } from "shared/Context";
 
 type PropsType = WithAuthProps & {
   chart: ChartType;
@@ -49,11 +48,11 @@ class RevisionSection extends Component<PropsType, StateType> {
 
   ws: WebSocket | null = null;
 
-  refreshHistory = () => {
-    let { chart } = this.props;
-    let { currentCluster, currentProject } = this.context;
+  refreshHistory = async () => {
+    const { chart } = this.props;
+    const { currentCluster, currentProject } = this.context;
 
-    return api
+    await api
       .getRevisions(
         "<token>",
         {},
@@ -88,8 +87,8 @@ class RevisionSection extends Component<PropsType, StateType> {
   }
 
   connectToLiveUpdates() {
-    let { chart } = this.props;
-    let { currentCluster, currentProject } = this.context;
+    const { chart } = this.props;
+    const { currentCluster, currentProject } = this.context;
 
     const apiPath = `/api/projects/${currentProject.id}/clusters/${currentCluster.id}/helm_release?charts=${chart.name}`;
     const protocol = window.location.protocol == "https:" ? "wss" : "ws";
@@ -102,10 +101,10 @@ class RevisionSection extends Component<PropsType, StateType> {
     };
 
     this.ws.onmessage = (evt: MessageEvent) => {
-      let event = JSON.parse(evt.data);
+      const event = JSON.parse(evt.data);
 
       if (event.event_type == "UPDATE") {
-        let object = event.Object;
+        const object = event.Object;
 
         this.setState(
           (prevState) => {
@@ -127,7 +126,11 @@ class RevisionSection extends Component<PropsType, StateType> {
               return { ...prevState, revisions: [object, ...prevRevisions] };
             }
 
-            return { ...prevState, revisions: prevRevisions, maxVersion: Math.max(...prevRevisions.map(rev => rev.version)) };
+            return {
+              ...prevState,
+              revisions: prevRevisions,
+              maxVersion: Math.max(...prevRevisions.map((rev) => rev.version)),
+            };
           },
           () => {
             this.props.setRevision(this.state.revisions[0], true);
@@ -161,9 +164,9 @@ class RevisionSection extends Component<PropsType, StateType> {
   }
 
   handleRollback = () => {
-    let { setCurrentError, currentCluster, currentProject } = this.context;
+    const { setCurrentError, currentCluster, currentProject } = this.context;
 
-    let revisionNumber = this.state.rollbackRevision;
+    const revisionNumber = this.state.rollbackRevision;
     this.setState({ loading: true, rollbackRevision: null });
 
     api
@@ -201,9 +204,10 @@ class RevisionSection extends Component<PropsType, StateType> {
 
   renderRevisionList = () => {
     return this.state.revisions.map((revision: ChartType, i: number) => {
-      let isCurrent = revision.version === this.state.maxVersion;
+      const isCurrent = revision.version === this.state.maxVersion;
       const isGithubApp = !!this.props.chart.git_action_config;
-      const imageTag = revision.config?.image?.tag || revision.config?.global?.image?.tag;
+      const imageTag =
+        revision.config?.image?.tag || revision.config?.global?.image?.tag;
 
       const parsedImageTag = isGithubApp
         ? String(imageTag).slice(0, 7)
@@ -214,7 +218,9 @@ class RevisionSection extends Component<PropsType, StateType> {
       return (
         <Tr
           key={i}
-          onClick={() => this.handleClickRevision(revision)}
+          onClick={() => {
+            this.handleClickRevision(revision);
+          }}
           selected={this.props.chart.version === revision.version}
         >
           <Td>{revision.version}</Td>
@@ -247,9 +253,9 @@ class RevisionSection extends Component<PropsType, StateType> {
                 ]) ||
                 isStack
               }
-              onClick={() =>
-                this.setState({ rollbackRevision: revision.version })
-              }
+              onClick={() => {
+                this.setState({ rollbackRevision: revision.version });
+              }}
             >
               {isCurrent ? "Current" : "Revert"}
             </RollbackButton>
@@ -293,14 +299,16 @@ class RevisionSection extends Component<PropsType, StateType> {
       );
     }
 
-    let isCurrent =
+    const isCurrent =
       this.props.chart.version === this.state.maxVersion ||
       this.state.maxVersion === 0;
     return (
       <div>
         {this.state.upgradeVersion && (
           <Modal
-            onRequestClose={() => this.setState({ upgradeVersion: "" })}
+            onRequestClose={() => {
+              this.setState({ upgradeVersion: "" });
+            }}
             width="500px"
             height="450px"
           >
@@ -366,7 +374,9 @@ class RevisionSection extends Component<PropsType, StateType> {
             show={this.state.rollbackRevision && true}
             message={`Are you sure you want to revert to version ${this.state.rollbackRevision}?`}
             onYes={this.handleRollback}
-            onNo={() => this.setState({ rollbackRevision: null })}
+            onNo={() => {
+              this.setState({ rollbackRevision: null });
+            }}
           />,
           document.body
         )}
@@ -430,7 +440,7 @@ const RollbackButton = styled.div`
     props.disabled ? "#aaaabbee" : "#616FEEcc"};
   :hover {
     background: ${(props: { disabled: boolean }) =>
-    props.disabled ? "" : "#405eddbb"};
+      props.disabled ? "" : "#405eddbb"};
   }
 `;
 
@@ -442,7 +452,7 @@ const Tr = styled.tr`
     props.selected ? "#ffffff11" : ""};
   :hover {
     background: ${(props: { disableHover?: boolean; selected?: boolean }) =>
-    props.disableHover ? "" : "#ffffff22"};
+      props.disableHover ? "" : "#ffffff22"};
   }
 `;
 
@@ -495,7 +505,7 @@ const RevisionHeader = styled.div`
     cursor: pointer;
     border-radius: 20px;
     transform: ${(props: { showRevisions: boolean; isCurrent: boolean }) =>
-    props.showRevisions ? "" : "rotate(-90deg)"};
+      props.showRevisions ? "" : "rotate(-90deg)"};
   }
 `;
 
@@ -506,7 +516,7 @@ const StyledRevisionSection = styled.div`
   margin: 20px 0px 18px;
   overflow: hidden;
   border-radius: 5px;
-  background: ${props => props.theme.fg};
+  background: ${(props) => props.theme.fg};
   border: 1px solid #494b4f;
   :hover {
     border: 1px solid #7a7b80;

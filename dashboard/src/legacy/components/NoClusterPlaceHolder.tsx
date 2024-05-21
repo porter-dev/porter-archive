@@ -1,15 +1,15 @@
-import React, { useEffect, useState, useContext } from "react";
-import styled from "styled-components";
+import React, { useContext, useEffect, useState } from "react";
+import loading from "legacy/assets/loading.gif";
+import Heading from "legacy/components/form-components/Heading";
+import Helper from "legacy/components/form-components/Helper";
+import { pushFiltered } from "legacy/shared/routing";
 import { RouteComponentProps, withRouter } from "react-router";
-import { pushFiltered } from "shared/routing";
-
-import loading from "assets/loading.gif";
+import styled from "styled-components";
 
 import { Context } from "shared/Context";
-import Heading from "components/form-components/Heading";
-import Helper from "components/form-components/Helper";
-import Text from "./porter/Text";
+
 import Spacer from "./porter/Spacer";
+import Text from "./porter/Text";
 
 type Props = {};
 

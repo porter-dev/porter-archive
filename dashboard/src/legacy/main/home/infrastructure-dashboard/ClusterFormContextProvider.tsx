@@ -2,13 +2,7 @@ import React, { createContext, useMemo, useRef, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type Contract } from "@porter-dev/api-contracts";
 import { useQueryClient } from "@tanstack/react-query";
-import { FormProvider, useForm } from "react-hook-form";
-import { useHistory } from "react-router";
-import styled from "styled-components";
-import { match } from "ts-pattern";
-import { z } from "zod";
-
-import { Error as ErrorComponent } from "components/porter/Error";
+import { Error as ErrorComponent } from "legacy/components/porter/Error";
 import {
   clusterContractValidator,
   machineTypeValidator,
@@ -16,15 +10,19 @@ import {
   type ClientPreflightCheck,
   type MachineType,
   type UpdateClusterResponse,
-} from "lib/clusters/types";
+} from "legacy/lib/clusters/types";
 import {
   uniqueCidrMetadataValidator,
   useUpdateCluster,
-} from "lib/hooks/useCluster";
-import { useClusterAnalytics } from "lib/hooks/useClusterAnalytics";
-import { useIntercom } from "lib/hooks/useIntercom";
-
-import api from "shared/api";
+} from "legacy/lib/hooks/useCluster";
+import { useClusterAnalytics } from "legacy/lib/hooks/useClusterAnalytics";
+import { useIntercom } from "legacy/lib/hooks/useIntercom";
+import api from "legacy/shared/api";
+import { FormProvider, useForm } from "react-hook-form";
+import { useHistory } from "react-router";
+import styled from "styled-components";
+import { match } from "ts-pattern";
+import { z } from "zod";
 
 import PreflightChecksModal from "./modals/PreflightChecksModal";
 

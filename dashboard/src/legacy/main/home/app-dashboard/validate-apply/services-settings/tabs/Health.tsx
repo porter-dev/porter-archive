@@ -1,12 +1,11 @@
 import React from "react";
+import Checkbox from "legacy/components/porter/Checkbox";
+import Container from "legacy/components/porter/Container";
+import { ControlledInput } from "legacy/components/porter/ControlledInput";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import { type PorterAppFormData } from "legacy/lib/porter-apps";
 import { Controller, useFormContext } from "react-hook-form";
-
-import Checkbox from "components/porter/Checkbox";
-import Container from "components/porter/Container";
-import { ControlledInput } from "components/porter/ControlledInput";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import { type PorterAppFormData } from "lib/porter-apps";
 
 type HealthProps = {
   index: number;

@@ -1,22 +1,23 @@
-import { PopulatedEnvGroup } from "components/porter-form/types";
 import { useContext, useEffect, useState } from "react";
-import api from "shared/api";
+import { type PopulatedEnvGroup } from "legacy/components/porter-form/types";
+import api from "legacy/shared/api";
+import { type ChartType } from "legacy/shared/types";
+
 import { Context } from "shared/Context";
-import { ChartType } from "shared/types";
-import { Stack } from "../stacks/types";
+
+import { type Stack } from "../stacks/types";
 
 export const useStackEnvGroups = (chart: ChartType) => {
-  const { currentProject, currentCluster, setCurrentError } = useContext(
-    Context
-  );
+  const { currentProject, currentCluster, setCurrentError } =
+    useContext(Context);
   const [stackEnvGroups, setStackEnvGroups] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const getEnvGroups = async (stack: Stack) => {
     const envGroups = stack.latest_revision.env_groups;
 
-    const envGroupsWithValues = envGroups.map((envGroup) => {
-      return api
+    const envGroupsWithValues = envGroups.map(async (envGroup) => {
+      return await api
         .getEnvGroup<PopulatedEnvGroup>(
           "<token>",
           {},
@@ -31,11 +32,11 @@ export const useStackEnvGroups = (chart: ChartType) => {
         .then((res) => res.data);
     });
 
-    return Promise.all(envGroupsWithValues);
+    return await Promise.all(envGroupsWithValues);
   };
 
-  const getStack = (stack_id: string) =>
-    api
+  const getStack = async (stack_id: string) =>
+    await api
       .getStack<Stack>(
         "token",
         {},
@@ -60,7 +61,7 @@ export const useStackEnvGroups = (chart: ChartType) => {
     }
     setLoading(true);
     getStack(stack_id)
-      .then((stack) => getEnvGroups(stack))
+      .then(async (stack) => await getEnvGroups(stack))
       .then((populatedEnvGroups) => {
         setStackEnvGroups(populatedEnvGroups);
 
@@ -72,7 +73,7 @@ export const useStackEnvGroups = (chart: ChartType) => {
   }, [chart?.stack_id]);
 
   return {
-    isStack: chart?.stack_id?.length ? true : false,
+    isStack: !!chart?.stack_id?.length,
     stackEnvGroups,
     isLoadingStackEnvGroups: loading,
   };

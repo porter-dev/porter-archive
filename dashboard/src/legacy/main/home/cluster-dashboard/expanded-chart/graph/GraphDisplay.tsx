@@ -1,14 +1,18 @@
 import React, { Component } from "react";
+import {
+  ChartType,
+  EdgeType,
+  NodeType,
+  ResourceType,
+} from "legacy/shared/types";
+import _ from "lodash";
 import styled from "styled-components";
 
-import { ChartType, EdgeType, NodeType, ResourceType } from "shared/types";
-
-import Node from "./Node";
 import Edge from "./Edge";
 import InfoPanel from "./InfoPanel";
-import ZoomPanel from "./ZoomPanel";
+import Node from "./Node";
 import SelectRegion from "./SelectRegion";
-import _ from "lodash";
+import ZoomPanel from "./ZoomPanel";
 
 const zoomConstant = 0.01;
 const panConstant = 0.8;
@@ -371,13 +375,8 @@ export default class GraphDisplay extends Component<PropsType, StateType> {
   };
 
   handleMouseUp = () => {
-    let {
-      cursorX,
-      nodeClickX,
-      cursorY,
-      nodeClickY,
-      suppressCloseNode,
-    } = this.state;
+    let { cursorX, nodeClickX, cursorY, nodeClickY, suppressCloseNode } =
+      this.state;
     this.setState({ dragBg: false, activeIds: [] });
 
     // Distinguish bg click vs drag for setting closing opened node

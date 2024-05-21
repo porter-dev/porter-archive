@@ -1,13 +1,11 @@
 import React from "react";
+import cloudformationStatus from "legacy/assets/cloud-formation-stack-complete.png";
+import Link from "legacy/components/porter/Link";
+import Modal from "legacy/components/porter/Modal";
+import Spacer from "legacy/components/porter/Spacer";
+import Step from "legacy/components/porter/Step";
+import Text from "legacy/components/porter/Text";
 import styled from "styled-components";
-
-import Link from "components/porter/Link";
-import Modal from "components/porter/Modal";
-import Spacer from "components/porter/Spacer";
-import Step from "components/porter/Step";
-import Text from "components/porter/Text";
-
-import cloudformationStatus from "assets/cloud-formation-stack-complete.png";
 
 type Props = {
   onClose: () => void;

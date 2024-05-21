@@ -1,4 +1,9 @@
 import React, { useContext, useMemo } from "react";
+import integrationGrad from "legacy/assets/integration-grad.svg";
+import Spacer from "legacy/components/porter/Spacer";
+import TitleSection from "legacy/components/TitleSection";
+import { integrationList } from "legacy/shared/common";
+import { pushFiltered } from "legacy/shared/routing";
 import {
   Route,
   Switch,
@@ -7,13 +12,7 @@ import {
 } from "react-router";
 import styled from "styled-components";
 
-import Spacer from "components/porter/Spacer";
-import TitleSection from "components/TitleSection";
-
-import { integrationList } from "shared/common";
 import { Context } from "shared/Context";
-import { pushFiltered } from "shared/routing";
-import integrationGrad from "assets/integration-grad.svg";
 
 import DashboardHeader from "../cluster-dashboard/DashboardHeader";
 import CreateIntegrationForm from "./create-integration/CreateIntegrationForm";

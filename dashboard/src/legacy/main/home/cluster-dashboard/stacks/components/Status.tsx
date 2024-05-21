@@ -1,6 +1,7 @@
 import React from "react";
+import loading from "legacy/assets/loading.gif";
+
 import { StatusStyles } from "./styles";
-import loading from "assets/loading.gif";
 
 export type StatusProps = {
   status: "loading" | "failed" | "successful" | "unknown";

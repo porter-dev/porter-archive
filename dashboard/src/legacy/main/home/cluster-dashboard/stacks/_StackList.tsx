@@ -1,13 +1,13 @@
-import DynamicLink from "components/DynamicLink";
-import Loading from "components/Loading";
 import React, { useContext, useEffect, useMemo, useState } from "react";
-import api from "shared/api";
-import { Context } from "shared/Context";
-import Placeholder from "components/OldPlaceholder";
+import DynamicLink from "legacy/components/DynamicLink";
+import Loading from "legacy/components/Loading";
+import Placeholder from "legacy/components/OldPlaceholder";
+import api from "legacy/shared/api";
+import { readableDate } from "legacy/shared/string_utils";
 import styled from "styled-components";
-import { Stack } from "./types";
-import { readableDate } from "shared/string_utils";
-import { Card } from "./launch/components/styles";
+
+import { Context } from "shared/Context";
+
 import Status, { StatusProps } from "./components/Status";
 import {
   Flex,
@@ -17,7 +17,9 @@ import {
   SepDot,
   Text,
 } from "./components/styles";
+import { Card } from "./launch/components/styles";
 import { getStackStatus, getStackStatusMessage } from "./shared";
+import { Stack } from "./types";
 
 const StackList = ({
   namespace,
@@ -26,9 +28,8 @@ const StackList = ({
   namespace: string;
   sortBy: "created_at" | "updated_at" | "alphabetical";
 }) => {
-  const { currentProject, currentCluster, setCurrentError } = useContext(
-    Context
-  );
+  const { currentProject, currentCluster, setCurrentError } =
+    useContext(Context);
   const [stacks, setStacks] = useState<Stack[]>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [deleting, setDeleting] = useState<string | null>(null);

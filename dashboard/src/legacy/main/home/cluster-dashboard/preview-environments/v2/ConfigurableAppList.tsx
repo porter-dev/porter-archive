@@ -1,20 +1,19 @@
 import React, { useContext, useMemo, useState } from "react";
+import add from "legacy/assets/plus-square.svg";
+import Loading from "legacy/components/Loading";
+import Button from "legacy/components/porter/Button";
+import Container from "legacy/components/porter/Container";
+import DashboardPlaceholder from "legacy/components/porter/DashboardPlaceholder";
+import Image from "legacy/components/porter/Image";
+import SearchBar from "legacy/components/porter/SearchBar";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import { useAppInstances } from "legacy/lib/hooks/useLatestAppRevisions";
+import { useTemplateEnvs } from "legacy/lib/hooks/useTemplateEnvs";
 import { useHistory } from "react-router";
 import styled from "styled-components";
 
-import Loading from "components/Loading";
-import Button from "components/porter/Button";
-import Container from "components/porter/Container";
-import DashboardPlaceholder from "components/porter/DashboardPlaceholder";
-import Image from "components/porter/Image";
-import SearchBar from "components/porter/SearchBar";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import { useAppInstances } from "lib/hooks/useLatestAppRevisions";
-import { useTemplateEnvs } from "lib/hooks/useTemplateEnvs";
-
 import { Context } from "shared/Context";
-import add from "assets/plus-square.svg";
 
 import { ConfigurableAppRow } from "./ConfigurableAppRow";
 

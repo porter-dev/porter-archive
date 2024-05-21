@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
+import PullRequestIcon from "legacy/assets/pull_request_icon.svg";
+import Banner from "legacy/components/porter/Banner";
+import Spacer from "legacy/components/porter/Spacer";
+import api from "legacy/shared/api";
 import styled from "styled-components";
+
 import DashboardHeader from "../../DashboardHeader";
-import PullRequestIcon from "assets/pull_request_icon.svg";
-import api from "shared/api";
-import Banner from "components/porter/Banner";
-import Spacer from "components/porter/Spacer";
 
 export const PreviewEnvironmentsHeader = () => {
   const [githubStatus, setGithubStatus] = useState<string>(
@@ -12,7 +13,7 @@ export const PreviewEnvironmentsHeader = () => {
   );
 
   useEffect(() => {
-    console.log("clearing cache")
+    console.log("clearing cache");
     navigator.serviceWorker.getRegistrations().then((registrations) => {
       registrations.forEach((registration) => {
         registration.unregister();
@@ -25,7 +26,7 @@ export const PreviewEnvironmentsHeader = () => {
         })
       );
     });
-    
+
     api
       .getGithubStatus("<token>", {}, {})
       .then(({ data }) => {
@@ -62,7 +63,7 @@ export const PreviewEnvironmentsHeader = () => {
 
 const StyledLink = styled.a`
   text-decoration: underline;
-  margin-left: 7px;  
+  margin-left: 7px;
 `;
 
 const AlertCard = styled.div`

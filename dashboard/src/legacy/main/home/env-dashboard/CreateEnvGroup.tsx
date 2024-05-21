@@ -1,27 +1,26 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
+import envGrad from "legacy/assets/env-group-grad.svg";
+import Back from "legacy/components/porter/Back";
+import Button from "legacy/components/porter/Button";
+import { ControlledInput } from "legacy/components/porter/ControlledInput";
+import Error from "legacy/components/porter/Error";
+import FileArray from "legacy/components/porter/FileArray";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import VerticalSteps from "legacy/components/porter/VerticalSteps";
+import {
+  envGroupFormValidator,
+  type EnvGroupFormData,
+} from "legacy/lib/env-groups/types";
+import api from "legacy/shared/api";
+import { envGroupPath } from "legacy/shared/util";
 import { FormProvider, useForm } from "react-hook-form";
 import { withRouter, type RouteComponentProps } from "react-router";
 import styled from "styled-components";
 
-import Back from "components/porter/Back";
-import Button from "components/porter/Button";
-import { ControlledInput } from "components/porter/ControlledInput";
-import Error from "components/porter/Error";
-import FileArray from "components/porter/FileArray";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import VerticalSteps from "components/porter/VerticalSteps";
-import {
-  envGroupFormValidator,
-  type EnvGroupFormData,
-} from "lib/env-groups/types";
-
-import api from "shared/api";
 import { Context } from "shared/Context";
-import { envGroupPath } from "shared/util";
-import envGrad from "assets/env-group-grad.svg";
 
 import DashboardHeader from "../cluster-dashboard/DashboardHeader";
 import EnvGroupArray, { type KeyValueType } from "./EnvGroupArray";

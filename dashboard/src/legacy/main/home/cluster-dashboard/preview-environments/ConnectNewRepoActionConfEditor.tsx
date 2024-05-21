@@ -1,10 +1,8 @@
 import React from "react";
+import Input from "legacy/components/porter/Input";
+import RepoList from "legacy/components/repo-selector/RepoList";
+import { type ActionConfigType } from "legacy/shared/types";
 import styled from "styled-components";
-
-import { ActionConfigType } from "shared/types";
-
-import Input from "components/porter/Input";
-import RepoList from "components/repo-selector/RepoList";
 
 type Props = {
   actionConfig: ActionConfigType | null;
@@ -38,7 +36,9 @@ const ConnectNewRepoActionConfEditor: React.FC<Props> = ({
       <ExpandedWrapperAlt>
         <RepoList
           actionConfig={actionConfig}
-          setActionConfig={(x: ActionConfigType) => setActionConfig(x)}
+          setActionConfig={(x: ActionConfigType) => {
+            setActionConfig(x);
+          }}
           readOnly={false}
         />
       </ExpandedWrapperAlt>

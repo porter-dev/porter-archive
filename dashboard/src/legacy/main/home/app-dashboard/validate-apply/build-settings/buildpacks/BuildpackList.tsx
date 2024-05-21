@@ -1,15 +1,17 @@
 import React from "react";
-import BuildpackCard from "./BuildpackCard";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import Loading from "components/Loading";
-import Error from "components/porter/Error";
-import { Droppable, DragDropContext } from "react-beautiful-dnd";
-import { Buildpack } from "main/home/app-dashboard/types/buildpack";
+import Loading from "legacy/components/Loading";
+import Container from "legacy/components/porter/Container";
+import Error from "legacy/components/porter/Error";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import { PorterAppFormData } from "legacy/lib/porter-apps";
+import { BuildOptions } from "legacy/lib/porter-apps/build";
+import { DragDropContext, Droppable } from "react-beautiful-dnd";
 import { useFieldArray, useFormContext } from "react-hook-form";
-import { PorterAppFormData } from "lib/porter-apps";
-import { BuildOptions } from "lib/porter-apps/build";
-import Container from "components/porter/Container";
+
+import { Buildpack } from "main/home/app-dashboard/types/buildpack";
+
+import BuildpackCard from "./BuildpackCard";
 
 interface Props {
   build: BuildOptions & {
@@ -80,7 +82,9 @@ const BuildpackList: React.FC<Props> = ({
     if (isDetectingBuildpacks) {
       return (
         <Container row>
-          <Text color="helper">Detecting buildpacks in your repo from path {build.context} </Text>
+          <Text color="helper">
+            Detecting buildpacks in your repo from path {build.context}{" "}
+          </Text>
           <Loading width="100px" />
         </Container>
       );

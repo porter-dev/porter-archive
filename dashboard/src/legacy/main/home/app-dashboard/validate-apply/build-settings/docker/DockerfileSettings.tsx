@@ -1,16 +1,17 @@
 import React, { useEffect, useRef, useState } from "react";
+import folder from "legacy/assets/folder_v2.svg";
+import Container from "legacy/components/porter/Container";
+import { ControlledInput } from "legacy/components/porter/ControlledInput";
+import Input from "legacy/components/porter/Input";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import {
+  type PorterAppFormData,
+  type SourceOptions,
+} from "legacy/lib/porter-apps";
 import { Controller, useFormContext } from "react-hook-form";
 import styled from "styled-components";
 import { match } from "ts-pattern";
-
-import Container from "components/porter/Container";
-import { ControlledInput } from "components/porter/ControlledInput";
-import Input from "components/porter/Input";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import { type PorterAppFormData, type SourceOptions } from "lib/porter-apps";
-
-import folder from "assets/folder_v2.svg";
 
 import FileSelector from "../FileSelector";
 

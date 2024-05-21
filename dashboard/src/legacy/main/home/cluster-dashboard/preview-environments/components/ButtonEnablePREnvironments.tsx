@@ -1,11 +1,12 @@
 import React, { useContext, useEffect, useState } from "react";
-import api from "shared/api";
-import { Context } from "shared/Context";
-import styled from "styled-components";
-import pr_icon from "assets/pull_request_icon.svg";
+import pr_icon from "legacy/assets/pull_request_icon.svg";
+import DynamicLink from "legacy/components/DynamicLink";
+import Loading from "legacy/components/Loading";
+import api from "legacy/shared/api";
 import { Link } from "react-router-dom";
-import DynamicLink from "components/DynamicLink";
-import Loading from "components/Loading";
+import styled from "styled-components";
+
+import { Context } from "shared/Context";
 
 type Props = {
   setIsReady: (status: boolean) => void;
@@ -16,7 +17,7 @@ const ButtonEnablePREnvironments = ({ setIsReady }: Props) => {
   // const { hasBillingEnabled } = useContext(Context);
   const [isLoading, setIsLoading] = useState(true);
   const [hasGHAccountConnected, setHasGHAccountConnected] = useState(false);
-  let hasBillingEnabled = true;
+  const hasBillingEnabled = true;
 
   const getAccounts = async () => {
     setIsLoading(true);
@@ -169,5 +170,4 @@ const Button = styled(DynamicLink)`
   }
 `;
 
-const Container = styled.div`
-`;
+const Container = styled.div``;

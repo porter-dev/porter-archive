@@ -1,11 +1,9 @@
-import { z } from "zod";
-
 import {
   upstashIntegrationValidator,
   type ClientUpstashIntegration,
-} from "lib/upstash/types";
-
-import api from "shared/api";
+} from "legacy/lib/upstash/types";
+import api from "legacy/shared/api";
+import { z } from "zod";
 
 type TUseUpstash = {
   getUpstashIntegrations: ({

@@ -1,15 +1,14 @@
 import { useContext, useState } from "react";
 import { useQuery, type UseQueryResult } from "@tanstack/react-query";
-import { z } from "zod";
-
 import {
   ClientSecretResponse,
   PaymentMethodValidator,
   type PaymentMethod,
   type PaymentMethodList,
-} from "lib/billing/types";
+} from "legacy/lib/billing/types";
+import api from "legacy/shared/api";
+import { z } from "zod";
 
-import api from "shared/api";
 import { Context } from "shared/Context";
 
 type TUsePaymentMethod = {

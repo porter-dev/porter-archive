@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
+import SaveButton from "legacy/components/SaveButton";
+import TabSelector from "legacy/components/TabSelector";
+import { provisionResourcesTracks } from "legacy/shared/anayltics";
+import api from "legacy/shared/api";
+import { integrationList } from "legacy/shared/common";
 import styled from "styled-components";
-import TabSelector from "components/TabSelector";
-import api from "shared/api";
-import SaveButton from "components/SaveButton";
-import { integrationList } from "shared/common";
-import { provisionResourcesTracks } from "shared/anayltics";
 
 type Props = {
   nextStep: () => void;
@@ -291,7 +291,9 @@ const ModalTitle = styled.div`
   margin: 0px 0px 13px;
   display: flex;
   flex: 1;
-  font-family: Work Sans, sans-serif;
+  font-family:
+    Work Sans,
+    sans-serif;
   font-size: 18px;
   color: #ffffff;
   user-select: none;

@@ -2,23 +2,21 @@ import { useEffect, useRef, useState } from "react";
 import { Addon, AddonWithEnvVars } from "@porter-dev/api-contracts";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Anser, { type AnserJsonEntry } from "anser";
-import { match } from "ts-pattern";
-import { z } from "zod";
-
 import {
   clientAddonFromProto,
   clientAddonToProto,
   legacyAddonValidator,
   type ClientAddon,
   type LegacyClientAddon,
-} from "lib/addons";
-
-import api from "shared/api";
+} from "legacy/lib/addons";
+import api from "legacy/shared/api";
 import {
   useWebsockets,
   type NewWebsocketOptions,
-} from "shared/hooks/useWebsockets";
-import { isJSON, valueExists } from "shared/util";
+} from "legacy/shared/hooks/useWebsockets";
+import { isJSON, valueExists } from "legacy/shared/util";
+import { match } from "ts-pattern";
+import { z } from "zod";
 
 import { type DeploymentTarget } from "./useDeploymentTarget";
 

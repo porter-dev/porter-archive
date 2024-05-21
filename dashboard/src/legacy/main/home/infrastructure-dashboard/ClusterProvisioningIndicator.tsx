@@ -1,6 +1,5 @@
 import React, { useMemo } from "react";
-
-import StatusBar from "components/porter/StatusBar";
+import StatusBar from "legacy/components/porter/StatusBar";
 
 import { useClusterContext } from "./ClusterContextProvider";
 

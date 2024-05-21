@@ -1,19 +1,18 @@
 import React, { useMemo, useState } from "react";
+import copy from "legacy/assets/copy-left.svg";
+import CopyToClipboard from "legacy/components/CopyToClipboard";
+import { ControlledInput } from "legacy/components/porter/ControlledInput";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import TabSelector from "legacy/components/TabSelector";
+import { type ClientAddon } from "legacy/lib/addons";
+import { getServiceResourceAllowances } from "legacy/lib/porter-apps/services";
 import { Controller, useFormContext } from "react-hook-form";
 import { match, P } from "ts-pattern";
 
-import CopyToClipboard from "components/CopyToClipboard";
-import { ControlledInput } from "components/porter/ControlledInput";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import TabSelector from "components/TabSelector";
 import IntelligentSlider from "main/home/app-dashboard/validate-apply/services-settings/tabs/IntelligentSlider";
 import { type AppTemplateFormData } from "main/home/cluster-dashboard/preview-environments/v2/EnvTemplateContextProvider";
 import { useClusterContext } from "main/home/infrastructure-dashboard/ClusterContextProvider";
-import { type ClientAddon } from "lib/addons";
-import { getServiceResourceAllowances } from "lib/porter-apps/services";
-
-import copy from "assets/copy-left.svg";
 
 import { Code, CopyContainer, CopyIcon, IdContainer } from "./shared";
 

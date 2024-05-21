@@ -1,11 +1,10 @@
 import React, { useContext, useState } from "react";
+import InputRow from "legacy/components/form-components/InputRow";
+import SaveButton from "legacy/components/SaveButton";
+import api from "legacy/shared/api";
 import styled from "styled-components";
 
-import api from "shared/api";
 import { Context } from "shared/Context";
-
-import SaveButton from "components/SaveButton";
-import InputRow from "components/form-components/InputRow";
 
 const DeleteNamespaceModal = () => {
   const {

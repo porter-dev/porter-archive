@@ -1,13 +1,13 @@
 import { useMemo } from "react";
 import { PorterApp } from "@porter-dev/api-contracts";
-
-import { type PopulatedEnvGroup } from "main/home/app-dashboard/validate-apply/app-settings/types";
 import {
   applyPreviewOverrides,
   clientAppFromProto,
   type ClientPorterApp,
-} from "lib/porter-apps";
-import { type DetectedServices } from "lib/porter-apps/services";
+} from "legacy/lib/porter-apps";
+import { type DetectedServices } from "legacy/lib/porter-apps/services";
+
+import { type PopulatedEnvGroup } from "main/home/app-dashboard/validate-apply/app-settings/types";
 
 export const useAppWithPreviewOverrides = ({
   latestApp,

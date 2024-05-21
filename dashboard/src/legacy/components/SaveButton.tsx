@@ -1,6 +1,6 @@
 import React, { Component } from "react";
+import loading from "legacy/assets/loading.gif";
 import styled from "styled-components";
-import loading from "assets/loading.gif";
 
 type Props = {
   text?: string;
@@ -150,7 +150,11 @@ const StatusWrapper = styled.div<{
 `;
 
 const ButtonWrapper = styled.div`
-  ${(props: { makeFlush: boolean; clearPosition?: boolean; absoluteSave: boolean }) => {
+  ${(props: {
+    makeFlush: boolean;
+    clearPosition?: boolean;
+    absoluteSave: boolean;
+  }) => {
     const baseStyles = `
       display: flex;
       position: ${props.absoluteSave ? "absolute" : ""};
@@ -199,7 +203,8 @@ const Button = styled.button<{
   text-align: left;
   border: 0;
   border-radius: ${(props) => (props.rounded ? "100px" : "5px")};
-  background: ${(props) => (!props.disabled ? (props.color || props.theme.button) : "#aaaabb")};
+  background: ${(props) =>
+    !props.disabled ? props.color || props.theme.button : "#aaaabb"};
   cursor: ${(props) => (props.disabled ? "not-allowed" : "pointer")};
   user-select: none;
   :focus {

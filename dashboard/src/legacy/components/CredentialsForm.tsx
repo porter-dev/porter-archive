@@ -1,23 +1,22 @@
-import React, { useEffect, useState, useContext, useMemo } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
+import addCircle from "legacy/assets/add-circle.png";
+import aws from "legacy/assets/aws.png";
+import credsIcon from "legacy/assets/creds.png";
+import Heading from "legacy/components/form-components/Heading";
+import Button from "legacy/components/porter/Button";
+import api from "legacy/shared/api";
 import styled from "styled-components";
-
-import api from "shared/api";
-import aws from "assets/aws.png";
-import credsIcon from "assets/creds.png";
-import addCircle from "assets/add-circle.png";
 
 import { Context } from "shared/Context";
 
-import Heading from "components/form-components/Heading";
 import Helper from "./form-components/Helper";
 import InputRow from "./form-components/InputRow";
-import SaveButton from "./SaveButton";
-import Button from "components/porter/Button";
 import Loading from "./Loading";
 import Error from "./porter/Error";
 import Modal from "./porter/Modal";
-import Text from "./porter/Text";
 import Spacer from "./porter/Spacer";
+import Text from "./porter/Text";
+import SaveButton from "./SaveButton";
 
 type Props = {
   goBack: () => void;
@@ -32,11 +31,7 @@ type AWSCredential = {
   aws_arn: string;
 };
 
-
-const CredentialsForm: React.FC<Props> = ({
-  goBack,
-  proceed,
-}) => {
+const CredentialsForm: React.FC<Props> = ({ goBack, proceed }) => {
   const { currentProject } = useContext(Context);
   const [awsCredentials, setAWSCredentials] = useState<AWSCredential[]>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -100,30 +95,30 @@ const CredentialsForm: React.FC<Props> = ({
       return (
         <>
           <CredentialList>
-            {
-              awsCredentials.map((cred: AWSCredential, i: number) => {
-                return (
-                  <Credential
-                    key={cred.id}
-                    isSelected={cred.id === selectedCredentials?.id}
-                    onClick={() => {
-                      if (cred.id === selectedCredentials?.id) {
-                        setSelectedCredentials(null);
-                      } else {
-                        setSelectedCredentials(cred);
-                      }
-                    }}
-                  >
-                    <Icon src={credsIcon} />
-                    <Name>{cred.aws_arn || "n/a"}</Name>
-                  </Credential>
-                );
-              })
-            }
-            <CreateRow onClick={() => {
-              setShowCreateForm(true);
-              setSelectedCredentials(null);
-            }}>
+            {awsCredentials.map((cred: AWSCredential, i: number) => {
+              return (
+                <Credential
+                  key={cred.id}
+                  isSelected={cred.id === selectedCredentials?.id}
+                  onClick={() => {
+                    if (cred.id === selectedCredentials?.id) {
+                      setSelectedCredentials(null);
+                    } else {
+                      setSelectedCredentials(cred);
+                    }
+                  }}
+                >
+                  <Icon src={credsIcon} />
+                  <Name>{cred.aws_arn || "n/a"}</Name>
+                </Credential>
+              );
+            })}
+            <CreateRow
+              onClick={() => {
+                setShowCreateForm(true);
+                setSelectedCredentials(null);
+              }}
+            >
               <Icon src={addCircle} />
               Add new AWS credentials
             </CreateRow>
@@ -141,13 +136,11 @@ const CredentialsForm: React.FC<Props> = ({
     return (
       <>
         <StyledForm>
-          {
-            awsCredentials.length > 0 && (
-              <CloseButton onClick={() => setShowCreateForm(false)}>
-                <i className="material-icons">close</i>
-              </CloseButton>
-            )
-          }
+          {awsCredentials.length > 0 && (
+            <CloseButton onClick={() => setShowCreateForm(false)}>
+              <i className="material-icons">close</i>
+            </CloseButton>
+          )}
           <InputRow
             type="string"
             value={awsAccessKeyID}
@@ -160,7 +153,7 @@ const CredentialsForm: React.FC<Props> = ({
             type="password"
             value={awsSecretAccessKey}
             setValue={(e: string) => {
-              setAWSSecretAccessKey(e)
+              setAWSSecretAccessKey(e);
             }}
             label="🔒 AWS secret key"
             placeholder="○ ○ ○ ○ ○ ○ ○ ○ ○"
@@ -176,7 +169,7 @@ const CredentialsForm: React.FC<Props> = ({
         </Button>
       </>
     );
-  }
+  };
 
   return (
     <>
@@ -188,22 +181,24 @@ const CredentialsForm: React.FC<Props> = ({
         <HSpacer />
         <Img src={aws} />
         Set AWS credentials
-        <HelperButton onClick={() => window.open("https://docs.porter.run/standard/getting-started/provisioning-on-aws", "_blank")}>
+        <HelperButton
+          onClick={() =>
+            window.open(
+              "https://docs.porter.run/standard/getting-started/provisioning-on-aws",
+              "_blank"
+            )
+          }
+        >
           <i className="material-icons">help_outline</i>
         </HelperButton>
       </Text>
       <Spacer y={1} />
       <Text color="helper">
-        Select your credentials from the list below, or add a new set of credentials:
+        Select your credentials from the list below, or add a new set of
+        credentials:
       </Text>
       <Spacer y={1} />
-      {
-        isLoading ? (
-          <Loading height="150px" />
-        ) : (
-          renderContent()
-        )
-      }
+      {isLoading ? <Loading height="150px" /> : renderContent()}
     </>
   );
 };
@@ -267,13 +262,13 @@ const CreateRow = styled.div`
   padding: 20px;
   background: #ffffff11;
   :hover {
-    background: #ffffff18; 
+    background: #ffffff18;
   }
 `;
 
 const Br = styled.div<{ height?: string }>`
   width: 100%;
-  height: ${props => props.height || "20px"};
+  height: ${(props) => props.height || "20px"};
 `;
 
 const Img = styled.img`
@@ -319,11 +314,11 @@ const Credential = styled.div<{ isLast?: boolean; isSelected?: boolean }>`
   cursor: pointer;
   align-items: center;
   padding: 20px;
-  border-bottom: ${props => props.isLast ? "" : "1px solid #7a7b80"};
-  background: ${props => props.isSelected ? "#ffffff33" : "#ffffff11"};
+  border-bottom: ${(props) => (props.isLast ? "" : "1px solid #7a7b80")};
+  background: ${(props) => (props.isSelected ? "#ffffff33" : "#ffffff11")};
 
   :hover {
-    background: ${props => props.isSelected ? "" : "#ffffff18"}; 
+    background: ${(props) => (props.isSelected ? "" : "#ffffff18")};
   }
 `;
 

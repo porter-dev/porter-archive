@@ -1,6 +1,5 @@
 import { useContext } from "react";
 import { useQuery } from "@tanstack/react-query";
-
 import {
   CreditGrantsValidator,
   InvoiceValidator,
@@ -12,9 +11,9 @@ import {
   type Plan,
   type ReferralDetails,
   type Usage,
-} from "lib/billing/types";
+} from "legacy/lib/billing/types";
+import api from "legacy/shared/api";
 
-import api from "shared/api";
 import { Context } from "shared/Context";
 
 type TGetCredits = {

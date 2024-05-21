@@ -1,10 +1,11 @@
 import React, { useContext, useRef, useState } from "react";
-import ConfirmOverlay from "../../../components/ConfirmOverlay";
+import DynamicLink from "legacy/components/DynamicLink";
+import { integrationList } from "legacy/shared/common";
 import styled from "styled-components";
-import { Context } from "../../../shared/Context";
+
+import ConfirmOverlay from "../../../components/ConfirmOverlay";
 import api from "../../../shared/api";
-import { integrationList } from "shared/common";
-import DynamicLink from "components/DynamicLink";
+import { Context } from "../../../shared/Context";
 
 interface Props {
   gitlabData: any[];
@@ -24,9 +25,8 @@ const GitlabIntegrationList: React.FC<Props> = (props) => {
     deleteID: 0,
   });
 
-  const { currentCluster, currentProject, setCurrentError } = useContext(
-    Context
-  );
+  const { currentCluster, currentProject, setCurrentError } =
+    useContext(Context);
 
   const handleDeleteIntegration = () => {
     api

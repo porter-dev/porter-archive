@@ -1,7 +1,6 @@
 import React, { useState } from "react";
+import Loading from "legacy/components/Loading";
 import styled from "styled-components";
-
-import Loading from "components/Loading";
 
 import { useOutsideClick } from "../../lib/hooks/UseOutsideClick";
 

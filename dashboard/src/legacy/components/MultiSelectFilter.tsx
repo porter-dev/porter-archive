@@ -1,7 +1,6 @@
-import React, { useEffect, useState, useRef } from "react";
-
+import React, { useEffect, useRef, useState } from "react";
+import arrow from "legacy/assets/arrow-down.svg";
 import styled from "styled-components";
-import arrow from "assets/arrow-down.svg";
 
 import CheckboxList from "./CheckboxList";
 
@@ -189,7 +188,7 @@ const StyledMultiSelectFilter = styled.div`
   font-size: 13px;
   position: relative;
   padding: 10px;
-  background: ${props => props.theme.fg};
+  background: ${(props) => props.theme.fg};
   border-radius: 5px;
   border: 1px solid #aaaabb33;
   display: flex;

@@ -1,5 +1,14 @@
 import React, { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
+import postgresql from "legacy/assets/postgresql.svg";
+import redis from "legacy/assets/redis.svg";
+import Button from "legacy/components/porter/Button";
+import Container from "legacy/components/porter/Container";
+import Modal from "legacy/components/porter/Modal";
+import Select from "legacy/components/porter/Select";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import { defaultClientAddon } from "legacy/lib/addons";
 import {
   Controller,
   useFieldArray,
@@ -9,17 +18,6 @@ import {
 import styled from "styled-components";
 import { match } from "ts-pattern";
 import { z } from "zod";
-
-import Button from "components/porter/Button";
-import Container from "components/porter/Container";
-import Modal from "components/porter/Modal";
-import Select from "components/porter/Select";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import { defaultClientAddon } from "lib/addons";
-
-import postgresql from "assets/postgresql.svg";
-import redis from "assets/redis.svg";
 
 import { type AppTemplateFormData } from "../cluster-dashboard/preview-environments/v2/EnvTemplateContextProvider";
 import { AddonListRow } from "./AddonListRow";

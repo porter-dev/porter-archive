@@ -1,23 +1,21 @@
 import React, { useMemo } from "react";
+import file_diff from "legacy/assets/file-diff.svg";
+import Loading from "legacy/components/Loading";
+import Button from "legacy/components/porter/Button";
+import { Error as ErrorComponent } from "legacy/components/porter/Error";
+import Expandable from "legacy/components/porter/Expandable";
+import Icon from "legacy/components/porter/Icon";
+import Modal from "legacy/components/porter/Modal";
+import PorterOperatorComponent from "legacy/components/porter/PorterOperatorComponent";
+import ShowIntercomButton from "legacy/components/porter/ShowIntercomButton";
+import Spacer from "legacy/components/porter/Spacer";
+import StatusDot from "legacy/components/porter/StatusDot";
+import Text from "legacy/components/porter/Text";
+import { type ClientPreflightCheck } from "legacy/lib/clusters/types";
+import { checksWithSuggestedChanges } from "legacy/lib/hooks/useCluster";
 import DiffViewer, { DiffMethod } from "react-diff-viewer";
 import styled from "styled-components";
 import { match } from "ts-pattern";
-
-import Loading from "components/Loading";
-import Button from "components/porter/Button";
-import { Error as ErrorComponent } from "components/porter/Error";
-import Expandable from "components/porter/Expandable";
-import Icon from "components/porter/Icon";
-import Modal from "components/porter/Modal";
-import PorterOperatorComponent from "components/porter/PorterOperatorComponent";
-import ShowIntercomButton from "components/porter/ShowIntercomButton";
-import Spacer from "components/porter/Spacer";
-import StatusDot from "components/porter/StatusDot";
-import Text from "components/porter/Text";
-import { type ClientPreflightCheck } from "lib/clusters/types";
-import { checksWithSuggestedChanges } from "lib/hooks/useCluster";
-
-import file_diff from "assets/file-diff.svg";
 
 import { useClusterFormContext } from "../ClusterFormContextProvider";
 import ResolutionStepsModalContents from "./help/preflight/ResolutionStepsModalContents";

@@ -1,9 +1,9 @@
 import React from "react";
 import { IntlProvider, ThemeProvider } from "@ory/elements";
+import MainWrapperErrorBoundary from "legacy/shared/error_handling/MainWrapperErrorBoundary";
 import { withRouter, type RouteComponentProps } from "react-router";
 
 import AuthzProvider from "shared/auth/AuthzContext";
-import MainWrapperErrorBoundary from "shared/error_handling/MainWrapperErrorBoundary";
 
 import AuthnProvider from "../shared/auth/AuthnContext";
 import { ContextProvider } from "../shared/Context";

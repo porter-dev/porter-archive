@@ -1,21 +1,20 @@
-import React, { useState, useContext } from "react";
+import React, { useContext, useState } from "react";
+import Button from "legacy/components/porter/Button";
+import ExpandableSection from "legacy/components/porter/ExpandableSection";
+import Fieldset from "legacy/components/porter/Fieldset";
+import Input from "legacy/components/porter/Input";
+import Link from "legacy/components/porter/Link";
+import Modal from "legacy/components/porter/Modal";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import api from "legacy/shared/api";
 import styled from "styled-components";
 
 import { Context } from "shared/Context";
-import api from "shared/api";
-
-import Modal from "components/porter/Modal";
-import Text from "components/porter/Text";
-import Spacer from "components/porter/Spacer";
-import Fieldset from "components/porter/Fieldset";
-import Button from "components/porter/Button";
-import ExpandableSection from "components/porter/ExpandableSection";
-import Input from "components/porter/Input";
-import Link from "components/porter/Link";
 
 type Props = {
   setShowCostConfirmModal: (show: boolean) => void;
-  show: boolean
+  show: boolean;
 };
 
 const ProjectDeleteConsent: React.FC<Props> = ({
@@ -23,9 +22,7 @@ const ProjectDeleteConsent: React.FC<Props> = ({
   show,
 }) => {
   const [confirmDelete, setDeleteCost] = useState("");
-  const {
-    currentProject, setCurrentModal
-  } = useContext(Context);
+  const { currentProject, setCurrentModal } = useContext(Context);
   return show ? (
     <>
       <Modal
@@ -40,14 +37,13 @@ const ProjectDeleteConsent: React.FC<Props> = ({
         <Text size={14} color="red">
           Attention:
         </Text>
-        <Spacer y={.1} />
+        <Spacer y={0.1} />
         <Text>
           Destruction of resources sometimes results in dangling resources. To
-          ensure that everything has been properly destroyed, please visit
-          your cloud provider's console.
+          ensure that everything has been properly destroyed, please visit your
+          cloud provider's console.
         </Text>
         <Link
-
           target="_blank"
           hasunderline
           to="https://docs.porter.run/other/deleting-dangling-resources"
@@ -76,12 +72,17 @@ const ProjectDeleteConsent: React.FC<Props> = ({
               currentProject: currentProject,
             });
           }}
-          status={confirmDelete == currentProject?.name ? "This action cannot be undone" : ""}
+          status={
+            confirmDelete == currentProject?.name
+              ? "This action cannot be undone"
+              : ""
+          }
         >
           Continue
         </Button>
       </Modal>
-    </>) : null
+    </>
+  ) : null;
 };
 
 export default ProjectDeleteConsent;

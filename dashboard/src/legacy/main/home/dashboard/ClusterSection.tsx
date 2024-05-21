@@ -1,14 +1,13 @@
-import React, { useState, useContext } from "react";
+import React, { useContext, useState } from "react";
+import Banner from "legacy/components/porter/Banner";
+import Spacer from "legacy/components/porter/Spacer";
+import ProvisionerFlow from "legacy/components/ProvisionerFlow";
+import TitleSection from "legacy/components/TitleSection";
 import styled from "styled-components";
 
 import { Context } from "shared/Context";
 
-import Banner from "components/porter/Banner";
-
-import ProvisionerFlow from "components/ProvisionerFlow";
 import ClusterList from "./ClusterList";
-import TitleSection from "components/TitleSection";
-import Spacer from "components/porter/Spacer";
 
 type Props = {};
 

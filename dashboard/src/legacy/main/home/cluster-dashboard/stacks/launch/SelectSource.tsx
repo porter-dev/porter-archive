@@ -1,14 +1,15 @@
-import ImageSelector from "components/image-selector/ImageSelector";
 import React, { useContext, useState } from "react";
-import { StacksLaunchContext } from "./Store";
-import { CreateStackBody } from "../types";
-import { useRouting } from "shared/routing";
-import { SubmitButton } from "./components/styles";
-import Helper from "components/form-components/Helper";
-import Heading from "components/form-components/Heading";
+import Heading from "legacy/components/form-components/Heading";
+import Helper from "legacy/components/form-components/Helper";
+import InputRow from "legacy/components/form-components/InputRow";
+import ImageSelector from "legacy/components/image-selector/ImageSelector";
+import TitleSection from "legacy/components/TitleSection";
+import { useRouting } from "legacy/shared/routing";
 import styled from "styled-components";
-import TitleSection from "components/TitleSection";
-import InputRow from "components/form-components/InputRow";
+
+import { CreateStackBody } from "../types";
+import { SubmitButton } from "./components/styles";
+import { StacksLaunchContext } from "./Store";
 
 const SelectSource = () => {
   const { addSourceConfig } = useContext(StacksLaunchContext);

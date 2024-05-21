@@ -1,14 +1,16 @@
 import React, { useContext, useEffect, useState } from "react";
-import api from "shared/api";
-import { PorterTemplate } from "shared/types";
+import DynamicLink from "legacy/components/DynamicLink";
+import Loading from "legacy/components/Loading";
+import Placeholder from "legacy/components/OldPlaceholder";
+import TitleSection from "legacy/components/TitleSection";
+import api from "legacy/shared/api";
+import { PorterTemplate } from "legacy/shared/types";
 import semver from "semver";
-import Loading from "components/Loading";
-import Placeholder from "components/OldPlaceholder";
-import { BackButton, Card } from "../../launch/components/styles";
-import DynamicLink from "components/DynamicLink";
-import { VersionSelector } from "../../launch/components/VersionSelector";
-import TitleSection from "components/TitleSection";
+
 import { Context } from "shared/Context";
+
+import { BackButton, Card } from "../../launch/components/styles";
+import { VersionSelector } from "../../launch/components/VersionSelector";
 
 const TemplateSelector = () => {
   const { capabilities, currentProject } = useContext(Context);
@@ -65,12 +67,15 @@ const TemplateSelector = () => {
     setIsLoading(true);
     getTemplates()
       .then((porterTemplates) => {
-        const latestVersions = porterTemplates.reduce((acc, template) => {
-          return {
-            ...acc,
-            [template.name]: template.versions[0],
-          };
-        }, {} as Record<string, string>);
+        const latestVersions = porterTemplates.reduce(
+          (acc, template) => {
+            return {
+              ...acc,
+              [template.name]: template.versions[0],
+            };
+          },
+          {} as Record<string, string>
+        );
 
         if (isSubscribed) {
           setTemplates(porterTemplates);

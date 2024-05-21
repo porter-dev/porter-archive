@@ -2,37 +2,36 @@ import React, { useContext, useMemo, useRef, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
+import alert_square from "legacy/assets/alert_square.svg";
+import build from "legacy/assets/build.png";
+import deploy from "legacy/assets/deploy.png";
+import hash from "legacy/assets/hash-02.svg";
+import pre_deploy from "legacy/assets/pre_deploy.png";
+import save from "legacy/assets/save-01.svg";
+import ConfirmOverlay from "legacy/components/ConfirmOverlay";
+import Loading from "legacy/components/Loading";
+import Button from "legacy/components/porter/Button";
+import Container from "legacy/components/porter/Container";
+import { ControlledInput } from "legacy/components/porter/ControlledInput";
+import Dropdown from "legacy/components/porter/Dropdown";
+import Error from "legacy/components/porter/Error";
+import Icon from "legacy/components/porter/Icon";
+import SelectableList from "legacy/components/porter/SelectableList";
+import Spacer from "legacy/components/porter/Spacer";
+import Tag from "legacy/components/porter/Tag";
+import Text from "legacy/components/porter/Text";
+import {
+  emptyNotificationConfig,
+  notificationConfigFormValidator,
+  type NotificationConfigFormData,
+} from "legacy/lib/notifications/types";
+import api from "legacy/shared/api";
 import { useForm } from "react-hook-form";
 import styled from "styled-components";
 import { match } from "ts-pattern";
 import { z } from "zod";
 
-import ConfirmOverlay from "components/ConfirmOverlay";
-import Loading from "components/Loading";
-import Button from "components/porter/Button";
-import Container from "components/porter/Container";
-import { ControlledInput } from "components/porter/ControlledInput";
-import Dropdown from "components/porter/Dropdown";
-import Error from "components/porter/Error";
-import Icon from "components/porter/Icon";
-import SelectableList from "components/porter/SelectableList";
-import Spacer from "components/porter/Spacer";
-import Tag from "components/porter/Tag";
-import Text from "components/porter/Text";
-import {
-  emptyNotificationConfig,
-  notificationConfigFormValidator,
-  type NotificationConfigFormData,
-} from "lib/notifications/types";
-
-import api from "shared/api";
 import { Context } from "shared/Context";
-import alert_square from "assets/alert_square.svg";
-import build from "assets/build.png";
-import deploy from "assets/deploy.png";
-import hash from "assets/hash-02.svg";
-import pre_deploy from "assets/pre_deploy.png";
-import save from "assets/save-01.svg";
 
 type SlackIntegrationListProps = {
   slackData: any[];

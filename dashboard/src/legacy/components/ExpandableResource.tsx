@@ -1,10 +1,12 @@
 import React, { Component, useContext, useEffect } from "react";
+import { baseApi } from "legacy/shared/baseApi";
+import { readableDate } from "legacy/shared/string_utils";
 import styled from "styled-components";
+
 import { Context } from "shared/Context";
+
 import ResourceTab from "./ResourceTab";
 import SaveButton from "./SaveButton";
-import { baseApi } from "shared/baseApi";
-import { readableDate } from "shared/string_utils";
 
 type Props = {
   resource: any;

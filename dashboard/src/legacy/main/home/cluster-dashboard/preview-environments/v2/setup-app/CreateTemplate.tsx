@@ -1,23 +1,22 @@
 import React, { useEffect, useState } from "react";
+import addOns from "legacy/assets/add-ons.svg";
+import Back from "legacy/components/porter/Back";
+import Button from "legacy/components/porter/Button";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import VerticalSteps from "legacy/components/porter/VerticalSteps";
+import { usePorterYaml } from "legacy/lib/hooks/usePorterYaml";
+import { valueExists } from "legacy/shared/util";
 import _ from "lodash";
 import { useFormContext } from "react-hook-form";
 import { useHistory } from "react-router";
 import styled from "styled-components";
 
-import Back from "components/porter/Back";
-import Button from "components/porter/Button";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import VerticalSteps from "components/porter/VerticalSteps";
 import { LatestRevisionProvider } from "main/home/app-dashboard/app-view/LatestRevisionContext";
 import { type AppInstance } from "main/home/app-dashboard/apps/types";
 import EnvSettings from "main/home/app-dashboard/validate-apply/app-settings/EnvSettings";
 import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
 import { AddonsList } from "main/home/managed-addons/AddonsList";
-import { usePorterYaml } from "lib/hooks/usePorterYaml";
-
-import { valueExists } from "shared/util";
-import addOns from "assets/add-ons.svg";
 
 import {
   useEnvTemplate,

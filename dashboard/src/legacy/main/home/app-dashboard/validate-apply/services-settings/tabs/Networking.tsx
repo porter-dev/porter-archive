@@ -1,17 +1,19 @@
 import React, { useMemo } from "react";
+import copy from "legacy/assets/copy-left.svg";
+import CopyToClipboard from "legacy/components/CopyToClipboard";
+import Checkbox from "legacy/components/porter/Checkbox";
+import { ControlledInput } from "legacy/components/porter/ControlledInput";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import { type PorterAppFormData } from "legacy/lib/porter-apps";
+import {
+  prefixSubdomain,
+  type ClientService,
+} from "legacy/lib/porter-apps/services";
 import { Controller, useFormContext } from "react-hook-form";
 import styled from "styled-components";
 
-import CopyToClipboard from "components/CopyToClipboard";
-import Checkbox from "components/porter/Checkbox";
-import { ControlledInput } from "components/porter/ControlledInput";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
 import { useClusterContext } from "main/home/infrastructure-dashboard/ClusterContextProvider";
-import { type PorterAppFormData } from "lib/porter-apps";
-import { prefixSubdomain, type ClientService } from "lib/porter-apps/services";
-
-import copy from "assets/copy-left.svg";
 
 import CustomDomains from "./CustomDomains";
 import IngressCustomAnnotations from "./IngressCustomAnnotations";

@@ -1,8 +1,8 @@
 import React, { useEffect } from "react";
+import { useAppWithPreviewOverrides } from "legacy/lib/hooks/useAppWithPreviewOverrides";
 import { useFormContext } from "react-hook-form";
 
 import { useLatestRevision } from "main/home/app-dashboard/app-view/LatestRevisionContext";
-import { useAppWithPreviewOverrides } from "lib/hooks/useAppWithPreviewOverrides";
 
 import { type AppTemplateFormData } from "../EnvTemplateContextProvider";
 

@@ -1,36 +1,35 @@
 import React, { useContext, useState } from "react";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
-import styled from "styled-components";
-
-import CopyToClipboard from "components/CopyToClipboard";
-import Loading from "components/Loading";
-import Banner from "components/porter/Banner";
-import Button from "components/porter/Button";
-import Container from "components/porter/Container";
-import Fieldset from "components/porter/Fieldset";
-import Icon from "components/porter/Icon";
-import Image from "components/porter/Image";
-import Link from "components/porter/Link";
-import Modal from "components/porter/Modal";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
+import cardIcon from "legacy/assets/credit-card.svg";
+import gift from "legacy/assets/gift.svg";
+import trashIcon from "legacy/assets/trash.png";
+import CopyToClipboard from "legacy/components/CopyToClipboard";
+import Loading from "legacy/components/Loading";
+import Banner from "legacy/components/porter/Banner";
+import Button from "legacy/components/porter/Button";
+import Container from "legacy/components/porter/Container";
+import Fieldset from "legacy/components/porter/Fieldset";
+import Icon from "legacy/components/porter/Icon";
+import Image from "legacy/components/porter/Image";
+import Link from "legacy/components/porter/Link";
+import Modal from "legacy/components/porter/Modal";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
 import {
   useCustomerInvoices,
   useCustomerPlan,
   usePorterCredits,
   useReferralDetails,
-} from "lib/hooks/useLago";
+} from "legacy/lib/hooks/useLago";
 import {
   checkIfProjectHasPayment,
   usePaymentMethods,
   useSetDefaultPaymentMethod,
-} from "lib/hooks/useStripe";
+} from "legacy/lib/hooks/useStripe";
+import styled from "styled-components";
 
 import { Context } from "shared/Context";
-import cardIcon from "assets/credit-card.svg";
-import gift from "assets/gift.svg";
-import trashIcon from "assets/trash.png";
 
 import BillingModal from "../modals/BillingModal";
 

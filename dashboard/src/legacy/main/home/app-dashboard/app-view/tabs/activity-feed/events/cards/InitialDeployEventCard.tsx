@@ -1,23 +1,22 @@
 import React, { useMemo } from "react";
+import alert from "legacy/assets/alert-warning.svg";
+import document from "legacy/assets/document.svg";
+import pull_request_icon from "legacy/assets/pull_request_icon.svg";
+import refresh from "legacy/assets/refresh.png";
+import run_for from "legacy/assets/run_for.png";
+import seed from "legacy/assets/seed.svg";
+import tag_icon from "legacy/assets/tag.png";
+import Container from "legacy/components/porter/Container";
+import Icon from "legacy/components/porter/Icon";
+import Link from "legacy/components/porter/Link";
+import Spacer from "legacy/components/porter/Spacer";
+import Tag from "legacy/components/porter/Tag";
+import Text from "legacy/components/porter/Text";
+import { isClientServiceNotification } from "legacy/lib/porter-apps/notification";
 import styled from "styled-components";
 import { match } from "ts-pattern";
 
-import Container from "components/porter/Container";
-import Icon from "components/porter/Icon";
-import Link from "components/porter/Link";
-import Spacer from "components/porter/Spacer";
-import Tag from "components/porter/Tag";
-import Text from "components/porter/Text";
 import { useLatestRevision } from "main/home/app-dashboard/app-view/LatestRevisionContext";
-import { isClientServiceNotification } from "lib/porter-apps/notification";
-
-import alert from "assets/alert-warning.svg";
-import document from "assets/document.svg";
-import pull_request_icon from "assets/pull_request_icon.svg";
-import refresh from "assets/refresh.png";
-import run_for from "assets/run_for.png";
-import seed from "assets/seed.svg";
-import tag_icon from "assets/tag.png";
 
 import { type PorterAppInitialDeployEvent } from "../types";
 import {

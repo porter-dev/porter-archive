@@ -11,10 +11,9 @@ import {
   Redis,
   Tailscale,
 } from "@porter-dev/api-contracts/src/porter/v1/addons_pb";
+import { serviceStringValidator } from "legacy/lib/porter-apps/values";
 import { match } from "ts-pattern";
 import { z } from "zod";
-
-import { serviceStringValidator } from "lib/porter-apps/values";
 
 import { datadogConfigValidator } from "./datadog";
 import { metabaseConfigValidator } from "./metabase";

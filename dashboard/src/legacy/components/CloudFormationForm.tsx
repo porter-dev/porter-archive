@@ -1,23 +1,22 @@
-import React, { useState, useContext, useMemo } from "react";
+import React, { useContext, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import aws from "legacy/assets/aws.png";
+import cloudformationStatus from "legacy/assets/cloud-formation-stack-complete.png";
+import api from "legacy/shared/api";
+import theme from "legacy/shared/themes/midnight";
 import styled from "styled-components";
-import { v4 as uuidv4 } from 'uuid';
-
-import api from "shared/api";
-import aws from "assets/aws.png";
-import cloudformationStatus from "assets/cloud-formation-stack-complete.png";
+import { v4 as uuidv4 } from "uuid";
 
 import { Context } from "shared/Context";
 
-import Text from "./porter/Text";
-import Spacer from "./porter/Spacer";
-import Input from "./porter/Input";
 import Button from "./porter/Button";
-import Link from "./porter/Link";
 import Container from "./porter/Container";
-import Step from "./porter/Step";
-import { useQuery } from "@tanstack/react-query";
+import Input from "./porter/Input";
+import Link from "./porter/Link";
 import Modal from "./porter/Modal";
-import theme from "shared/themes/midnight";
+import Spacer from "./porter/Spacer";
+import Step from "./porter/Step";
+import Text from "./porter/Text";
 import VerticalSteps from "./porter/VerticalSteps";
 import PreflightChecks from "./PreflightChecks";
 
@@ -30,40 +29,49 @@ type Props = {
 const CloudFormationForm: React.FC<Props> = ({
   goBack,
   proceed,
-  switchToCredentialFlow
+  switchToCredentialFlow,
 }) => {
   const [AWSAccountID, setAWSAccountID] = useState("");
   const [currentStep, setCurrentStep] = useState<number>(0);
-  const [hasClickedCloudformationButton, setHasClickedCloudformationButton] = useState(false);
+  const [hasClickedCloudformationButton, setHasClickedCloudformationButton] =
+    useState(false);
   const [showNeedHelpModal, setShowNeedHelpModal] = useState(false);
   const [preflightData, setPreflightData] = useState<any>(undefined);
 
   const { currentProject, user } = useContext(Context);
-  const markStepStarted = async (
-    {
-      step,
-      account_id = "",
-      cloudformation_url = "",
-      error_message = "",
-      login_url = "",
-      external_id = "",
-    }:
-      {
-        step: string;
-        account_id?: string;
-        cloudformation_url?: string;
-        error_message?: string;
-        login_url?: string;
-        external_id?: string;
-      }
-  ) => {
+  const markStepStarted = async ({
+    step,
+    account_id = "",
+    cloudformation_url = "",
+    error_message = "",
+    login_url = "",
+    external_id = "",
+  }: {
+    step: string;
+    account_id?: string;
+    cloudformation_url?: string;
+    error_message?: string;
+    login_url?: string;
+    external_id?: string;
+  }) => {
     try {
       if (currentProject == null) {
         return;
       }
-      await api.updateOnboardingStep("<token>", { step, account_id, cloudformation_url, error_message, login_url, external_id }, {
-        project_id: currentProject.id,
-      });
+      await api.updateOnboardingStep(
+        "<token>",
+        {
+          step,
+          account_id,
+          cloudformation_url,
+          error_message,
+          login_url,
+          external_id,
+        },
+        {
+          project_id: currentProject.id,
+        }
+      );
     } catch (err) {
       // console.log(err);
     }
@@ -73,63 +81,65 @@ const CloudFormationForm: React.FC<Props> = ({
     try {
       if (currentProject == null) {
         return false;
-      };
+      }
       let externalId = getExternalId();
-      let targetARN = `arn:aws:iam::${AWSAccountID}:role/porter-manager`
-      await api
-        .createAWSIntegration(
-          "<token>",
-          {
-            aws_target_arn: targetARN,
-            aws_external_id: externalId,
-          },
-          {
-            id: currentProject.id,
-          }
-        );
-      setPreflightData({
-        "Msg": {
-          "preflight_checks": {
-            cloudFormation: {},
-          }
+      let targetARN = `arn:aws:iam::${AWSAccountID}:role/porter-manager`;
+      await api.createAWSIntegration(
+        "<token>",
+        {
+          aws_target_arn: targetARN,
+          aws_external_id: externalId,
+        },
+        {
+          id: currentProject.id,
         }
-      })
-      console.log("true")
+      );
+      setPreflightData({
+        Msg: {
+          preflight_checks: {
+            cloudFormation: {},
+          },
+        },
+      });
+      console.log("true");
 
       return true;
-
     } catch (err) {
-      console.log("false")
-      return false
+      console.log("false");
+      return false;
     }
-  }
+  };
 
   const { data: canProceed } = useQuery(
-    ["createAWSIntegration", currentStep, hasClickedCloudformationButton, AWSAccountID],
+    [
+      "createAWSIntegration",
+      currentStep,
+      hasClickedCloudformationButton,
+      AWSAccountID,
+    ],
     async () => {
       if (currentProject == null) {
         return false;
-      };
+      }
       let externalId = getExternalId();
-      let targetARN = `arn:aws:iam::${AWSAccountID}:role/porter-manager`
-      await api
-        .createAWSIntegration(
-          "<token>",
-          {
-            aws_target_arn: targetARN,
-            aws_external_id: externalId,
-          },
-          {
-            id: currentProject.id,
-          }
-        );
-      setPreflightData({
-        "Msg": {
-          "preflight_checks": {
-            cloudFormation: {},
-          }
+      let targetARN = `arn:aws:iam::${AWSAccountID}:role/porter-manager`;
+      await api.createAWSIntegration(
+        "<token>",
+        {
+          aws_target_arn: targetARN,
+          aws_external_id: externalId,
+        },
+        {
+          id: currentProject.id,
         }
-      })
+      );
+      setPreflightData({
+        Msg: {
+          preflight_checks: {
+            cloudFormation: {},
+          },
+        },
+      });
       return true;
     },
     {
@@ -143,14 +153,14 @@ const CloudFormationForm: React.FC<Props> = ({
       },
       retryDelay: 5000,
     }
-  )
+  );
 
   const awsAccountIdInputError = useMemo(() => {
     const regex = /^\d{12}$/;
     if (AWSAccountID.trim().length === 0) {
       return undefined;
     } else if (!regex.test(AWSAccountID)) {
-      return 'A valid AWS Account ID must be a 12-digit number.';
+      return "A valid AWS Account ID must be a 12-digit number.";
     }
     return undefined;
   }, [AWSAccountID]);
@@ -167,74 +177,90 @@ const CloudFormationForm: React.FC<Props> = ({
   const handleContinueWithAWSAccountId = async () => {
     const cloudFormationCheck = await checkCloudFormation();
     cloudFormationCheck ? setCurrentStep(3) : setCurrentStep(2);
-    markStepStarted({ step: "aws-account-id-complete", account_id: AWSAccountID });
-  }
+    markStepStarted({
+      step: "aws-account-id-complete",
+      account_id: AWSAccountID,
+    });
+  };
 
   const handleProceedToProvisionStep = () => {
     try {
       if (currentProject != null) {
-        api.inviteAdmin(
-          "<token>",
-          {},
-          { project_id: currentProject.id }
-        );
-      };
+        api.inviteAdmin("<token>", {}, { project_id: currentProject.id });
+      }
     } catch (err) {
       console.log(err);
     }
-    markStepStarted({ step: "aws-create-integration-success", account_id: AWSAccountID })
+    markStepStarted({
+      step: "aws-create-integration-success",
+      account_id: AWSAccountID,
+    });
     proceed(`arn:aws:iam::${AWSAccountID}:role/porter-manager`);
 
     try {
       window.dataLayer?.push({
-        event: 'provision-attempt',
+        event: "provision-attempt",
         data: {
-          cloud: 'aws',
-          email: user?.email
-        }
+          cloud: "aws",
+          email: user?.email,
+        },
       });
     } catch (err) {
       console.log(err);
     }
-  }
+  };
 
   const reportFailedCreateAWSIntegration = () => {
-    markStepStarted({ step: "aws-create-integration-failed", account_id: AWSAccountID, external_id: getExternalId() })
-  }
+    markStepStarted({
+      step: "aws-create-integration-failed",
+      account_id: AWSAccountID,
+      external_id: getExternalId(),
+    });
+  };
 
   const getExternalId = () => {
-    let externalId = localStorage.getItem(AWSAccountID)
+    let externalId = localStorage.getItem(AWSAccountID);
     if (!externalId) {
-      externalId = uuidv4()
+      externalId = uuidv4();
       localStorage.setItem(AWSAccountID, externalId);
     }
 
-    return externalId
-  }
+    return externalId;
+  };
 
   const directToAWSLogin = () => {
     const login_url = `https://signin.aws.amazon.com/console`;
     markStepStarted({ step: "aws-login-redirect-success", login_url });
     window.open(login_url, "_blank");
-  }
+  };
 
   const directToCloudFormation = () => {
-    setCurrentStep(3)
+    setCurrentStep(3);
     const externalId = getExternalId();
-    let trustArn = process.env.TRUST_ARN ? process.env.TRUST_ARN : "arn:aws:iam::108458755588:role/CAPIManagement";
-    let cloudformation_url = `https://console.aws.amazon.com/cloudformation/home?#/stacks/create/review?templateURL=https://porter-role.s3.us-east-2.amazonaws.com/cloudformation-policy.json&stackName=PorterRole&param_ExternalIdParameter=${externalId}&param_TrustArnParameter=${trustArn}`
+    let trustArn = process.env.TRUST_ARN
+      ? process.env.TRUST_ARN
+      : "arn:aws:iam::108458755588:role/CAPIManagement";
+    let cloudformation_url = `https://console.aws.amazon.com/cloudformation/home?#/stacks/create/review?templateURL=https://porter-role.s3.us-east-2.amazonaws.com/cloudformation-policy.json&stackName=PorterRole&param_ExternalIdParameter=${externalId}&param_TrustArnParameter=${trustArn}`;
     if (currentProject.aws_ack_auth_enabled === true) {
-      cloudformation_url = `https://console.aws.amazon.com/cloudformation/home?#/stacks/create/review?templateURL=https://porter-role.s3.us-east-2.amazonaws.com/cloudformation-access-policy.json&stackName=PorterRole&param_TrustArnParameter=${trustArn}`
+      cloudformation_url = `https://console.aws.amazon.com/cloudformation/home?#/stacks/create/review?templateURL=https://porter-role.s3.us-east-2.amazonaws.com/cloudformation-access-policy.json&stackName=PorterRole&param_TrustArnParameter=${trustArn}`;
     }
-    markStepStarted({ step: "aws-cloudformation-redirect-success", account_id: AWSAccountID, cloudformation_url, external_id: externalId })
-    window.open(cloudformation_url, "_blank")
+    markStepStarted({
+      step: "aws-cloudformation-redirect-success",
+      account_id: AWSAccountID,
+      cloudformation_url,
+      external_id: externalId,
+    });
+    window.open(cloudformation_url, "_blank");
     setHasClickedCloudformationButton(true);
-  }
+  };
 
   const renderContent = () => {
     return (
       <>
-        <Text>Grant Porter permissions to create infrastructure in your AWS account by following 3 simple steps.</Text>
+        <Text>
+          Grant Porter permissions to create infrastructure in your AWS account
+          by following 3 simple steps.
+        </Text>
         <Spacer y={1} />
         <VerticalSteps
           onlyShowCurrentStep={true}
@@ -242,11 +268,11 @@ const CloudFormationForm: React.FC<Props> = ({
           steps={[
             <>
               <Text size={16}>Log in to your AWS account</Text>
-              <Spacer y={.5} />
+              <Spacer y={0.5} />
               <Text color="helper">
                 Return to Porter after successful login.
               </Text>
-              <Spacer y={.5} />
+              <Spacer y={0.5} />
               <AWSButtonContainer>
                 <ButtonImg src={aws} />
                 <Button
@@ -259,17 +285,16 @@ const CloudFormationForm: React.FC<Props> = ({
                 </Button>
               </AWSButtonContainer>
               <Spacer y={1} />
-              <Button onClick={() => setCurrentStep(1)}>
-                Continue
-              </Button>
+              <Button onClick={() => setCurrentStep(1)}>Continue</Button>
             </>,
             <>
               <Text size={16}>Enter your AWS account ID</Text>
-              <Spacer y={.5} />
+              <Spacer y={0.5} />
               <Text color="helper">
-                Make sure this is the ID of the account you are currently logged into and would like to provision resources in.
+                Make sure this is the ID of the account you are currently logged
+                into and would like to provision resources in.
               </Text>
-              <Spacer y={.5} />
+              <Spacer y={0.5} />
               <Input
                 label={
                   <Flex>
@@ -277,7 +302,10 @@ const CloudFormationForm: React.FC<Props> = ({
                     <i
                       className="material-icons"
                       onClick={() => {
-                        window.open("https://us-east-1.console.aws.amazon.com/billing/home?region=us-east-1#/account", "_blank")
+                        window.open(
+                          "https://us-east-1.console.aws.amazon.com/billing/home?region=us-east-1#/account",
+                          "_blank"
+                        );
                       }}
                     >
                       help_outline
@@ -291,22 +319,34 @@ const CloudFormationForm: React.FC<Props> = ({
               />
               <Spacer y={1} />
               <StepChangeButtonsContainer>
-                <Button onClick={handleContinueWithAWSAccountId} disabled={awsAccountIdInputError != null || AWSAccountID.length === 0}>Continue</Button>
+                <Button
+                  onClick={handleContinueWithAWSAccountId}
+                  disabled={
+                    awsAccountIdInputError != null || AWSAccountID.length === 0
+                  }
+                >
+                  Continue
+                </Button>
                 <Spacer inline x={0.5} />
-                <Button onClick={() => setCurrentStep(0)} color="#222222">Back</Button>
+                <Button onClick={() => setCurrentStep(0)} color="#222222">
+                  Back
+                </Button>
               </StepChangeButtonsContainer>
             </>,
             <>
               <Text size={16}>Create an AWS CloudFormation stack</Text>
-              <Spacer y={.5} />
+              <Spacer y={0.5} />
               <Text color="helper">
-                This grants Porter permissions to create infrastructure in your account.
+                This grants Porter permissions to create infrastructure in your
+                account.
               </Text>
-              <Spacer y={.5} />
+              <Spacer y={0.5} />
               <Text color="helper">
-                Clicking the button below will take you to the AWS CloudFormation console. Return to Porter after clicking 'Create stack' in the bottom right corner.
+                Clicking the button below will take you to the AWS
+                CloudFormation console. Return to Porter after clicking 'Create
+                stack' in the bottom right corner.
               </Text>
-              <Spacer y={.5} />
+              <Spacer y={0.5} />
               <AWSButtonContainer>
                 <ButtonImg src={aws} />
                 <Button
@@ -315,7 +355,9 @@ const CloudFormationForm: React.FC<Props> = ({
                   color="linear-gradient(180deg, #26292e, #24272c)"
                   withBorder
                   disabled={canProceed || preflightData}
-                  disabledTooltipMessage={"Porter can already access your account!"}
+                  disabledTooltipMessage={
+                    "Porter can already access your account!"
+                  }
                 >
                   Grant permissions
                 </Button>
@@ -337,14 +379,20 @@ const CloudFormationForm: React.FC<Props> = ({
             </>,
             <>
               <Text size={16}>Check permissions</Text>
-              <Spacer y={.5} />
+              <Spacer y={0.5} />
               <Text color="helper">
-                Checking if Porter can access AWS account with ID {AWSAccountID}. This can take up to a minute.<Spacer inline width="10px" /><Link hasunderline onClick={() => setShowNeedHelpModal(true)}>
+                Checking if Porter can access AWS account with ID {AWSAccountID}
+                . This can take up to a minute.
+                <Spacer inline width="10px" />
+                <Link hasunderline onClick={() => setShowNeedHelpModal(true)}>
                   Need help?
                 </Link>
               </Text>
               <Spacer y={1} />
-              <PreflightChecks preflightData={preflightData} provider={"DEFAULT"} />
+              <PreflightChecks
+                preflightData={preflightData}
+                provider={"DEFAULT"}
+              />
               <Spacer y={1} />
               <Container row>
                 <Button
@@ -354,21 +402,28 @@ const CloudFormationForm: React.FC<Props> = ({
                   Continue
                 </Button>
                 <Spacer inline x={0.5} />
-                <Button onClick={() => setCurrentStep(2)} color="#222222">Back</Button>
+                <Button onClick={() => setCurrentStep(2)} color="#222222">
+                  Back
+                </Button>
               </Container>
             </>,
           ]}
         />
-        {showNeedHelpModal &&
+        {showNeedHelpModal && (
           <Modal closeModal={() => setShowNeedHelpModal(false)} width={"800px"}>
             <Text size={16}>Granting Porter access to AWS</Text>
             <Spacer y={1} />
             <Text color="helper">
-              Porter needs access to your AWS account in order to create infrastructure. You can grant Porter access to AWS by following these steps:
+              Porter needs access to your AWS account in order to create
+              infrastructure. You can grant Porter access to AWS by following
+              these steps:
             </Text>
             <Spacer y={1} />
             <Step number={1}>
-              <Link to="https://aws.amazon.com/resources/create-account/" target="_blank">
+              <Link
+                to="https://aws.amazon.com/resources/create-account/"
+                target="_blank"
+              >
                 Create an AWS account
               </Link>
               <Spacer inline width="5px" />
@@ -378,16 +433,28 @@ const CloudFormationForm: React.FC<Props> = ({
             <Step number={2}>
               Once you are logged in to your AWS account,
               <Spacer inline width="5px" />
-              <Link to="https://console.aws.amazon.com/billing/home?region=us-east-1#/account" target="_blank">
+              <Link
+                to="https://console.aws.amazon.com/billing/home?region=us-east-1#/account"
+                target="_blank"
+              >
                 copy your account ID
-              </Link>.
+              </Link>
+              .
             </Step>
             <Spacer y={1} />
-            <Step number={3}>Fill in your account ID on Porter and select "Grant permissions".</Step>
+            <Step number={3}>
+              Fill in your account ID on Porter and select "Grant permissions".
+            </Step>
             <Spacer y={1} />
-            <Step number={4}>After being redirected to AWS CloudFormation, select "Create stack" on the bottom right.</Step>
+            <Step number={4}>
+              After being redirected to AWS CloudFormation, select "Create
+              stack" on the bottom right.
+            </Step>
             <Spacer y={1} />
-            <Step number={5}>The stack will start to create. Refresh until the stack status has changed from "CREATE_IN_PROGRESS" to "CREATE_COMPLETE":</Step>
+            <Step number={5}>
+              The stack will start to create. Refresh until the stack status has
+              changed from "CREATE_IN_PROGRESS" to "CREATE_COMPLETE":
+            </Step>
             <Spacer y={1} />
             <ImageDiv>
               <img src={cloudformationStatus} height="250px" />
@@ -395,12 +462,15 @@ const CloudFormationForm: React.FC<Props> = ({
             <Spacer y={1} />
             <Step number={6}>Return to Porter and select "Continue".</Step>
             <Spacer y={1} />
-            <Step number={7}>If you continue to see issues, <a href="mailto:support@porter.run">email support.</a></Step>
+            <Step number={7}>
+              If you continue to see issues,{" "}
+              <a href="mailto:support@porter.run">email support.</a>
+            </Step>
           </Modal>
-        }
+        )}
       </>
     );
-  }
+  };
 
   return (
     <>
@@ -411,9 +481,7 @@ const CloudFormationForm: React.FC<Props> = ({
         </BackButton>
         <Spacer x={1} inline />
         <Img src={aws} />
-        <Text size={16}>
-          Grant AWS permissions
-        </Text>
+        <Text size={16}>Grant AWS permissions</Text>
       </Container>
       <Spacer y={1} />
       {renderContent()}
@@ -481,4 +549,4 @@ const BackButton = styled.div`
 const AWSButtonContainer = styled.div`
   display: flex;
   align-items: center;
-  `;
+`;

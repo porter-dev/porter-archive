@@ -6,18 +6,17 @@ import React, {
   type SetStateAction,
 } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
+import Button from "legacy/components/porter/Button";
+import { ControlledInput } from "legacy/components/porter/ControlledInput";
+import Modal from "legacy/components/porter/Modal";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import { getErrorMessageFromNetworkCall } from "legacy/lib/hooks/useCluster";
+import api from "legacy/shared/api";
 import { useForm } from "react-hook-form";
 import { useHistory } from "react-router";
 import { z } from "zod";
 
-import Button from "components/porter/Button";
-import { ControlledInput } from "components/porter/ControlledInput";
-import Modal from "components/porter/Modal";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import { getErrorMessageFromNetworkCall } from "lib/hooks/useCluster";
-
-import api from "shared/api";
 import { Context } from "shared/Context";
 
 const addInfisicalEnvFormData = z.object({

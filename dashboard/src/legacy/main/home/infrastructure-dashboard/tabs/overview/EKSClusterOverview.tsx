@@ -1,15 +1,14 @@
 import React, { useMemo } from "react";
-import { useFormContext } from "react-hook-form";
-
-import Container from "components/porter/Container";
-import Select from "components/porter/Select";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
+import Container from "legacy/components/porter/Container";
+import Select from "legacy/components/porter/Select";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
 import {
   CloudProviderAWS,
   SUPPORTED_AWS_REGIONS,
-} from "lib/clusters/constants";
-import { type ClientClusterContract } from "lib/clusters/types";
+} from "legacy/lib/clusters/constants";
+import { type ClientClusterContract } from "legacy/lib/clusters/types";
+import { useFormContext } from "react-hook-form";
 
 import NodeGroups from "../../shared/NodeGroups";
 

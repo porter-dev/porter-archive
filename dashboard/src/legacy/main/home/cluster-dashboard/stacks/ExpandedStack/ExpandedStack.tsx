@@ -1,15 +1,19 @@
-import Loading from "components/Loading";
-import Placeholder from "components/OldPlaceholder";
-import TabSelector from "components/TabSelector";
-import TitleSection from "components/TitleSection";
 import React, { useContext, useState } from "react";
-import leftArrow from "assets/left-arrow.svg";
+import leftArrow from "legacy/assets/left-arrow.svg";
+import DynamicLink from "legacy/components/DynamicLink";
+import Loading from "legacy/components/Loading";
+import Placeholder from "legacy/components/OldPlaceholder";
+import TabSelector from "legacy/components/TabSelector";
+import TitleSection from "legacy/components/TitleSection";
+import api from "legacy/shared/api";
+import { useRouting } from "legacy/shared/routing";
+import { readableDate } from "legacy/shared/string_utils";
 import { useParams, useRouteMatch } from "react-router";
-import api from "shared/api";
-import { Context } from "shared/Context";
-import { useRouting } from "shared/routing";
-import { readableDate } from "shared/string_utils";
+import { NavLink } from "react-router-dom";
 import styled from "styled-components";
+
+import { Context } from "shared/Context";
+
 import ChartList from "../../chart/ChartList";
 import Status from "../components/Status";
 import {
@@ -23,13 +27,11 @@ import {
 } from "../components/styles";
 import { getStackStatus, getStackStatusMessage } from "../shared";
 import { FullStackRevision, Stack, StackRevision } from "../types";
-import EnvGroups from "./components/EnvGroups";
 import RevisionList from "./_RevisionList";
 import SourceConfig from "./_SourceConfig";
-import { NavLink } from "react-router-dom";
+import EnvGroups from "./components/EnvGroups";
 import Settings from "./components/Settings";
 import { ExpandedStackStore } from "./Store";
-import DynamicLink from "components/DynamicLink";
 
 const ExpandedStack = () => {
   const { namespace } = useParams<{
@@ -41,9 +43,8 @@ const ExpandedStack = () => {
 
   const { pushFiltered } = useRouting();
 
-  const { currentProject, currentCluster, setCurrentError } = useContext(
-    Context
-  );
+  const { currentProject, currentCluster, setCurrentError } =
+    useContext(Context);
 
   const { url } = useRouteMatch();
 

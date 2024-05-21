@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import api from "legacy/shared/api";
 import { z } from "zod";
 
 import { useLatestRevision } from "main/home/app-dashboard/app-view/LatestRevisionContext";
-
-import api from "shared/api";
 
 import { appRevisionValidator, type AppRevision } from "../revisions/types";
 

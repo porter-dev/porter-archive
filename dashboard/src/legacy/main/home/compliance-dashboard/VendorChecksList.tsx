@@ -1,18 +1,16 @@
 import React, { Fragment, useMemo, useState } from "react";
+import greenCheck from "legacy/assets/green-check.svg";
+import linkExternal from "legacy/assets/link-external.svg";
+import notApplicable from "legacy/assets/not-applicable.svg";
+import warning from "legacy/assets/warning.svg";
+import Container from "legacy/components/porter/Container";
+import Image from "legacy/components/porter/Image";
+import Modal from "legacy/components/porter/Modal";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import { useIntercom } from "legacy/lib/hooks/useIntercom";
 import styled from "styled-components";
 import { match } from "ts-pattern";
-
-import Container from "components/porter/Container";
-import Image from "components/porter/Image";
-import Modal from "components/porter/Modal";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import { useIntercom } from "lib/hooks/useIntercom";
-
-import greenCheck from "assets/green-check.svg";
-import linkExternal from "assets/link-external.svg";
-import notApplicable from "assets/not-applicable.svg";
-import warning from "assets/warning.svg";
 
 import { useCompliance } from "./ComplianceContext";
 import { type VendorCheck } from "./types";

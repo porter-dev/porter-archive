@@ -1,8 +1,9 @@
-import InputRow from "components/form-components/InputRow";
-import SaveButton from "components/SaveButton";
 import React, { useContext } from "react";
-import { Context } from "shared/Context";
+import InputRow from "legacy/components/form-components/InputRow";
+import SaveButton from "legacy/components/SaveButton";
 import styled from "styled-components";
+
+import { Context } from "shared/Context";
 
 /**
  * If user goes to /onboarding and has clusters, the Onboarding component

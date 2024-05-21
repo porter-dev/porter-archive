@@ -1,17 +1,18 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
+import leftArrow from "legacy/assets/left-arrow.svg";
+import nodePng from "legacy/assets/node.png";
+import StatusSection from "legacy/components/StatusSection";
+import TabSelector from "legacy/components/TabSelector";
+import TitleSection from "legacy/components/TitleSection";
+import api from "legacy/shared/api";
+import { pushFiltered } from "legacy/shared/routing";
 import { useHistory, useLocation, useParams } from "react-router";
 import styled from "styled-components";
-import leftArrow from "assets/left-arrow.svg";
-import api from "shared/api";
+
 import { Context } from "shared/Context";
 
-import nodePng from "assets/node.png";
-import TabSelector from "components/TabSelector";
-import { pushFiltered } from "shared/routing";
-import NodeUsage from "./NodeUsage";
 import { ConditionsTable } from "./ConditionsTable";
-import StatusSection from "components/StatusSection";
-import TitleSection from "components/TitleSection";
+import NodeUsage from "./NodeUsage";
 
 type ExpandedNodeViewParams = {
   nodeId: string;
@@ -19,10 +20,10 @@ type ExpandedNodeViewParams = {
 
 type TabEnum = "conditions";
 
-const tabOptions: {
+const tabOptions: Array<{
   label: string;
   value: TabEnum;
-}[] = [{ label: "Conditions", value: "conditions" }];
+}> = [{ label: "Conditions", value: "conditions" }];
 
 export const ExpandedNodeView = () => {
   const { nodeId } = useParams<ExpandedNodeViewParams>();
@@ -33,7 +34,7 @@ export const ExpandedNodeView = () => {
   const [currentTab, setCurrentTab] = useState("conditions");
 
   useEffect(() => {
-    let isSubscribed = true;
+    const isSubscribed = true;
     api
       .getClusterNode(
         "<token>",
@@ -56,8 +57,7 @@ export const ExpandedNodeView = () => {
   };
 
   const instanceType = useMemo(() => {
-    const instanceType =
-      node?.labels && node?.labels["node.kubernetes.io/instance-type"];
+    const instanceType = node?.labels?.["node.kubernetes.io/instance-type"];
     if (instanceType) {
       return ` (${instanceType})`;
     }
@@ -73,7 +73,7 @@ export const ExpandedNodeView = () => {
   }, [currentTab, node]);
 
   const nodeStatus = useMemo(() => {
-    if (!node || !node.node_conditions) {
+    if (!node?.node_conditions) {
       return "loading";
     }
 
@@ -112,7 +112,9 @@ export const ExpandedNodeView = () => {
         <TabSelector
           options={tabOptions}
           currentTab={currentTab}
-          setCurrentTab={(value: TabEnum) => setCurrentTab(value)}
+          setCurrentTab={(value: TabEnum) => {
+            setCurrentTab(value);
+          }}
         />
         {currentTabPage}
       </BodyWrapper>

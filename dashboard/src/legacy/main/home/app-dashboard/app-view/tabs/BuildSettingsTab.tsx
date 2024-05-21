@@ -1,10 +1,9 @@
 import React from "react";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import { type PorterAppFormData } from "legacy/lib/porter-apps";
 import { useFormContext } from "react-hook-form";
 import { match } from "ts-pattern";
-
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import { type PorterAppFormData } from "lib/porter-apps";
 
 import { BuildSettings } from "../../create-app/BuildSettings";
 import RepoSettings from "../../create-app/RepoSettings";

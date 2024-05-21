@@ -1,26 +1,27 @@
 import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
-import { StacksLaunchContext } from "./Store";
-import InputRow from "components/form-components/InputRow";
-import Selector from "components/Selector";
-import api from "shared/api";
-import { Context } from "shared/Context";
-import useAuth from "shared/auth/useAuth";
-import { useRouting } from "shared/routing";
-import {
-  AddResourceButtonStyles,
-  SubmitButton,
-  Card,
-} from "./components/styles";
-import { AddResourceButton } from "./components/AddResourceButton";
+import sliders from "legacy/assets/sliders.svg";
+import DocsHelper from "legacy/components/DocsHelper";
+import DynamicLink from "legacy/components/DynamicLink";
+import Heading from "legacy/components/form-components/Heading";
+import Helper from "legacy/components/form-components/Helper";
+import InputRow from "legacy/components/form-components/InputRow";
+import Selector from "legacy/components/Selector";
+import TitleSection from "legacy/components/TitleSection";
+import api from "legacy/shared/api";
+import { hardcodedIcons } from "legacy/shared/hardcodedNameDict";
+import { useRouting } from "legacy/shared/routing";
 import styled from "styled-components";
 
-import Helper from "components/form-components/Helper";
-import Heading from "components/form-components/Heading";
-import TitleSection from "components/TitleSection";
-import DynamicLink from "components/DynamicLink";
-import { hardcodedIcons } from "shared/hardcodedNameDict";
-import sliders from "assets/sliders.svg";
-import DocsHelper from "components/DocsHelper";
+import useAuth from "shared/auth/useAuth";
+import { Context } from "shared/Context";
+
+import { AddResourceButton } from "./components/AddResourceButton";
+import {
+  AddResourceButtonStyles,
+  Card,
+  SubmitButton,
+} from "./components/styles";
+import { StacksLaunchContext } from "./Store";
 
 const Overview = () => {
   const {

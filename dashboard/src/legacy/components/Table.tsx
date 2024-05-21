@@ -1,5 +1,5 @@
-import Placeholder from "components/Placeholder";
 import React from "react";
+import Placeholder from "legacy/components/Placeholder";
 import {
   Column,
   Row,
@@ -7,12 +7,13 @@ import {
   usePagination,
   useTable,
 } from "react-table";
+
 import {
-  StyledTd,
   StyledTable,
-  StyledTHead,
-  StyledTh,
   StyledTBody,
+  StyledTd,
+  StyledTh,
+  StyledTHead,
 } from "../main/home/cluster-dashboard/expanded-chart/events/styles";
 
 export type TableProps = {
@@ -32,20 +33,15 @@ const Table: React.FC<TableProps> = ({
     return <Placeholder>{placeholder}</Placeholder>;
   }
 
-  const {
-    rows,
-    getTableProps,
-    getTableBodyProps,
-    prepareRow,
-    headerGroups,
-  } = useTable(
-    {
-      columns: columnsData,
-      data,
-    },
-    useGlobalFilter,
-    usePagination
-  );
+  const { rows, getTableProps, getTableBodyProps, prepareRow, headerGroups } =
+    useTable(
+      {
+        columns: columnsData,
+        data,
+      },
+      useGlobalFilter,
+      usePagination
+    );
 
   const renderRows = () => {
     return (

@@ -1,21 +1,21 @@
 import React, { useContext, useState } from "react";
-import styled from "styled-components";
-
-import Button from "components/porter/Button";
-import DashboardPlaceholder from "components/porter/DashboardPlaceholder";
-import Link from "components/porter/Link";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
+import bolt from "legacy/assets/bolt.svg";
+import Button from "legacy/components/porter/Button";
+import DashboardPlaceholder from "legacy/components/porter/DashboardPlaceholder";
+import Link from "legacy/components/porter/Link";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
 import {
   CloudProviderAWS,
   CloudProviderAzure,
   CloudProviderGCP,
-} from "lib/clusters/constants";
-import { type ClientCloudProvider } from "lib/clusters/types";
+} from "legacy/lib/clusters/constants";
+import { type ClientCloudProvider } from "legacy/lib/clusters/types";
+import styled from "styled-components";
+
+import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
 
 import { Context } from "shared/Context";
-import bolt from "assets/bolt.svg";
 
 import CostConsentModal from "../modals/cost-consent/CostConsentModal";
 

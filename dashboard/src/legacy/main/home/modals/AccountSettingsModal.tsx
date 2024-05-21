@@ -1,17 +1,15 @@
 import React, { useContext, useEffect, useState } from "react";
+import github from "legacy/assets/github.png";
+import Heading from "legacy/components/form-components/Heading";
+import Helper from "legacy/components/form-components/Helper";
+import Link from "legacy/components/porter/Link";
+import Spacer from "legacy/components/porter/Spacer";
+import TabSelector from "legacy/components/TabSelector";
 import styled from "styled-components";
 
-import github from "assets/github.png";
-
-import { Context } from "../../../shared/Context";
-import api from "../../../shared/api";
 import Loading from "../../../components/Loading";
-import Heading from "components/form-components/Heading";
-import Helper from "components/form-components/Helper";
-
-import TabSelector from "components/TabSelector";
-import Link from "components/porter/Link";
-import Spacer from "components/porter/Spacer";
+import api from "../../../shared/api";
+import { Context } from "../../../shared/Context";
 
 interface GithubAppAccessData {
   username?: string;
@@ -64,7 +62,11 @@ const AccountSettingsModal = () => {
               <Helper>
                 No connected repositories found.
                 <Spacer inline width="5px" />
-                <Link target="_blank" to={"/api/integrations/github-app/oauth"} hasunderline>
+                <Link
+                  target="_blank"
+                  to={"/api/integrations/github-app/oauth"}
+                  hasunderline
+                >
                   Authorize Porter to view your repositories
                 </Link>
               </Helper>
@@ -83,7 +85,7 @@ const AccountSettingsModal = () => {
                   <Helper>
                     No connected repositories found.
                     <Spacer inline width="5px" />
-                    <Link 
+                    <Link
                       target="_blank"
                       to={"/api/integrations/github-app/install"}
                       hasunderline
@@ -110,7 +112,11 @@ const AccountSettingsModal = () => {
                   </List>
                   <br />
                   Don't see the right repos?{" "}
-                  <Link target="_blank" to={"/api/integrations/github-app/install"} hasunderline>
+                  <Link
+                    target="_blank"
+                    to={"/api/integrations/github-app/install"}
+                    hasunderline
+                  >
                     Install Porter in more repositories
                   </Link>
                 </>

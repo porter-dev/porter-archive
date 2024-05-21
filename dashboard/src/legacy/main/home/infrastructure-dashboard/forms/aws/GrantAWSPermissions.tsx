@@ -1,29 +1,28 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
+import Back from "legacy/components/porter/Back";
+import Button from "legacy/components/porter/Button";
+import Container from "legacy/components/porter/Container";
+import { Error as ErrorComponent } from "legacy/components/porter/Error";
+import Image from "legacy/components/porter/Image";
+import Input from "legacy/components/porter/Input";
+import Link from "legacy/components/porter/Link";
+import Spacer from "legacy/components/porter/Spacer";
+import StatusBar from "legacy/components/porter/StatusBar";
+import Text from "legacy/components/porter/Text";
+import VerticalSteps from "legacy/components/porter/VerticalSteps";
+import { CloudProviderAWS } from "legacy/lib/clusters/constants";
+import { connectToAwsAccount } from "legacy/lib/hooks/useCloudProvider";
+import { useClusterAnalytics } from "legacy/lib/hooks/useClusterAnalytics";
+import { useIntercom } from "legacy/lib/hooks/useIntercom";
+import api from "legacy/shared/api";
 import AnimateHeight from "react-animate-height";
 import styled from "styled-components";
 import { v4 as uuidv4 } from "uuid";
 import { z } from "zod";
 
-import Back from "components/porter/Back";
-import Button from "components/porter/Button";
-import Container from "components/porter/Container";
-import { Error as ErrorComponent } from "components/porter/Error";
-import Image from "components/porter/Image";
-import Input from "components/porter/Input";
-import Link from "components/porter/Link";
-import Spacer from "components/porter/Spacer";
-import StatusBar from "components/porter/StatusBar";
-import Text from "components/porter/Text";
-import VerticalSteps from "components/porter/VerticalSteps";
 import { type ButtonStatus } from "main/home/app-dashboard/app-view/AppDataContainer";
-import { CloudProviderAWS } from "lib/clusters/constants";
-import { connectToAwsAccount } from "lib/hooks/useCloudProvider";
-import { useClusterAnalytics } from "lib/hooks/useClusterAnalytics";
-import { useIntercom } from "lib/hooks/useIntercom";
-
-import api from "shared/api";
 
 import GrantAWSPermissionsHelpModal from "../../modals/help/permissions/GrantAWSPermissionsHelpModal";
 import { CheckItem } from "../../modals/PreflightChecksModal";

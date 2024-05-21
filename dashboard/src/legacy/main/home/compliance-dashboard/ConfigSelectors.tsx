@@ -1,16 +1,14 @@
 import React from "react";
-
-import Container from "components/porter/Container";
-import Image from "components/porter/Image";
-import Select from "components/porter/Select";
-import Spacer from "components/porter/Spacer";
-
-import aws from "assets/aws.png";
-import framework from "assets/framework.svg";
-import oneleet from "assets/oneleet.svg";
-import provider from "assets/provider.svg";
-import typeSvg from "assets/type.svg";
-import vanta from "assets/vanta.svg";
+import aws from "legacy/assets/aws.png";
+import framework from "legacy/assets/framework.svg";
+import oneleet from "legacy/assets/oneleet.svg";
+import provider from "legacy/assets/provider.svg";
+import typeSvg from "legacy/assets/type.svg";
+import vanta from "legacy/assets/vanta.svg";
+import Container from "legacy/components/porter/Container";
+import Image from "legacy/components/porter/Image";
+import Select from "legacy/components/porter/Select";
+import Spacer from "legacy/components/porter/Spacer";
 
 import { useCompliance } from "./ComplianceContext";
 

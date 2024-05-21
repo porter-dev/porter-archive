@@ -1,25 +1,24 @@
 import React, { useContext, useEffect, useState } from "react";
-import { Controller, useFormContext } from "react-hook-form";
-
-import Loading from "components/Loading";
-import Container from "components/porter/Container";
-import { ControlledInput } from "components/porter/ControlledInput";
-import Error from "components/porter/Error";
-import Select from "components/porter/Select";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import VerticalSteps from "components/porter/VerticalSteps";
-import { CloudProviderAzure } from "lib/clusters/constants";
+import Loading from "legacy/components/Loading";
+import Container from "legacy/components/porter/Container";
+import { ControlledInput } from "legacy/components/porter/ControlledInput";
+import Error from "legacy/components/porter/Error";
+import Select from "legacy/components/porter/Select";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import VerticalSteps from "legacy/components/porter/VerticalSteps";
+import { CloudProviderAzure } from "legacy/lib/clusters/constants";
 import type {
   ClientClusterContract,
   ClientMachineType,
   NodeGroupType,
-} from "lib/clusters/types";
-import { useIntercom } from "lib/hooks/useIntercom";
-import { useMachineTypeList } from "lib/hooks/useNodeGroups";
+} from "legacy/lib/clusters/types";
+import { useIntercom } from "legacy/lib/hooks/useIntercom";
+import { useMachineTypeList } from "legacy/lib/hooks/useNodeGroups";
+import { valueExists } from "legacy/shared/util";
+import { Controller, useFormContext } from "react-hook-form";
 
 import { Context } from "shared/Context";
-import { valueExists } from "shared/util";
 
 import { useClusterFormContext } from "../../ClusterFormContextProvider";
 import ClusterSaveButton from "../../ClusterSaveButton";

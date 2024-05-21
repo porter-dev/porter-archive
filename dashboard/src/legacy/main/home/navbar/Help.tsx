@@ -1,7 +1,7 @@
 import React, { useState } from "react";
+import community from "legacy/assets/chat.svg";
+import { useIntercom } from "legacy/lib/hooks/useIntercom";
 import styled from "styled-components";
-import community from "assets/chat.svg";
-import { useIntercom } from "lib/hooks/useIntercom";
 
 type HelpProps = {};
 
@@ -14,9 +14,7 @@ const Help: React.FC<HelpProps> = () => {
     if (showHelpDropdown) {
       return (
         <>
-          <CloseOverlay
-            onClick={() => setShowHelpDropdown(false)}
-          />
+          <CloseOverlay onClick={() => setShowHelpDropdown(false)} />
           <Dropdown dropdownWidth="155px" dropdownMaxHeight="300px">
             <Option
               onClick={() => {
@@ -28,7 +26,10 @@ const Help: React.FC<HelpProps> = () => {
             </Option>
             <Option
               onClick={() => {
-                showIntercomWithMessage({ message: "I need help with...", delaySeconds: 0 });
+                showIntercomWithMessage({
+                  message: "I need help with...",
+                  delaySeconds: 0,
+                });
               }}
             >
               <Icon src={community} />
@@ -119,7 +120,7 @@ const Dropdown = styled.div`
   z-index: 999;
   overflow-y: auto;
   margin-bottom: 20px;
-  border: 1px solid #494B4F;
+  border: 1px solid #494b4f;
   animation: ${(props: {
     dropdownWidth: string;
     dropdownMaxHeight: string;

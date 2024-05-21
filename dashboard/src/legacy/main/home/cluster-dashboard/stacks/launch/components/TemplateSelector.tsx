@@ -1,8 +1,9 @@
-import Loading from "components/Loading";
 import React, { useRef, useState } from "react";
-import { useOutsideAlerter } from "shared/hooks/useOutsideAlerter";
-import { capitalize } from "shared/string_utils";
-import { PorterTemplate } from "shared/types";
+import Loading from "legacy/components/Loading";
+import { useOutsideAlerter } from "legacy/shared/hooks/useOutsideAlerter";
+import { capitalize } from "legacy/shared/string_utils";
+import { PorterTemplate } from "legacy/shared/types";
+
 import { SelectorStyles } from "./styles";
 
 export const TemplateSelector = ({

@@ -1,19 +1,19 @@
 import React, { useContext, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import pull_request from "legacy/assets/pull_request_icon.svg";
+import Loading from "legacy/components/Loading";
+import Back from "legacy/components/porter/Back";
+import Spacer from "legacy/components/porter/Spacer";
+import api from "legacy/shared/api";
 import { withRouter, type RouteComponentProps } from "react-router";
 import styled from "styled-components";
 import { match } from "ts-pattern";
 
-import Loading from "components/Loading";
-import Back from "components/porter/Back";
-import Spacer from "components/porter/Spacer";
 import { LatestRevisionProvider } from "main/home/app-dashboard/app-view/LatestRevisionContext";
 import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
 import ClusterContextProvider from "main/home/infrastructure-dashboard/ClusterContextProvider";
 
-import api from "shared/api";
 import { Context } from "shared/Context";
-import pull_request from "assets/pull_request_icon.svg";
 
 import { EnvTemplateContextProvider } from "../EnvTemplateContextProvider";
 import { existingTemplateWithEnvValidator } from "../types";

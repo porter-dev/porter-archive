@@ -1,16 +1,14 @@
 import React, { useState } from "react";
+import target from "legacy/assets/target.svg";
+import Button from "legacy/components/porter/Button";
+import Container from "legacy/components/porter/Container";
+import Error from "legacy/components/porter/Error";
+import Icon from "legacy/components/porter/Icon";
+import Spacer from "legacy/components/porter/Spacer";
+import { useIntercom } from "legacy/lib/hooks/useIntercom";
+import api from "legacy/shared/api";
 import { useHistory } from "react-router";
 import { z } from "zod";
-
-import Button from "components/porter/Button";
-import Container from "components/porter/Container";
-import Error from "components/porter/Error";
-import Icon from "components/porter/Icon";
-import Spacer from "components/porter/Spacer";
-import { useIntercom } from "lib/hooks/useIntercom";
-
-import api from "shared/api";
-import target from "assets/target.svg";
 
 import { useLatestRevision } from "../../app-view/LatestRevisionContext";
 

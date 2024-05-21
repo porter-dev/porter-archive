@@ -17,22 +17,22 @@ import {
   QuotaIncreaseRequest,
   type EnumQuotaIncrease,
 } from "@porter-dev/api-contracts";
+import info from "legacy/assets/info-outlined.svg";
+import healthy from "legacy/assets/status-healthy.png";
+import Heading from "legacy/components/form-components/Heading";
+import SelectRow from "legacy/components/form-components/SelectRow";
+import { useIntercom } from "legacy/lib/hooks/useIntercom";
+import api from "legacy/shared/api";
+import { pushFiltered } from "legacy/shared/routing";
+import { type ClusterState, type ClusterType } from "legacy/shared/types";
+import { PREFLIGHT_TO_ENUM } from "legacy/shared/util";
 import { withRouter, type RouteComponentProps } from "react-router";
 import styled from "styled-components";
 import { Integer } from "type-fest";
 
-import Heading from "components/form-components/Heading";
-import SelectRow from "components/form-components/SelectRow";
 import { OFState } from "main/home/onboarding/state";
-import { useIntercom } from "lib/hooks/useIntercom";
 
-import api from "shared/api";
 import { Context } from "shared/Context";
-import { pushFiltered } from "shared/routing";
-import { type ClusterState, type ClusterType } from "shared/types";
-import { PREFLIGHT_TO_ENUM } from "shared/util";
-import info from "assets/info-outlined.svg";
-import healthy from "assets/status-healthy.png";
 
 import GPUProvisionSettings from "./GPUProvisionSettings";
 import Loading from "./Loading";
@@ -698,9 +698,13 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       const data = new PreflightCheckRequest({
         contract,
       });
-      const preflightDataResp = await api.legacyPreflightCheck("<token>", data, {
-        id: currentProject.id,
-      });
+      const preflightDataResp = await api.legacyPreflightCheck(
+        "<token>",
+        data,
+        {
+          id: currentProject.id,
+        }
+      );
       // Check if any of the preflight checks has a message
       let hasMessage = false;
       let errors = "Preflight Checks Failed : ";

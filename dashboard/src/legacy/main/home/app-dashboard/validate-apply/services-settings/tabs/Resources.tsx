@@ -1,18 +1,18 @@
 import React, { useContext, useMemo } from "react";
-import { Controller, useFormContext } from "react-hook-form";
-import { match } from "ts-pattern";
-
-import Checkbox from "components/porter/Checkbox";
-import { ControlledInput } from "components/porter/ControlledInput";
-import InputSlider from "components/porter/InputSlider";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import { useClusterContext } from "main/home/infrastructure-dashboard/ClusterContextProvider";
-import { type PorterAppFormData } from "lib/porter-apps";
+import Checkbox from "legacy/components/porter/Checkbox";
+import { ControlledInput } from "legacy/components/porter/ControlledInput";
+import InputSlider from "legacy/components/porter/InputSlider";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import { type PorterAppFormData } from "legacy/lib/porter-apps";
 import {
   getServiceResourceAllowances,
   type ClientService,
-} from "lib/porter-apps/services";
+} from "legacy/lib/porter-apps/services";
+import { Controller, useFormContext } from "react-hook-form";
+import { match } from "ts-pattern";
+
+import { useClusterContext } from "main/home/infrastructure-dashboard/ClusterContextProvider";
 
 import { Context } from "shared/Context";
 

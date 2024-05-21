@@ -1,7 +1,6 @@
 import React, { Component } from "react";
+import { kindToIcon } from "legacy/shared/rosettaStone";
 import styled from "styled-components";
-
-import { kindToIcon } from "shared/rosettaStone";
 
 type PropsType = {
   label: string;

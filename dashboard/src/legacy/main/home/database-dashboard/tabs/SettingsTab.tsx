@@ -1,19 +1,18 @@
 import React, { useMemo, useState } from "react";
+import trash from "legacy/assets/trash.png";
+import Button from "legacy/components/porter/Button";
+import { Error as ErrorComponent } from "legacy/components/porter/Error";
+import Icon from "legacy/components/porter/Icon";
+import Input from "legacy/components/porter/Input";
+import Link from "legacy/components/porter/Link";
+import Modal from "legacy/components/porter/Modal";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import { getErrorMessageFromNetworkCall } from "legacy/lib/hooks/useCluster";
+import { useDatastore } from "legacy/lib/hooks/useDatastore";
 import styled from "styled-components";
 
-import Button from "components/porter/Button";
-import { Error as ErrorComponent } from "components/porter/Error";
-import Icon from "components/porter/Icon";
-import Input from "components/porter/Input";
-import Link from "components/porter/Link";
-import Modal from "components/porter/Modal";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
 import { type UpdateClusterButtonProps } from "main/home/infrastructure-dashboard/ClusterFormContextProvider";
-import { getErrorMessageFromNetworkCall } from "lib/hooks/useCluster";
-import { useDatastore } from "lib/hooks/useDatastore";
-
-import trash from "assets/trash.png";
 
 import { useDatastoreContext } from "../DatabaseContextProvider";
 

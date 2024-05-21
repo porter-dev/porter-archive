@@ -1,13 +1,12 @@
 import React, { useContext } from "react";
 import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
-
-import Link from "components/porter/Link";
-import Modal from "components/porter/Modal";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import { useIntercom } from "lib/hooks/useIntercom";
-import { usePublishableKey } from "lib/hooks/useStripe";
+import Link from "legacy/components/porter/Link";
+import Modal from "legacy/components/porter/Modal";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import { useIntercom } from "legacy/lib/hooks/useIntercom";
+import { usePublishableKey } from "legacy/lib/hooks/useStripe";
 
 import { Context } from "shared/Context";
 

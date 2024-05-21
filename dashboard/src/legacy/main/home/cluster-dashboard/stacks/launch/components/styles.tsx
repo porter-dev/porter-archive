@@ -1,4 +1,4 @@
-import SaveButton from "components/SaveButton";
+import SaveButton from "legacy/components/SaveButton";
 import styled from "styled-components";
 
 export const Card = {

@@ -1,7 +1,6 @@
 import React from "react";
+import { type ClientAddon } from "legacy/lib/addons";
 import { match } from "ts-pattern";
-
-import { type ClientAddon } from "lib/addons";
 
 import DatadogForm from "../datadog/DatadogForm";
 import MetabaseForm from "../metabase/MetabaseForm";

@@ -3,11 +3,10 @@ import {
   ServiceType,
   type PorterApp,
 } from "@porter-dev/api-contracts";
+import { type ClientNode } from "legacy/lib/clusters/types";
 import _ from "lodash";
 import { match } from "ts-pattern";
 import { z } from "zod";
-
-import { type ClientNode } from "lib/clusters/types";
 
 import { type BuildOptions } from "./build";
 import {

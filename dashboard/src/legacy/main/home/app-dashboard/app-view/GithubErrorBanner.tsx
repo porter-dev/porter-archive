@@ -1,11 +1,10 @@
 import React, { type Dispatch, type SetStateAction } from "react";
+import Banner from "legacy/components/porter/Banner";
+import Spacer from "legacy/components/porter/Spacer";
+import { type GithubResultErrorCode } from "legacy/lib/github/workflows";
 import AnimateHeight from "react-animate-height";
 import styled from "styled-components";
 import { match } from "ts-pattern";
-
-import Banner from "components/porter/Banner";
-import Spacer from "components/porter/Spacer";
-import { type GithubResultErrorCode } from "lib/github/workflows";
 
 type Props = {
   appName: string;

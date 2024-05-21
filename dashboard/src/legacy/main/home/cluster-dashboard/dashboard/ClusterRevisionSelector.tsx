@@ -1,16 +1,15 @@
 import React, { useContext, useEffect, useState } from "react";
+import loading from "legacy/assets/loading.gif";
+import warning from "legacy/assets/warning.png";
+import ConfirmOverlay from "legacy/components/ConfirmOverlay";
+import ExpandableSection from "legacy/components/porter/ExpandableSection";
+import Spacer from "legacy/components/porter/Spacer";
+import api from "legacy/shared/api";
+import { readableDate } from "legacy/shared/string_utils";
 import { createPortal } from "react-dom";
 import styled from "styled-components";
 
-import ConfirmOverlay from "components/ConfirmOverlay";
-import ExpandableSection from "components/porter/ExpandableSection";
-import Spacer from "components/porter/Spacer";
-
-import api from "shared/api";
 import { Context } from "shared/Context";
-import { readableDate } from "shared/string_utils";
-import loading from "assets/loading.gif";
-import warning from "assets/warning.png";
 
 type Props = {
   selectedClusterVersion: any;

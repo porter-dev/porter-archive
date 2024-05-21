@@ -1,20 +1,19 @@
 import React, { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
+import UploadArea from "legacy/components/form-components/UploadArea";
+import Button from "legacy/components/porter/Button";
+import Container from "legacy/components/porter/Container";
+import { Error as ErrorComponent } from "legacy/components/porter/Error";
+import Link from "legacy/components/porter/Link";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import VerticalSteps from "legacy/components/porter/VerticalSteps";
+import { CloudProviderGCP } from "legacy/lib/clusters/constants";
+import { connectToGCPAccount } from "legacy/lib/hooks/useCloudProvider";
 import { useForm } from "react-hook-form";
 import styled from "styled-components";
 import { z } from "zod";
-
-import UploadArea from "components/form-components/UploadArea";
-import Button from "components/porter/Button";
-import Container from "components/porter/Container";
-import { Error as ErrorComponent } from "components/porter/Error";
-import Link from "components/porter/Link";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import VerticalSteps from "components/porter/VerticalSteps";
-import { CloudProviderGCP } from "lib/clusters/constants";
-import { connectToGCPAccount } from "lib/hooks/useCloudProvider";
 
 import { CheckItem } from "../../modals/PreflightChecksModal";
 import { BackButton, Img } from "../CreateClusterForm";

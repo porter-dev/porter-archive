@@ -1,8 +1,7 @@
 import React, { Component } from "react";
+import { kindToIcon } from "legacy/shared/rosettaStone";
+import { NodeType } from "legacy/shared/types";
 import styled from "styled-components";
-
-import { kindToIcon } from "shared/rosettaStone";
-import { NodeType } from "shared/types";
 
 type PropsType = {
   node: NodeType;

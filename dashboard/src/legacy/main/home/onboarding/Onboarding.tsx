@@ -1,19 +1,18 @@
 import React, { useContext, useEffect, useState } from "react";
+import bolt from "legacy/assets/bolt.svg";
+import Loading from "legacy/components/Loading";
+import Banner from "legacy/components/porter/Banner";
+import Button from "legacy/components/porter/Button";
+import DashboardPlaceholder from "legacy/components/porter/DashboardPlaceholder";
+import Link from "legacy/components/porter/Link";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import ProvisionerFlow from "legacy/components/ProvisionerFlow";
+import api from "legacy/shared/api";
 import styled from "styled-components";
 import { devtools } from "valtio/utils";
 
-import Loading from "components/Loading";
-import Banner from "components/porter/Banner";
-import Button from "components/porter/Button";
-import DashboardPlaceholder from "components/porter/DashboardPlaceholder";
-import Link from "components/porter/Link";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import ProvisionerFlow from "components/ProvisionerFlow";
-
-import api from "shared/api";
 import { Context } from "shared/Context";
-import bolt from "assets/bolt.svg";
 
 import DashboardHeader from "../cluster-dashboard/DashboardHeader";
 import CreateClusterForm from "../infrastructure-dashboard/forms/CreateClusterForm";

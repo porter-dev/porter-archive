@@ -1,16 +1,16 @@
-import yaml from "js-yaml";
 import { useContext, useEffect, useState } from "react";
+import yaml from "js-yaml";
+import api from "legacy/shared/api";
+import { onlyInLeft } from "legacy/shared/array_utils";
+import { useRouting } from "legacy/shared/routing";
+import { ChartType, ChartTypeWithExtendedConfig } from "legacy/shared/types";
 import { useRouteMatch } from "react-router";
-import api from "shared/api";
-import { onlyInLeft } from "shared/array_utils";
+
 import { Context } from "shared/Context";
-import { useRouting } from "shared/routing";
-import { ChartType, ChartTypeWithExtendedConfig } from "shared/types";
 
 export const useChart = (oldChart: ChartType, closeChart: () => void) => {
-  const { currentProject, currentCluster, setCurrentError } = useContext(
-    Context
-  );
+  const { currentProject, currentCluster, setCurrentError } =
+    useContext(Context);
   const [chart, setChart] = useState<ChartTypeWithExtendedConfig>(null);
   const { url: matchUrl } = useRouteMatch();
 

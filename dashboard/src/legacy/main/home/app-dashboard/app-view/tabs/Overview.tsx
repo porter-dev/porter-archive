@@ -1,15 +1,14 @@
 import React from "react";
-import { useFormContext } from "react-hook-form";
-
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import { useAppStatus } from "lib/hooks/useAppStatus";
-import { useCluster } from "lib/hooks/useCluster";
-import { type PorterAppFormData } from "lib/porter-apps";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import { useAppStatus } from "legacy/lib/hooks/useAppStatus";
+import { useCluster } from "legacy/lib/hooks/useCluster";
+import { type PorterAppFormData } from "legacy/lib/porter-apps";
 import {
   isClientWebService,
   isClientWorkerService,
-} from "lib/porter-apps/services";
+} from "legacy/lib/porter-apps/services";
+import { useFormContext } from "react-hook-form";
 
 import ServiceList from "../../validate-apply/services-settings/ServiceList";
 import { type ButtonStatus } from "../AppDataContainer";

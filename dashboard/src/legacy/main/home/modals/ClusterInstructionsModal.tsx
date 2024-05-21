@@ -1,7 +1,7 @@
 import React, { Component } from "react";
+import close from "legacy/assets/close.png";
+import TabSelector from "legacy/components/TabSelector";
 import styled from "styled-components";
-import close from "assets/close.png";
-import TabSelector from "components/TabSelector";
 
 import { Context } from "shared/Context";
 

@@ -1,42 +1,44 @@
-import Loading from "components/Loading";
-import { PopulatedEnvGroup } from "components/porter-form/types";
-import TitleSection from "components/TitleSection";
-import _ from "lodash";
 import React, { useContext, useEffect, useState } from "react";
-import api from "shared/api";
-import { Context } from "shared/Context";
-import { useRouting } from "shared/routing";
-import { ExpandedPorterTemplate } from "shared/types";
+import Heading from "legacy/components/form-components/Heading";
+import Helper from "legacy/components/form-components/Helper";
+import InputRow from "legacy/components/form-components/InputRow";
+import Loading from "legacy/components/Loading";
+import PorterFormWrapper from "legacy/components/porter-form/PorterFormWrapper";
+import { PopulatedEnvGroup } from "legacy/components/porter-form/types";
+import TitleSection from "legacy/components/TitleSection";
+import api from "legacy/shared/api";
+import { hardcodedIcons } from "legacy/shared/hardcodedNameDict";
+import { useRouting } from "legacy/shared/routing";
+import { ExpandedPorterTemplate } from "legacy/shared/types";
+import _ from "lodash";
 import styled from "styled-components";
+
+import { Context } from "shared/Context";
+
 import { BackButton, Icon, Polymer } from "../launch/components/styles";
 import { CreateStackBody, SourceConfig } from "../types";
-import { hardcodedIcons } from "shared/hardcodedNameDict";
-import Heading from "components/form-components/Heading";
-import InputRow from "components/form-components/InputRow";
-import Helper from "components/form-components/Helper";
-import PorterFormWrapper from "components/porter-form/PorterFormWrapper";
 
-const parseEnvGroup = (namespace: string) => (
-  envGroup: CreateStackBody["env_groups"][0]
-): PopulatedEnvGroup => {
-  const variables = envGroup?.variables || {};
-  const secretVariables = envGroup?.secret_variables || {};
+const parseEnvGroup =
+  (namespace: string) =>
+  (envGroup: CreateStackBody["env_groups"][0]): PopulatedEnvGroup => {
+    const variables = envGroup?.variables || {};
+    const secretVariables = envGroup?.secret_variables || {};
 
-  return {
-    name: envGroup.name,
-    version: 1,
-    namespace,
-    applications: envGroup.linked_applications,
-    meta_version: 2,
-    variables: {
-      ...variables,
-      ...Object.keys(secretVariables).reduce((acc, key) => {
-        acc[key] = "PORTERSECRET_" + key;
-        return acc;
-      }, {} as any),
-    },
+    return {
+      name: envGroup.name,
+      version: 1,
+      namespace,
+      applications: envGroup.linked_applications,
+      meta_version: 2,
+      variables: {
+        ...variables,
+        ...Object.keys(secretVariables).reduce((acc, key) => {
+          acc[key] = "PORTERSECRET_" + key;
+          return acc;
+        }, {} as any),
+      },
+    };
   };
-};
 
 const NewAppResourceForm = (props: {
   templateInfo: {

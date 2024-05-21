@@ -1,12 +1,11 @@
 import React, { useEffect, useRef } from "react";
 import type Anser from "anser";
 import dayjs from "dayjs";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import { useAddonLogs } from "legacy/lib/hooks/useAddon";
 import styled from "styled-components";
 import { match, P } from "ts-pattern";
-
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import { useAddonLogs } from "lib/hooks/useAddon";
 
 import { useAddonContext } from "../AddonContextProvider";
 

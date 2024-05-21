@@ -1,17 +1,20 @@
 import React, { useContext, useEffect, useState } from "react";
 import loadable from "@loadable/component";
+import Loading from "legacy/components/Loading";
+import api from "legacy/shared/api";
+import {
+  getQueryParam,
+  pushQueryParams,
+  type PorterUrl,
+} from "legacy/shared/routing";
+import { type ClusterType } from "legacy/shared/types";
 import { withRouter, type RouteComponentProps } from "react-router";
 import { Route, Switch } from "react-router-dom";
 import styled from "styled-components";
 
-import Loading from "components/Loading";
-
-import api from "shared/api";
 import { withAuth, type WithAuthProps } from "shared/auth/AuthorizationHoc";
 import GuardedRoute from "shared/auth/RouteGuard";
 import { Context } from "shared/Context";
-import { getQueryParam, pushQueryParams, type PorterUrl } from "shared/routing";
-import { type ClusterType } from "shared/types";
 
 import AppDashboard from "./apps/AppDashboard";
 import DashboardRoutes from "./dashboard/Routes";

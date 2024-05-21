@@ -1,12 +1,14 @@
 import React, { useContext } from "react";
 import { Redirect, Route, Switch, useRouteMatch } from "react-router";
+
 import { Context } from "shared/Context";
+
 import ConnectNewRepo from "./ConnectNewRepo";
 import DeploymentDetail from "./deployments/DeploymentDetail";
 import DeploymentList from "./deployments/DeploymentList";
-import EnvironmentsList from "./environments/EnvironmentsList";
-import EnvironmentSettings from "./environments/EnvironmentSettings";
 import DeployEnvironment from "./environments/CreateEnvironment";
+import EnvironmentSettings from "./environments/EnvironmentSettings";
+import EnvironmentsList from "./environments/EnvironmentsList";
 
 export const Routes = () => {
   const { path } = useRouteMatch();

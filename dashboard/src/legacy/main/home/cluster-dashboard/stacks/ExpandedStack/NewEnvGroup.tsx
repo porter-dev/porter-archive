@@ -1,8 +1,10 @@
-import { AxiosError } from "axios";
 import React, { useContext } from "react";
-import api from "shared/api";
+import { AxiosError } from "axios";
+import api from "legacy/shared/api";
+import { useRouting } from "legacy/shared/routing";
+
 import { Context } from "shared/Context";
-import { useRouting } from "shared/routing";
+
 import NewEnvGroupForm from "../components/NewEnvGroupForm";
 import { CreateStackBody } from "../types";
 import { ExpandedStackStore } from "./Store";

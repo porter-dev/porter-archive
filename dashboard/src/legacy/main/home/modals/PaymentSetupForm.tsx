@@ -4,16 +4,15 @@ import {
   useElements,
   useStripe,
 } from "@stripe/react-stripe-js";
-import styled from "styled-components";
-
-import Button from "components/porter/Button";
-import Error from "components/porter/Error";
-import Spacer from "components/porter/Spacer";
-import SaveButton from "components/SaveButton";
+import Button from "legacy/components/porter/Button";
+import Error from "legacy/components/porter/Error";
+import Spacer from "legacy/components/porter/Spacer";
+import SaveButton from "legacy/components/SaveButton";
 import {
   useCreatePaymentMethod,
   useSetDefaultPaymentMethod,
-} from "lib/hooks/useStripe";
+} from "legacy/lib/hooks/useStripe";
+import styled from "styled-components";
 
 const PaymentSetupForm = ({ onCreate }: { onCreate: () => Promise<void> }) => {
   const stripe = useStripe();

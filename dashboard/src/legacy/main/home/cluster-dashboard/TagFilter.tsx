@@ -1,10 +1,10 @@
-import RadioFilter from "components/RadioFilter";
 import React, { useContext, useEffect, useState } from "react";
-import api from "shared/api";
-import { Context } from "shared/Context";
+import tag from "legacy/assets/tag.svg";
+import RadioFilter from "legacy/components/RadioFilter";
+import api from "legacy/shared/api";
 import styled from "styled-components";
 
-import tag from "assets/tag.svg";
+import { Context } from "shared/Context";
 
 const TagFilter = ({ onSelect }: { onSelect: (tag: any) => void }) => {
   const { currentProject, currentCluster } = useContext(Context);
@@ -40,7 +40,9 @@ const TagFilter = ({ onSelect }: { onSelect: (tag: any) => void }) => {
           label: tag.name,
         }))
       )}
-      setSelected={(newVal: any) => setSelectedTag(newVal)}
+      setSelected={(newVal: any) => {
+        setSelectedTag(newVal);
+      }}
       name="Tag"
       icon={tag}
     />

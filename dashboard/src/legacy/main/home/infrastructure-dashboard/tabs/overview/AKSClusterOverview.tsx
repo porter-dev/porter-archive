@@ -1,14 +1,13 @@
 import React from "react";
+import Loading from "legacy/components/Loading";
+import Container from "legacy/components/porter/Container";
+import Select from "legacy/components/porter/Select";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import { CloudProviderAzure } from "legacy/lib/clusters/constants";
+import { type ClientClusterContract } from "legacy/lib/clusters/types";
+import { useMachineTypeList } from "legacy/lib/hooks/useNodeGroups";
 import { Controller, useFormContext } from "react-hook-form";
-
-import Loading from "components/Loading";
-import Container from "components/porter/Container";
-import Select from "components/porter/Select";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import { CloudProviderAzure } from "lib/clusters/constants";
-import { type ClientClusterContract } from "lib/clusters/types";
-import { useMachineTypeList } from "lib/hooks/useNodeGroups";
 
 import NodeGroups from "../../shared/NodeGroups";
 

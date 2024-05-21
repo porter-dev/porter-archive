@@ -1,8 +1,7 @@
 import React from "react";
+import { useRevisionList } from "legacy/lib/hooks/useRevisionList";
+import { type ClientNotification } from "legacy/lib/porter-apps/notification";
 import styled from "styled-components";
-
-import { useRevisionList } from "lib/hooks/useRevisionList";
-import { type ClientNotification } from "lib/porter-apps/notification";
 
 import NotificationTile from "./NotificationTile";
 

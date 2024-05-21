@@ -1,10 +1,12 @@
-import Heading from "components/form-components/Heading";
-import Helper from "components/form-components/Helper";
-import InputRow from "components/form-components/InputRow";
 import React, { useContext, useState } from "react";
-import api from "shared/api";
-import { Context } from "shared/Context";
+import Heading from "legacy/components/form-components/Heading";
+import Helper from "legacy/components/form-components/Helper";
+import InputRow from "legacy/components/form-components/InputRow";
+import api from "legacy/shared/api";
 import styled from "styled-components";
+
+import { Context } from "shared/Context";
+
 import { SubmitButton } from "../../launch/components/styles";
 import { Stack } from "../../types";
 
@@ -17,12 +19,8 @@ const Settings = ({
   onDelete: () => void;
   onUpdate: () => Promise<void>;
 }) => {
-  const {
-    currentCluster,
-    currentProject,
-    setCurrentOverlay,
-    setCurrentError,
-  } = useContext(Context);
+  const { currentCluster, currentProject, setCurrentOverlay, setCurrentError } =
+    useContext(Context);
   const [stackName, setStackName] = useState(stack.name);
   const [buttonStatus, setButtonStatus] = useState("");
 

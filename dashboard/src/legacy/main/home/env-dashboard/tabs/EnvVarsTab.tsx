@@ -1,20 +1,19 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
-import { FormProvider, useForm } from "react-hook-form";
-import styled from "styled-components";
-
-import Button from "components/porter/Button";
-import Error from "components/porter/Error";
-import FileArray from "components/porter/FileArray";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
+import Button from "legacy/components/porter/Button";
+import Error from "legacy/components/porter/Error";
+import FileArray from "legacy/components/porter/FileArray";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
 import {
   envGroupFormValidator,
   type EnvGroupFormData,
-} from "lib/env-groups/types";
+} from "legacy/lib/env-groups/types";
+import api from "legacy/shared/api";
+import { FormProvider, useForm } from "react-hook-form";
+import styled from "styled-components";
 
-import api from "shared/api";
 import { Context } from "shared/Context";
 
 import EnvGroupArray, { type KeyValueType } from "../EnvGroupArray";

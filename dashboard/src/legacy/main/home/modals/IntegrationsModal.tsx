@@ -1,12 +1,11 @@
 import React, { Component } from "react";
+import close from "legacy/assets/close.png";
+import Tooltip from "legacy/components/porter/Tooltip";
+import api from "legacy/shared/api";
+import { integrationList } from "legacy/shared/common";
 import styled from "styled-components";
 
-import Tooltip from "components/porter/Tooltip";
-
-import api from "shared/api";
-import { integrationList } from "shared/common";
 import { Context } from "shared/Context";
-import close from "assets/close.png";
 
 type PropsType = {};
 

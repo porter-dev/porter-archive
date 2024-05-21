@@ -1,13 +1,12 @@
 import React, { createContext, useContext, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useLocation } from "react-router";
-import { z } from "zod";
-
 import {
   deploymentTargetValidator,
   useDefaultDeploymentTarget,
   type DeploymentTarget,
-} from "lib/hooks/useDeploymentTarget";
+} from "legacy/lib/hooks/useDeploymentTarget";
+import { useLocation } from "react-router";
+import { z } from "zod";
 
 import api from "./api";
 import { Context } from "./Context";

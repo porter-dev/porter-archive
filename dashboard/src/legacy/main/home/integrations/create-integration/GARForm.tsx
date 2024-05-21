@@ -1,14 +1,16 @@
-import Heading from "components/form-components/Heading";
-import Helper from "components/form-components/Helper";
-import InputRow from "components/form-components/InputRow";
-import SelectRow from "components/form-components/SelectRow";
-import UploadArea from "components/form-components/UploadArea";
-import SaveButton from "components/SaveButton";
-import { GAR_REGION_OPTIONS } from "main/home/onboarding/constants";
 import React, { useContext, useState } from "react";
-import api from "shared/api";
-import { Context } from "shared/Context";
+import Heading from "legacy/components/form-components/Heading";
+import Helper from "legacy/components/form-components/Helper";
+import InputRow from "legacy/components/form-components/InputRow";
+import SelectRow from "legacy/components/form-components/SelectRow";
+import UploadArea from "legacy/components/form-components/UploadArea";
+import SaveButton from "legacy/components/SaveButton";
+import api from "legacy/shared/api";
 import styled from "styled-components";
+
+import { GAR_REGION_OPTIONS } from "main/home/onboarding/constants";
+
+import { Context } from "shared/Context";
 
 type GCPIntegration = {
   id: string;

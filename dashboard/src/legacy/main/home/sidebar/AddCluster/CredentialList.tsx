@@ -1,6 +1,6 @@
 import React from "react";
+import { readableDate } from "legacy/shared/string_utils";
 import styled from "styled-components";
-import { readableDate } from "shared/string_utils";
 
 type Props = {
   selectCredential: (id: number) => void;
@@ -44,8 +44,8 @@ const CredentialList: React.FunctionComponent<Props> = (props) => {
           <PreviewRow
             key={cred.id}
             onClick={() => {
-              props.setTargetARN(cred.display_name)
-              props.selectCredential(cred.id)
+              props.setTargetARN(cred.display_name);
+              props.selectCredential(cred.id);
             }}
           >
             <Flex>

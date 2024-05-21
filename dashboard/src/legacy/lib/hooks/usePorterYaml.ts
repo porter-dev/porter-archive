@@ -1,16 +1,16 @@
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { PorterApp } from "@porter-dev/api-contracts";
 import { useQuery } from "@tanstack/react-query";
-import { z } from "zod";
-
-import { useClusterContext } from "main/home/infrastructure-dashboard/ClusterContextProvider";
-import { serviceOverrides, type SourceOptions } from "lib/porter-apps";
+import { serviceOverrides, type SourceOptions } from "legacy/lib/porter-apps";
 import {
   getServiceResourceAllowances,
   type DetectedServices,
-} from "lib/porter-apps/services";
+} from "legacy/lib/porter-apps/services";
+import api from "legacy/shared/api";
+import { z } from "zod";
 
-import api from "shared/api";
+import { useClusterContext } from "main/home/infrastructure-dashboard/ClusterContextProvider";
+
 import { Context } from "shared/Context";
 
 type PorterYamlStatus =

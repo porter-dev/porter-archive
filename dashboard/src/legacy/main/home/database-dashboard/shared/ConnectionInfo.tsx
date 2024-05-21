@@ -1,12 +1,9 @@
 import React, { useMemo } from "react";
-import styled from "styled-components";
-import { match } from "ts-pattern";
-
-import ClickToCopy from "components/porter/ClickToCopy";
-import Container from "components/porter/Container";
-import Fieldset from "components/porter/Fieldset";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
+import ClickToCopy from "legacy/components/porter/ClickToCopy";
+import Container from "legacy/components/porter/Container";
+import Fieldset from "legacy/components/porter/Fieldset";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
 import {
   DATASTORE_TYPE_ELASTICACHE,
   DATASTORE_TYPE_MANAGED_POSTGRES,
@@ -16,7 +13,9 @@ import {
   DATASTORE_TYPE_UPSTASH,
   type DatastoreConnectionInfo,
   type DatastoreTemplate,
-} from "lib/databases/types";
+} from "legacy/lib/databases/types";
+import styled from "styled-components";
+import { match } from "ts-pattern";
 
 import {
   DATASTORE_ENGINE_POSTGRES,

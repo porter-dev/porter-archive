@@ -1,36 +1,36 @@
 import React, { Component } from "react";
+import edit from "legacy/assets/edit.svg";
+import info from "legacy/assets/info.svg";
+import { integrationList } from "legacy/shared/common";
+import { ImageType } from "legacy/shared/types";
 import styled from "styled-components";
-import info from "assets/info.svg";
-import edit from "assets/edit.svg";
 
-import { integrationList } from "shared/common";
 import { Context } from "shared/Context";
-import { ImageType } from "shared/types";
 
 import Loading from "../Loading";
 import ImageList from "./ImageList";
 
 type PropsType =
   | {
-    forceExpanded?: boolean;
-    selectedImageUrl: string | null;
-    selectedTag: string | null;
-    setSelectedImageUrl: (x: string) => void;
-    setSelectedTag: (x: string) => void;
-    noTagSelection?: boolean;
-    disableImageSelect?: boolean;
-    readOnly?: boolean;
-  }
+      forceExpanded?: boolean;
+      selectedImageUrl: string | null;
+      selectedTag: string | null;
+      setSelectedImageUrl: (x: string) => void;
+      setSelectedTag: (x: string) => void;
+      noTagSelection?: boolean;
+      disableImageSelect?: boolean;
+      readOnly?: boolean;
+    }
   | {
-    forceExpanded?: boolean;
-    selectedImageUrl: string | null;
-    selectedTag: string | null;
-    setSelectedImageUrl?: (x: string) => void;
-    setSelectedTag?: (x: string) => void;
-    noTagSelection?: boolean;
-    disableImageSelect?: boolean;
-    readOnly: true;
-  };
+      forceExpanded?: boolean;
+      selectedImageUrl: string | null;
+      selectedTag: string | null;
+      setSelectedImageUrl?: (x: string) => void;
+      setSelectedTag?: (x: string) => void;
+      noTagSelection?: boolean;
+      disableImageSelect?: boolean;
+      readOnly: true;
+    };
 
 type StateType = {
   isExpanded: boolean;
@@ -245,7 +245,7 @@ const ImageItem = styled.div`
   user-select: text;
   cursor: text;
     ${(props: { lastItem: boolean; isSelected: boolean }) =>
-    props.lastItem ? "#00000000" : "#606166"};
+      props.lastItem ? "#00000000" : "#606166"};
   color: #ffffff;
   align-items: center;
   padding: 10px 0px;

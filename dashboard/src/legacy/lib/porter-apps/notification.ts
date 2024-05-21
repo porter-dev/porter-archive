@@ -1,4 +1,7 @@
 import { PorterApp } from "@porter-dev/api-contracts";
+import { appRevisionValidator } from "legacy/lib/revisions/types";
+import api from "legacy/shared/api";
+import { valueExists } from "legacy/shared/util";
 import _ from "lodash";
 import { z } from "zod";
 
@@ -8,10 +11,6 @@ import {
   porterAppNotificationEventMetadataValidator,
   type PorterAppNotification,
 } from "main/home/app-dashboard/app-view/tabs/activity-feed/events/types";
-import { appRevisionValidator } from "lib/revisions/types";
-
-import api from "shared/api";
-import { valueExists } from "shared/util";
 
 import { clientAppFromProto } from ".";
 import {

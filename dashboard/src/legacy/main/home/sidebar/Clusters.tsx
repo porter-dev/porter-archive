@@ -1,19 +1,18 @@
 import React, { Component } from "react";
+import job from "legacy/assets/job-bold.png";
+import settings from "legacy/assets/settings.svg";
+import sliders from "legacy/assets/sliders.svg";
+import web from "legacy/assets/web-bold.png";
+import api from "legacy/shared/api";
+import { pushFiltered } from "legacy/shared/routing";
+import { ClusterType } from "legacy/shared/types";
+import { RouteComponentProps, withRouter } from "react-router";
 import styled from "styled-components";
 
-import api from "shared/api";
-import { pushFiltered } from "shared/routing";
 import { Context } from "shared/Context";
-import { ClusterType } from "shared/types";
+
 import { ClusterSection } from "./ClusterSection";
 import SidebarLink from "./SidebarLink";
-
-import settings from "assets/settings.svg";
-import job from "assets/job-bold.png";
-import web from "assets/web-bold.png";
-import sliders from "assets/sliders.svg";
-
-import { RouteComponentProps, withRouter } from "react-router";
 
 type PropsType = RouteComponentProps & {
   setWelcome: (x: boolean) => void;
@@ -42,12 +41,8 @@ class Clusters extends Component<PropsType, StateType> {
     if (!this.context.currentProject) {
       return;
     }
-    let {
-      user,
-      currentProject,
-      setCurrentCluster,
-      currentCluster,
-    } = this.context;
+    let { user, currentProject, setCurrentCluster, currentCluster } =
+      this.context;
 
     // TODO: query with selected filter once implemented
     api

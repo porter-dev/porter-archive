@@ -1,32 +1,32 @@
 import React, { useContext, useState } from "react";
-import styled from "styled-components";
-import { RouteComponentProps, withRouter } from "react-router";
-
-import job from "assets/job.png";
-
-import { Context } from "shared/Context";
-import { JobStatusType } from "shared/types";
-import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
+import job from "legacy/assets/job.png";
+import ClusterProvisioningPlaceholder from "legacy/components/ClusterProvisioningPlaceholder";
 import {
-  pushQueryParams,
   pushFiltered,
-  PorterUrl,
-} from "shared/routing";
+  pushQueryParams,
+  type PorterUrl,
+} from "legacy/shared/routing";
+import { type JobStatusType } from "legacy/shared/types";
+import { withRouter, type RouteComponentProps } from "react-router";
+import styled from "styled-components";
 
-import { NamespaceSelector } from "../NamespaceSelector";
-import TagFilter from "../TagFilter";
+import { withAuth, type WithAuthProps } from "shared/auth/AuthorizationHoc";
+import { Context } from "shared/Context";
+
+import ChartList from "../chart/ChartList";
+import JobRunTable from "../chart/JobRunTable";
 import DashboardHeader from "../DashboardHeader";
 import LastRunStatusSelector from "../LastRunStatusSelector";
-import JobRunTable from "../chart/JobRunTable";
-import ChartList from "../chart/ChartList";
-import ClusterProvisioningPlaceholder from "components/ClusterProvisioningPlaceholder";
+import { NamespaceSelector } from "../NamespaceSelector";
+import TagFilter from "../TagFilter";
 
-type Props = RouteComponentProps & WithAuthProps & {
-  currentView: PorterUrl;
-  namespace?: string;
-  setNamespace?: (namespace: string) => void;
-  sortType: any;
-};
+type Props = RouteComponentProps &
+  WithAuthProps & {
+    currentView: PorterUrl;
+    namespace?: string;
+    setNamespace?: (namespace: string) => void;
+    sortType: any;
+  };
 
 // TODO: Pull namespace (and sort) down out of DashboardRouter
 const JobDashboard: React.FC<Props> = ({
@@ -68,39 +68,37 @@ const JobDashboard: React.FC<Props> = ({
                 }}
                 namespace={namespace}
               />
-              <TagFilter
-                onSelect={setSelectedTag}
-              />
+              <TagFilter onSelect={setSelectedTag} />
             </FilterWrapper>
             <Flex>
               <ToggleButton>
                 <ToggleOption
-                  onClick={() => setShowRuns(false)}
+                  onClick={() => {
+                    setShowRuns(false);
+                  }}
                   selected={!showRuns}
                 >
                   Jobs
                 </ToggleOption>
                 <ToggleOption
                   nudgeLeft
-                  onClick={() => setShowRuns(true)}
+                  onClick={() => {
+                    setShowRuns(true);
+                  }}
                   selected={showRuns}
                 >
                   Runs
                 </ToggleOption>
               </ToggleButton>
-              {props.isAuthorized(
-                "namespace",
-                [],
-                ["get", "create"]
-              ) && (
-                  <Button
-                    onClick={() => {
-                      pushFiltered(props, "/launch", ["project_id"]);
-                    }}
-                  >
-                    <i className="material-icons">add</i> Launch template
-                  </Button>
-                )}
+              {props.isAuthorized("namespace", [], ["get", "create"]) && (
+                <Button
+                  onClick={() => {
+                    pushFiltered(props, "/launch", ["project_id"]);
+                  }}
+                >
+                  <i className="material-icons">add</i> Launch template
+                </Button>
+              )}
             </Flex>
           </ControlRow>
           <HidableElement show={showRuns}>
@@ -115,7 +113,9 @@ const JobDashboard: React.FC<Props> = ({
               currentView={currentView}
               currentCluster={currentCluster}
               lastRunStatus={lastRunStatus}
-              namespace={currentProject?.capi_provisioner_enabled ? "default" : namespace}
+              namespace={
+                currentProject?.capi_provisioner_enabled ? "default" : namespace
+              }
               sortType={sortType}
               selectedTag={selectedTag}
             />
@@ -160,8 +160,7 @@ const Flex = styled.div`
   border-bottom: 30px solid transparent;
 `;
 
-const StyledJobDashboard = styled.div`
-`;
+const StyledJobDashboard = styled.div``;
 
 const ControlRow = styled.div`
   display: flex;
@@ -204,7 +203,7 @@ const Button = styled.div`
     props.disabled ? "#aaaabbee" : "#616FEEcc"};
   :hover {
     background: ${(props: { disabled?: boolean }) =>
-    props.disabled ? "" : "#505edddd"};
+      props.disabled ? "" : "#505edddd"};
   }
 
   > i {

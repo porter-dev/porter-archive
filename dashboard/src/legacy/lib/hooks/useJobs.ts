@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import api from "legacy/shared/api";
 import _ from "lodash";
 import { z } from "zod";
-
-import api from "shared/api";
 
 import { useRevisionList } from "./useRevisionList";
 

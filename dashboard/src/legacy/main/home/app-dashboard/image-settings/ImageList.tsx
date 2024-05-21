@@ -1,15 +1,13 @@
 import React, { useState } from "react";
+import addCircle from "legacy/assets/add-circle.png";
+import Loading from "legacy/components/Loading";
+import Link from "legacy/components/porter/Link";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import SearchBar from "legacy/components/SearchBar";
+import { integrationList } from "legacy/shared/common";
 import _ from "lodash";
 import styled from "styled-components";
-
-import Loading from "components/Loading";
-import Link from "components/porter/Link";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import SearchBar from "components/SearchBar";
-
-import { integrationList } from "shared/common";
-import addCircle from "assets/add-circle.png";
 
 import { type ImageType } from "./types";
 

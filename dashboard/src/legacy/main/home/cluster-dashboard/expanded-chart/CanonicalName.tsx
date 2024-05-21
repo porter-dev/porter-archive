@@ -1,12 +1,13 @@
 import React, { useContext, useMemo, useState } from "react";
-import styled from "styled-components";
-import InputRow from "components/form-components/InputRow";
-import SaveButton from "components/SaveButton";
-import api from "shared/api";
 import Color from "color";
+import InputRow from "legacy/components/form-components/InputRow";
+import SaveButton from "legacy/components/SaveButton";
+import api from "legacy/shared/api";
+import { isAlphanumeric } from "legacy/shared/common";
+import { type ChartType } from "legacy/shared/types";
+import styled from "styled-components";
+
 import { Context } from "shared/Context";
-import { ChartType } from "shared/types";
-import { isAlphanumeric } from "shared/common";
 
 type Props = {
   onSave: (() => void) | (() => Promise<void>);
@@ -14,9 +15,8 @@ type Props = {
 };
 
 const CanonicalName = ({ onSave, release }: Props) => {
-  const { currentProject, currentCluster, setCurrentError } = useContext(
-    Context
-  );
+  const { currentProject, currentCluster, setCurrentError } =
+    useContext(Context);
   const [buttonStatus, setButtonStatus] = useState("");
   const [canonicalName, setCanonicalName] = useState<string>(
     release.canonical_name
@@ -85,7 +85,9 @@ const CanonicalName = ({ onSave, release }: Props) => {
       <InputRow
         type="text"
         value={canonicalName}
-        setValue={(x: string) => setCanonicalName(x)}
+        setValue={(x: string) => {
+          setCanonicalName(x);
+        }}
         placeholder="ex: my-app"
         isRequired={true}
         width={"100%"}
@@ -101,7 +103,9 @@ const CanonicalName = ({ onSave, release }: Props) => {
           disabled={shouldDisableSave}
           statusPosition="right"
           text="Save changes"
-          onClick={() => handleSave()}
+          onClick={async () => {
+            await handleSave();
+          }}
           status={buttonStatus}
         ></SaveButton>
       </Flex>

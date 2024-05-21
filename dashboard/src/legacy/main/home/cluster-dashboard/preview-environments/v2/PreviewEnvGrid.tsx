@@ -4,28 +4,26 @@ import React, {
   type Dispatch,
   type SetStateAction,
 } from "react";
+import calendar from "legacy/assets/calendar-number.svg";
+import pull_request from "legacy/assets/pull_request_icon.svg";
+import healthy from "legacy/assets/status-healthy.png";
+import time from "legacy/assets/time.png";
+import letter from "legacy/assets/vector.svg";
+import Button from "legacy/components/porter/Button";
+import Container from "legacy/components/porter/Container";
+import DashboardPlaceholder from "legacy/components/porter/DashboardPlaceholder";
+import Icon from "legacy/components/porter/Icon";
+import SearchBar from "legacy/components/porter/SearchBar";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import Toggle from "legacy/components/porter/Toggle";
+import type { DeploymentTarget } from "legacy/lib/hooks/useDeploymentTarget";
+import { search } from "legacy/shared/search";
+import { readableDate } from "legacy/shared/string_utils";
 import _ from "lodash";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
 import { match } from "ts-pattern";
-
-import Button from "components/porter/Button";
-import Container from "components/porter/Container";
-import DashboardPlaceholder from "components/porter/DashboardPlaceholder";
-import Icon from "components/porter/Icon";
-import SearchBar from "components/porter/SearchBar";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import Toggle from "components/porter/Toggle";
-import type { DeploymentTarget } from "lib/hooks/useDeploymentTarget";
-
-import { search } from "shared/search";
-import { readableDate } from "shared/string_utils";
-import calendar from "assets/calendar-number.svg";
-import pull_request from "assets/pull_request_icon.svg";
-import healthy from "assets/status-healthy.png";
-import time from "assets/time.png";
-import letter from "assets/vector.svg";
 
 import { type ValidTab } from "./PreviewEnvs";
 

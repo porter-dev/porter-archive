@@ -1,11 +1,11 @@
 import React, { Component } from "react";
+import Loading from "legacy/components/Loading";
+import { type ChartType, type ResourceType } from "legacy/shared/types";
 import styled from "styled-components";
 
 import { Context } from "shared/Context";
-import { ChartType, ResourceType } from "shared/types";
 
 import GraphDisplay from "./graph/GraphDisplay";
-import Loading from "components/Loading";
 
 type PropsType = {
   components: ResourceType[];

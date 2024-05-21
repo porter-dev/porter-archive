@@ -1,36 +1,41 @@
-import DynamicLink from "components/DynamicLink";
-import Heading from "components/form-components/Heading";
-import RepoList from "components/repo-selector/RepoList";
-import SaveButton from "components/SaveButton";
-import DocsHelper from "components/DocsHelper";
-import { ActionConfigType, GithubActionConfigType } from "shared/types";
 import React, { useContext, useEffect, useState } from "react";
-import styled from "styled-components";
-import api from "shared/api";
-import { Context } from "shared/Context";
-import { useRouting } from "shared/routing";
-import { Environment } from "./types";
-import DashboardHeader from "../DashboardHeader";
-import PullRequestIcon from "assets/pull_request_icon.svg";
-import CheckboxRow from "components/form-components/CheckboxRow";
-import BranchFilterSelector from "./components/BranchFilterSelector";
-import Helper from "components/form-components/Helper";
-import NamespaceLabels, { KeyValueType } from "./components/NamespaceLabels";
+import PullRequestIcon from "legacy/assets/pull_request_icon.svg";
+import DocsHelper from "legacy/components/DocsHelper";
+import DynamicLink from "legacy/components/DynamicLink";
+import CheckboxRow from "legacy/components/form-components/CheckboxRow";
+import Heading from "legacy/components/form-components/Heading";
+import Helper from "legacy/components/form-components/Helper";
+import Back from "legacy/components/porter/Back";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import VerticalSteps from "legacy/components/porter/VerticalSteps";
+import RepoList from "legacy/components/repo-selector/RepoList";
+import SaveButton from "legacy/components/SaveButton";
+import api from "legacy/shared/api";
+import { useRouting } from "legacy/shared/routing";
+import {
+  GithubActionConfigType,
+  type ActionConfigType,
+} from "legacy/shared/types";
 import AnimateHeight from "react-animate-height";
-import Text from "components/porter/Text";
-import Spacer from "components/porter/Spacer";
+import styled from "styled-components";
+
+import { Context } from "shared/Context";
+
+import DashboardHeader from "../DashboardHeader";
+import BranchFilterSelector from "./components/BranchFilterSelector";
+import NamespaceLabels, {
+  type KeyValueType,
+} from "./components/NamespaceLabels";
 import ConnectNewRepoActionConfEditor from "./ConnectNewRepoActionConfEditor";
-import VerticalSteps from "components/porter/VerticalSteps";
-import Back from "components/porter/Back";
+import { type Environment } from "./types";
 
 const ConnectNewRepo: React.FC = () => {
-  const { currentProject, currentCluster, setCurrentError } = useContext(
-    Context
-  );
+  const { currentProject, currentCluster, setCurrentError } =
+    useContext(Context);
   const [repo, setRepo] = useState(null);
-  const [enableAutomaticDeployments, setEnableAutomaticDeployments] = useState(
-    false
-  );
+  const [enableAutomaticDeployments, setEnableAutomaticDeployments] =
+    useState(false);
   const [filteredRepos, setFilteredRepos] = useState<string[]>([]);
 
   const [status, setStatus] = useState(null);
@@ -88,7 +93,7 @@ const ConnectNewRepo: React.FC = () => {
       return;
     }
 
-    let isSubscribed = true;
+    const isSubscribed = true;
     const repoName = actionConfig.git_repo.split("/")[1];
     const repoOwner = actionConfig.git_repo.split("/")[0];
     setIsLoadingBranches(true);
@@ -121,7 +126,7 @@ const ConnectNewRepo: React.FC = () => {
   }, [actionConfig]);
 
   const addRepo = () => {
-    let [owner, repoName] = actionConfig.git_repo.split("/");
+    const [owner, repoName] = actionConfig.git_repo.split("/");
     const labels: Record<string, string> = {};
 
     setStatus("loading");
@@ -129,7 +134,7 @@ const ConnectNewRepo: React.FC = () => {
     namespaceLabels
       .filter((elem: KeyValueType, index: number, self: KeyValueType[]) => {
         // remove any collisions that are duplicates
-        let numCollisions = self.reduce((n, _elem: KeyValueType) => {
+        const numCollisions = self.reduce((n, _elem: KeyValueType) => {
           return n + (_elem.key === elem.key ? 1 : 0);
         }, 0);
 
@@ -204,7 +209,7 @@ const ConnectNewRepo: React.FC = () => {
                       })
                     );
 
-                    if (!!actionConfig.git_repo) {
+                    if (actionConfig.git_repo) {
                       setCurrentStep((prev) => {
                         if (prev > 0) {
                           return prev;
@@ -253,7 +258,7 @@ const ConnectNewRepo: React.FC = () => {
           <ActionContainer>
             <SaveButton
               text="Add repository"
-              disabled={actionConfig.git_repo_id ? false : true}
+              disabled={!actionConfig.git_repo_id}
               onClick={addRepo}
               makeFlush={true}
               clearPosition={true}
@@ -383,9 +388,9 @@ const ConnectNewRepo: React.FC = () => {
             <CheckboxRow
               label="Enable automatic deploys"
               checked={enableAutomaticDeployments}
-              toggle={() =>
-                setEnableAutomaticDeployments(!enableAutomaticDeployments)
-              }
+              toggle={() => {
+                setEnableAutomaticDeployments(!enableAutomaticDeployments);
+              }}
               wrapperStyles={{
                 disableMargin: true,
               }}
@@ -401,7 +406,9 @@ const ConnectNewRepo: React.FC = () => {
             <CheckboxRow
               label="Disable new comments for deployments"
               checked={isNewCommentsDisabled}
-              toggle={() => setIsNewCommentsDisabled(!isNewCommentsDisabled)}
+              toggle={() => {
+                setIsNewCommentsDisabled(!isNewCommentsDisabled);
+              }}
               wrapperStyles={{
                 disableMargin: true,
               }}
@@ -417,7 +424,7 @@ const ConnectNewRepo: React.FC = () => {
           <NamespaceLabels
             values={namespaceLabels}
             setValues={(x: KeyValueType[]) => {
-              let labels: KeyValueType[] = [];
+              const labels: KeyValueType[] = [];
               x.forEach((entry) => {
                 labels.push({ key: entry.key, value: entry.value });
               });
@@ -430,7 +437,7 @@ const ConnectNewRepo: React.FC = () => {
       <ActionContainer>
         <SaveButton
           text="Add repository"
-          disabled={actionConfig.git_repo_id ? false : true}
+          disabled={!actionConfig.git_repo_id}
           onClick={addRepo}
           makeFlush={true}
           clearPosition={true}

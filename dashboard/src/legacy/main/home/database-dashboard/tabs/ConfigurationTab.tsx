@@ -1,9 +1,9 @@
 import React, { useMemo } from "react";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import { useClusterList } from "legacy/lib/hooks/useCluster";
 
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
 import { ClusterList } from "main/home/infrastructure-dashboard/ClusterDashboard";
-import { useClusterList } from "lib/hooks/useCluster";
 
 import { useDatastoreContext } from "../DatabaseContextProvider";
 

@@ -1,27 +1,31 @@
 import React, { useContext, useEffect, useState } from "react";
-import styled from "styled-components";
-import api from "shared/api";
 import yaml from "js-yaml";
+import CopyToClipboard from "legacy/components/CopyToClipboard";
+import DynamicLink from "legacy/components/DynamicLink";
+import Heading from "legacy/components/form-components/Heading";
+import Helper from "legacy/components/form-components/Helper";
+import ImageSelector from "legacy/components/image-selector/ImageSelector";
+import Loading from "legacy/components/Loading";
+import SaveButton from "legacy/components/SaveButton";
+import api from "legacy/shared/api";
+import { PORTER_IMAGE_TEMPLATES } from "legacy/shared/common";
+import { isDeployedFromGithub } from "legacy/shared/release/utils";
+import {
+  ActionConfigType,
+  StorageType,
+  type ChartType,
+} from "legacy/shared/types";
+import _ from "lodash";
+import { Link } from "react-router-dom";
+import styled from "styled-components";
 import * as traverse from "traverse";
 
-import { ActionConfigType, ChartType, StorageType } from "shared/types";
+import useAuth from "shared/auth/useAuth";
 import { Context } from "shared/Context";
 
-import ImageSelector from "components/image-selector/ImageSelector";
-import SaveButton from "components/SaveButton";
-import Heading from "components/form-components/Heading";
-import Helper from "components/form-components/Helper";
-import _ from "lodash";
-import CopyToClipboard from "components/CopyToClipboard";
-import useAuth from "shared/auth/useAuth";
-import Loading from "components/Loading";
-import NotificationSettingsSection from "./NotificationSettingsSection";
-import { Link } from "react-router-dom";
-import { isDeployedFromGithub } from "shared/release/utils";
-import TagSelector from "./TagSelector";
-import { PORTER_IMAGE_TEMPLATES } from "shared/common";
-import DynamicLink from "components/DynamicLink";
 import CanonicalName from "./CanonicalName";
+import NotificationSettingsSection from "./NotificationSettingsSection";
+import TagSelector from "./TagSelector";
 
 type PropsType = {
   currentChart: ChartType;
@@ -39,19 +43,15 @@ const SettingsSection: React.FC<PropsType> = ({
   const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>("");
   const [selectedTag, setSelectedTag] = useState<string | null>("");
   const [saveValuesStatus, setSaveValuesStatus] = useState<string | null>(null);
-  const [highlightCopyButton, setHighlightCopyButton] = useState<boolean>(
-    false
-  );
+  const [highlightCopyButton, setHighlightCopyButton] =
+    useState<boolean>(false);
   const [webhookToken, setWebhookToken] = useState<string>("");
-  const [
-    createWebhookButtonStatus,
-    setCreateWebhookButtonStatus,
-  ] = useState<string>("");
+  const [createWebhookButtonStatus, setCreateWebhookButtonStatus] =
+    useState<string>("");
   const [loadingWebhookToken, setLoadingWebhookToken] = useState<boolean>(true);
 
-  const { currentCluster, currentProject, setCurrentError } = useContext(
-    Context
-  );
+  const { currentCluster, currentProject, setCurrentError } =
+    useContext(Context);
 
   const [isAuthorized] = useAuth();
 
@@ -81,7 +81,9 @@ const SettingsSection: React.FC<PropsType> = ({
         setWebhookToken(res.data.webhook_token);
       })
       .catch(console.log)
-      .finally(() => setLoadingWebhookToken(false));
+      .finally(() => {
+        setLoadingWebhookToken(false);
+      });
 
     return () => {
       isSubscribed = false;
@@ -93,7 +95,7 @@ const SettingsSection: React.FC<PropsType> = ({
 
     // console.log(selectedImageUrl);
 
-    let values = {};
+    const values = {};
     if (selectedTag) {
       _.set(values, "image.repository", selectedImageUrl);
       _.set(values, "image.tag", selectedTag);
@@ -105,7 +107,7 @@ const SettingsSection: React.FC<PropsType> = ({
     }
 
     // Weave in preexisting values and convert to yaml
-    let conf = yaml.dump(
+    const conf = yaml.dump(
       {
         ...(currentChart?.config as Object),
         ...values,
@@ -130,7 +132,7 @@ const SettingsSection: React.FC<PropsType> = ({
       setSaveValuesStatus("successful");
       refreshChart();
     } catch (err) {
-      let parsedErr = err?.response?.data?.error;
+      const parsedErr = err?.response?.data?.error;
 
       if (parsedErr) {
         err = parsedErr;
@@ -162,7 +164,7 @@ const SettingsSection: React.FC<PropsType> = ({
         setWebhookToken(res.data.webhook_token);
       }, 500);
     } catch (err) {
-      let parsedErr = err?.response?.data?.error;
+      const parsedErr = err?.response?.data?.error;
 
       if (parsedErr) {
         err = parsedErr;
@@ -221,8 +223,12 @@ const SettingsSection: React.FC<PropsType> = ({
             <ImageSelector
               selectedTag={selectedTag}
               selectedImageUrl={selectedImageUrl}
-              setSelectedImageUrl={(x: string) => setSelectedImageUrl(x)}
-              setSelectedTag={(x: string) => setSelectedTag(x)}
+              setSelectedImageUrl={(x: string) => {
+                setSelectedImageUrl(x);
+              }}
+              setSelectedTag={(x: string) => {
+                setSelectedTag(x);
+              }}
               forceExpanded={true}
               disableImageSelect={false}
             />
@@ -250,7 +256,12 @@ const SettingsSection: React.FC<PropsType> = ({
             Set a canonical name for this application (lowercase letters,
             numbers, and "-" only)
           </Helper>
-          <CanonicalName release={currentChart} onSave={() => refreshChart()} />
+          <CanonicalName
+            release={currentChart}
+            onSave={async () => {
+              await refreshChart();
+            }}
+          />
 
           <Heading>Redeploy Webhook</Heading>
           <Helper>
@@ -273,10 +284,14 @@ const SettingsSection: React.FC<PropsType> = ({
               <CopyToClipboard
                 as="i"
                 text={curlWebhook}
-                onSuccess={() => setHighlightCopyButton(true)}
+                onSuccess={() => {
+                  setHighlightCopyButton(true);
+                }}
                 wrapperProps={{
                   className: "material-icons",
-                  onMouseLeave: () => setHighlightCopyButton(false),
+                  onMouseLeave: () => {
+                    setHighlightCopyButton(false);
+                  },
                 }}
               >
                 content_copy
@@ -286,7 +301,12 @@ const SettingsSection: React.FC<PropsType> = ({
         </>
         <Heading>Application Tags</Heading>
         <Helper>Add tags for filtering applications.</Helper>
-        <TagSelector release={currentChart} onSave={(val) => refreshChart()} />
+        <TagSelector
+          release={currentChart}
+          onSave={async (val) => {
+            await refreshChart();
+          }}
+        />
       </>
     );
   };
@@ -353,7 +373,9 @@ const SettingsSection: React.FC<PropsType> = ({
           <Heading>Additional Settings</Heading>
           <Button
             color="#b91133"
-            onClick={() => setShowDeleteOverlay(true)}
+            onClick={() => {
+              setShowDeleteOverlay(true);
+            }}
             disabled={!canBeDeleted()}
           >
             Delete {currentChart.name}
@@ -482,7 +504,7 @@ const StyledSettingsSection = styled.div`
   overflow: auto;
   height: calc(100% - 55px);
   border-radius: 5px;
-  background: ${props => props.theme.fg};
+  background: ${(props) => props.theme.fg};
   border: 1px solid #494b4f;
 `;
 

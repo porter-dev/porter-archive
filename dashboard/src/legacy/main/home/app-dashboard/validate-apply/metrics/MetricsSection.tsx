@@ -1,24 +1,23 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import CheckboxRow from "legacy/components/CheckboxRow";
+import Loading from "legacy/components/Loading";
+import Container from "legacy/components/porter/Container";
+import Fieldset from "legacy/components/porter/Fieldset";
+import Filter from "legacy/components/porter/Filter";
+import Text from "legacy/components/porter/Text";
+import TabSelector from "legacy/components/TabSelector";
+import { type ClientService } from "legacy/lib/porter-apps/services";
+import api from "legacy/shared/api";
 import { useLocation } from "react-router";
 import styled from "styled-components";
 import { match } from "ts-pattern";
 
-import CheckboxRow from "components/CheckboxRow";
-import Loading from "components/Loading";
-import Container from "components/porter/Container";
-import Fieldset from "components/porter/Fieldset";
-import Filter from "components/porter/Filter";
-import Text from "components/porter/Text";
-import TabSelector from "components/TabSelector";
 import {
   type AvailableMetrics,
   type GenericMetricResponseResults,
   type NormalizedMetricsData,
 } from "main/home/cluster-dashboard/expanded-chart/metrics/types";
-import { type ClientService } from "lib/porter-apps/services";
-
-import api from "shared/api";
 
 import {
   GenericFilterOption,

@@ -1,29 +1,30 @@
 import React, { useContext, useEffect, useState } from "react";
+import leftArrow from "legacy/assets/left-arrow.svg";
+import KeyValueArray from "legacy/components/form-components/KeyValueArray";
+import Loading from "legacy/components/Loading";
+import TabRegion, { type TabOption } from "legacy/components/TabRegion";
+import TitleSection from "legacy/components/TitleSection";
+import api from "legacy/shared/api";
+import { usePods } from "legacy/shared/hooks/usePods";
+import { useRouting } from "legacy/shared/routing";
+import { capitalize } from "legacy/shared/string_utils";
+import { type ChartType } from "legacy/shared/types";
 import { get, isEmpty } from "lodash";
 import styled from "styled-components";
 
-import leftArrow from "assets/left-arrow.svg";
-import KeyValueArray from "components/form-components/KeyValueArray";
-import Loading from "components/Loading";
-import TabRegion, { TabOption } from "components/TabRegion";
-import TitleSection from "components/TitleSection";
-import api from "shared/api";
 import { Context } from "shared/Context";
-import { ChartType } from "shared/types";
+
+import { getPodStatus } from "../deploy-status-section/util";
 import DeploymentType from "../DeploymentType";
+import EventsTab from "../events/EventsTab";
+import LogsSection, { type InitLogData } from "../logs-section/LogsSection";
 import JobMetricsSection from "../metrics/JobMetricsSection";
 import Logs from "../status/Logs";
-import { useRouting } from "shared/routing";
-import LogsSection, { InitLogData } from "../logs-section/LogsSection";
-import EventsTab from "../events/EventsTab";
-import { getPodStatus } from "../deploy-status-section/util";
-import { capitalize } from "shared/string_utils";
-import { usePods } from "shared/hooks/usePods";
 
 const readableDate = (s: string) => {
-  let ts = new Date(s);
-  let date = ts.toLocaleDateString();
-  let time = ts.toLocaleTimeString([], {
+  const ts = new Date(s);
+  const date = ts.toLocaleDateString();
+  const time = ts.toLocaleTimeString([], {
     hour: "numeric",
     minute: "2-digit",
   });
@@ -131,9 +132,8 @@ const ExpandedJobRun = ({
   jobRun: any;
   onClose: () => void;
 }) => {
-  const { currentProject, currentCluster, setCurrentError } = useContext(
-    Context
-  );
+  const { currentProject, currentCluster, setCurrentError } =
+    useContext(Context);
   const [currentTab, setCurrentTab] = useState<ExpandedJobRunTabs>(
     currentCluster.agent_integration_enabled ? "events" : "logs"
   );
@@ -150,8 +150,8 @@ const ExpandedJobRun = ({
     subscribed: true,
   });
 
-  let chart = currentChart;
-  let run = jobRun;
+  const chart = currentChart;
+  const run = jobRun;
 
   useEffect(() => {
     return () => {
@@ -160,25 +160,23 @@ const ExpandedJobRun = ({
   }, []);
 
   const renderConfigSection = (job: any) => {
-    let commandString = job?.spec?.template?.spec?.containers[0]?.command?.join(
-      " "
-    );
-    let envArray = job?.spec?.template?.spec?.containers[0]?.env;
-    let envObject = {} as any;
-    envArray &&
-      envArray.forEach((env: any, i: number) => {
-        const secretName = get(env, "valueFrom.secretKeyRef.name");
-        envObject[env.name] = secretName
-          ? `PORTERSECRET_${secretName}`
-          : env.value;
-      });
+    const commandString =
+      job?.spec?.template?.spec?.containers[0]?.command?.join(" ");
+    const envArray = job?.spec?.template?.spec?.containers[0]?.env;
+    const envObject = {} as any;
+    envArray?.forEach((env: any, i: number) => {
+      const secretName = get(env, "valueFrom.secretKeyRef.name");
+      envObject[env.name] = secretName
+        ? `PORTERSECRET_${secretName}`
+        : env.value;
+    });
 
     // Handle no config to show
     if (!commandString && isEmpty(envObject)) {
       return <Placeholder>No config was found.</Placeholder>;
     }
 
-    let tag = job.spec.template.spec.containers[0].image.split(":")[1];
+    const tag = job.spec.template.spec.containers[0].image.split(":")[1];
     return (
       <ConfigSection>
         {commandString ? (
@@ -211,7 +209,9 @@ const ExpandedJobRun = ({
       <EventsTab
         currentChart={currentChart}
         overridingJobName={jobRun.metadata?.name}
-        setLogData={() => setCurrentTab("logs")}
+        setLogData={() => {
+          setCurrentTab("logs");
+        }}
       />
     );
   };
@@ -229,7 +229,7 @@ const ExpandedJobRun = ({
       );
     }
 
-    let initData: InitLogData = {};
+    const initData: InitLogData = {};
 
     if (run.status.completionTime) {
       initData.timestamp = run.status.completionTime;
@@ -250,7 +250,7 @@ const ExpandedJobRun = ({
         </DeprecatedWarning>
         <LogsSection
           isFullscreen={false}
-          setIsFullscreen={() => { }}
+          setIsFullscreen={() => {}}
           overridingPodSelector={jobRun.metadata?.name}
           currentChart={currentChart}
           initData={initData}
@@ -263,7 +263,7 @@ const ExpandedJobRun = ({
     return <Loading />;
   }
 
-  let options: TabOption[] = [];
+  const options: TabOption[] = [];
 
   if (currentCluster.agent_integration_enabled) {
     options.push({
@@ -310,7 +310,13 @@ const ExpandedJobRun = ({
                 : ""
             )}
             <TagWrapper>
-              Namespace <NamespaceTag>{currentProject?.capi_provisioner_enabled && chart.namespace.startsWith("porter-stack-") ? chart.namespace.replace("porter-stack-", "") : chart.namespace}</NamespaceTag>
+              Namespace{" "}
+              <NamespaceTag>
+                {currentProject?.capi_provisioner_enabled &&
+                chart.namespace.startsWith("porter-stack-")
+                  ? chart.namespace.replace("porter-stack-", "")
+                  : chart.namespace}
+              </NamespaceTag>
             </TagWrapper>
             <DeploymentType currentChart={currentChart} />
           </LastDeployed>

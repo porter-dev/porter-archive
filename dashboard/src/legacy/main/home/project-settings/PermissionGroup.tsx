@@ -1,7 +1,6 @@
 import React, { useState } from "react";
+import role from "legacy/assets/role.svg";
 import styled from "styled-components";
-
-import role from "assets/role.svg";
 
 import RoleModal from "./RoleModal";
 

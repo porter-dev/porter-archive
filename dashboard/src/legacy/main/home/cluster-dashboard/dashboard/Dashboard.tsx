@@ -1,24 +1,23 @@
 import React, { useContext, useEffect, useState } from "react";
+import editIcon from "legacy/assets/edit-button.svg";
+import infraGrad from "legacy/assets/infra-grad.svg";
+import AzureProvisionerSettings from "legacy/components/AzureProvisionerSettings";
+import GCPProvisionerSettings from "legacy/components/GCPProvisionerSettings";
+import Button from "legacy/components/porter/Button";
+import DashboardPlaceholder from "legacy/components/porter/DashboardPlaceholder";
+import Image from "legacy/components/porter/Image";
+import PorterLink from "legacy/components/porter/Link";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import ProvisionerSettings from "legacy/components/ProvisionerSettings";
+import TabSelector from "legacy/components/TabSelector";
+import api from "legacy/shared/api";
+import { getQueryParam } from "legacy/shared/routing";
 import { useLocation } from "react-router";
 import styled from "styled-components";
 
-import AzureProvisionerSettings from "components/AzureProvisionerSettings";
-import GCPProvisionerSettings from "components/GCPProvisionerSettings";
-import Button from "components/porter/Button";
-import DashboardPlaceholder from "components/porter/DashboardPlaceholder";
-import Image from "components/porter/Image";
-import PorterLink from "components/porter/Link";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import ProvisionerSettings from "components/ProvisionerSettings";
-import TabSelector from "components/TabSelector";
-
-import api from "shared/api";
 import useAuth from "shared/auth/useAuth";
 import { Context } from "shared/Context";
-import { getQueryParam } from "shared/routing";
-import editIcon from "assets/edit-button.svg";
-import infraGrad from "assets/infra-grad.svg";
 
 import DashboardHeader from "../DashboardHeader";
 import ClusterRevisionSelector from "./ClusterRevisionSelector";
@@ -189,7 +188,9 @@ export const Dashboard: React.FunctionComponent = () => {
     if (context.currentProject?.sandbox_enabled) {
       return (
         <DashboardPlaceholder>
-          <Text size={16}>Infrastructure settings are not enabled on the Porter Cloud.</Text>
+          <Text size={16}>
+            Infrastructure settings are not enabled on the Porter Cloud.
+          </Text>
           <Spacer y={0.5} />
           <Text color={"helper"}>
             Eject to your own cloud account to enable managed infrastructure.

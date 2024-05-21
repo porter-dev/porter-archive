@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
+import search from "legacy/assets/search.png";
 import styled from "styled-components";
-
-import search from "assets/search.png";
 
 type Props = {
   placeholder: string;
@@ -34,16 +33,12 @@ const SearchBar: React.FC<Props> = ({
 }) => {
   return (
     <Block width={width} style={style}>
-      {
-        label && (
-          <Label>{label}</Label>
-        )
-      }
+      {label && <Label>{label}</Label>}
       <StyledSearchBar
         style={style}
         width={width}
         height={height}
-        hasError={(error && true) || (error === "")}
+        hasError={(error && true) || error === ""}
         onKeyDown={(event) => {
           if (event.key === "Enter") {
             event.preventDefault();
@@ -56,19 +51,17 @@ const SearchBar: React.FC<Props> = ({
         <Icon src={search} />
         <Input
           value={value}
-          onChange={e => setValue(e.target.value)}
+          onChange={(e) => setValue(e.target.value)}
           placeholder={placeholder}
           type={type || "text"}
           autoFocus={autoFocus}
         />
-        {
-          error && (
-            <Error>
-              <i className="material-icons">error</i>
-              {error}
-            </Error>
-          )
-        }
+        {error && (
+          <Error>
+            <i className="material-icons">error</i>
+            {error}
+          </Error>
+        )}
       </StyledSearchBar>
       {children}
     </Block>
@@ -91,7 +84,7 @@ const Block = styled.div<{
 }>`
   display: block;
   position: relative;
-  width: ${props => props.width || "200px"};
+  width: ${(props) => props.width || "200px"};
 `;
 
 const Label = styled.div`
@@ -118,18 +111,18 @@ const StyledSearchBar = styled.div<{
   height: string;
   hasError: boolean;
 }>`
-  height: ${props => props.height || "30px"};
+  height: ${(props) => props.height || "30px"};
   padding: 5px 10px;
-  width: ${props => props.width || "200px"};
+  width: ${(props) => props.width || "200px"};
   color: #ffffff;
   font-size: 13px;
   border-radius: 5px;
-  background: ${props => props.theme.fg};
+  background: ${(props) => props.theme.fg};
   transition: all 0.2s;
 
-  border: 1px solid ${props => props.hasError ? "#ff3b62" : "#494b4f"};
+  border: 1px solid ${(props) => (props.hasError ? "#ff3b62" : "#494b4f")};
   :hover {
-    border: 1px solid ${props => props.hasError ? "#ff3b62" : "#7a7b80"};
+    border: 1px solid ${(props) => (props.hasError ? "#ff3b62" : "#7a7b80")};
   }
 `;
 

@@ -1,10 +1,10 @@
-import EnvEditorModal from "main/home/modals/EnvEditorModal";
-import Modal from "main/home/modals/Modal";
 import React, { useEffect, useState } from "react";
+import upload from "legacy/assets/upload.svg";
+import { dotenv_parse } from "legacy/shared/string_utils";
 import styled from "styled-components";
 
-import upload from "assets/upload.svg";
-import { dotenv_parse } from "shared/string_utils";
+import EnvEditorModal from "main/home/modals/EnvEditorModal";
+import Modal from "main/home/modals/Modal";
 
 export type KeyValueType = {
   key: string;
@@ -44,15 +44,15 @@ const EnvGroupArray = ({
   };
   const blankValue = (key: string): boolean => {
     if (key === "" && setButtonDisabled) {
-      return true
+      return true;
     }
-    return false
+    return false;
   };
 
   const incorrectRegex = (key: string) => {
     const pattern = /^[a-zA-Z0-9._-]+$/;
     if (setButtonDisabled) {
-      setButtonDisabled(!pattern.test(key))
+      setButtonDisabled(!pattern.test(key));
       blankValues();
     }
     if (key) {
@@ -142,7 +142,11 @@ const EnvGroupArray = ({
                     />
                   ) : (
                     <MultiLineInputer
-                      placeholder={blankValue(entry.value) ? "value cannot be blank" : "ex: value"}
+                      placeholder={
+                        blankValue(entry.value)
+                          ? "value cannot be blank"
+                          : "ex: value"
+                      }
                       width="270px"
                       value={entry.value}
                       onChange={(e: any) => {
@@ -222,13 +226,19 @@ const EnvGroupArray = ({
       </StyledInputArray>
       {showEditorModal && (
         <Modal
-          onRequestClose={() => { setShowEditorModal(false); }}
+          onRequestClose={() => {
+            setShowEditorModal(false);
+          }}
           width="60%"
           height="650px"
         >
           <EnvEditorModal
-            closeModal={() => { setShowEditorModal(false); }}
-            setEnvVariables={(envFile: string) => { readFile(envFile); }}
+            closeModal={() => {
+              setShowEditorModal(false);
+            }}
+            setEnvVariables={(envFile: string) => {
+              readFile(envFile);
+            }}
           />
         </Modal>
       )}
@@ -314,10 +324,10 @@ const HideButton = styled(DeleteButton)`
   > i {
     font-size: 19px;
     cursor: ${(props: { disabled: boolean }) =>
-    props.disabled ? "default" : "pointer"};
+      props.disabled ? "default" : "pointer"};
     :hover {
       color: ${(props: { disabled: boolean }) =>
-    props.disabled ? "#ffffff44" : "#ffffff88"};
+        props.disabled ? "#ffffff44" : "#ffffff88"};
     }
   }
 `;
@@ -333,10 +343,11 @@ const Input = styled.input<InputProps>`
   margin-bottom: 5px;
   font-size: 13px;
   background: #ffffff11;
-  border: ${(props) => (props.override ? '2px solid #f4cb42' : ' 1px solid #ffffff55')};
+  border: ${(props) =>
+    props.override ? "2px solid #f4cb42" : " 1px solid #ffffff55"};
   border-radius: 3px;
-  width: ${(props) => props.width ? props.width : "270px"};
-  color: ${(props) => props.disabled ? "#ffffff44" : "white"};
+  width: ${(props) => (props.width ? props.width : "270px")};
+  color: ${(props) => (props.disabled ? "#ffffff44" : "white")};
   padding: 5px 10px;
   height: 35px;
 `;
@@ -356,7 +367,8 @@ export const MultiLineInputer = styled.textarea<InputProps>`
   margin-bottom: 5px;
   font-size: 13px;
   background: #ffffff11;
-  border: ${(props) => (props.override ? '2px solid #f4cb42' : ' 1px solid #ffffff55')};
+  border: ${(props) =>
+    props.override ? "2px solid #f4cb42" : " 1px solid #ffffff55"};
   border-radius: 3px;
   min-width: ${(props) => (props.width ? props.width : "270px")};
   max-width: ${(props) => (props.width ? props.width : "270px")};

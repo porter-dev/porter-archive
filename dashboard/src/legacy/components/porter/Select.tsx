@@ -1,7 +1,6 @@
 import React from "react";
+import arrow from "legacy/assets/arrow-down.svg";
 import styled, { css } from "styled-components";
-
-import arrow from "assets/arrow-down.svg";
 
 import Container from "./Container";
 
@@ -88,7 +87,7 @@ const Select: React.FC<Props> = ({
 
 export default Select;
 
-const Div = styled.div<{ width?: string, noShrink?: boolean }>`
+const Div = styled.div<{ width?: string; noShrink?: boolean }>`
   width: ${({ width }) => width || ""};
   ${({ noShrink }) => (noShrink ? "flex-shrink: 0;" : "")}
 `;

@@ -1,28 +1,27 @@
 import React, { Component } from "react";
+import addOns from "legacy/assets/add-ons.svg";
+import applications from "legacy/assets/applications.svg";
+import category from "legacy/assets/category.svg";
+import infra from "legacy/assets/cluster.svg";
+import collapseSidebar from "legacy/assets/collapse-sidebar.svg";
+import compliance from "legacy/assets/compliance.svg";
+import database from "legacy/assets/database.svg";
+import sliders from "legacy/assets/env-groups.svg";
+import integrations from "legacy/assets/integrations.svg";
+import lock from "legacy/assets/lock.svg";
+import pr_icon from "legacy/assets/pull_request_icon.svg";
+import rocket from "legacy/assets/rocket.png";
+import settings from "legacy/assets/settings.svg";
+import Container from "legacy/components/porter/Container";
+import Image from "legacy/components/porter/Image";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
 import { withRouter, type RouteComponentProps } from "react-router";
 import styled from "styled-components";
 import { match } from "ts-pattern";
 
-import Container from "components/porter/Container";
-import Image from "components/porter/Image";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-
 import { withAuth, type WithAuthProps } from "shared/auth/AuthorizationHoc";
 import { Context } from "shared/Context";
-import addOns from "assets/add-ons.svg";
-import applications from "assets/applications.svg";
-import category from "assets/category.svg";
-import infra from "assets/cluster.svg";
-import collapseSidebar from "assets/collapse-sidebar.svg";
-import compliance from "assets/compliance.svg";
-import database from "assets/database.svg";
-import sliders from "assets/env-groups.svg";
-import integrations from "assets/integrations.svg";
-import lock from "assets/lock.svg";
-import pr_icon from "assets/pull_request_icon.svg";
-import rocket from "assets/rocket.png";
-import settings from "assets/settings.svg";
 
 import { envGroupPath } from "../../../shared/util";
 import ClusterListContainer from "./ClusterListContainer";

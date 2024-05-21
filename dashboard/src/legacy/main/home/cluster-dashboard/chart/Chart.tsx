@@ -5,30 +5,29 @@ import React, {
   useMemo,
   useState,
 } from "react";
-import styled from "styled-components";
-import { useHistory, useLocation, useRouteMatch } from "react-router";
-
-import {
-  ChartType,
-  JobStatusType,
-  JobStatusWithTimeType,
-  StorageType,
-} from "shared/types";
-import { Context } from "shared/Context";
-import StatusIndicator from "components/StatusIndicator";
-import { pushFiltered } from "shared/routing";
-import api from "shared/api";
-import { readableDate } from "shared/string_utils";
 import { Tooltip, Zoom } from "@material-ui/core";
-import CronParser from "cron-parser";
-
 import {
   createTheme,
   MuiThemeProvider,
   withStyles,
 } from "@material-ui/core/styles";
-import { Link } from "react-router-dom";
+import CronParser from "cron-parser";
+import StatusIndicator from "legacy/components/StatusIndicator";
+import api from "legacy/shared/api";
+import { pushFiltered } from "legacy/shared/routing";
+import { readableDate } from "legacy/shared/string_utils";
+import {
+  ChartType,
+  JobStatusType,
+  JobStatusWithTimeType,
+  StorageType,
+} from "legacy/shared/types";
 import _ from "lodash";
+import { useHistory, useLocation, useRouteMatch } from "react-router";
+import { Link } from "react-router-dom";
+import styled from "styled-components";
+
+import { Context } from "shared/Context";
 
 type Props = {
   chart: ChartType;
@@ -132,8 +131,9 @@ const Chart: React.FunctionComponent<Props> = ({
 
     const cluster = context.currentCluster?.name;
 
-    const route = `${isJob ? "/jobs" : "/applications"}/${cluster}/${chart.namespace
-      }/${chart.name}`;
+    const route = `${isJob ? "/jobs" : "/applications"}/${cluster}/${
+      chart.namespace
+    }/${chart.name}`;
 
     const newParams = {
       // @ts-ignore
@@ -223,7 +223,12 @@ const Chart: React.FunctionComponent<Props> = ({
 
           <TagWrapper>
             Namespace
-            <NamespaceTag>{context.currentProject?.capi_provisioner_enabled && chart.namespace.startsWith("porter-stack-") ? chart.namespace.replace("porter-stack-", "") : chart.namespace}</NamespaceTag>
+            <NamespaceTag>
+              {context.currentProject?.capi_provisioner_enabled &&
+              chart.namespace.startsWith("porter-stack-")
+                ? chart.namespace.replace("porter-stack-", "")
+                : chart.namespace}
+            </NamespaceTag>
           </TagWrapper>
         </BottomWrapper>
 
@@ -351,7 +356,7 @@ const Title = styled.div`
   padding: 12px 35px 12px 45px;
   font-size: 14px;
   font-family: "Work Sans", sans-serif;
-  color: ${props => props.theme.text.primary};
+  color: ${(props) => props.theme.text.primary};
   width: 80%;
   overflow: hidden;
   white-space: nowrap;
@@ -374,12 +379,13 @@ const JobStatus = styled.span<{ status?: JobStatusType }>`
   font-weight: ${(props) =>
     props.status && props.status !== JobStatusType.Running ? "500" : ""};
   ${(props) => `
-  color: ${props.status === JobStatusType.Succeeded
+  color: ${
+    props.status === JobStatusType.Succeeded
       ? "rgb(56, 168, 138)"
       : props.status === JobStatusType.Failed
-        ? "#ff385d"
-        : "#aaaabb66"
-    }`}
+      ? "#ff385d"
+      : "#aaaabb66"
+  }`}
 `;
 
 const StyledChart = styled.div`
@@ -391,7 +397,7 @@ const StyledChart = styled.div`
   width: calc(100% + 2px);
   height: calc(100% + 2px);
   border-radius: 5px;
-  background: ${props => props.theme.clickable.bg};
+  background: ${(props) => props.theme.clickable.bg};
   border: 1px solid #494b4f;
   :hover {
     border: 1px solid #7a7b80;

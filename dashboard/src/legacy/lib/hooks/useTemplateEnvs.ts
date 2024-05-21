@@ -1,13 +1,12 @@
 import { useContext, useMemo } from "react";
 import { Addon, PorterApp } from "@porter-dev/api-contracts";
 import { useQuery } from "@tanstack/react-query";
+import { clientAddonFromProto } from "legacy/lib/addons";
+import { type Environment } from "legacy/lib/environments/types";
+import { clientAppFromProto } from "legacy/lib/porter-apps";
+import api from "legacy/shared/api";
 import { z } from "zod";
 
-import { clientAddonFromProto } from "lib/addons";
-import { type Environment } from "lib/environments/types";
-import { clientAppFromProto } from "lib/porter-apps";
-
-import api from "shared/api";
 import { Context } from "shared/Context";
 
 type TUseTemplateEnvs = {

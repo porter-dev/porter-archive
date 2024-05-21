@@ -1,19 +1,19 @@
 import React, { useContext, useMemo, useState } from "react";
+import trash from "legacy/assets/trash.png";
+import Button from "legacy/components/porter/Button";
+import Container from "legacy/components/porter/Container";
+import { Error as ErrorComponent } from "legacy/components/porter/Error";
+import Icon from "legacy/components/porter/Icon";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import { useAddon } from "legacy/lib/hooks/useAddon";
+import { getErrorMessageFromNetworkCall } from "legacy/lib/hooks/useCluster";
+import { useIntercom } from "legacy/lib/hooks/useIntercom";
 import { useHistory } from "react-router";
 
-import Button from "components/porter/Button";
-import Container from "components/porter/Container";
-import { Error as ErrorComponent } from "components/porter/Error";
-import Icon from "components/porter/Icon";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
 import { Code } from "main/home/managed-addons/tabs/shared";
-import { useAddon } from "lib/hooks/useAddon";
-import { getErrorMessageFromNetworkCall } from "lib/hooks/useCluster";
-import { useIntercom } from "lib/hooks/useIntercom";
 
 import { Context } from "shared/Context";
-import trash from "assets/trash.png";
 
 import { useAddonContext } from "../AddonContextProvider";
 import { useAddonFormContext } from "../AddonFormContextProvider";

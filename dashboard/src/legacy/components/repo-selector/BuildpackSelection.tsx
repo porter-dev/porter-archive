@@ -1,13 +1,14 @@
-import { DeviconsNameList } from "assets/devicons-name-list";
-import Helper from "components/form-components/Helper";
-import InputRow from "components/form-components/InputRow";
-import SelectRow from "components/form-components/SelectRow";
-import Loading from "components/Loading";
 import React, { useContext, useEffect, useMemo, useState } from "react";
-import api from "shared/api";
-import { Context } from "shared/Context";
-import { ActionConfigType } from "shared/types";
+import { DeviconsNameList } from "legacy/assets/devicons-name-list";
+import Helper from "legacy/components/form-components/Helper";
+import InputRow from "legacy/components/form-components/InputRow";
+import SelectRow from "legacy/components/form-components/SelectRow";
+import Loading from "legacy/components/Loading";
+import api from "legacy/shared/api";
+import { ActionConfigType } from "legacy/shared/types";
 import styled, { keyframes } from "styled-components";
+
+import { Context } from "shared/Context";
 
 const DEFAULT_BUILDER_NAME = "heroku";
 const DEFAULT_PAKETO_STACK = "paketobuildpacks/builder-jammy-full:latest";

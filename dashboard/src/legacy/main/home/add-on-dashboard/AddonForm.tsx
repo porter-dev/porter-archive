@@ -1,18 +1,17 @@
 import React, { useContext, useEffect, useMemo } from "react";
+import Loading from "legacy/components/Loading";
+import Back from "legacy/components/porter/Back";
+import { ControlledInput } from "legacy/components/porter/ControlledInput";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import VerticalSteps from "legacy/components/porter/VerticalSteps";
+import { type ClientAddon, type ClientAddonType } from "legacy/lib/addons";
+import { type AddonTemplate } from "legacy/lib/addons/template";
+import { useAddonList } from "legacy/lib/hooks/useAddon";
+import { useDefaultDeploymentTarget } from "legacy/lib/hooks/useDeploymentTarget";
 import { useFormContext } from "react-hook-form";
 import { useHistory } from "react-router";
 import styled from "styled-components";
-
-import Loading from "components/Loading";
-import Back from "components/porter/Back";
-import { ControlledInput } from "components/porter/ControlledInput";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import VerticalSteps from "components/porter/VerticalSteps";
-import { type ClientAddon, type ClientAddonType } from "lib/addons";
-import { type AddonTemplate } from "lib/addons/template";
-import { useAddonList } from "lib/hooks/useAddon";
-import { useDefaultDeploymentTarget } from "lib/hooks/useDeploymentTarget";
 
 import { Context } from "shared/Context";
 

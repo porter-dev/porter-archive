@@ -1,25 +1,30 @@
-import DynamicLink from "components/DynamicLink";
-import Loading from "components/Loading";
 import React, { useContext, useEffect, useMemo, useState } from "react";
-import api from "shared/api";
-import styled from "styled-components";
-import { useParams } from "react-router";
-import DashboardHeader from "../../DashboardHeader";
-import PullRequestIcon from "assets/pull_request_icon.svg";
-import Heading from "components/form-components/Heading";
-import Helper from "components/form-components/Helper";
-import CheckboxRow from "components/form-components/CheckboxRow";
-import { Environment, EnvironmentDeploymentMode } from "../types";
-import SaveButton from "components/SaveButton";
+import PullRequestIcon from "legacy/assets/pull_request_icon.svg";
+import DynamicLink from "legacy/components/DynamicLink";
+import CheckboxRow from "legacy/components/form-components/CheckboxRow";
+import Heading from "legacy/components/form-components/Heading";
+import Helper from "legacy/components/form-components/Helper";
+import InputRow from "legacy/components/form-components/InputRow";
+import Loading from "legacy/components/Loading";
+import PageNotFound from "legacy/components/PageNotFound";
+import Banner from "legacy/components/porter/Banner";
+import SaveButton from "legacy/components/SaveButton";
+import api from "legacy/shared/api";
+import { useRouting } from "legacy/shared/routing";
 import _ from "lodash";
-import { Context } from "shared/Context";
-import PageNotFound from "components/PageNotFound";
-import Banner from "components/porter/Banner";
-import InputRow from "components/form-components/InputRow";
+import { useParams } from "react-router";
+import styled from "styled-components";
+
 import Modal from "main/home/modals/Modal";
-import { useRouting } from "shared/routing";
-import NamespaceLabels, { KeyValueType } from "../components/NamespaceLabels";
+
+import { Context } from "shared/Context";
+
+import DashboardHeader from "../../DashboardHeader";
 import BranchFilterSelector from "../components/BranchFilterSelector";
+import NamespaceLabels, {
+  type KeyValueType,
+} from "../components/NamespaceLabels";
+import { type Environment, type EnvironmentDeploymentMode } from "../types";
 
 const EnvironmentSettings = () => {
   const router = useRouting();
@@ -27,18 +32,15 @@ const EnvironmentSettings = () => {
   const [availableBranches, setAvailableBranches] = useState<string[]>([]);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteConfirmationPrompt, setDeleteConfirmationPrompt] = useState("");
-  const { currentProject, currentCluster, setCurrentError } = useContext(
-    Context
-  );
+  const { currentProject, currentCluster, setCurrentError } =
+    useContext(Context);
   const [baseBranches, setBaseBranches] = useState([]);
   const [deployBranches, setDeployBranches] = useState([]);
   const [environment, setEnvironment] = useState<Environment>();
   const [saveStatus, setSaveStatus] = useState("");
   const [newCommentsDisabled, setNewCommentsDisabled] = useState(false);
-  const [
-    deploymentMode,
-    setDeploymentMode,
-  ] = useState<EnvironmentDeploymentMode>("manual");
+  const [deploymentMode, setDeploymentMode] =
+    useState<EnvironmentDeploymentMode>("manual");
   const [namespaceLabels, setNamespaceLabels] = useState<KeyValueType[]>([]);
   const {
     environment_id: environmentId,
@@ -122,14 +124,14 @@ const EnvironmentSettings = () => {
   }, [environment]);
 
   const handleSave = async () => {
-    let labels: Record<string, string> = {};
+    const labels: Record<string, string> = {};
 
     setSaveStatus("loading");
 
     namespaceLabels
       .filter((elem: KeyValueType, index: number, self: KeyValueType[]) => {
         // remove any collisions that are duplicates
-        let numCollisions = self.reduce((n, _elem: KeyValueType) => {
+        const numCollisions = self.reduce((n, _elem: KeyValueType) => {
           return n + (_elem.key === elem.key ? 1 : 0);
         }, 0);
 
@@ -256,7 +258,9 @@ const EnvironmentSettings = () => {
         <CheckboxRow
           label="Update the most recent PR comment"
           checked={newCommentsDisabled}
-          toggle={() => setNewCommentsDisabled(!newCommentsDisabled)}
+          toggle={() => {
+            setNewCommentsDisabled(!newCommentsDisabled);
+          }}
         />
         <Br />
         <Heading>Automatic preview deployments</Heading>
@@ -267,11 +271,11 @@ const EnvironmentSettings = () => {
         <CheckboxRow
           label="Automatically create preview deployments"
           checked={deploymentMode === "auto"}
-          toggle={() =>
+          toggle={() => {
             setDeploymentMode((deploymentMode) =>
               deploymentMode === "auto" ? "manual" : "auto"
-            )
-          }
+            );
+          }}
         />
         <Br />
         <Heading>Deploy from branches</Heading>
@@ -341,7 +345,7 @@ const EnvironmentSettings = () => {
   );
 };
 
-interface DeletePreviewEnvironmentModalProps {
+type DeletePreviewEnvironmentModalProps = {
   repoName: string;
   repoOwner: string;
   prompt: string;
@@ -349,7 +353,7 @@ interface DeletePreviewEnvironmentModalProps {
   onDelete: () => void;
   onClose: () => void;
   disabled: boolean;
-}
+};
 
 const DeletePreviewEnvironmentModal = (
   props: DeletePreviewEnvironmentModalProps
@@ -370,12 +374,16 @@ const DeletePreviewEnvironmentModal = (
           label={`Enter ${props.repoOwner}/${props.repoName} to delete Preview Environments:`}
           value={props.prompt}
           placeholder={`${props.repoOwner}/${props.repoName}`}
-          setValue={(x: string) => props.setPrompt(x)}
+          setValue={(x: string) => {
+            props.setPrompt(x);
+          }}
           width={"500px"}
         />
         <Flex justifyContent="center" alignItems="center">
           <DeleteButton
-            onClick={() => props.onDelete()}
+            onClick={() => {
+              props.onDelete();
+            }}
             disabled={props.disabled}
           >
             Delete

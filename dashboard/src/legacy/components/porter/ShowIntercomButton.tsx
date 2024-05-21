@@ -1,8 +1,6 @@
 import React from "react";
-
-import { useIntercom } from "lib/hooks/useIntercom";
-
-import chat from "assets/chat.svg";
+import chat from "legacy/assets/chat.svg";
+import { useIntercom } from "legacy/lib/hooks/useIntercom";
 
 import Button, { type ButtonProps } from "./Button";
 

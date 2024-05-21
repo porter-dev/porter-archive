@@ -1,16 +1,15 @@
 import React, { useContext, useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import Loading from "legacy/components/Loading";
+import Placeholder from "legacy/components/Placeholder";
+import Banner from "legacy/components/porter/Banner";
+import Button from "legacy/components/porter/Button";
+import Link from "legacy/components/porter/Link";
+import Spacer from "legacy/components/porter/Spacer";
+import ToggleRow from "legacy/components/porter/ToggleRow";
+import api from "legacy/shared/api";
 import { z } from "zod";
 
-import Loading from "components/Loading";
-import Placeholder from "components/Placeholder";
-import Banner from "components/porter/Banner";
-import Button from "components/porter/Button";
-import Link from "components/porter/Link";
-import Spacer from "components/porter/Spacer";
-import ToggleRow from "components/porter/ToggleRow";
-
-import api from "shared/api";
 import { Context } from "shared/Context";
 
 import { AddInfisicalEnvModal } from "./AddInfisicalEnvModal";

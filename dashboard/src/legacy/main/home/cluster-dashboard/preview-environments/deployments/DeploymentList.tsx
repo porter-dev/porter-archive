@@ -1,21 +1,20 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
+import filterOutline from "legacy/assets/filter-outline.svg";
+import pullRequestIcon from "legacy/assets/pull_request_icon.svg";
+import sort from "legacy/assets/sort.svg";
+import DynamicLink from "legacy/components/DynamicLink";
+import Loading from "legacy/components/Loading";
+import Placeholder from "legacy/components/Placeholder";
+import Banner from "legacy/components/porter/Banner";
+import RadioFilter from "legacy/components/RadioFilter";
+import api from "legacy/shared/api";
+import { useRouting } from "legacy/shared/routing";
+import { search } from "legacy/shared/search";
 import _ from "lodash";
 import { useHistory, useLocation, useParams } from "react-router";
 import styled from "styled-components";
 
-import DynamicLink from "components/DynamicLink";
-import Loading from "components/Loading";
-import Placeholder from "components/Placeholder";
-import Banner from "components/porter/Banner";
-import RadioFilter from "components/RadioFilter";
-
-import api from "shared/api";
 import { Context } from "shared/Context";
-import { useRouting } from "shared/routing";
-import { search } from "shared/search";
-import filterOutline from "assets/filter-outline.svg";
-import pullRequestIcon from "assets/pull_request_icon.svg";
-import sort from "assets/sort.svg";
 
 import DashboardHeader from "../../DashboardHeader";
 import PorterYAMLErrorsModal from "../components/PorterYAMLErrorsModal";

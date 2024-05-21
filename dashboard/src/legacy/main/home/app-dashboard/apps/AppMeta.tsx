@@ -1,15 +1,13 @@
 import React from "react";
+import box from "legacy/assets/box.png";
+import git_scm from "legacy/assets/git-scm.svg";
+import github from "legacy/assets/github.png";
+import web from "legacy/assets/web.png";
+import Container from "legacy/components/porter/Container";
+import Icon from "legacy/components/porter/Icon";
+import Text from "legacy/components/porter/Text";
+import { type ClientPorterApp } from "legacy/lib/porter-apps";
 import styled from "styled-components";
-
-import Container from "components/porter/Container";
-import Icon from "components/porter/Icon";
-import Text from "components/porter/Text";
-import { type ClientPorterApp } from "lib/porter-apps";
-
-import box from "assets/box.png";
-import git_scm from "assets/git-scm.svg";
-import github from "assets/github.png";
-import web from "assets/web.png";
 
 import { type AppRevisionWithSource } from "./types";
 

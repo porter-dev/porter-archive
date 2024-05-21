@@ -1,18 +1,16 @@
 import React from "react";
+import calendar from "legacy/assets/calendar-02.svg";
+import job from "legacy/assets/job.png";
+import web from "legacy/assets/web.png";
+import worker from "legacy/assets/worker.png";
+import Container from "legacy/components/porter/Container";
+import Link from "legacy/components/porter/Link";
+import Spacer from "legacy/components/porter/Spacer";
+import Tag from "legacy/components/porter/Tag";
+import Text from "legacy/components/porter/Text";
+import { type ClientServiceNotification } from "legacy/lib/porter-apps/notification";
 import styled from "styled-components";
 import { match } from "ts-pattern";
-
-import Container from "components/porter/Container";
-import Link from "components/porter/Link";
-import Spacer from "components/porter/Spacer";
-import Tag from "components/porter/Tag";
-import Text from "components/porter/Text";
-import { type ClientServiceNotification } from "lib/porter-apps/notification";
-
-import calendar from "assets/calendar-02.svg";
-import job from "assets/job.png";
-import web from "assets/web.png";
-import worker from "assets/worker.png";
 
 import { useLatestRevision } from "../../../LatestRevisionContext";
 import { isServiceNotification } from "../../activity-feed/events/types";

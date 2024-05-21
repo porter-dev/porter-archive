@@ -1,8 +1,7 @@
 import React, { useState } from "react";
+import { integrationList } from "legacy/shared/common";
+import { ChartType } from "legacy/shared/types";
 import styled from "styled-components";
-
-import { integrationList } from "shared/common";
-import { ChartType } from "shared/types";
 
 type Props = {
   currentChart: ChartType;

@@ -1,17 +1,17 @@
-import React, { useState, useContext } from "react";
+import React, { useContext, useState } from "react";
+import api from "legacy/shared/api";
 import styled from "styled-components";
 
 import { Context } from "shared/Context";
-import api from "shared/api";
 
-import Modal from "./porter/Modal";
-import Text from "./porter/Text";
-import Spacer from "./porter/Spacer";
-import Fieldset from "./porter/Fieldset";
 import Button from "./porter/Button";
 import ExpandableSection from "./porter/ExpandableSection";
+import Fieldset from "./porter/Fieldset";
 import Input from "./porter/Input";
 import Link from "./porter/Link";
+import Modal from "./porter/Modal";
+import Spacer from "./porter/Spacer";
+import Text from "./porter/Text";
 
 type Props = {
   setCurrentStep: (step: string) => void;
@@ -46,7 +46,11 @@ const AWSCostConsent: React.FC<Props> = ({
           noWrapper
           expandText="[+] Show details"
           collapseText="[-] Hide details"
-          Header={<Text size={20} weight={600}>$224.58 / mo</Text>}
+          Header={
+            <Text size={20} weight={600}>
+              $224.58 / mo
+            </Text>
+          }
           ExpandedSection={
             <>
               <Spacer height="15px" />

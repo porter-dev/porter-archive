@@ -1,24 +1,26 @@
-import React, { useState, useEffect, useContext } from "react";
-import { CellProps } from "react-table";
-
-import styled from "styled-components";
-import Table from "components/Table";
-import Loading from "components/Loading";
-import danger from "assets/danger.svg";
-import rocket from "assets/rocket.png";
-import document from "assets/document.svg";
-import info from "assets/info-outlined.svg";
-import status from "assets/info-circle.svg";
-import { readableDate, relativeDate } from "shared/string_utils";
-import TitleSection from "components/TitleSection";
-import api from "shared/api";
-import Modal from "main/home/modals/Modal";
-import time from "assets/time.svg";
-import { Context } from "shared/Context";
-import { InitLogData } from "../logs-section/LogsSection";
-import { Direction, Log, parseLogs } from "../logs-section/useAgentLogs";
+import React, { useContext, useEffect, useState } from "react";
+import type Anser from "anser";
 import dayjs from "dayjs";
-import Anser from "anser";
+import danger from "legacy/assets/danger.svg";
+import document from "legacy/assets/document.svg";
+import status from "legacy/assets/info-circle.svg";
+import info from "legacy/assets/info-outlined.svg";
+import rocket from "legacy/assets/rocket.png";
+import time from "legacy/assets/time.svg";
+import Loading from "legacy/components/Loading";
+import Table from "legacy/components/Table";
+import TitleSection from "legacy/components/TitleSection";
+import api from "legacy/shared/api";
+import { readableDate, relativeDate } from "legacy/shared/string_utils";
+import { type CellProps } from "react-table";
+import styled from "styled-components";
+
+import Modal from "main/home/modals/Modal";
+
+import { Context } from "shared/Context";
+
+import { type InitLogData } from "../logs-section/LogsSection";
+import { Direction, parseLogs, type Log } from "../logs-section/useAgentLogs";
 
 type Props = {
   namespace: string;
@@ -26,10 +28,10 @@ type Props = {
   setLogData?: (logData: InitLogData) => void;
 };
 
-interface ExpandedIncidentLogsProps {
+type ExpandedIncidentLogsProps = {
   logs: Log[];
   onViewMore: () => void;
-}
+};
 
 const ExpandedIncidentLogs = ({
   logs,
@@ -225,7 +227,9 @@ const EventList: React.FC<Props> = ({ filters, namespace, setLogData }) => {
         {expandedEvent.should_view_logs ? (
           <ExpandedIncidentLogs
             logs={logs}
-            onViewMore={() => redirectToLogs(expandedEvent)}
+            onViewMore={() => {
+              redirectToLogs(expandedEvent);
+            }}
           />
         ) : null}
       </>
@@ -373,9 +377,9 @@ const EventList: React.FC<Props> = ({ filters, namespace, setLogData }) => {
         </LoadWrapper>
       ) : (
         <TableWrapper>
-          <Table 
-            columns={columns} 
-            data={events} 
+          <Table
+            columns={columns}
+            data={events}
             placeholder="No events found."
           />
           <FlexRow>

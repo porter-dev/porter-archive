@@ -1,10 +1,9 @@
-import styled from "styled-components";
 import React, { Component, MouseEvent, MouseEventHandler } from "react";
-
-import ImageList from "components/image-selector/ImageList";
-import RepoList from "components/repo-selector/RepoList";
-import { ActionConfigType } from "shared/types";
-import { integrationList } from "shared/common";
+import ImageList from "legacy/components/image-selector/ImageList";
+import RepoList from "legacy/components/repo-selector/RepoList";
+import { integrationList } from "legacy/shared/common";
+import { ActionConfigType } from "legacy/shared/types";
+import styled from "styled-components";
 
 import CreateIntegrationForm from "./create-integration/CreateIntegrationForm";
 
@@ -55,7 +54,13 @@ export default class IntegrationRow extends Component<PropsType, StateType> {
       <Integration disabled={false}>
         <MainRow onClick={this.props.toggleCollapse} disabled={false}>
           <Flex>
-            <Icon src={icon ? icon : "https://avatars2.githubusercontent.com/u/52505464?s=400&u=da920f994c67665c7ad6c606a5286557d4f8555f&v=4"} />
+            <Icon
+              src={
+                icon
+                  ? icon
+                  : "https://avatars2.githubusercontent.com/u/52505464?s=400&u=da920f994c67665c7ad6c606a5286557d4f8555f&v=4"
+              }
+            />
             <Description>
               <Label>{this.props.label}</Label>
               <Subtitle>{subtitle}</Subtitle>
@@ -133,7 +138,7 @@ const Integration = styled.div`
     props.disabled ? "not-allowed" : "pointer"};
   margin-bottom: 15px;
   border-radius: 5px;
-  background: ${props => props.theme.clickable.bg};
+  background: ${(props) => props.theme.clickable.bg};
   border: 1px solid #494b4f;
   :hover {
     border: 1px solid #7a7b80;

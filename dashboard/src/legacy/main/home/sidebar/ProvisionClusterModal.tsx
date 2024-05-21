@@ -1,18 +1,17 @@
 import React, { useContext, useState } from "react";
+import GCPProvisionerSettings from "legacy/components/GCPProvisionerSettings";
+import GPUCostConsent from "legacy/components/GPUCostConsent";
+import Modal from "legacy/components/porter/Modal";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import ProvisionerSettings from "legacy/components/ProvisionerSettings";
+import api from "legacy/shared/api";
+import { type InfraCredentials } from "legacy/shared/types";
 import { withRouter, type RouteComponentProps } from "react-router";
 import styled from "styled-components";
 import { z } from "zod";
 
-import GCPProvisionerSettings from "components/GCPProvisionerSettings";
-import GPUCostConsent from "components/GPUCostConsent";
-import Modal from "components/porter/Modal";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import ProvisionerSettings from "components/ProvisionerSettings";
-
-import api from "shared/api";
 import { Context } from "shared/Context";
-import { type InfraCredentials } from "shared/types";
 
 import AzureProvisionerSettings from "../../../components/AzureProvisionerSettings";
 import ClusterRevisionSelector from "../cluster-dashboard/dashboard/ClusterRevisionSelector";

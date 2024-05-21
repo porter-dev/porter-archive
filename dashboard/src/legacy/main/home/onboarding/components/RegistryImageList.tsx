@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
-import Helper from "components/form-components/Helper";
-import api from "shared/api";
+import Helper from "legacy/components/form-components/Helper";
+import api from "legacy/shared/api";
+import { integrationList } from "legacy/shared/common";
 import styled from "styled-components";
-import { integrationList } from "shared/common";
 
 const RegistryImageList: React.FC<{
   project: {
@@ -32,7 +32,7 @@ const RegistryImageList: React.FC<{
         setImageList(res.data);
       })
       .catch(console.error);
-    return () => { };
+    return () => {};
   }, []);
 
   const getIcon = () => {
@@ -91,7 +91,7 @@ const ImageRow = styled.div<{ isLast?: boolean }>`
   font-size: 13px;
   padding: 12px;
   user-select: text;
-  
+
   > img {
     width: 20px;
     filter: grayscale(100%);

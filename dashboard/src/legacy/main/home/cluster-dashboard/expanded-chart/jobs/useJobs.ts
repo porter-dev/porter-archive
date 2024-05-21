@@ -1,18 +1,24 @@
-import { set } from "lodash";
 import { useContext, useEffect, useRef, useState } from "react";
-import api from "shared/api";
-import { Context } from "shared/Context";
-import { NewWebsocketOptions, useWebsockets } from "shared/hooks/useWebsockets";
-import { ChartType, ChartTypeWithExtendedConfig } from "shared/types";
 import yaml from "js-yaml";
-import { usePrevious } from "shared/hooks/usePrevious";
-import { useRouting } from "shared/routing";
-import { PORTER_IMAGE_TEMPLATES } from "shared/common";
+import api from "legacy/shared/api";
+import { PORTER_IMAGE_TEMPLATES } from "legacy/shared/common";
+import { usePrevious } from "legacy/shared/hooks/usePrevious";
+import {
+  useWebsockets,
+  type NewWebsocketOptions,
+} from "legacy/shared/hooks/useWebsockets";
+import { useRouting } from "legacy/shared/routing";
+import {
+  type ChartType,
+  type ChartTypeWithExtendedConfig,
+} from "legacy/shared/types";
+import { set } from "lodash";
+
+import { Context } from "shared/Context";
 
 export const useJobs = (chart: ChartType) => {
-  const { currentProject, currentCluster, setCurrentError } = useContext(
-    Context
-  );
+  const { currentProject, currentCluster, setCurrentError } =
+    useContext(Context);
   const [jobs, setJobs] = useState([]);
   const jobsRef = useRef([]);
   const lastStreamStatus = useRef("");
@@ -28,18 +34,14 @@ export const useJobs = (chart: ChartType) => {
 
   const { pushQueryParams, getQueryParam } = useRouting();
 
-  const {
-    newWebsocket,
-    openWebsocket,
-    closeAllWebsockets,
-    closeWebsocket,
-  } = useWebsockets();
+  const { newWebsocket, openWebsocket, closeAllWebsockets, closeWebsocket } =
+    useWebsockets();
 
   const isBeingDeployed = (latestJob: any) => {
     const currentChart: ChartTypeWithExtendedConfig = chart;
     const chartImage = currentChart.config.image.repository;
 
-    let latestImageDetected =
+    const latestImageDetected =
       latestJob?.spec?.template?.spec?.containers[0]?.image;
 
     if (!PORTER_IMAGE_TEMPLATES.includes(chartImage)) {
@@ -74,7 +76,7 @@ export const useJobs = (chart: ChartType) => {
   };
 
   const addJob = (newJob: any) => {
-    let newJobs = [...jobsRef.current];
+    const newJobs = [...jobsRef.current];
     const existingJobIndex = newJobs.findIndex((currentJob) => {
       return (
         currentJob.metadata?.name === newJob.metadata?.name &&
@@ -91,7 +93,7 @@ export const useJobs = (chart: ChartType) => {
   };
 
   const mergeNewJob = (newJob: any) => {
-    let newJobs = [...jobsRef.current];
+    const newJobs = [...jobsRef.current];
     const existingJobIndex = newJobs.findIndex((currentJob) => {
       return (
         currentJob.metadata?.name === newJob.metadata?.name &&
@@ -108,7 +110,7 @@ export const useJobs = (chart: ChartType) => {
   };
 
   const removeJob = (deletedJob: any) => {
-    let newJobs = jobsRef.current.filter((job: any) => {
+    const newJobs = jobsRef.current.filter((job: any) => {
       return deletedJob.metadata?.name !== job.metadata?.name;
     });
 
@@ -249,7 +251,7 @@ export const useJobs = (chart: ChartType) => {
   };
 
   useEffect(() => {
-    if (!chart || !chart.namespace || !chart.name) {
+    if (!chart?.namespace || !chart.name) {
       return () => {};
     }
 
@@ -336,7 +338,7 @@ export const useJobs = (chart: ChartType) => {
     const config = chart.config;
     const values = {};
 
-    for (let key in config) {
+    for (const key in config) {
       set(values, key, config[key]);
     }
 
@@ -365,17 +367,21 @@ export const useJobs = (chart: ChartType) => {
       )
       .then((res) => {
         setTriggerRunStatus("successful");
-        setTimeout(() => setTriggerRunStatus(""), 500);
+        setTimeout(() => {
+          setTriggerRunStatus("");
+        }, 500);
       })
       .catch((err) => {
-        let parsedErr = err?.response?.data?.error;
+        const parsedErr = err?.response?.data?.error;
 
         if (parsedErr) {
           err = parsedErr;
         }
 
         setTriggerRunStatus("Couldn't trigger a new run for this job.");
-        setTimeout(() => setTriggerRunStatus(""), 500);
+        setTimeout(() => {
+          setTriggerRunStatus("");
+        }, 500);
         setCurrentError(parsedErr);
       });
   };

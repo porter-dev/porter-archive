@@ -1,10 +1,8 @@
 import React from "react";
+import last_run from "legacy/assets/last-run.svg";
+import RadioFilter from "legacy/components/RadioFilter";
+import { JobStatusType } from "legacy/shared/types";
 import styled from "styled-components";
-
-import RadioFilter from "components/RadioFilter";
-import { JobStatusType } from "shared/types";
-
-import last_run from "assets/last-run.svg";
 
 type PropsType = {
   lastRunStatus: JobStatusType;

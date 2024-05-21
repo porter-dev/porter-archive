@@ -1,6 +1,5 @@
+import api from "legacy/shared/api";
 import { z } from "zod";
-
-import api from "shared/api";
 
 export const connectToAwsAccount = async ({
   targetArn,

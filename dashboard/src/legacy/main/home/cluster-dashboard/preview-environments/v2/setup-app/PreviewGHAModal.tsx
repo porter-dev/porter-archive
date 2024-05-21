@@ -1,28 +1,27 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
+import Button from "legacy/components/porter/Button";
+import Checkbox from "legacy/components/porter/Checkbox";
+import Error from "legacy/components/porter/Error";
+import ExpandableSection from "legacy/components/porter/ExpandableSection";
+import Input from "legacy/components/porter/Input";
+import Modal from "legacy/components/porter/Modal";
+import Select from "legacy/components/porter/Select";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import YamlEditor from "legacy/components/YamlEditor";
+import api from "legacy/shared/api";
 import { Controller, useForm } from "react-hook-form";
 import { useHistory } from "react-router";
 import styled from "styled-components";
 import { z } from "zod";
 
-import Button from "components/porter/Button";
-import Checkbox from "components/porter/Checkbox";
-import Error from "components/porter/Error";
-import ExpandableSection from "components/porter/ExpandableSection";
-import Input from "components/porter/Input";
-import Modal from "components/porter/Modal";
-import Select from "components/porter/Select";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import YamlEditor from "components/YamlEditor";
 import { useLatestRevision } from "main/home/app-dashboard/app-view/LatestRevisionContext";
 import RepositorySelector from "main/home/app-dashboard/build-settings/RepositorySelector";
 import { getPreviewGithubAction } from "main/home/app-dashboard/new-app-flow/utils";
 import FileSelector from "main/home/app-dashboard/validate-apply/build-settings/FileSelector";
 import { Code } from "main/home/managed-addons/tabs/shared";
-
-import api from "shared/api";
 
 import { type RepoOverrides } from "../EnvTemplateContextProvider";
 

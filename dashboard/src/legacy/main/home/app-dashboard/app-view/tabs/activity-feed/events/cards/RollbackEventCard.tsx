@@ -1,15 +1,13 @@
 import React from "react";
+import pull_request_icon from "legacy/assets/pull_request_icon.svg";
+import refresh from "legacy/assets/refresh.png";
+import tag_icon from "legacy/assets/tag.png";
+import Container from "legacy/components/porter/Container";
+import Icon from "legacy/components/porter/Icon";
+import Link from "legacy/components/porter/Link";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
 import styled from "styled-components";
-
-import Container from "components/porter/Container";
-import Icon from "components/porter/Icon";
-import Link from "components/porter/Link";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-
-import pull_request_icon from "assets/pull_request_icon.svg";
-import refresh from "assets/refresh.png";
-import tag_icon from "assets/tag.png";
 
 import { getStatusColor, getStatusIcon } from "../utils";
 import {

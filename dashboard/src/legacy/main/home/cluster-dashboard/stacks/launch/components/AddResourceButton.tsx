@@ -1,14 +1,15 @@
 import React, { useContext, useEffect, useState } from "react";
-import api from "shared/api";
-import { PorterTemplate } from "shared/types";
+import DynamicLink from "legacy/components/DynamicLink";
+import api from "legacy/shared/api";
+import { PorterTemplate } from "legacy/shared/types";
 import semver from "semver";
+import styled from "styled-components";
+
+import { Context } from "shared/Context";
+
 import { AddResourceButtonStyles } from "./styles";
 import { TemplateSelector } from "./TemplateSelector";
 import { VersionSelector } from "./VersionSelector";
-import DynamicLink from "components/DynamicLink";
-
-import styled from "styled-components";
-import { Context } from "shared/Context";
 
 export const AddResourceButton = () => {
   const { currentProject, capabilities } = useContext(Context);

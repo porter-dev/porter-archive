@@ -1,16 +1,14 @@
 import { useEffect, useState } from "react";
-import _ from "lodash";
-import pluralize from "pluralize";
-import z from "zod";
-
-import { type ClientService } from "lib/porter-apps/services";
-
-import api from "shared/api";
+import { type ClientService } from "legacy/lib/porter-apps/services";
+import api from "legacy/shared/api";
 import {
   useWebsockets,
   type NewWebsocketOptions,
-} from "shared/hooks/useWebsockets";
-import { valueExists } from "shared/util";
+} from "legacy/shared/hooks/useWebsockets";
+import { valueExists } from "legacy/shared/util";
+import _ from "lodash";
+import pluralize from "pluralize";
+import z from "zod";
 
 export type ClientServiceStatus = {
   status: "running" | "spinningDown" | "failing";

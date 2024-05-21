@@ -1,12 +1,11 @@
 import React, { useEffect, useState } from "react";
+import blog from "legacy/assets/blog.png";
+import docs from "legacy/assets/docs.png";
+import logo from "legacy/assets/logo.png";
+import DynamicLink from "legacy/components/DynamicLink";
+import Container from "legacy/components/porter/Container";
+import Spacer from "legacy/components/porter/Spacer";
 import styled from "styled-components";
-
-import DynamicLink from "components/DynamicLink";
-import Container from "components/porter/Container";
-import Spacer from "components/porter/Spacer";
-import blog from "assets/blog.png";
-import docs from "assets/docs.png";
-import logo from "assets/logo.png";
 
 import Login from "./Login";
 

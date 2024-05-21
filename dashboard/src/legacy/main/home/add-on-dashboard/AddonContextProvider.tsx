@@ -1,24 +1,23 @@
 import React, { createContext, useContext } from "react";
-import styled from "styled-components";
-
-import Loading from "components/Loading";
-import Container from "components/porter/Container";
-import Link from "components/porter/Link";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import { type ClientAddon } from "lib/addons";
+import notFound from "legacy/assets/not-found.png";
+import Loading from "legacy/components/Loading";
+import Container from "legacy/components/porter/Container";
+import Link from "legacy/components/porter/Link";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import { type ClientAddon } from "legacy/lib/addons";
 import {
   useAddon,
   useAddonStatus,
   type ClientAddonStatus,
-} from "lib/hooks/useAddon";
+} from "legacy/lib/hooks/useAddon";
 import {
   useDefaultDeploymentTarget,
   type DeploymentTarget,
-} from "lib/hooks/useDeploymentTarget";
+} from "legacy/lib/hooks/useDeploymentTarget";
+import styled from "styled-components";
 
 import { Context } from "shared/Context";
-import notFound from "assets/not-found.png";
 
 type AddonContextType = {
   addon: ClientAddon;

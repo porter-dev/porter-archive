@@ -1,9 +1,14 @@
-import Anser from "anser";
 import { useContext, useEffect, useMemo, useRef, useState } from "react";
-import api from "shared/api";
+import Anser from "anser";
+import api from "legacy/shared/api";
+import {
+  useWebsockets,
+  type NewWebsocketOptions,
+} from "legacy/shared/hooks/useWebsockets";
+
 import { Context } from "shared/Context";
-import { useWebsockets, NewWebsocketOptions } from "shared/hooks/useWebsockets";
-import { SelectedPodType } from "./types";
+
+import { type SelectedPodType } from "./types";
 
 const MAX_LOGS = 250;
 
@@ -16,13 +21,13 @@ export const useLogs = (
   const { currentCluster, currentProject } = useContext(Context);
   const [containers, setContainers] = useState<string[]>([]);
   const [currentContainer, setCurrentContainer] = useState<string>("");
-  const [logs, setLogs] = useState<{
-    [key: string]: Anser.AnserJsonEntry[][];
-  }>({});
+  const [logs, setLogs] = useState<Record<string, Anser.AnserJsonEntry[][]>>(
+    {}
+  );
 
-  const [prevLogs, setPrevLogs] = useState<{
-    [key: string]: Anser.AnserJsonEntry[][];
-  }>({});
+  const [prevLogs, setPrevLogs] = useState<
+    Record<string, Anser.AnserJsonEntry[][]>
+  >({});
 
   const {
     newWebsocket,
@@ -46,11 +51,11 @@ export const useLogs = (
       )
       .then((res) => res.data);
 
-    let processedLogs = [] as Anser.AnserJsonEntry[][];
+    const processedLogs = [] as Anser.AnserJsonEntry[][];
 
     events.items.forEach((evt: any) => {
-      let ansiEvtType = evt.type == "Warning" ? "\u001b[31m" : "\u001b[32m";
-      let ansiLog = Anser.ansiToJson(
+      const ansiEvtType = evt.type == "Warning" ? "\u001b[31m" : "\u001b[32m";
+      const ansiLog = Anser.ansiToJson(
         `${ansiEvtType}${evt.type}\u001b[0m \t \u001b[43m\u001b[34m\t${evt.reason} \u001b[0m \t ${evt.message}`
       );
       processedLogs.push(ansiLog);
@@ -82,7 +87,7 @@ export const useLogs = (
       // Process logs
       const processedLogs: Anser.AnserJsonEntry[][] = logs.previous_logs.map(
         (currentLog) => {
-          let ansiLog = Anser.ansiToJson(currentLog);
+          const ansiLog = Anser.ansiToJson(currentLog);
           return ansiLog;
         }
       );
@@ -104,10 +109,10 @@ export const useLogs = (
         console.log("Opened websocket:", websocketKey);
       },
       onmessage: (evt: MessageEvent) => {
-        let ansiLog = Anser.ansiToJson(evt.data);
+        const ansiLog = Anser.ansiToJson(evt.data);
         setLogs((logs) => {
           const tmpLogs = { ...logs };
-          let containerLogs = tmpLogs[containerName] || [];
+          const containerLogs = tmpLogs[containerName] || [];
 
           containerLogs.push(ansiLog);
           // this is technically not as efficient as things could be

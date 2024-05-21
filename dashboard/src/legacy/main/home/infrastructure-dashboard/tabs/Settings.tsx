@@ -1,20 +1,19 @@
 import React, { useCallback, useContext, useMemo, useState } from "react";
 import axios from "axios";
+import trash from "legacy/assets/trash.png";
+import Button from "legacy/components/porter/Button";
+import Container from "legacy/components/porter/Container";
+import { Error as ErrorComponent } from "legacy/components/porter/Error";
+import Icon from "legacy/components/porter/Icon";
+import Input from "legacy/components/porter/Input";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import { useDatastoreList } from "legacy/lib/hooks/useDatabaseList";
+import { useIntercom } from "legacy/lib/hooks/useIntercom";
 import { useHistory } from "react-router";
 import { z } from "zod";
 
-import Button from "components/porter/Button";
-import Container from "components/porter/Container";
-import { Error as ErrorComponent } from "components/porter/Error";
-import Icon from "components/porter/Icon";
-import Input from "components/porter/Input";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import { useDatastoreList } from "lib/hooks/useDatabaseList";
-import { useIntercom } from "lib/hooks/useIntercom";
-
 import { Context } from "shared/Context";
-import trash from "assets/trash.png";
 
 import { useClusterContext } from "../ClusterContextProvider";
 import { useClusterFormContext } from "../ClusterFormContextProvider";

@@ -1,16 +1,15 @@
 import React, { Component } from "react";
+import Heading from "legacy/components/form-components/Heading";
+import Helper from "legacy/components/form-components/Helper";
+import api from "legacy/shared/api";
+import { pushFiltered } from "legacy/shared/routing";
+import { ClusterType, DetailedClusterType } from "legacy/shared/types";
+import { RouteComponentProps, withRouter } from "react-router";
 import styled from "styled-components";
 
 import { Context } from "shared/Context";
-import api from "shared/api";
-import { ClusterType, DetailedClusterType } from "shared/types";
-import Helper from "components/form-components/Helper";
-import { pushFiltered } from "shared/routing";
-
-import { RouteComponentProps, withRouter } from "react-router";
 
 import Modal from "../modals/Modal";
-import Heading from "components/form-components/Heading";
 
 type PropsType = RouteComponentProps & {
   currentCluster: ClusterType;
@@ -241,7 +240,7 @@ const TemplateBlock = styled.div`
   color: #ffffff;
   position: relative;
   border-radius: 5px;
-  background: ${props => props.theme.clickable.bg};
+  background: ${(props) => props.theme.clickable.bg};
   border: 1px solid #494b4f;
   :hover {
     border: 1px solid #7a7b80;

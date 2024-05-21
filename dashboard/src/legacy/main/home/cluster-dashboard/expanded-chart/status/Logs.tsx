@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
-import styled from "styled-components";
 import Anser from "anser";
-import CommandLineIcon from "assets/command-line-icon";
+import CommandLineIcon from "legacy/assets/command-line-icon";
+import styled from "styled-components";
+
 import { SelectedPodType } from "./types";
 import { useLogs } from "./useLogs";
 

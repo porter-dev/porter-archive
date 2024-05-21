@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState } from "react";
-import api from "shared/api";
+import api from "legacy/shared/api";
+
 import { Context } from "shared/Context";
+
 import { CreateStackBody } from "../types";
 
 export type StacksLaunchContextType = {
@@ -57,14 +59,12 @@ const defaultValues: StacksLaunchContextType = {
   submit: async () => {},
 };
 
-export const StacksLaunchContext = createContext<StacksLaunchContextType>(
-  defaultValues
-);
+export const StacksLaunchContext =
+  createContext<StacksLaunchContextType>(defaultValues);
 
 const StacksLaunchContextProvider: React.FC<{}> = ({ children }) => {
-  const { currentProject, currentCluster, setCurrentError } = useContext(
-    Context
-  );
+  const { currentProject, currentCluster, setCurrentError } =
+    useContext(Context);
   const [newStack, setNewStack] = useState<CreateStackBody>(
     defaultValues.newStack
   );

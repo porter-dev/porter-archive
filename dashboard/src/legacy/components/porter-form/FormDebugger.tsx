@@ -1,17 +1,19 @@
 import React, { Component } from "react";
-import styled from "styled-components";
-import AceEditor from "react-ace";
-import PorterFormWrapper from "./PorterFormWrapper";
-import CheckboxRow from "components/form-components/CheckboxRow";
-import InputRow from "components/form-components/InputRow";
 import yaml from "js-yaml";
+import CheckboxRow from "legacy/components/form-components/CheckboxRow";
+import InputRow from "legacy/components/form-components/InputRow";
+import AceEditor from "react-ace";
+import styled from "styled-components";
+
+import PorterFormWrapper from "./PorterFormWrapper";
 
 import "shared/ace-porter-theme";
 import "ace-builds/src-noconflict/mode-text";
 
+import { ChartType } from "legacy/shared/types";
+
 import Heading from "../form-components/Heading";
 import Helper from "../form-components/Helper";
-import { ChartType } from "shared/types";
 
 type PropsType = {
   goBack: () => void;

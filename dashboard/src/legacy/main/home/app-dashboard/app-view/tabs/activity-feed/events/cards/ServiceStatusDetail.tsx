@@ -1,24 +1,23 @@
 import React from "react";
+import alert from "legacy/assets/alert-warning.svg";
+import metrics from "legacy/assets/bar-group-03.svg";
+import calendar from "legacy/assets/calendar-02.svg";
+import document from "legacy/assets/document.svg";
+import link from "legacy/assets/external-link.svg";
+import job from "legacy/assets/job.png";
+import web from "legacy/assets/web.png";
+import worker from "legacy/assets/worker.png";
+import Icon from "legacy/components/porter/Icon";
+import Link from "legacy/components/porter/Link";
+import Spacer from "legacy/components/porter/Spacer";
+import Tag from "legacy/components/porter/Tag";
+import Text from "legacy/components/porter/Text";
+import { isClientServiceNotification } from "legacy/lib/porter-apps/notification";
+import { prefixSubdomain } from "legacy/lib/porter-apps/services";
 import styled from "styled-components";
 import { match } from "ts-pattern";
 
-import Icon from "components/porter/Icon";
-import Link from "components/porter/Link";
-import Spacer from "components/porter/Spacer";
-import Tag from "components/porter/Tag";
-import Text from "components/porter/Text";
 import { useLatestRevision } from "main/home/app-dashboard/app-view/LatestRevisionContext";
-import { isClientServiceNotification } from "lib/porter-apps/notification";
-import { prefixSubdomain } from "lib/porter-apps/services";
-
-import alert from "assets/alert-warning.svg";
-import metrics from "assets/bar-group-03.svg";
-import calendar from "assets/calendar-02.svg";
-import document from "assets/document.svg";
-import link from "assets/external-link.svg";
-import job from "assets/job.png";
-import web from "assets/web.png";
-import worker from "assets/worker.png";
 
 import { getStatusColor, getStatusIcon } from "../utils";
 

@@ -1,18 +1,16 @@
 import React, { useMemo } from "react";
+import Button from "legacy/components/porter/Button";
+import Checkbox from "legacy/components/porter/Checkbox";
+import Error from "legacy/components/porter/Error";
+import ExpandableSection from "legacy/components/porter/ExpandableSection";
+import Modal from "legacy/components/porter/Modal";
+import Select from "legacy/components/porter/Select";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import YamlEditor from "legacy/components/YamlEditor";
+import api from "legacy/shared/api";
 import { withRouter, type RouteComponentProps } from "react-router";
 import styled from "styled-components";
-
-import Button from "components/porter/Button";
-import Checkbox from "components/porter/Checkbox";
-import Error from "components/porter/Error";
-import ExpandableSection from "components/porter/ExpandableSection";
-import Modal from "components/porter/Modal";
-import Select from "components/porter/Select";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import YamlEditor from "components/YamlEditor";
-
-import api from "shared/api";
 
 import { getGithubAction } from "./utils";
 

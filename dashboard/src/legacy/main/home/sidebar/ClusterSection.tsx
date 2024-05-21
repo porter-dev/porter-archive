@@ -1,12 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { Tooltip } from "@material-ui/core";
+import job from "legacy/assets/job-bold.png";
+import settings from "legacy/assets/settings.svg";
+import sliders from "legacy/assets/sliders.svg";
+import web from "legacy/assets/web-bold.png";
+import { type ClusterType, type ProjectType } from "legacy/shared/types";
 import styled from "styled-components";
-
-import { type ClusterType, type ProjectType } from "shared/types";
-import job from "assets/job-bold.png";
-import settings from "assets/settings.svg";
-import sliders from "assets/sliders.svg";
-import web from "assets/web-bold.png";
 
 import SidebarLink from "./SidebarLink";
 

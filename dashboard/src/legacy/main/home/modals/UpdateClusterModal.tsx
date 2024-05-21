@@ -1,17 +1,17 @@
 import React, { Component } from "react";
+import close from "legacy/assets/close.png";
+import ConfirmOverlay from "legacy/components/ConfirmOverlay";
+import InputRow from "legacy/components/form-components/InputRow";
+import SaveButton from "legacy/components/SaveButton";
+import api from "legacy/shared/api";
+import { pushFiltered } from "legacy/shared/routing";
+import { NilCluster } from "legacy/shared/types";
 import { withRouter, type RouteComponentProps } from "react-router";
 import styled from "styled-components";
 
-import ConfirmOverlay from "components/ConfirmOverlay";
-import InputRow from "components/form-components/InputRow";
-import SaveButton from "components/SaveButton";
 import { OFState } from "main/home/onboarding/state";
 
-import api from "shared/api";
 import { Context } from "shared/Context";
-import { pushFiltered } from "shared/routing";
-import { NilCluster } from "shared/types";
-import close from "assets/close.png";
 
 import { Onboarding as OnboardingSaveType } from "../onboarding/types";
 

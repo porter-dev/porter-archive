@@ -1,8 +1,10 @@
 import { useContext, useEffect } from "react";
+import { useRouting } from "legacy/shared/routing";
 import { useLocation } from "react-router";
-import { Context } from "shared/Context";
-import { useRouting } from "shared/routing";
 import { proxy, useSnapshot } from "valtio";
+
+import { Context } from "shared/Context";
+
 import { StepKey, Steps } from "../types";
 
 type Step = {
@@ -299,11 +301,11 @@ export const useSteps = (isParentLoading?: boolean) => {
       setHasFinishedOnboarding(true);
     }
     if (currentProject && currentProject.id) {
-      pushFiltered(`${snap.currentStep.url}?project_id=${currentProject.id}`, ["tab"]);
+      pushFiltered(`${snap.currentStep.url}?project_id=${currentProject.id}`, [
+        "tab",
+      ]);
     } else {
       pushFiltered(snap.currentStep.url, ["tab"]);
     }
-
   }, [location.pathname, snap.currentStep?.url, isParentLoading]);
 };
-

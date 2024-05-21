@@ -1,11 +1,9 @@
-import { z } from "zod";
-
 import {
   neonIntegrationValidator,
   type ClientNeonIntegration,
-} from "lib/neon/types";
-
-import api from "shared/api";
+} from "legacy/lib/neon/types";
+import api from "legacy/shared/api";
+import { z } from "zod";
 
 type TUseNeon = {
   getNeonIntegrations: ({

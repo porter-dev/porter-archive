@@ -1,11 +1,10 @@
 import React, { useState } from "react";
+import Button from "legacy/components/porter/Button";
+import Input from "legacy/components/porter/Input";
+import Modal from "legacy/components/porter/Modal";
+import Spacer from "legacy/components/porter/Spacer";
+import { type ClientCloudProvider } from "legacy/lib/clusters/types";
 import { match } from "ts-pattern";
-
-import Button from "components/porter/Button";
-import Input from "components/porter/Input";
-import Modal from "components/porter/Modal";
-import Spacer from "components/porter/Spacer";
-import { type ClientCloudProvider } from "lib/clusters/types";
 
 import AWSCostConsentModalContents from "./AWSCostConsentModalContents";
 import AzureCostConsentModalContents from "./AzureCostConsentModalContents";

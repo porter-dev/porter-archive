@@ -1,17 +1,15 @@
 import React, { useEffect, useRef, useState } from "react";
+import fileIcon from "legacy/assets/file.svg";
+import Button from "legacy/components/porter/Button";
+import Clickable from "legacy/components/porter/Clickable";
+import Container from "legacy/components/porter/Container";
+import Image from "legacy/components/porter/Image";
+import Input from "legacy/components/porter/Input";
+import Modal from "legacy/components/porter/Modal";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
 import AceEditor from "react-ace";
 import styled from "styled-components";
-
-import Button from "components/porter/Button";
-import Clickable from "components/porter/Clickable";
-import Container from "components/porter/Container";
-import Image from "components/porter/Image";
-import Input from "components/porter/Input";
-import Modal from "components/porter/Modal";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-
-import fileIcon from "assets/file.svg";
 
 type File = {
   name: string;

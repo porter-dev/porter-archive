@@ -1,7 +1,8 @@
 import React, { useMemo } from "react";
-import { DeviconsNameList } from "assets/devicons-name-list";
-import styled, { keyframes } from "styled-components";
+import { DeviconsNameList } from "legacy/assets/devicons-name-list";
 import { Draggable } from "react-beautiful-dnd";
+import styled, { keyframes } from "styled-components";
+
 import { Buildpack } from "main/home/app-dashboard/types/buildpack";
 
 interface Props {
@@ -35,7 +36,7 @@ const BuildpackCard: React.FC<Props> = ({
     if (!devicon) {
       return "";
     }
-    return `devicon-${devicon.name}-plain colored`
+    return `devicon-${devicon.name}-plain colored`;
   }, [buildpack.name]);
 
   const renderedBuildpackName = useMemo(() => {
@@ -43,7 +44,11 @@ const BuildpackCard: React.FC<Props> = ({
   }, [buildpack.name]);
 
   return draggable ? (
-    <Draggable draggableId={renderedBuildpackName} index={index} key={renderedBuildpackName}>
+    <Draggable
+      draggableId={renderedBuildpackName}
+      index={index}
+      key={renderedBuildpackName}
+    >
       {(provided) => (
         <StyledCard
           marginBottom="5px"
@@ -123,7 +128,7 @@ const ContentContainer = styled.div`
 const Icon = styled.span`
   font-size: 20px;
   margin-left: 10px;
-  margin-right: 20px
+  margin-right: 20px;
 `;
 
 const EventInformation = styled.div`

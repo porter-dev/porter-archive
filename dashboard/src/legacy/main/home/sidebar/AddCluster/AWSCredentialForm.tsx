@@ -1,15 +1,15 @@
 import React, { useContext, useEffect, useState } from "react";
-import InputRow from "components/form-components/InputRow";
-import SelectRow from "components/form-components/SelectRow";
-import SaveButton from "components/SaveButton";
+import InputRow from "legacy/components/form-components/InputRow";
+import SelectRow from "legacy/components/form-components/SelectRow";
+import Loading from "legacy/components/Loading";
+import Placeholder from "legacy/components/OldPlaceholder";
+import SaveButton from "legacy/components/SaveButton";
+import api from "legacy/shared/api";
+import { readableDate } from "legacy/shared/string_utils";
+import { Operation, OperationStatus, OperationType } from "legacy/shared/types";
+import styled from "styled-components";
 
 import { Context } from "shared/Context";
-import api from "shared/api";
-import styled from "styled-components";
-import Loading from "components/Loading";
-import { Operation, OperationStatus, OperationType } from "shared/types";
-import { readableDate } from "shared/string_utils";
-import Placeholder from "components/OldPlaceholder";
 
 type Props = {
   setCreatedCredential: (aws_integration_id: number) => void;

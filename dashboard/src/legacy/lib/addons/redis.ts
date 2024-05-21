@@ -1,6 +1,5 @@
+import { serviceNumberValidator } from "legacy/lib/porter-apps/values";
 import { z } from "zod";
-
-import { serviceNumberValidator } from "lib/porter-apps/values";
 
 export const redisConfigValidator = z.object({
   type: z.literal("redis"),

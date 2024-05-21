@@ -1,8 +1,7 @@
 import React from "react";
+import leftArrow from "legacy/assets/left-arrow.svg";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
-
-import leftArrow from "assets/left-arrow.svg";
 
 import Container from "./Container";
 

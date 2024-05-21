@@ -1,11 +1,10 @@
 import React, { type Dispatch, type SetStateAction } from "react";
-
-import Button from "components/porter/Button";
-import ExpandableSection from "components/porter/ExpandableSection";
-import Fieldset from "components/porter/Fieldset";
-import Modal from "components/porter/Modal";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
+import Button from "legacy/components/porter/Button";
+import ExpandableSection from "legacy/components/porter/ExpandableSection";
+import Fieldset from "legacy/components/porter/Fieldset";
+import Modal from "legacy/components/porter/Modal";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
 
 import { useCompliance } from "./ComplianceContext";
 

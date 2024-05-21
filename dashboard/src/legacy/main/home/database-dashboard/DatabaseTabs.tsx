@@ -1,9 +1,8 @@
 import React, { useContext, useMemo } from "react";
+import Spacer from "legacy/components/porter/Spacer";
+import TabSelector from "legacy/components/TabSelector";
 import { useHistory } from "react-router";
 import { match } from "ts-pattern";
-
-import Spacer from "components/porter/Spacer";
-import TabSelector from "components/TabSelector";
 
 import { Context } from "shared/Context";
 

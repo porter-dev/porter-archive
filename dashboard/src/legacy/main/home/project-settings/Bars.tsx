@@ -1,4 +1,5 @@
 import React from "react";
+import Text from "legacy/components/porter/Text";
 import {
   Bar,
   BarChart,
@@ -10,8 +11,6 @@ import {
   type TooltipProps,
 } from "recharts";
 import styled from "styled-components";
-
-import Text from "components/porter/Text";
 
 type Props = {
   data: Array<Record<string, unknown>>;

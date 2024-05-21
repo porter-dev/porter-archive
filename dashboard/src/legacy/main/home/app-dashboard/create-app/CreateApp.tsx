@@ -3,47 +3,47 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { type PorterApp } from "@porter-dev/api-contracts";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
+import applicationGrad from "legacy/assets/application-grad.svg";
+import CreateDeploymentTargetModal from "legacy/components/CreateDeploymentTargetModal";
+import Back from "legacy/components/porter/Back";
+import Button from "legacy/components/porter/Button";
+import Container from "legacy/components/porter/Container";
+import { ControlledInput } from "legacy/components/porter/ControlledInput";
+import Error from "legacy/components/porter/Error";
+import Link from "legacy/components/porter/Link";
+import Selector from "legacy/components/porter/Selector";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import VerticalSteps from "legacy/components/porter/VerticalSteps";
+import { useAppAnalytics } from "legacy/lib/hooks/useAppAnalytics";
+import { useAppValidation } from "legacy/lib/hooks/useAppValidation";
+import {
+  useDefaultDeploymentTarget,
+  useDeploymentTargetList,
+  type DeploymentTarget,
+} from "legacy/lib/hooks/useDeploymentTarget";
+import { useIntercom } from "legacy/lib/hooks/useIntercom";
+import { usePorterYaml } from "legacy/lib/hooks/usePorterYaml";
+import { checkIfProjectHasPayment } from "legacy/lib/hooks/useStripe";
+import {
+  APP_CREATE_FORM_DEFAULTS,
+  porterAppFormValidator,
+  type PorterAppFormData,
+  type SourceOptions,
+} from "legacy/lib/porter-apps";
+import api from "legacy/shared/api";
+import { valueExists } from "legacy/shared/util";
 import AnimateHeight from "react-animate-height";
 import { Controller, FormProvider, useForm } from "react-hook-form";
 import { withRouter, type RouteComponentProps } from "react-router";
 import styled from "styled-components";
 import { z } from "zod";
 
-import CreateDeploymentTargetModal from "components/CreateDeploymentTargetModal";
-import Back from "components/porter/Back";
-import Button from "components/porter/Button";
-import Container from "components/porter/Container";
-import { ControlledInput } from "components/porter/ControlledInput";
-import Error from "components/porter/Error";
-import Link from "components/porter/Link";
-import Selector from "components/porter/Selector";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import VerticalSteps from "components/porter/VerticalSteps";
 import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
 import { useClusterContext } from "main/home/infrastructure-dashboard/ClusterContextProvider";
 import BillingModal from "main/home/modals/BillingModal";
-import { useAppAnalytics } from "lib/hooks/useAppAnalytics";
-import { useAppValidation } from "lib/hooks/useAppValidation";
-import {
-  useDefaultDeploymentTarget,
-  useDeploymentTargetList,
-  type DeploymentTarget,
-} from "lib/hooks/useDeploymentTarget";
-import { useIntercom } from "lib/hooks/useIntercom";
-import { usePorterYaml } from "lib/hooks/usePorterYaml";
-import { checkIfProjectHasPayment } from "lib/hooks/useStripe";
-import {
-  APP_CREATE_FORM_DEFAULTS,
-  porterAppFormValidator,
-  type PorterAppFormData,
-  type SourceOptions,
-} from "lib/porter-apps";
 
-import api from "shared/api";
 import { Context } from "shared/Context";
-import { valueExists } from "shared/util";
-import applicationGrad from "assets/application-grad.svg";
 
 import {
   useAppInstances,

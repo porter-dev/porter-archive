@@ -1,12 +1,13 @@
 import React, { useContext, useState } from "react";
+import Placeholder from "legacy/components/Placeholder";
+import api from "legacy/shared/api";
+import usePagination from "legacy/shared/hooks/usePagination";
 import styled from "styled-components";
 
-import api from "shared/api";
-import { Context } from "shared/Context";
-import JobResource from "./JobResource";
 import useAuth from "shared/auth/useAuth";
-import usePagination from "shared/hooks/usePagination";
-import Placeholder from "components/Placeholder";
+import { Context } from "shared/Context";
+
+import JobResource from "./JobResource";
 
 type PropsType = {
   jobs: any[];
@@ -20,12 +21,8 @@ type PropsType = {
 
 const JobListFC = (props: PropsType): JSX.Element => {
   const [isAuthorized] = useAuth();
-  const {
-    currentCluster,
-    currentProject,
-    setCurrentOverlay,
-    setCurrentError,
-  } = useContext(Context);
+  const { currentCluster, currentProject, setCurrentOverlay, setCurrentError } =
+    useContext(Context);
   const [deletionJob, setDeletionJob] = useState(null);
 
   const {
@@ -59,7 +56,7 @@ const JobListFC = (props: PropsType): JSX.Element => {
         setDeletionJob(job);
       })
       .catch((err) => {
-        let parsedErr = err?.response?.data?.error;
+        const parsedErr = err?.response?.data?.error;
         if (parsedErr) {
           err = parsedErr;
         }
@@ -95,8 +92,12 @@ const JobListFC = (props: PropsType): JSX.Element => {
                 handleDelete={() => {
                   setCurrentOverlay({
                     message: "Are you sure you want to delete this job run?",
-                    onYes: () => deleteJob(job),
-                    onNo: () => setCurrentOverlay(null),
+                    onYes: () => {
+                      deleteJob(job);
+                    },
+                    onNo: () => {
+                      setCurrentOverlay(null);
+                    },
                   });
                 }}
                 deleting={deletionJob?.metadata?.name == job.metadata?.name}

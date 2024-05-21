@@ -1,14 +1,13 @@
 import React, { Component } from "react";
-import styled from "styled-components";
 import yaml from "js-yaml";
+import SaveButton from "legacy/components/SaveButton";
+import YamlEditor from "legacy/components/YamlEditor";
+import api from "legacy/shared/api";
+import { StorageType, type ChartType } from "legacy/shared/types";
 import _ from "lodash";
+import styled from "styled-components";
 
-import { ChartType, StorageType } from "shared/types";
-import api from "shared/api";
 import { Context } from "shared/Context";
-
-import YamlEditor from "components/YamlEditor";
-import SaveButton from "components/SaveButton";
 
 type PropsType = {
   currentChart: ChartType;
@@ -47,7 +46,7 @@ export default class ValuesYaml extends Component<PropsType, StateType> {
   }
 
   handleSaveValues = () => {
-    let { currentCluster, setCurrentError, currentProject } = this.context;
+    const { currentCluster, setCurrentError, currentProject } = this.context;
     this.setState({ saveValuesStatus: "loading" });
 
     let valuesString = this.state.values;
@@ -78,7 +77,7 @@ export default class ValuesYaml extends Component<PropsType, StateType> {
         this.props.refreshChart();
       })
       .catch((err) => {
-        let parsedErr = err?.response?.data?.error;
+        const parsedErr = err?.response?.data?.error;
 
         if (parsedErr) {
           err = parsedErr;
@@ -98,7 +97,9 @@ export default class ValuesYaml extends Component<PropsType, StateType> {
         <Wrapper>
           <YamlEditor
             value={this.state.values}
-            onChange={(e: any) => this.setState({ values: e })}
+            onChange={(e: any) => {
+              this.setState({ values: e });
+            }}
             readOnly={this.props.disabled}
             height="calc(100vh - 412px)"
           />

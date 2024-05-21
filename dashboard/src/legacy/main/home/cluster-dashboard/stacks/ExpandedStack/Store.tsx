@@ -1,10 +1,12 @@
-import Loading from "components/Loading";
-import Placeholder from "components/OldPlaceholder";
 import React, { createContext, useContext, useEffect, useState } from "react";
+import Loading from "legacy/components/Loading";
+import Placeholder from "legacy/components/OldPlaceholder";
+import api from "legacy/shared/api";
+import { useRouting } from "legacy/shared/routing";
 import { useParams } from "react-router";
-import api from "shared/api";
+
 import { Context } from "shared/Context";
-import { useRouting } from "shared/routing";
+
 import type { Stack } from "../types";
 
 interface StoreType {
@@ -20,9 +22,8 @@ const defaultValues: StoreType = {
 export const ExpandedStackStore = createContext(defaultValues);
 
 const ExpandedStackStoreProvider: React.FC = ({ children }) => {
-  const { currentProject, currentCluster, setCurrentError } = useContext(
-    Context
-  );
+  const { currentProject, currentCluster, setCurrentError } =
+    useContext(Context);
 
   const [stack, setStack] = useState<Stack>(null);
   const [isLoading, setIsLoading] = useState(true);

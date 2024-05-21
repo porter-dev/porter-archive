@@ -1,33 +1,36 @@
 import React, { useContext, useEffect, useState } from "react";
-import styled from "styled-components";
 import ParentSize from "@visx/responsive/lib/components/ParentSize";
+import settings from "legacy/assets/settings.svg";
+import CheckboxRow from "legacy/components/form-components/CheckboxRow";
+import SelectRow from "legacy/components/form-components/SelectRow";
+import Loading from "legacy/components/Loading";
+import TabSelector from "legacy/components/TabSelector";
+import api from "legacy/shared/api";
+import {
+  StorageType,
+  type ChartTypeWithExtendedConfig,
+} from "legacy/shared/types";
+import styled from "styled-components";
 
-import settings from "assets/settings.svg";
-import api from "shared/api";
 import { Context } from "shared/Context";
-import { ChartTypeWithExtendedConfig, StorageType } from "shared/types";
 
-import TabSelector from "components/TabSelector";
-import Loading from "components/Loading";
-import SelectRow from "components/form-components/SelectRow";
 import AreaChart from "./AreaChart";
 import { MetricNormalizer } from "./MetricNormalizer";
-import { AvailableMetrics, NormalizedMetricsData } from "./types";
-import CheckboxRow from "components/form-components/CheckboxRow";
+import { type AvailableMetrics, type NormalizedMetricsData } from "./types";
 
 type PropsType = {
   jobChart: ChartTypeWithExtendedConfig;
   jobRun: any;
 };
 
-export const resolutions: { [range: string]: string } = {
+export const resolutions: Record<string, string> = {
   "1H": "1s",
   "6H": "15s",
   "1D": "15s",
   "1M": "5h",
 };
 
-export const secondsBeforeNow: { [range: string]: number } = {
+export const secondsBeforeNow: Record<string, number> = {
   "1H": 60 * 60,
   "6H": 60 * 60 * 6,
   "1D": 60 * 60 * 24,
@@ -60,9 +63,8 @@ const JobMetricsSection: React.FunctionComponent<PropsType> = ({
     currentChart?.config?.autoscaling?.enabled
   );
 
-  const { currentCluster, currentProject, setCurrentError } = useContext(
-    Context
-  );
+  const { currentCluster, currentProject, setCurrentError } =
+    useContext(Context);
 
   useEffect(() => {
     setIsLoading((prev) => prev + 1);
@@ -81,7 +83,7 @@ const JobMetricsSection: React.FunctionComponent<PropsType> = ({
       )
       .then((res) => {
         const controllerOptions = res.data.map((controller: any) => {
-          let name = controller?.metadata?.name;
+          const name = controller?.metadata?.name;
           return { value: controller, label: name };
         });
 
@@ -102,7 +104,7 @@ const JobMetricsSection: React.FunctionComponent<PropsType> = ({
   //
   // This breaks down if the job runs for over 6 years.
   const getJobResolution = (start: number, end: number) => {
-    let duration = end - start;
+    const duration = end - start;
     if (duration <= 3600) {
       return "1s";
     } else if (duration <= 54000) {
@@ -128,10 +130,10 @@ const JobMetricsSection: React.FunctionComponent<PropsType> = ({
         "<token>",
         {
           metric: metricType,
-          shouldsum: shouldsum,
+          shouldsum,
           kind: selectedController?.kind,
           name: selectedController?.metadata.name,
-          namespace: namespace,
+          namespace,
           startrange: start,
           endrange: end,
           resolution: getJobResolution(start, end),
@@ -148,7 +150,6 @@ const JobMetricsSection: React.FunctionComponent<PropsType> = ({
       }
       const autoscalingMetrics = new MetricNormalizer(res.data, metricType);
       setHpaData(autoscalingMetrics.getParsedData());
-      return;
     } catch (error) {
       console.error(error);
     } finally {
@@ -158,7 +159,7 @@ const JobMetricsSection: React.FunctionComponent<PropsType> = ({
 
   const getMetrics = async () => {
     try {
-      let namespace = currentChart.namespace;
+      const namespace = currentChart.namespace;
 
       const start = Math.round(
         new Date(jobRun?.status?.startTime).getTime() / 1000
@@ -182,7 +183,7 @@ const JobMetricsSection: React.FunctionComponent<PropsType> = ({
           shouldsum: true,
           kind: "job",
           name: jobRun?.metadata?.name,
-          namespace: namespace,
+          namespace,
           startrange: start,
           endrange: end,
           resolution: getJobResolution(start, end),
@@ -221,13 +222,19 @@ const JobMetricsSection: React.FunctionComponent<PropsType> = ({
       if (selectedMetric == "nginx:errors") {
         return (
           <>
-            <DropdownOverlay onClick={() => setShowMetricsSettings(false)} />
+            <DropdownOverlay
+              onClick={() => {
+                setShowMetricsSettings(false);
+              }}
+            />
             <DropdownAlt dropdownWidth="330px" dropdownMaxHeight="300px">
               <Label>Additional Settings</Label>
               <SelectRow
                 label="Target Ingress"
                 value={selectedIngress}
-                setActiveValue={(x: any) => setSelectedIngress(x)}
+                setActiveValue={(x: any) => {
+                  setSelectedIngress(x);
+                }}
                 options={ingressOptions}
                 width="100%"
               />
@@ -238,13 +245,19 @@ const JobMetricsSection: React.FunctionComponent<PropsType> = ({
 
       return (
         <>
-          <DropdownOverlay onClick={() => setShowMetricsSettings(false)} />
+          <DropdownOverlay
+            onClick={() => {
+              setShowMetricsSettings(false);
+            }}
+          />
           <DropdownAlt dropdownWidth="330px" dropdownMaxHeight="300px">
             <Label>Additional Settings</Label>
             <SelectRow
               label="Target Controller"
               value={selectedController}
-              setActiveValue={(x: any) => setSelectedController(x)}
+              setActiveValue={(x: any) => {
+                setSelectedController(x);
+              }}
               options={controllerOptions}
               width="100%"
             />
@@ -258,11 +271,17 @@ const JobMetricsSection: React.FunctionComponent<PropsType> = ({
     if (dropdownExpanded) {
       return (
         <>
-          <DropdownOverlay onClick={() => setDropdownExpanded(false)} />
+          <DropdownOverlay
+            onClick={() => {
+              setDropdownExpanded(false);
+            }}
+          />
           <Dropdown
             dropdownWidth="230px"
             dropdownMaxHeight="200px"
-            onClick={() => setDropdownExpanded(false)}
+            onClick={() => {
+              setDropdownExpanded(false);
+            }}
           >
             {renderOptionList()}
           </Dropdown>
@@ -305,7 +324,9 @@ const JobMetricsSection: React.FunctionComponent<PropsType> = ({
       <MetricsHeader>
         <Flex>
           <MetricSelector
-            onClick={() => setDropdownExpanded(!dropdownExpanded)}
+            onClick={() => {
+              setDropdownExpanded(!dropdownExpanded);
+            }}
           >
             <MetricsLabel>{selectedMetricLabel}</MetricsLabel>
             <i className="material-icons">arrow_drop_down</i>
@@ -343,7 +364,9 @@ const JobMetricsSection: React.FunctionComponent<PropsType> = ({
           {currentChart?.config?.autoscaling?.enabled &&
             ["cpu", "memory"].includes(selectedMetric) && (
               <CheckboxRow
-                toggle={() => setHpaEnabled((prev: any) => !prev)}
+                toggle={() => {
+                  setHpaEnabled((prev: any) => !prev);
+                }}
                 checked={hpaEnabled}
                 label="Show Autoscaling Threshold"
               />

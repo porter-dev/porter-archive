@@ -1,13 +1,14 @@
-import React, { MouseEvent, useContext, useState } from "react";
-import styled from "styled-components";
-import { Context } from "shared/Context";
+import React, { useContext, useState, type MouseEvent } from "react";
+import DynamicLink from "legacy/components/DynamicLink";
+import api from "legacy/shared/api";
+import { usePods } from "legacy/shared/hooks/usePods";
+import { readableDate } from "legacy/shared/string_utils";
 import _ from "lodash";
+import styled from "styled-components";
 
-import api from "shared/api";
-import DynamicLink from "components/DynamicLink";
-import { readableDate } from "shared/string_utils";
+import { Context } from "shared/Context";
+
 import { isRunning, renderStatus } from "./ExpandedJobRun";
-import { usePods } from "shared/hooks/usePods";
 
 type Props = {
   job: any;
@@ -22,9 +23,8 @@ type Props = {
 };
 
 const JobResource: React.FC<Props> = (props) => {
-  const { currentProject, currentCluster, setCurrentError } = useContext(
-    Context
-  );
+  const { currentProject, currentCluster, setCurrentError } =
+    useContext(Context);
 
   const [showConnectionModal, setShowConnectionModal] = useState(false);
 
@@ -56,7 +56,7 @@ const JobResource: React.FC<Props> = (props) => {
       )
       .then(() => {})
       .catch((err) => {
-        let parsedErr = err?.response?.data?.error;
+        const parsedErr = err?.response?.data?.error;
         if (parsedErr) {
           err = parsedErr;
         }
@@ -149,7 +149,9 @@ const JobResource: React.FC<Props> = (props) => {
       return (
         <DynamicLink
           to={`https://github.com/${props.repositoryUrl}/commit/${tag}`}
-          onClick={(e) => e.preventDefault()}
+          onClick={(e) => {
+            e.preventDefault();
+          }}
           target="_blank"
         >
           {tag}
@@ -175,9 +177,8 @@ const JobResource: React.FC<Props> = (props) => {
 
   const icon =
     "https://user-images.githubusercontent.com/65516095/111258413-4e2c3800-85f3-11eb-8a6a-88e03460f8fe.png";
-  const commandString = props.job?.spec?.template?.spec?.containers[0]?.command?.join(
-    " "
-  );
+  const commandString =
+    props.job?.spec?.template?.spec?.containers[0]?.command?.join(" ");
 
   return (
     <>
@@ -279,7 +280,7 @@ const StyledJob = styled.div`
   margin-bottom: 20px;
   overflow: hidden;
   border-radius: 5px;
-  background: ${props => props.theme.clickable.bg};
+  background: ${(props) => props.theme.clickable.bg};
   border: 1px solid #494b4f;
   :hover {
     border: 1px solid #7a7b80;

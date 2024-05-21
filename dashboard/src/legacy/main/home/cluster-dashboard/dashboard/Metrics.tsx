@@ -1,30 +1,31 @@
-import React, { useContext, useState, useEffect } from "react";
-import { Context } from "shared/Context";
-import api from "shared/api";
-import styled from "styled-components";
-import Loading from "components/Loading";
-import settings from "assets/settings.svg";
-import TabSelector from "components/TabSelector";
-import Placeholder from "components/OldPlaceholder";
+import React, { useContext, useEffect, useState } from "react";
 import ParentSize from "@visx/responsive/lib/components/ParentSize";
-import AreaChart from "../expanded-chart/metrics/AreaChart";
-import {
-  AvailableMetrics,
-  GenericMetricResponse,
-  NormalizedMetricsData,
-} from "../expanded-chart/metrics/types";
+import settings from "legacy/assets/settings.svg";
+import Loading from "legacy/components/Loading";
+import Placeholder from "legacy/components/OldPlaceholder";
+import TabSelector from "legacy/components/TabSelector";
+import api from "legacy/shared/api";
+import styled from "styled-components";
+
+import { Context } from "shared/Context";
+
 import SelectRow from "../../../../components/form-components/SelectRow";
+import AggregatedDataLegend from "../expanded-chart/metrics/AggregatedDataLegend";
+import AreaChart from "../expanded-chart/metrics/AreaChart";
 import { MetricNormalizer } from "../expanded-chart/metrics/MetricNormalizer";
 import {
   resolutions,
   secondsBeforeNow,
 } from "../expanded-chart/metrics/MetricsSection";
-import AggregatedDataLegend from "../expanded-chart/metrics/AggregatedDataLegend";
+import {
+  type AvailableMetrics,
+  type GenericMetricResponse,
+  type NormalizedMetricsData,
+} from "../expanded-chart/metrics/types";
 
 const Metrics: React.FC = () => {
-  const { currentProject, currentCluster, setCurrentError } = useContext(
-    Context
-  );
+  const { currentProject, currentCluster, setCurrentError } =
+    useContext(Context);
   const [loading, setLoading] = useState(true);
   const [detected, setDetected] = useState(false);
   const [metricsOptions, setMetricsOptions] = useState([]);
@@ -130,13 +131,19 @@ const Metrics: React.FC = () => {
     if (showMetricsSettings) {
       return (
         <>
-          <DropdownOverlay onClick={() => setShowMetricsSettings(false)} />
+          <DropdownOverlay
+            onClick={() => {
+              setShowMetricsSettings(false);
+            }}
+          />
           <DropdownAlt dropdownWidth="330px" dropdownMaxHeight="300px">
             <Label>Additional Settings</Label>
             <SelectRow
               label="Target Ingress"
               value={selectedIngress}
-              setActiveValue={(x: any) => setSelectedIngress(x)}
+              setActiveValue={(x: any) => {
+                setSelectedIngress(x);
+              }}
               options={ingressOptions}
               width="100%"
             />
@@ -174,11 +181,17 @@ const Metrics: React.FC = () => {
     if (dropdownExpanded) {
       return (
         <>
-          <DropdownOverlay onClick={() => setDropdownExpanded(false)} />
+          <DropdownOverlay
+            onClick={() => {
+              setDropdownExpanded(false);
+            }}
+          />
           <Dropdown
             dropdownWidth="230px"
             dropdownMaxHeight="200px"
-            onClick={() => setDropdownExpanded(false)}
+            onClick={() => {
+              setDropdownExpanded(false);
+            }}
           >
             {renderOptionList()}
           </Dropdown>
@@ -209,8 +222,8 @@ const Metrics: React.FC = () => {
 
   const getMetrics = async () => {
     try {
-      let shouldsum = true;
-      let namespace = "default";
+      const shouldsum = true;
+      const namespace = "default";
 
       // calculate start and end range
       const d = new Date();
@@ -315,14 +328,20 @@ const Metrics: React.FC = () => {
       <Header>
         <Flex>
           <MetricSelector
-            onClick={() => setDropdownExpanded(!dropdownExpanded)}
+            onClick={() => {
+              setDropdownExpanded(!dropdownExpanded);
+            }}
           >
             <MetricsLabel>{selectedMetricLabel}</MetricsLabel>
             <i className="material-icons">arrow_drop_down</i>
             {renderDropdown()}
           </MetricSelector>
           <Relative>
-            <IconWrapper onClick={() => setShowMetricsSettings(true)}>
+            <IconWrapper
+              onClick={() => {
+                setShowMetricsSettings(true);
+              }}
+            >
               <SettingsIcon src={settings} />
             </IconWrapper>
             {renderMetricsSettings()}
@@ -342,7 +361,9 @@ const Metrics: React.FC = () => {
               { value: "1M", label: "1M" },
             ]}
             currentTab={selectedRange}
-            setCurrentTab={(x: string) => setSelectedRange(x)}
+            setCurrentTab={(x: string) => {
+              setSelectedRange(x);
+            }}
           />
         </RangeWrapper>
       </Header>

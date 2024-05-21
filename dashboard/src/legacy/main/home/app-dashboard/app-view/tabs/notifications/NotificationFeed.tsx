@@ -1,13 +1,12 @@
 import React from "react";
+import Fieldset from "legacy/components/porter/Fieldset";
+import Link from "legacy/components/porter/Link";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import { type DeploymentTarget } from "legacy/lib/hooks/useDeploymentTarget";
+import { type ClientNotification } from "legacy/lib/porter-apps/notification";
 import { useHistory, useLocation } from "react-router";
 import styled from "styled-components";
-
-import Fieldset from "components/porter/Fieldset";
-import Link from "components/porter/Link";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import { type DeploymentTarget } from "lib/hooks/useDeploymentTarget";
-import { type ClientNotification } from "lib/porter-apps/notification";
 
 import { useLatestRevision } from "../../LatestRevisionContext";
 import { NotificationContextProvider } from "./expanded-views/NotificationContextProvider";

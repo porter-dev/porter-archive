@@ -1,13 +1,11 @@
 import React, { useState } from "react";
+import file from "legacy/assets/file_v2.svg";
+import file_branch from "legacy/assets/file-branch.svg";
+import folder from "legacy/assets/folder_v2.svg";
+import Loading from "legacy/components/Loading";
+import { useGithubContents } from "legacy/lib/hooks/useGithubContents";
 import styled from "styled-components";
 import { match } from "ts-pattern";
-
-import Loading from "components/Loading";
-import { useGithubContents } from "lib/hooks/useGithubContents";
-
-import file from "assets/file_v2.svg";
-import file_branch from "assets/file-branch.svg";
-import folder from "assets/folder_v2.svg";
 
 type Props = {
   repoId: number;

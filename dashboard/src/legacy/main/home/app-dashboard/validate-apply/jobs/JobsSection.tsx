@@ -1,19 +1,17 @@
 import React, { useMemo, useState } from "react";
+import history from "legacy/assets/history.png";
+import SelectRow from "legacy/components/form-components/SelectRow";
+import Table from "legacy/components/OldTable";
+import Container from "legacy/components/porter/Container";
+import Link from "legacy/components/porter/Link";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import { useJobs, type JobRun } from "legacy/lib/hooks/useJobs";
+import { relativeDate } from "legacy/shared/string_utils";
 import { useLocation } from "react-router";
 import { type Column } from "react-table";
 import styled from "styled-components";
 import { match } from "ts-pattern";
-
-import SelectRow from "components/form-components/SelectRow";
-import Table from "components/OldTable";
-import Container from "components/porter/Container";
-import Link from "components/porter/Link";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import { useJobs, type JobRun } from "lib/hooks/useJobs";
-
-import { relativeDate } from "shared/string_utils";
-import history from "assets/history.png";
 
 import { useLatestRevision } from "../../app-view/LatestRevisionContext";
 import { getStatusColor } from "../../app-view/tabs/activity-feed/events/utils";

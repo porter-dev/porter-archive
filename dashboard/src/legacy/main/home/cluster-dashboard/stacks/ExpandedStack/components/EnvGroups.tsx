@@ -1,13 +1,15 @@
 import React, { useContext, useEffect, useState } from "react";
-import api from "shared/api";
+import sliders from "legacy/assets/sliders.svg";
+import DynamicLink from "legacy/components/DynamicLink";
+import Loading from "legacy/components/Loading";
+import Placeholder from "legacy/components/OldPlaceholder";
+import api from "legacy/shared/api";
+import { useRouteMatch } from "react-router";
+
 import { Context } from "shared/Context";
+
 import { Card } from "../../launch/components/styles";
 import { Stack } from "../../types";
-import sliders from "assets/sliders.svg";
-import DynamicLink from "components/DynamicLink";
-import Placeholder from "components/OldPlaceholder";
-import Loading from "components/Loading";
-import { useRouteMatch } from "react-router";
 
 type PopulatedEnvGroup = {
   applications: string[];

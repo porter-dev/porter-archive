@@ -1,17 +1,17 @@
-import React, { useState, useContext } from "react";
+import React, { useContext, useState } from "react";
+import api from "legacy/shared/api";
 import styled from "styled-components";
 
 import { Context } from "shared/Context";
-import api from "shared/api";
 
-import Modal from "./porter/Modal";
-import Text from "./porter/Text";
-import Spacer from "./porter/Spacer";
-import Fieldset from "./porter/Fieldset";
 import Button from "./porter/Button";
 import ExpandableSection from "./porter/ExpandableSection";
+import Fieldset from "./porter/Fieldset";
 import Input from "./porter/Input";
 import Link from "./porter/Link";
+import Modal from "./porter/Modal";
+import Spacer from "./porter/Spacer";
+import Text from "./porter/Text";
 
 type Props = {
   setCurrentStep: (step: string) => void;
@@ -38,9 +38,9 @@ const GCPCostConsent: React.FC<Props> = ({
         <Text size={16}>Base GCP cost consent</Text>
         <Spacer height="15px" />
         <Text color="helper">
-          Porter will create the underlying infrastructure in your own GCP project.
-          You will be separately charged by GCP for this infrastructure.
-          The cost for this base infrastructure is as follows:
+          Porter will create the underlying infrastructure in your own GCP
+          project. You will be separately charged by GCP for this
+          infrastructure. The cost for this base infrastructure is as follows:
         </Text>
         <Spacer y={1} />
         <ExpandableSection
@@ -93,8 +93,8 @@ const GCPCostConsent: React.FC<Props> = ({
         <Spacer y={0.5} />
         <Text color="helper">
           All GCP resources will be automatically deleted when you delete your
-          Porter project. Please enter the GCP base cost ("{costTotal}") below to
-          proceed:
+          Porter project. Please enter the GCP base cost ("{costTotal}") below
+          to proceed:
         </Text>
         <Spacer y={1} />
         <Input

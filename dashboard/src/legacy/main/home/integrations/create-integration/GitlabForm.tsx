@@ -1,13 +1,15 @@
-import Heading from "components/form-components/Heading";
-import InputRow from "components/form-components/InputRow";
-import SaveButton from "components/SaveButton";
 import React, { useContext, useState } from "react";
-import api from "shared/api";
-import { Context } from "shared/Context";
-import { useRouting } from "shared/routing";
+import Heading from "legacy/components/form-components/Heading";
+import InputRow from "legacy/components/form-components/InputRow";
+import SaveButton from "legacy/components/SaveButton";
+import api from "legacy/shared/api";
+import { useRouting } from "legacy/shared/routing";
 import styled from "styled-components";
 
-const URLRegex = /(http(s)?):\/\/[(www\.)?a-zA-Z0-9@:%._\+~#=\-]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/;
+import { Context } from "shared/Context";
+
+const URLRegex =
+  /(http(s)?):\/\/[(www\.)?a-zA-Z0-9@:%._\+~#=\-]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/;
 
 type Props = {
   closeForm: () => void;

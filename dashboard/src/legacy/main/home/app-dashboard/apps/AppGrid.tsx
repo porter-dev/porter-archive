@@ -1,22 +1,21 @@
 import React, { useContext, useMemo } from "react";
 import { PorterApp } from "@porter-dev/api-contracts";
+import notFound from "legacy/assets/not-found.png";
+import target from "legacy/assets/target.svg";
+import time from "legacy/assets/time.png";
+import Container from "legacy/components/porter/Container";
+import Fieldset from "legacy/components/porter/Fieldset";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import { type ClientAddon } from "legacy/lib/addons";
+import { search } from "legacy/shared/search";
+import { readableDate } from "legacy/shared/string_utils";
 import _ from "lodash";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
 import { match } from "ts-pattern";
 
-import Container from "components/porter/Container";
-import Fieldset from "components/porter/Fieldset";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import { type ClientAddon } from "lib/addons";
-
 import { useDeploymentTarget } from "shared/DeploymentTargetContext";
-import { search } from "shared/search";
-import { readableDate } from "shared/string_utils";
-import notFound from "assets/not-found.png";
-import target from "assets/target.svg";
-import time from "assets/time.png";
 
 import { Context } from "../../../../shared/Context";
 import { Addon } from "./Addon";

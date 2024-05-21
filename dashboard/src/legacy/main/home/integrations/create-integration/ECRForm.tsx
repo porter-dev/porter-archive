@@ -1,13 +1,12 @@
 import React, { Component } from "react";
+import Heading from "legacy/components/form-components/Heading";
+import Helper from "legacy/components/form-components/Helper";
+import InputRow from "legacy/components/form-components/InputRow";
+import SaveButton from "legacy/components/SaveButton";
+import api from "legacy/shared/api";
 import styled from "styled-components";
 
 import { Context } from "shared/Context";
-import api from "shared/api";
-
-import InputRow from "components/form-components/InputRow";
-import SaveButton from "components/SaveButton";
-import Heading from "components/form-components/Heading";
-import Helper from "components/form-components/Helper";
 
 type PropsType = {
   closeForm: () => void;

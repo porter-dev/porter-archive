@@ -1,36 +1,42 @@
-import React, { useEffect, useState, useContext } from "react";
+import React, { useContext, useEffect, useState } from "react";
+import failure from "legacy/assets/failure.svg";
+import healthy from "legacy/assets/status-healthy.png";
+import {
+  PREFLIGHT_MESSAGE_CONST,
+  PREFLIGHT_MESSAGE_CONST_AWS,
+  PREFLIGHT_MESSAGE_CONST_GCP,
+  PROVISIONING_STATUS,
+} from "legacy/shared/util";
+import { withRouter, type RouteComponentProps } from "react-router";
 import styled from "styled-components";
-import { type RouteComponentProps, withRouter } from "react-router";
+
+import Loading from "./Loading";
+import Error from "./porter/Error";
+import Link from "./porter/Link";
 import Spacer from "./porter/Spacer";
 import Step from "./porter/Step";
-import Link from "./porter/Link";
 import Text from "./porter/Text";
-import Error from "./porter/Error";
-import healthy from "assets/status-healthy.png";
-import failure from "assets/failure.svg";
-import { PREFLIGHT_MESSAGE_CONST, PREFLIGHT_MESSAGE_CONST_AWS, PREFLIGHT_MESSAGE_CONST_GCP, PROVISIONING_STATUS } from "shared/util";
-import Loading from "./Loading";
-type Props = RouteComponentProps & {
-  preflightData: any
-  provider: 'AWS' | 'GCP' | 'DEFAULT' | 'PROVISIONING_STATUS';
-  error?: string;
 
+type Props = RouteComponentProps & {
+  preflightData: any;
+  provider: "AWS" | "GCP" | "DEFAULT" | "PROVISIONING_STATUS";
+  error?: string;
 };
 type ItemProps = RouteComponentProps & {
-  checkKey: string
-  checkLabel?: string
+  checkKey: string;
+  checkLabel?: string;
 };
 
-
 const PreflightChecks: React.FC<Props> = (props) => {
-
-  const getMessageConstByProvider = (provider: 'AWS' | 'GCP' | 'DEFAULT' | 'PROVISIONING_STATUS') => {
+  const getMessageConstByProvider = (
+    provider: "AWS" | "GCP" | "DEFAULT" | "PROVISIONING_STATUS"
+  ) => {
     switch (provider) {
-      case 'PROVISIONING_STATUS':
+      case "PROVISIONING_STATUS":
         return PROVISIONING_STATUS;
-      case 'AWS':
+      case "AWS":
         return PREFLIGHT_MESSAGE_CONST_AWS;
-      case 'GCP':
+      case "GCP":
         return PREFLIGHT_MESSAGE_CONST_GCP;
       default:
         return PREFLIGHT_MESSAGE_CONST;
@@ -42,11 +48,13 @@ const PreflightChecks: React.FC<Props> = (props) => {
 
   const combinedKeys = new Set([
     ...Object.keys(currentMessageConst),
-    ...Object.keys(preflightChecks)
+    ...Object.keys(preflightChecks),
   ]);
 
-
-  const PreflightCheckItem: React.FC<ItemProps> = ({ checkKey, checkLabel }) => {
+  const PreflightCheckItem: React.FC<ItemProps> = ({
+    checkKey,
+    checkLabel,
+  }) => {
     // Using optional chaining to prevent potential null/undefined errors
     const checkLabelConst = currentMessageConst[checkKey];
     const checkData = props.preflightData?.preflight_checks?.[checkKey];
@@ -59,26 +67,25 @@ const PreflightChecks: React.FC<Props> = (props) => {
       }
     };
 
-
-
     return (
       <CheckItemContainer hasMessage={hasMessage}>
         <CheckItemTop onClick={handleToggle}>
           {!props.preflightData ? (
-            <Loading
-              offset="0px"
-              width="20px"
-              height="20px" />
+            <Loading offset="0px" width="20px" height="20px" />
           ) : hasMessage ? (
             <StatusIcon src={failure} />
           ) : (
             <StatusIcon src={healthy} />
           )}
           <Spacer inline x={1} />
-          <Text style={{ marginLeft: '10px', flex: 1 }}>{checkLabel ?? checkLabelConst}</Text>
-          {hasMessage && <ExpandIcon className="material-icons" isExpanded={isExpanded}>
-            arrow_drop_down
-          </ExpandIcon>}
+          <Text style={{ marginLeft: "10px", flex: 1 }}>
+            {checkLabel ?? checkLabelConst}
+          </Text>
+          {hasMessage && (
+            <ExpandIcon className="material-icons" isExpanded={isExpanded}>
+              arrow_drop_down
+            </ExpandIcon>
+          )}
         </CheckItemTop>
         {isExpanded && hasMessage && (
           <div>
@@ -91,7 +98,7 @@ const PreflightChecks: React.FC<Props> = (props) => {
               }
               errorModalContents={errorMessageToModal(checkData?.message)}
             />
-            <Spacer y={.5} />
+            <Spacer y={0.5} />
             {checkData?.metadata &&
               Object.entries(checkData.metadata).map(([key, value]) => (
                 <>
@@ -106,62 +113,59 @@ const PreflightChecks: React.FC<Props> = (props) => {
       </CheckItemContainer>
     );
   };
-  return (
-
-    props.provider === 'DEFAULT' ?
-      <AppearingDiv>
-        {Object.keys(currentMessageConst).map((checkKey) => (
-          <PreflightCheckItem key={checkKey} checkKey={checkKey} />
-        ))}
-      </AppearingDiv >
-      :
-
-      (
-        <AppearingDiv>
-          <Text size={16}>Cluster provision check</Text>
-          <Spacer y={.5} />
-          <Text color="helper">
-            Porter checks that the account has the right permissions and resources to provision a cluster.
-          </Text>
-          <Spacer y={1} />
-          {
-            props.error ?
-              props.provider === 'AWS' ?
-                <Error message="Selected region is not available for your account. Please select another region" /> :
-                <>
-                  <Error message="There is an error with your account. Please ensure billing is enabled or contact Porter Support: support@porter.run" />
-                  <Spacer y={.5} />
-                  <Link to="https://support.google.com/googleapi/answer/6158867?hl=en" target="_blank">
-                    Check to see if billing is enabled on your account
-                  </Link>
-                  <Spacer y={.5} />
-                </>
-              :
-              Array.from(combinedKeys).map((checkKey) => (
-                <PreflightCheckItem
-                  key={checkKey}
-                  checkKey={checkKey}
-                  checkLabel={currentMessageConst[checkKey] || checkKey}
-                />
-              ))
-          }
-        </AppearingDiv >
-      )
-  )
+  return props.provider === "DEFAULT" ? (
+    <AppearingDiv>
+      {Object.keys(currentMessageConst).map((checkKey) => (
+        <PreflightCheckItem key={checkKey} checkKey={checkKey} />
+      ))}
+    </AppearingDiv>
+  ) : (
+    <AppearingDiv>
+      <Text size={16}>Cluster provision check</Text>
+      <Spacer y={0.5} />
+      <Text color="helper">
+        Porter checks that the account has the right permissions and resources
+        to provision a cluster.
+      </Text>
+      <Spacer y={1} />
+      {props.error ? (
+        props.provider === "AWS" ? (
+          <Error message="Selected region is not available for your account. Please select another region" />
+        ) : (
+          <>
+            <Error message="There is an error with your account. Please ensure billing is enabled or contact Porter Support: support@porter.run" />
+            <Spacer y={0.5} />
+            <Link
+              to="https://support.google.com/googleapi/answer/6158867?hl=en"
+              target="_blank"
+            >
+              Check to see if billing is enabled on your account
+            </Link>
+            <Spacer y={0.5} />
+          </>
+        )
+      ) : (
+        Array.from(combinedKeys).map((checkKey) => (
+          <PreflightCheckItem
+            key={checkKey}
+            checkKey={checkKey}
+            checkLabel={currentMessageConst[checkKey] || checkKey}
+          />
+        ))
+      )}
+    </AppearingDiv>
+  );
 };
 
-
-
 export default withRouter(PreflightChecks);
-
 
 const AppearingDiv = styled.div<{ color?: string }>`
   animation: floatIn 0.5s;
   animation-fill-mode: forwards;
   display: flex;
-  flex-direction: column; 
+  flex-direction: column;
   color: ${(props) => props.color || "#ffffff44"};
- 
+
   @keyframes floatIn {
     from {
       opacity: 0;
@@ -174,28 +178,27 @@ const AppearingDiv = styled.div<{ color?: string }>`
   }
 `;
 const StatusIcon = styled.img`
-height: 14px;
+  height: 14px;
 `;
 
 const CheckItemContainer = styled.div`
   display: flex;
   flex-direction: column;
-  border: 1px solid ${props => props.theme.border};
+  border: 1px solid ${(props) => props.theme.border};
   border-radius: 5px;
   font-size: 13px;
   width: 100%;
   margin-bottom: 10px;
   padding-left: 10px;
-  cursor: ${props => (props.hasMessage ? 'pointer' : 'default')};
-  background: ${props => props.theme.clickable.bg};
-
+  cursor: ${(props) => (props.hasMessage ? "pointer" : "default")};
+  background: ${(props) => props.theme.clickable.bg};
 `;
 
 const CheckItemTop = styled.div`
   display: flex;
   align-items: center;
   padding: 10px;
-  background: ${props => props.theme.clickable.bg};
+  background: ${(props) => props.theme.clickable.bg};
 `;
 
 const ExpandIcon = styled.i<{ isExpanded: boolean }>`
@@ -204,19 +207,19 @@ const ExpandIcon = styled.i<{ isExpanded: boolean }>`
   font-size: 20px;
   cursor: pointer;
   border-radius: 20px;
-  transform: ${props => props.isExpanded ? "" : "rotate(-90deg)"};
+  transform: ${(props) => (props.isExpanded ? "" : "rotate(-90deg)")};
 `;
 const ErrorMessageLabel = styled.span`
   font-weight: bold;
   margin-left: 10px;
 `;
 const ErrorMessageContent = styled.div`
-  font-family: 'Courier New', Courier, monospace;
+  font-family: "Courier New", Courier, monospace;
   padding: 5px 10px;
   border-radius: 4px;
   margin-left: 10px;
   user-select: text;
-  cursor: text
+  cursor: text;
 `;
 
 const AWS_LOGIN_ERROR_MESSAGE =

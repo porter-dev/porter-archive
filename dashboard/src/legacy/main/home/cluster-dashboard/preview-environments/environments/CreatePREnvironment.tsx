@@ -1,33 +1,34 @@
 import React, { useContext, useMemo, useState } from "react";
-import styled from "styled-components";
-import { Context } from "shared/Context";
-import { PullRequest } from "../types";
-import Helper from "components/form-components/Helper";
-import pr_icon from "assets/pull_request_icon.svg";
-import api from "shared/api";
-import { EllipsisTextWrapper } from "../components/styled";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { getPRDeploymentList, validatePorterYAML } from "../utils";
-import Banner from "components/porter/Banner";
-import { useRouting } from "shared/routing";
-import PorterYAMLErrorsModal from "../components/PorterYAMLErrorsModal";
-import Placeholder from "components/Placeholder";
-import RadioFilter from "components/RadioFilter";
-
-import sort from "assets/sort.svg";
-import { search } from "shared/search";
-import _, { create } from "lodash";
-import { readableDate } from "shared/string_utils";
 import dayjs from "dayjs";
-import Loading from "components/Loading";
-import Modal from "components/porter/Modal";
-import Text from "components/porter/Text";
-import Spacer from "components/porter/Spacer";
-import Button from "components/porter/Button";
+import pr_icon from "legacy/assets/pull_request_icon.svg";
+import sort from "legacy/assets/sort.svg";
+import Helper from "legacy/components/form-components/Helper";
+import Loading from "legacy/components/Loading";
+import Placeholder from "legacy/components/Placeholder";
+import Banner from "legacy/components/porter/Banner";
+import Button from "legacy/components/porter/Button";
+import Modal from "legacy/components/porter/Modal";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import RadioFilter from "legacy/components/RadioFilter";
+import api from "legacy/shared/api";
+import { useRouting } from "legacy/shared/routing";
+import { search } from "legacy/shared/search";
+import { readableDate } from "legacy/shared/string_utils";
+import _, { create } from "lodash";
+import styled from "styled-components";
 
-interface Props {
+import { Context } from "shared/Context";
+
+import PorterYAMLErrorsModal from "../components/PorterYAMLErrorsModal";
+import { EllipsisTextWrapper } from "../components/styled";
+import { type PullRequest } from "../types";
+import { getPRDeploymentList, validatePorterYAML } from "../utils";
+
+type Props = {
   environmentID: string;
-}
+};
 
 const CreatePREnvironment = ({ environmentID }: Props) => {
   const queryClient = useQueryClient();
@@ -35,9 +36,8 @@ const CreatePREnvironment = ({ environmentID }: Props) => {
   const [searchValue, setSearchValue] = useState("");
   const [sortOrder, setSortOrder] = useState("Newest");
   const [showErrorsModal, setShowErrorsModal] = useState<boolean>(false);
-  const { currentProject, currentCluster, setCurrentError } = useContext(
-    Context
-  );
+  const { currentProject, currentCluster, setCurrentError } =
+    useContext(Context);
 
   // Get all PRs for the current environment
   const { isLoading: pullRequestsLoading, data: pullRequests } = useQuery<
@@ -62,9 +62,8 @@ const CreatePREnvironment = ({ environmentID }: Props) => {
   const [selectedPR, setSelectedPR] = useState<PullRequest>();
   const [loading, setLoading] = useState(false);
   const [porterYAMLErrors, setPorterYAMLErrors] = useState<string[]>([]);
-  const [showCreatePreviewModal, setShowCreatePreviewModal] = useState<boolean>(
-    false
-  );
+  const [showCreatePreviewModal, setShowCreatePreviewModal] =
+    useState<boolean>(false);
 
   const handleCreatePreviewDeployment = async () => {
     try {
@@ -259,7 +258,9 @@ const CreatePREnvironment = ({ environmentID }: Props) => {
       {showErrorsModal && selectedPR ? (
         <PorterYAMLErrorsModal
           errors={porterYAMLErrors}
-          onClose={() => setShowErrorsModal(false)}
+          onClose={() => {
+            setShowErrorsModal(false);
+          }}
           repo={selectedPR.repo_owner + "/" + selectedPR.repo_name}
           branch={selectedPR.branch_from}
         />
@@ -269,24 +270,32 @@ const CreatePREnvironment = ({ environmentID }: Props) => {
           <Banner type="warning">
             We found some errors in the porter.yaml file in the&nbsp;
             {selectedPR.branch_from}&nbsp;branch. &nbsp;
-            <LearnMoreButton onClick={() => setShowErrorsModal(true)}>
+            <LearnMoreButton
+              onClick={() => {
+                setShowErrorsModal(true);
+              }}
+            >
               Learn more
             </LearnMoreButton>
           </Banner>
         </ValidationErrorBannerWrapper>
       ) : null}
       <CreatePreviewDeploymentWrapper>
-        {showCreatePreviewModal && selectedPR && porterYAMLErrors.length == 0 && (
-          <Modal
-            title="Create Preview Environment"
-            closeModal={() => setShowCreatePreviewModal(false)}
-          >
-            <>
-              <Text color="helper">
-                Create Preview Deployment for {selectedPR.pr_title}?
-              </Text>
-              <Spacer y={1} />
-              {/* <Button
+        {showCreatePreviewModal &&
+          selectedPR &&
+          porterYAMLErrors.length == 0 && (
+            <Modal
+              title="Create Preview Environment"
+              closeModal={() => {
+                setShowCreatePreviewModal(false);
+              }}
+            >
+              <>
+                <Text color="helper">
+                  Create Preview Deployment for {selectedPR.pr_title}?
+                </Text>
+                <Spacer y={1} />
+                {/* <Button
                 onClick={() => handleModalSubmit}
                 loadingText="Submitting..."
                 withBorder
@@ -301,22 +310,24 @@ const CreatePREnvironment = ({ environmentID }: Props) => {
                   ? "Creating..."
                   : "Create Preview Deployment"}
               </Button> */}
-              <SubmitButton
-                onClick={() => createPreviewDeploymentMutation.mutate()}
-                disabled={
-                  loading ||
-                  !selectedPR ||
-                  porterYAMLErrors.length > 0 ||
-                  createPreviewDeploymentMutation.isLoading
-                }
-              >
-                {createPreviewDeploymentMutation.isLoading
-                  ? "Creating..."
-                  : "Create preview deployment"}
-              </SubmitButton>
-            </>
-          </Modal>
-        )}
+                <SubmitButton
+                  onClick={() => {
+                    createPreviewDeploymentMutation.mutate();
+                  }}
+                  disabled={
+                    loading ||
+                    !selectedPR ||
+                    porterYAMLErrors.length > 0 ||
+                    createPreviewDeploymentMutation.isLoading
+                  }
+                >
+                  {createPreviewDeploymentMutation.isLoading
+                    ? "Creating..."
+                    : "Create preview deployment"}
+                </SubmitButton>
+              </>
+            </Modal>
+          )}
         {selectedPR && porterYAMLErrors.length ? (
           <RevalidatePorterYAMLSpanWrapper>
             Please fix your porter.yaml file to continue.{" "}
@@ -371,7 +382,7 @@ const InfoWrapper = styled.div`
 `;
 
 const Code = styled.span`
-  font-family: monospace; ;
+  font-family: monospace;
 `;
 
 const Flex = styled.div`

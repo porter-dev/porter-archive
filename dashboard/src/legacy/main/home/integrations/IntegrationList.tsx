@@ -1,11 +1,12 @@
 import React, { Component, MouseEvent } from "react";
+import ConfirmOverlay from "legacy/components/ConfirmOverlay";
+import api from "legacy/shared/api";
+import { integrationList } from "legacy/shared/common";
 import styled from "styled-components";
 
 import { Context } from "shared/Context";
-import { integrationList } from "shared/common";
+
 import IntegrationRow from "./IntegrationRow";
-import ConfirmOverlay from "components/ConfirmOverlay";
-import api from "shared/api";
 
 type PropsType = {
   setCurrent?: (x: string) => void;
@@ -231,7 +232,7 @@ const Integration = styled.div`
     props.disabled ? "not-allowed" : "pointer"};
   margin-bottom: 20px;
   border-radius: 5px;
-  background: ${props => props.theme.clickable.bg};
+  background: ${(props) => props.theme.clickable.bg};
   border: 1px solid #494b4f;
   :hover {
     border: 1px solid #7a7b80;

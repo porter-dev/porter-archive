@@ -1,12 +1,12 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
-
-import Table from "components/OldTable";
-import { Column } from "react-table";
-import styled from "styled-components";
-import api from "shared/api";
-import { Context } from "shared/Context";
-import { pushFiltered } from "shared/routing";
+import Table from "legacy/components/OldTable";
+import api from "legacy/shared/api";
+import { pushFiltered } from "legacy/shared/routing";
 import { useHistory, useLocation } from "react-router";
+import { type Column } from "react-table";
+import styled from "styled-components";
+
+import { Context } from "shared/Context";
 
 const NodeList: React.FC = () => {
   const context = useContext(Context);
@@ -15,7 +15,7 @@ const NodeList: React.FC = () => {
   const history = useHistory();
   const location = useLocation();
 
-  const columns = useMemo<Column<any>[]>(
+  const columns = useMemo<Array<Column<any>>>(
     () => [
       {
         Header: "Node Name",
@@ -59,7 +59,7 @@ const NodeList: React.FC = () => {
       `${Number(number).toFixed(2)}%`;
 
     const getMachineType = (labels: any) => {
-      return (labels && labels["node.kubernetes.io/instance-type"]) || "N/A";
+      return labels?.["node.kubernetes.io/instance-type"] || "N/A";
     };
 
     return nodeList
@@ -113,7 +113,9 @@ const NodeList: React.FC = () => {
       .catch(() => {
         console.log({ error: true });
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        setLoading(false);
+      });
   }, [context, setNodeList]);
 
   const handleOnRowClick = (row: any) => {
@@ -156,7 +158,7 @@ const StyledChart = styled.div`
     margin-bottom: 25px;
   }
   border-radius: 5px;
-  background: ${props => props.theme.fg};
+  background: ${(props) => props.theme.fg};
   border: 1px solid #494b4f;
 `;
 

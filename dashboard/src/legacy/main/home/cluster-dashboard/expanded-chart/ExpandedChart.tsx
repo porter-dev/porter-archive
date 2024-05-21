@@ -1,36 +1,40 @@
 import React, { useCallback, useContext, useEffect, useState } from "react";
-import styled from "styled-components";
 import yaml from "js-yaml";
+import leftArrow from "legacy/assets/left-arrow.svg";
+import loadingSrc from "legacy/assets/loading.gif";
+import Loading from "legacy/components/Loading";
+import PorterFormWrapper from "legacy/components/porter-form/PorterFormWrapper";
+import Banner from "legacy/components/porter/Banner";
+import Spacer from "legacy/components/porter/Spacer";
+import StatusIndicator from "legacy/components/StatusIndicator";
+import TitleSection from "legacy/components/TitleSection";
+import api from "legacy/shared/api";
+import { useWebsockets } from "legacy/shared/hooks/useWebsockets";
+import {
+  type ChartType,
+  type ClusterType,
+  type ResourceType,
+} from "legacy/shared/types";
 import _, { cloneDeep } from "lodash";
-import loadingSrc from "assets/loading.gif";
-import leftArrow from "assets/left-arrow.svg";
+import styled from "styled-components";
 
-import { ChartType, ClusterType, ResourceType } from "shared/types";
-import { Context } from "shared/Context";
-import api from "shared/api";
-import StatusIndicator from "components/StatusIndicator";
-import PorterFormWrapper from "components/porter-form/PorterFormWrapper";
-import RevisionSection from "./RevisionSection";
-import ValuesYaml from "./ValuesYaml";
-import GraphSection from "./GraphSection";
-import MetricsSection from "./metrics/MetricsSection";
-import LogsSection, { InitLogData } from "./logs-section/LogsSection";
-import ListSection from "./ListSection";
-import StatusSection from "./status/StatusSection";
-import SettingsSection from "./SettingsSection";
-import Loading from "components/Loading";
-import { useWebsockets } from "shared/hooks/useWebsockets";
 import useAuth from "shared/auth/useAuth";
-import TitleSection from "components/TitleSection";
+import { Context } from "shared/Context";
+
+import BuildSettingsTab from "./build-settings/BuildSettingsTab";
+import DeployStatusSection from "./deploy-status-section/DeployStatusSection";
 import DeploymentType from "./DeploymentType";
 import EventsTab from "./events/EventsTab";
-import BuildSettingsTab from "./build-settings/BuildSettingsTab";
+import GraphSection from "./GraphSection";
 import { DisabledNamespacesForIncidents } from "./incidents/DisabledNamespaces";
+import ListSection from "./ListSection";
+import LogsSection, { type InitLogData } from "./logs-section/LogsSection";
+import MetricsSection from "./metrics/MetricsSection";
+import RevisionSection from "./RevisionSection";
+import SettingsSection from "./SettingsSection";
+import StatusSection from "./status/StatusSection";
 import { useStackEnvGroups } from "./useStackEnvGroups";
-import DeployStatusSection from "./deploy-status-section/DeployStatusSection";
-import Banner from "components/porter/Banner";
-import Spacer from "components/porter/Spacer";
-
+import ValuesYaml from "./ValuesYaml";
 
 type Props = {
   namespace: string;
@@ -71,9 +75,8 @@ const ExpandedChart: React.FC<Props> = (props) => {
   const [rightTabOptions, setRightTabOptions] = useState<any[]>([]);
   const [leftTabOptions, setLeftTabOptions] = useState<any[]>([]);
   const [saveValuesStatus, setSaveValueStatus] = useState<string>(null);
-  const [forceRefreshRevisions, setForceRefreshRevisions] = useState<boolean>(
-    false
-  );
+  const [forceRefreshRevisions, setForceRefreshRevisions] =
+    useState<boolean>(false);
   const [controllers, setControllers] = useState<
     Record<string, Record<string, any>>
   >({});
@@ -90,25 +93,14 @@ const ExpandedChart: React.FC<Props> = (props) => {
   const [isAgentInstalled, setIsAgentInstalled] = useState<boolean>(false);
   const [databaseStatus, setDatabaseStatus] = useState<boolean>(true);
 
-  const {
-    isStack,
-    stackEnvGroups,
-    isLoadingStackEnvGroups,
-  } = useStackEnvGroups(currentChart);
+  const { isStack, stackEnvGroups, isLoadingStackEnvGroups } =
+    useStackEnvGroups(currentChart);
 
-  const {
-    newWebsocket,
-    openWebsocket,
-    closeAllWebsockets,
-    closeWebsocket,
-  } = useWebsockets();
+  const { newWebsocket, openWebsocket, closeAllWebsockets, closeWebsocket } =
+    useWebsockets();
 
-  const {
-    currentCluster,
-    currentProject,
-    setCurrentError,
-    setCurrentOverlay,
-  } = useContext(Context);
+  const { currentCluster, currentProject, setCurrentError, setCurrentOverlay } =
+    useContext(Context);
 
   const renderLogsAtTimestamp = (initLogData: InitLogData) => {
     setLogData(initLogData);
@@ -147,7 +139,9 @@ const ExpandedChart: React.FC<Props> = (props) => {
 
     setCurrentChart(updatedChart);
 
-    updateComponents(updatedChart).finally(() => setIsLoadingChartData(false));
+    updateComponents(updatedChart).finally(() => {
+      setIsLoadingChartData(false);
+    });
   };
 
   const getControllers = async (chart: ChartType) => {
@@ -175,8 +169,6 @@ const ExpandedChart: React.FC<Props> = (props) => {
           [c.metadata.uid]: c,
         }));
       });
-
-      return;
     } catch (error) {
       if (typeof error !== "string") {
         setCurrentError(JSON.stringify(error));
@@ -202,7 +194,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
           if (
             oldControllers &&
             oldControllers[object.metadata.uid]?.status?.conditions ==
-            object.status?.conditions
+              object.status?.conditions
           ) {
             return oldControllers;
           }
@@ -275,8 +267,8 @@ const ExpandedChart: React.FC<Props> = (props) => {
     const addedEnvGroups = syncedEnvGroups?.added || [];
 
     const addApplicationToEnvGroupPromises = addedEnvGroups.map(
-      (envGroup: any) => {
-        return api.addApplicationToEnvGroup(
+      async (envGroup: any) => {
+        return await api.addApplicationToEnvGroup(
           "<token>",
           {
             name: envGroup?.name,
@@ -300,8 +292,8 @@ const ExpandedChart: React.FC<Props> = (props) => {
     }
 
     const removeApplicationToEnvGroupPromises = deletedEnvGroups.map(
-      (envGroup: any) => {
-        return api.removeApplicationFromEnvGroup(
+      async (envGroup: any) => {
+        return await api.removeApplicationFromEnvGroup(
           "<token>",
           {
             name: envGroup?.name,
@@ -367,8 +359,6 @@ const ExpandedChart: React.FC<Props> = (props) => {
         values: valuesYaml,
         error: err,
       });
-
-      return;
     }
   };
 
@@ -389,7 +379,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
           "<token>",
           {
             values: valuesYaml,
-            version: version,
+            version,
             latest_revision: currentChart.version,
           },
           {
@@ -472,8 +462,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
                   <Spinner src={loadingSrc} /> This application is currently
                   being deployed
                 </Header>
-                {props.currentChart.git_action_config &&
-                  props.currentChart.git_action_config.gitlab_integration_id ? (
+                {props.currentChart.git_action_config?.gitlab_integration_id ? (
                   <>
                     Navigate to the{" "}
                     <A
@@ -503,7 +492,9 @@ const ExpandedChart: React.FC<Props> = (props) => {
           return (
             <StatusSection
               currentChart={chart}
-              setFullScreenLogs={() => setFullScreenLogs(true)}
+              setFullScreenLogs={() => {
+                setFullScreenLogs(true);
+              }}
             />
           );
         }
@@ -511,13 +502,17 @@ const ExpandedChart: React.FC<Props> = (props) => {
         return (
           <SettingsSection
             currentChart={chart}
-            refreshChart={() => getChartData(currentChart)}
+            refreshChart={async () => {
+              await getChartData(currentChart);
+            }}
             setShowDeleteOverlay={(x: boolean) => {
               if (x) {
                 setCurrentOverlay({
                   message: `Are you sure you want to delete ${currentChart.name}?`,
                   onYes: handleUninstallChart,
-                  onNo: () => setCurrentOverlay(null),
+                  onNo: () => {
+                    setCurrentOverlay(null);
+                  },
                 });
               } else {
                 setCurrentOverlay(null);
@@ -548,7 +543,9 @@ const ExpandedChart: React.FC<Props> = (props) => {
         return (
           <ValuesYaml
             currentChart={chart}
-            refreshChart={() => getChartData(currentChart)}
+            refreshChart={async () => {
+              await getChartData(currentChart);
+            }}
             disabled={!isAuthorized("application", "", ["get", "update"])}
           />
         );
@@ -627,7 +624,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
 
   const setRevision = (chart: ChartType, isCurrent?: boolean) => {
     // if we've set the revision, we also override the revision in log data
-    let newLogData = logData;
+    const newLogData = logData;
 
     newLogData.revision = `${chart.version}`;
 
@@ -647,7 +644,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
       return (
         <Url>
           <i className="material-icons">link</i>
-          <a href={url} target="_blank">
+          <a href={url} target="_blank" rel="noreferrer">
             {url}
           </a>
         </Url>
@@ -692,8 +689,8 @@ const ExpandedChart: React.FC<Props> = (props) => {
     setCurrentOverlay(null);
     const syncedEnvGroups = currentChart.config?.container?.env?.synced || [];
     const removeApplicationToEnvGroupPromises = syncedEnvGroups.map(
-      (envGroup: any) => {
-        return api.removeApplicationFromEnvGroup(
+      async (envGroup: any) => {
+        return await api.removeApplicationFromEnvGroup(
           "<token>",
           {
             name: envGroup?.name,
@@ -786,8 +783,6 @@ const ExpandedChart: React.FC<Props> = (props) => {
       });
   }, [currentChart]);
 
-
-
   useEffect(() => {
     if (logData.revision) {
       api
@@ -847,7 +842,6 @@ const ExpandedChart: React.FC<Props> = (props) => {
       (c) =>
         c.Kind === "Ingress" ||
         (c.Kind === "Gateway" &&
-          c.RawYAML?.apiVersion &&
           c.RawYAML?.apiVersion?.startsWith("networking.istio.io"))
     );
 
@@ -870,7 +864,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
         if (!isSubscribed) {
           return;
         }
-        if (res.data?.spec?.rules && res.data?.spec?.rules[0]?.host) {
+        if (res.data?.spec?.rules?.[0]?.host) {
           setUrl(`https://${res.data?.spec?.rules[0]?.host}`);
           return;
         }
@@ -882,13 +876,8 @@ const ExpandedChart: React.FC<Props> = (props) => {
           return;
         }
 
-        if (
-          res.data?.spec?.servers &&
-          res.data?.spec?.servers[0]?.hosts &&
-          res.data?.spec?.servers[0]?.hosts[0]
-        ) {
+        if (res.data?.spec?.servers?.[0]?.hosts?.[0]) {
           setUrl(`http://${res.data?.spec?.servers[0]?.hosts[0]}`);
-          return;
         }
       })
       .catch(console.log);
@@ -902,7 +891,9 @@ const ExpandedChart: React.FC<Props> = (props) => {
         <StatusSection
           fullscreen={true}
           currentChart={currentChart}
-          setFullScreenLogs={() => setFullScreenLogs(false)}
+          setFullScreenLogs={() => {
+            setFullScreenLogs(false);
+          }}
         />
       ) : (
         <>
@@ -911,7 +902,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
               isFullscreen={true}
               setIsFullscreen={setIsFullscreen}
               currentChart={currentChart}
-              setInitData={() => { }}
+              setInitData={() => {}}
             />
           ) : (
             <StyledExpandedChart>
@@ -949,24 +940,32 @@ const ExpandedChart: React.FC<Props> = (props) => {
                     margin_left={"0px"}
                   />
                   */}
-                  {!templateWhitelist.includes(currentChart.chart.metadata.name) &&
-                    <><DeployStatusSection
-                      chart={currentChart}
-                      setLogData={renderLogsAtTimestamp} /><LastDeployed>
+                  {!templateWhitelist.includes(
+                    currentChart.chart.metadata.name
+                  ) && (
+                    <>
+                      <DeployStatusSection
+                        chart={currentChart}
+                        setLogData={renderLogsAtTimestamp}
+                      />
+                      <LastDeployed>
                         <Dot>•</Dot>Last deployed
                         {" " + getReadableDate(currentChart.info.last_deployed)}
-                      </LastDeployed></>
-                  }
+                      </LastDeployed>
+                    </>
+                  )}
                 </InfoWrapper>
 
-                {!databaseStatus &&
+                {!databaseStatus && (
                   <>
                     <Banner>
                       <BannerContents>
                         <b>Database is being created</b>
                       </BannerContents>
                       <Spacer inline width="5px" />
-                    </Banner></>}
+                    </Banner>
+                  </>
+                )}
               </HeaderWrapper>
               {deleting ? (
                 <>
@@ -990,14 +989,18 @@ const ExpandedChart: React.FC<Props> = (props) => {
                       setShowRevisions(!showRevisions);
                     }}
                     chart={currentChart}
-                    refreshChart={() => getChartData(currentChart)}
+                    refreshChart={async () => {
+                      await getChartData(currentChart);
+                    }}
                     setRevision={setRevision}
                     forceRefreshRevisions={forceRefreshRevisions}
-                    refreshRevisionsOff={() => setForceRefreshRevisions(false)}
+                    refreshRevisionsOff={() => {
+                      setForceRefreshRevisions(false);
+                    }}
                     shouldUpdate={
                       currentChart.latest_version &&
                       currentChart.latest_version !==
-                      currentChart.chart.metadata.version
+                        currentChart.chart.metadata.version
                     }
                     latestVersion={currentChart.latest_version}
                     upgradeVersion={handleUpgradeVersion}
@@ -1077,8 +1080,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
             </StyledExpandedChart>
           )}
         </>
-      )
-      }
+      )}
     </>
   );
 };
@@ -1208,11 +1210,11 @@ const TabButton = styled.div`
   border-radius: 20px;
   text-shadow: 0px 0px 8px
     ${(props: { devOpsMode: boolean }) =>
-    props.devOpsMode ? "#ffffff66" : "none"};
+      props.devOpsMode ? "#ffffff66" : "none"};
   cursor: pointer;
   :hover {
     color: ${(props: { devOpsMode: boolean }) =>
-    props.devOpsMode ? "" : "#aaaabb99"};
+      props.devOpsMode ? "" : "#aaaabb99"};
   }
 
   > i {
@@ -1301,7 +1303,6 @@ const A = styled.a`
   text-decoration: underline;
   cursor: pointer;
 `;
-
 
 const BannerContents = styled.div`
   display: flex;

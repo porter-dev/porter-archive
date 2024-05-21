@@ -1,9 +1,9 @@
 import React, { ChangeEvent, Component } from "react";
+import logo from "legacy/assets/logo.png";
+import api from "legacy/shared/api";
+import { emailRegex } from "legacy/shared/regex";
 import styled from "styled-components";
-import logo from "assets/logo.png";
 
-import api from "shared/api";
-import { emailRegex } from "shared/regex";
 import { Context } from "shared/Context";
 
 type PropsType = {};
@@ -145,7 +145,9 @@ const Footer = styled.div`
   color: #aaaabb;
   font-size: 13px;
   padding-right: 8px;
-  font: Work Sans, sans-serif;
+  font:
+    Work Sans,
+    sans-serif;
 `;
 
 const DarkMatter = styled.div`

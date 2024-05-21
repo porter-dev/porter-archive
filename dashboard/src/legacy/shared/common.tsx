@@ -1,10 +1,11 @@
+import azure from "legacy/assets/azure.png";
+import doppler from "legacy/assets/doppler.png";
+import infisical from "legacy/assets/infisical.svg";
+
 import aws from "../assets/aws.png";
 import digitalOcean from "../assets/do.png";
 import gcp from "../assets/gcp.png";
 import github from "../assets/github.png";
-import azure from "assets/azure.png";
-import doppler from "assets/doppler.png";
-import infisical from "assets/infisical.svg";
 
 export const infraNames: any = {
   ecr: "Elastic Container Registry (ECR)",
@@ -27,8 +28,7 @@ export const integrationList: any = {
     buttonText: "Add an API key",
   },
   kubernetes: {
-    icon:
-      "https://upload.wikimedia.org/wikipedia/labs/thumb/b/ba/Kubernetes-icon-color.svg/2110px-Kubernetes-icon-color.svg.png",
+    icon: "https://upload.wikimedia.org/wikipedia/labs/thumb/b/ba/Kubernetes-icon-color.svg/2110px-Kubernetes-icon-color.svg.png",
     label: "Kubernetes",
     buttonText: "Add a cluster",
   },
@@ -38,14 +38,12 @@ export const integrationList: any = {
     buttonText: "Link a GitHub account",
   },
   slack: {
-    icon:
-      "https://user-images.githubusercontent.com/5147537/54070671-0a173780-4263-11e9-8946-09ac0e37d8c6.png",
+    icon: "https://user-images.githubusercontent.com/5147537/54070671-0a173780-4263-11e9-8946-09ac0e37d8c6.png",
     label: "Slack",
     buttonText: "Install application",
   },
   registry: {
-    icon:
-      "https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/97_Docker_logo_logos-512.png",
+    icon: "https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/97_Docker_logo_logos-512.png",
     label: "Docker registry",
     buttonText: "Add a registry",
   },
@@ -58,53 +56,43 @@ export const integrationList: any = {
     label: "Amazon Elastic Kubernetes Service (EKS)",
   },
   test: {
-    icon:
-      "https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/97_Docker_logo_logos-512.png",
+    icon: "https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/97_Docker_logo_logos-512.png",
     label: "Testing",
   },
   kube: {
-    icon:
-      "https://uxwing.com/wp-content/themes/uxwing/download/10-brands-and-social-media/kubernetes.png",
+    icon: "https://uxwing.com/wp-content/themes/uxwing/download/10-brands-and-social-media/kubernetes.png",
     label: "Upload Kubeconfig",
   },
   dockerhub: {
-    icon:
-      "https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/97_Docker_logo_logos-512.png",
+    icon: "https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/97_Docker_logo_logos-512.png",
     label: "Docker Hub",
   },
   gcr: {
-    icon:
-      "https://carlossanchez.files.wordpress.com/2019/06/21046548.png?w=640",
+    icon: "https://carlossanchez.files.wordpress.com/2019/06/21046548.png?w=640",
     label: "Google Container Registry (GCR)",
   },
   gar: {
-    icon:
-      "https://carlossanchez.files.wordpress.com/2019/06/21046548.png?w=640",
+    icon: "https://carlossanchez.files.wordpress.com/2019/06/21046548.png?w=640",
     label: "Google Artifact Registry (GAR)",
   },
   ecr: {
-    icon:
-      "https://avatars2.githubusercontent.com/u/52505464?s=400&u=da920f994c67665c7ad6c606a5286557d4f8555f&v=4",
+    icon: "https://avatars2.githubusercontent.com/u/52505464?s=400&u=da920f994c67665c7ad6c606a5286557d4f8555f&v=4",
     label: "Elastic Container Registry (ECR)",
   },
   doks: {
-    icon:
-      "https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/97_Docker_logo_logos-512.png",
+    icon: "https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/97_Docker_logo_logos-512.png",
     label: "Digital Ocean Kubernetes Service (DOKS)",
   },
   docr: {
-    icon:
-      "https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/97_Docker_logo_logos-512.png",
+    icon: "https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/97_Docker_logo_logos-512.png",
     label: "Digital Ocean Container Registry (DOCR)",
   },
   aks: {
-    icon:
-      "https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/97_Docker_logo_logos-512.png",
+    icon: "https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/97_Docker_logo_logos-512.png",
     label: "Azure Kubernetes Service (AKS)",
   },
   acr: {
-    icon:
-      "https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/97_Docker_logo_logos-512.png",
+    icon: "https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/97_Docker_logo_logos-512.png",
     label: "Azure Container Registry (ACR)",
   },
   aws: {
@@ -114,12 +102,12 @@ export const integrationList: any = {
   gcp: {
     icon: gcp,
     label: "GCP",
-    tagline: "Email contact@porter.run"
+    tagline: "Email contact@porter.run",
   },
   azure: {
     icon: azure,
     label: "Azure",
-    tagline: "Email contact@porter.run"
+    tagline: "Email contact@porter.run",
   },
   do: {
     icon: digitalOcean,
@@ -135,13 +123,11 @@ export const integrationList: any = {
     buttonText: "Add an Instance",
   },
   rds: {
-    icon:
-      "https://cdn2.iconfinder.com/data/icons/amazon-aws-stencils/100/Database_copy_Amazon_RDS-512.png",
+    icon: "https://cdn2.iconfinder.com/data/icons/amazon-aws-stencils/100/Database_copy_Amazon_RDS-512.png",
     label: "Amazon Relational Database Service",
   },
   s3: {
-    icon:
-      "https://cdn2.iconfinder.com/data/icons/amazon-aws-stencils/100/Database_copy_Amazon_RDS-512.png",
+    icon: "https://cdn2.iconfinder.com/data/icons/amazon-aws-stencils/100/Database_copy_Amazon_RDS-512.png",
     label: "Amazon S3 Bucket",
   },
 };

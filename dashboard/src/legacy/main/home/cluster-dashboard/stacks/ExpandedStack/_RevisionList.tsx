@@ -1,9 +1,11 @@
-import Loading from "components/Loading";
 import React, { useContext, useRef, useState } from "react";
-import api from "shared/api";
-import { Context } from "shared/Context";
-import { readableDate } from "shared/string_utils";
+import Loading from "legacy/components/Loading";
+import api from "legacy/shared/api";
+import { readableDate } from "legacy/shared/string_utils";
 import styled from "styled-components";
+
+import { Context } from "shared/Context";
+
 import { FullStackRevision, Stack, StackRevision } from "../types";
 
 type RevisionListProps = {
@@ -25,9 +27,8 @@ const _RevisionList = ({
   onRevisionClick,
   onRollback,
 }: RevisionListProps) => {
-  const { currentProject, currentCluster, setCurrentError } = useContext(
-    Context
-  );
+  const { currentProject, currentCluster, setCurrentError } =
+    useContext(Context);
   const [isLoading, setIsLoading] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
 

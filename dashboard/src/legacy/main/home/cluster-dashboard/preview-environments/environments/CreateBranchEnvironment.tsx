@@ -1,30 +1,32 @@
 import React, { useContext, useMemo, useState } from "react";
-import styled from "styled-components";
-import { Context } from "shared/Context";
-import { Environment } from "../types";
-import Helper from "components/form-components/Helper";
-import api from "shared/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { validatePorterYAML } from "../utils";
-import Banner from "components/porter/Banner";
-import { useRouting } from "shared/routing";
-import PorterYAMLErrorsModal from "../components/PorterYAMLErrorsModal";
-import Placeholder from "components/Placeholder";
+import pr_icon from "legacy/assets/pull_request_icon.svg";
+import sort from "legacy/assets/sort.svg";
+import Helper from "legacy/components/form-components/Helper";
+import Loading from "legacy/components/Loading";
+import Placeholder from "legacy/components/Placeholder";
+import Banner from "legacy/components/porter/Banner";
+import Button from "legacy/components/porter/Button";
+import Modal from "legacy/components/porter/Modal";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import RadioFilter from "legacy/components/RadioFilter";
+import api from "legacy/shared/api";
+import { useRouting } from "legacy/shared/routing";
+import { search } from "legacy/shared/search";
 import _ from "lodash";
-import Loading from "components/Loading";
-import { EllipsisTextWrapper } from "../components/styled";
-import pr_icon from "assets/pull_request_icon.svg";
-import { search } from "shared/search";
-import RadioFilter from "components/RadioFilter";
-import sort from "assets/sort.svg";
-import Modal from "components/porter/Modal";
-import Text from "components/porter/Text";
-import Button from "components/porter/Button";
-import Spacer from "components/porter/Spacer";
+import styled from "styled-components";
 
-interface Props {
+import { Context } from "shared/Context";
+
+import PorterYAMLErrorsModal from "../components/PorterYAMLErrorsModal";
+import { EllipsisTextWrapper } from "../components/styled";
+import { type Environment } from "../types";
+import { validatePorterYAML } from "../utils";
+
+type Props = {
   environmentID: string;
-}
+};
 
 const CreateBranchEnvironment = ({ environmentID }: Props) => {
   const queryClient = useQueryClient();
@@ -33,29 +35,26 @@ const CreateBranchEnvironment = ({ environmentID }: Props) => {
   const [sortOrder, setSortOrder] = useState("Newest");
   const [loading, setLoading] = useState<boolean>(false);
   const [showErrorsModal, setShowErrorsModal] = useState<boolean>(false);
-  const { currentProject, currentCluster, setCurrentError } = useContext(
-    Context
-  );
+  const { currentProject, currentCluster, setCurrentError } =
+    useContext(Context);
 
-  const {
-    data: environment,
-    isLoading: environmentLoading,
-  } = useQuery<Environment>(
-    ["environment", currentProject.id, currentCluster.id, environmentID],
-    async () => {
-      const { data: environment } = await api.getEnvironment<Environment>(
-        "<token>",
-        {},
-        {
-          project_id: currentProject.id,
-          cluster_id: currentCluster.id,
-          environment_id: parseInt(environmentID),
-        }
-      );
+  const { data: environment, isLoading: environmentLoading } =
+    useQuery<Environment>(
+      ["environment", currentProject.id, currentCluster.id, environmentID],
+      async () => {
+        const { data: environment } = await api.getEnvironment<Environment>(
+          "<token>",
+          {},
+          {
+            project_id: currentProject.id,
+            cluster_id: currentCluster.id,
+            environment_id: parseInt(environmentID),
+          }
+        );
 
-      return environment;
-    }
-  );
+        return environment;
+      }
+    );
 
   // Get all branches for the current environment
   const { isLoading: branchesLoading, data: branches } = useQuery<string[]>(
@@ -84,9 +83,8 @@ const CreateBranchEnvironment = ({ environmentID }: Props) => {
       enabled: !!environment,
     }
   );
-  const [showCreatePreviewModal, setShowCreatePreviewModal] = useState<boolean>(
-    false
-  );
+  const [showCreatePreviewModal, setShowCreatePreviewModal] =
+    useState<boolean>(false);
   const environmentGitDeployBranches = environment?.git_deploy_branches ?? [];
   const [selectedBranch, setSelectedBranch] = useState<string>(null);
   const [porterYAMLErrors, setPorterYAMLErrors] = useState<string[]>([]);
@@ -132,8 +130,8 @@ const CreateBranchEnvironment = ({ environmentID }: Props) => {
     setShowCreatePreviewModal(false);
   };
   const updateDeployBranchesMutation = useMutation({
-    mutationFn: () => {
-      return api.updateEnvironment(
+    mutationFn: async () => {
+      return await api.updateEnvironment(
         "token",
         {
           disable_new_comments: environment.new_comments_disabled,
@@ -153,10 +151,11 @@ const CreateBranchEnvironment = ({ environmentID }: Props) => {
     onError: (err) => {
       setCurrentError(err as string);
     },
-    onSuccess: () =>
+    onSuccess: () => {
       router.push(
         `/preview-environments/deployments/${environmentID}/${environment.git_repo_name}/${environment.git_repo_owner}?status_filter=all`
-      ),
+      );
+    },
   });
 
   if (branchesLoading || environmentLoading) {
@@ -219,7 +218,9 @@ const CreateBranchEnvironment = ({ environmentID }: Props) => {
       <BranchList>
         {(filteredBranches ?? []).map((branch, i) => (
           <BranchRow
-            onClick={() => handleRowItemClick(branch)}
+            onClick={async () => {
+              await handleRowItemClick(branch);
+            }}
             isLast={i === filteredBranches.length - 1}
             isSelected={branch === selectedBranch}
           >
@@ -235,7 +236,9 @@ const CreateBranchEnvironment = ({ environmentID }: Props) => {
       {showErrorsModal && selectedBranch ? (
         <PorterYAMLErrorsModal
           errors={porterYAMLErrors}
-          onClose={() => setShowErrorsModal(false)}
+          onClose={() => {
+            setShowErrorsModal(false);
+          }}
           repo={environment.git_repo_name + "/" + environment.git_repo_owner}
           branch={selectedBranch}
         />
@@ -245,7 +248,11 @@ const CreateBranchEnvironment = ({ environmentID }: Props) => {
           <Banner type="warning">
             We found some errors in the porter.yaml file in the&nbsp;
             {selectedBranch}&nbsp;branch. &nbsp;
-            <LearnMoreButton onClick={() => setShowErrorsModal(true)}>
+            <LearnMoreButton
+              onClick={() => {
+                setShowErrorsModal(true);
+              }}
+            >
               Learn more
             </LearnMoreButton>
           </Banner>
@@ -257,7 +264,9 @@ const CreateBranchEnvironment = ({ environmentID }: Props) => {
           porterYAMLErrors.length == 0 && (
             <Modal
               title="Create Preview Environment"
-              closeModal={() => setShowCreatePreviewModal(false)}
+              closeModal={() => {
+                setShowCreatePreviewModal(false);
+              }}
             >
               <>
                 <Text color="helper">
@@ -265,7 +274,9 @@ const CreateBranchEnvironment = ({ environmentID }: Props) => {
                 </Text>
                 <Spacer y={1} />
                 <SubmitButton
-                  onClick={() => updateDeployBranchesMutation.mutate()}
+                  onClick={() => {
+                    updateDeployBranchesMutation.mutate();
+                  }}
                   disabled={
                     updateDeployBranchesMutation.isLoading ||
                     loading ||
@@ -360,7 +371,7 @@ const BranchName = styled.div`
 `;
 
 const Code = styled.span`
-  font-family: monospace; ;
+  font-family: monospace;
 `;
 
 const Flex = styled.div`

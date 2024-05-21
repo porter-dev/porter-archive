@@ -1,12 +1,14 @@
-import React, { useEffect, useContext, useState } from "react";
-import api from "shared/api";
-import styled from "styled-components";
-import EventList from "./EventList";
-import Loading from "components/Loading";
+import React, { useContext, useEffect, useState } from "react";
+import Dropdown from "legacy/components/Dropdown";
+import Loading from "legacy/components/Loading";
+import api from "legacy/shared/api";
 import InfiniteScroll from "react-infinite-scroll-component";
+import styled from "styled-components";
+
 import { Context } from "shared/Context";
-import Dropdown from "components/Dropdown";
-import { InitLogData } from "../logs-section/LogsSection";
+
+import { type InitLogData } from "../logs-section/LogsSection";
+import EventList from "./EventList";
 
 type Props = {
   currentChart: any;
@@ -36,7 +38,9 @@ const EventsTab: React.FC<Props> = ({
 
     const checkForAgentInterval = setInterval(checkForAgent, 3000);
 
-    return () => clearInterval(checkForAgentInterval);
+    return () => {
+      clearInterval(checkForAgentInterval);
+    };
   }, [isPorterAgentInstalling]);
 
   const checkForAgent = () => {
@@ -50,7 +54,7 @@ const EventsTab: React.FC<Props> = ({
           setHasPorterAgent(false);
         } else {
           // next, check whether events can be queried - if they can, we're good to go
-          let filters: any = getFilters();
+          const filters: any = getFilters();
 
           let apiQuery = api.listPorterEvents;
 
@@ -137,7 +141,11 @@ const EventsTab: React.FC<Props> = ({
         <div>
           <Header>We couldn't detect the Porter agent on your cluster</Header>
           In order to use the events tab, you need to install the Porter agent.
-          <InstallPorterAgentButton onClick={() => triggerInstall()}>
+          <InstallPorterAgentButton
+            onClick={() => {
+              triggerInstall();
+            }}
+          >
             <i className="material-icons">add</i> Install Porter agent
           </InstallPorterAgentButton>
         </div>

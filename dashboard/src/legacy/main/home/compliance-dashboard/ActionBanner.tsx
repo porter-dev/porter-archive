@@ -1,14 +1,12 @@
 import React, { useMemo, type Dispatch, type SetStateAction } from "react";
+import loading_img from "legacy/assets/loading.gif";
+import refresh from "legacy/assets/refresh.png";
+import Banner from "legacy/components/porter/Banner";
+import Image from "legacy/components/porter/Image";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
 import { useHistory } from "react-router";
 import { match } from "ts-pattern";
-
-import Banner from "components/porter/Banner";
-import Image from "components/porter/Image";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-
-import loading_img from "assets/loading.gif";
-import refresh from "assets/refresh.png";
 
 import { useCompliance } from "./ComplianceContext";
 

@@ -1,10 +1,9 @@
 import React from "react";
+import { ControlledInput } from "legacy/components/porter/ControlledInput";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import { type ClientAddon } from "legacy/lib/addons";
 import { useFormContext } from "react-hook-form";
-
-import { ControlledInput } from "components/porter/ControlledInput";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import { type ClientAddon } from "lib/addons";
 
 import AddonSaveButton from "../AddonSaveButton";
 

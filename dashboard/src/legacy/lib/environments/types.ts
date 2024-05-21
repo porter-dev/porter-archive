@@ -1,7 +1,6 @@
+import { clientAddonValidator } from "legacy/lib/addons";
+import { clientAppValidator } from "legacy/lib/porter-apps";
 import { z } from "zod";
-
-import { clientAddonValidator } from "lib/addons";
-import { clientAppValidator } from "lib/porter-apps";
 
 const environmentValidator = z.object({
   name: z.string(),

@@ -1,7 +1,6 @@
 import React, { useContext } from "react";
+import Loading from "legacy/components/Loading";
 import { match } from "ts-pattern";
-
-import Loading from "components/Loading";
 
 import { Context } from "shared/Context";
 

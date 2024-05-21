@@ -1,8 +1,7 @@
 import React from "react";
+import Fieldset from "legacy/components/porter/Fieldset";
+import Spacer from "legacy/components/porter/Spacer";
 import { match } from "ts-pattern";
-
-import Fieldset from "components/porter/Fieldset";
-import Spacer from "components/porter/Spacer";
 
 import { useClusterContext } from "../../ClusterContextProvider";
 import ClusterSaveButton from "../../ClusterSaveButton";

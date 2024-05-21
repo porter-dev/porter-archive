@@ -1,12 +1,12 @@
 import React from "react";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import { type PorterAppFormData } from "legacy/lib/porter-apps";
 import _ from "lodash";
 import { useFormContext } from "react-hook-form";
 
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
 import { type ButtonStatus } from "main/home/app-dashboard/app-view/AppDataContainer";
 import { AddonsList } from "main/home/managed-addons/AddonsList";
-import { type PorterAppFormData } from "lib/porter-apps";
 
 import PreviewSaveButton from "./PreviewSaveButton";
 

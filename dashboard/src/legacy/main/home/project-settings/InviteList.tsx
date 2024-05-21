@@ -1,20 +1,19 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
+import CopyToClipboard from "legacy/components/CopyToClipboard";
+import Heading from "legacy/components/form-components/Heading";
+import Helper from "legacy/components/form-components/Helper";
+import InputRow from "legacy/components/form-components/InputRow";
+import Loading from "legacy/components/Loading";
+import Table from "legacy/components/OldTable";
+import Button from "legacy/components/porter/Button";
+import Spacer from "legacy/components/porter/Spacer";
+import RadioSelector from "legacy/components/RadioSelector";
+import api from "legacy/shared/api";
+import { type InviteType } from "legacy/shared/types";
 import { type Column } from "react-table";
 import styled from "styled-components";
 
-import CopyToClipboard from "components/CopyToClipboard";
-import Heading from "components/form-components/Heading";
-import Helper from "components/form-components/Helper";
-import InputRow from "components/form-components/InputRow";
-import Loading from "components/Loading";
-import Table from "components/OldTable";
-import Button from "components/porter/Button";
-import Spacer from "components/porter/Spacer";
-import RadioSelector from "components/RadioSelector";
-
-import api from "shared/api";
 import { Context } from "shared/Context";
-import { type InviteType } from "shared/types";
 
 import PermissionGroup from "./PermissionGroup";
 import RoleModal from "./RoleModal";

@@ -1,24 +1,22 @@
 import React from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import chip from "legacy/assets/computer-chip.svg";
+import job from "legacy/assets/job.png";
+import moon from "legacy/assets/moon.svg";
+import seed from "legacy/assets/seed.svg";
+import web from "legacy/assets/web.png";
+import worker from "legacy/assets/worker.png";
+import Spacer from "legacy/components/porter/Spacer";
+import { type ClientServiceStatus } from "legacy/lib/hooks/useAppStatus";
+import { type PorterAppFormData } from "legacy/lib/porter-apps";
+import {
+  isClientJobService,
+  type ClientService,
+} from "legacy/lib/porter-apps/services";
 import _ from "lodash";
 import { type UseFieldArrayUpdate } from "react-hook-form";
 import styled, { keyframes } from "styled-components";
 import { match } from "ts-pattern";
-
-import Spacer from "components/porter/Spacer";
-import { type ClientServiceStatus } from "lib/hooks/useAppStatus";
-import { type PorterAppFormData } from "lib/porter-apps";
-import {
-  isClientJobService,
-  type ClientService,
-} from "lib/porter-apps/services";
-
-import chip from "assets/computer-chip.svg";
-import job from "assets/job.png";
-import moon from "assets/moon.svg";
-import seed from "assets/seed.svg";
-import web from "assets/web.png";
-import worker from "assets/worker.png";
 
 import JobFooter from "./footers/JobFooter";
 import ServiceStatusFooter from "./footers/ServiceStatusFooter";

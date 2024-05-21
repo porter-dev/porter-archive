@@ -1,15 +1,14 @@
 import React, { useContext, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import Banner from "legacy/components/porter/Banner";
+import Link from "legacy/components/porter/Link";
+import Spacer from "legacy/components/porter/Spacer";
+import { useGithubWorkflow } from "legacy/lib/hooks/useGithubWorkflow";
+import { appRevisionValidator } from "legacy/lib/revisions/types";
+import api from "legacy/shared/api";
 import { match } from "ts-pattern";
 import { z } from "zod";
 
-import Banner from "components/porter/Banner";
-import Link from "components/porter/Link";
-import Spacer from "components/porter/Spacer";
-import { useGithubWorkflow } from "lib/hooks/useGithubWorkflow";
-import { appRevisionValidator } from "lib/revisions/types";
-
-import api from "shared/api";
 import { Context } from "shared/Context";
 
 import { HELLO_PORTER_PLACEHOLDER_TAG } from "../../app-view/AppHeader";

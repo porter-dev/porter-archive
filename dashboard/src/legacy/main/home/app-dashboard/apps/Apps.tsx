@@ -8,47 +8,47 @@ import React, {
 import { AddonWithEnvVars } from "@porter-dev/api-contracts";
 import { useQueries } from "@tanstack/react-query";
 import dayjs from "dayjs";
+import applicationGrad from "legacy/assets/application-grad.svg";
+import calendar from "legacy/assets/calendar-number.svg";
+import gift from "legacy/assets/gift.svg";
+import grid from "legacy/assets/grid.png";
+import list from "legacy/assets/list.png";
+import pull_request from "legacy/assets/pull_request_icon.svg";
+import target from "legacy/assets/target.svg";
+import letter from "legacy/assets/vector.svg";
+import ClusterProvisioningPlaceholder from "legacy/components/ClusterProvisioningPlaceholder";
+import Loading from "legacy/components/Loading";
+import Banner from "legacy/components/porter/Banner";
+import Button from "legacy/components/porter/Button";
+import Container from "legacy/components/porter/Container";
+import DashboardPlaceholder from "legacy/components/porter/DashboardPlaceholder";
+import Image from "legacy/components/porter/Image";
+import PorterLink from "legacy/components/porter/Link";
+import SearchBar from "legacy/components/porter/SearchBar";
+import Select from "legacy/components/porter/Select";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import Toggle from "legacy/components/porter/Toggle";
+import { clientAddonFromProto, type ClientAddon } from "legacy/lib/addons";
+import { useAppAnalytics } from "legacy/lib/hooks/useAppAnalytics";
+import {
+  useDeploymentTargetList,
+  type DeploymentTarget,
+} from "legacy/lib/hooks/useDeploymentTarget";
+import { useCustomerPlan } from "legacy/lib/hooks/useLago";
+import { checkIfProjectHasPayment } from "legacy/lib/hooks/useStripe";
+import api from "legacy/shared/api";
+import { valueExists } from "legacy/shared/util";
 import { useHistory } from "react-router";
 import styled from "styled-components";
 import { z } from "zod";
 
-import ClusterProvisioningPlaceholder from "components/ClusterProvisioningPlaceholder";
-import Loading from "components/Loading";
-import Banner from "components/porter/Banner";
-import Button from "components/porter/Button";
-import Container from "components/porter/Container";
-import DashboardPlaceholder from "components/porter/DashboardPlaceholder";
-import Image from "components/porter/Image";
-import PorterLink from "components/porter/Link";
-import SearchBar from "components/porter/SearchBar";
-import Select from "components/porter/Select";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import Toggle from "components/porter/Toggle";
 import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
 import DeleteEnvModal from "main/home/cluster-dashboard/preview-environments/v2/DeleteEnvModal";
 import BillingModal from "main/home/modals/BillingModal";
-import { clientAddonFromProto, type ClientAddon } from "lib/addons";
-import { useAppAnalytics } from "lib/hooks/useAppAnalytics";
-import {
-  useDeploymentTargetList,
-  type DeploymentTarget,
-} from "lib/hooks/useDeploymentTarget";
-import { useCustomerPlan } from "lib/hooks/useLago";
-import { checkIfProjectHasPayment } from "lib/hooks/useStripe";
 
-import api from "shared/api";
 import { Context } from "shared/Context";
 import { useDeploymentTarget } from "shared/DeploymentTargetContext";
-import { valueExists } from "shared/util";
-import applicationGrad from "assets/application-grad.svg";
-import calendar from "assets/calendar-number.svg";
-import gift from "assets/gift.svg";
-import grid from "assets/grid.png";
-import list from "assets/list.png";
-import pull_request from "assets/pull_request_icon.svg";
-import target from "assets/target.svg";
-import letter from "assets/vector.svg";
 
 import AppGrid from "./AppGrid";
 import { appRevisionWithSourceValidator } from "./types";

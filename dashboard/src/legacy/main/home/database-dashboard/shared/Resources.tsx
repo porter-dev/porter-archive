@@ -1,10 +1,12 @@
 import React from "react";
+import Container from "legacy/components/porter/Container";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import {
+  type InstanceTier,
+  type ResourceOption,
+} from "legacy/lib/databases/types";
 import styled from "styled-components";
-
-import Container from "components/porter/Container";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import { type InstanceTier, type ResourceOption } from "lib/databases/types";
 
 type Props = {
   options: ResourceOption[];

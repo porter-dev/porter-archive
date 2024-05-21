@@ -1,14 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import Anser from "anser";
 import dayjs, { type Dayjs } from "dayjs";
-import _ from "lodash";
-import { z } from "zod";
-
-import api from "shared/api";
+import api from "legacy/shared/api";
 import {
   useWebsockets,
   type NewWebsocketOptions,
-} from "shared/hooks/useWebsockets";
+} from "legacy/shared/hooks/useWebsockets";
+import _ from "lodash";
+import { z } from "zod";
 
 import {
   agentLogValidator,

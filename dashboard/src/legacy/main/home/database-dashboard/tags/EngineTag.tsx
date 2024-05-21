@@ -1,15 +1,13 @@
 import React from "react";
+import postgresql from "legacy/assets/postgresql.svg";
+import redis from "legacy/assets/redis.svg";
+import Icon from "legacy/components/porter/Icon";
+import Spacer from "legacy/components/porter/Spacer";
+import Tag from "legacy/components/porter/Tag";
+import Text from "legacy/components/porter/Text";
+import { type DatastoreEngine } from "legacy/lib/databases/types";
 import styled from "styled-components";
 import { match } from "ts-pattern";
-
-import Icon from "components/porter/Icon";
-import Spacer from "components/porter/Spacer";
-import Tag from "components/porter/Tag";
-import Text from "components/porter/Text";
-import { type DatastoreEngine } from "lib/databases/types";
-
-import postgresql from "assets/postgresql.svg";
-import redis from "assets/redis.svg";
 
 type Props = {
   engine: DatastoreEngine;

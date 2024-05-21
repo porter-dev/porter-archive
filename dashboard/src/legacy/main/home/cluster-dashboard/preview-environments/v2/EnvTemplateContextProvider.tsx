@@ -8,20 +8,19 @@ import React, {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type PorterApp } from "@porter-dev/api-contracts";
 import axios from "axios";
+import { Error as ErrorComponent } from "legacy/components/porter/Error";
+import { clientAddonToProto, clientAddonValidator } from "legacy/lib/addons";
+import {
+  APP_CREATE_FORM_DEFAULTS,
+  basePorterAppFormValidator,
+  clientAppToProto,
+} from "legacy/lib/porter-apps";
+import api from "legacy/shared/api";
 import _ from "lodash";
 import { FormProvider, useForm } from "react-hook-form";
 import { match } from "ts-pattern";
 import { z } from "zod";
 
-import { Error as ErrorComponent } from "components/porter/Error";
-import { clientAddonToProto, clientAddonValidator } from "lib/addons";
-import {
-  APP_CREATE_FORM_DEFAULTS,
-  basePorterAppFormValidator,
-  clientAppToProto,
-} from "lib/porter-apps";
-
-import api from "shared/api";
 import { Context } from "shared/Context";
 import { useDeploymentTarget } from "shared/DeploymentTargetContext";
 

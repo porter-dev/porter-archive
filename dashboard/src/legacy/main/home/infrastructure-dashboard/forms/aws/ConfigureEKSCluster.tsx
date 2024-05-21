@@ -1,18 +1,16 @@
 import React, { useState } from "react";
+import Back from "legacy/components/porter/Back";
+import Container from "legacy/components/porter/Container";
+import { ControlledInput } from "legacy/components/porter/ControlledInput";
+import Image from "legacy/components/porter/Image";
+import Select from "legacy/components/porter/Select";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import VerticalSteps from "legacy/components/porter/VerticalSteps";
+import { CloudProviderAWS } from "legacy/lib/clusters/constants";
+import { type ClientClusterContract } from "legacy/lib/clusters/types";
+import { valueExists } from "legacy/shared/util";
 import { Controller, useFormContext } from "react-hook-form";
-
-import Back from "components/porter/Back";
-import Container from "components/porter/Container";
-import { ControlledInput } from "components/porter/ControlledInput";
-import Image from "components/porter/Image";
-import Select from "components/porter/Select";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import VerticalSteps from "components/porter/VerticalSteps";
-import { CloudProviderAWS } from "lib/clusters/constants";
-import { type ClientClusterContract } from "lib/clusters/types";
-
-import { valueExists } from "shared/util";
 
 import { useClusterFormContext } from "../../ClusterFormContextProvider";
 import ClusterSaveButton from "../../ClusterSaveButton";

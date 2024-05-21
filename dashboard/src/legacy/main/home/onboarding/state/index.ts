@@ -1,5 +1,6 @@
-import api from "shared/api";
+import api from "legacy/shared/api";
 import { proxy } from "valtio";
+
 import { CompressedOnboardingState, Onboarding } from "../types";
 import { StateHandler } from "./StateHandler";
 import { Action, StepHandler } from "./StepHandler";
@@ -47,7 +48,6 @@ export const OFState = proxy({
           .then((res) => console.log(res))
           .catch((err) => console.log(err));
       }
-
     },
     restoreState: (state: any) => {
       const prevState = decompressState(state);

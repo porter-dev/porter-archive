@@ -1,7 +1,6 @@
 import React from "react";
-
-import Spacer from "components/porter/Spacer";
-import { type AppRevision } from "lib/revisions/types";
+import Spacer from "legacy/components/porter/Spacer";
+import { type AppRevision } from "legacy/lib/revisions/types";
 
 import EnvGroups from "./EnvGroups";
 import EnvVariables from "./EnvVariables";

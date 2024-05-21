@@ -1,8 +1,7 @@
 import React, { Component } from "react";
+import InputRow from "legacy/components/form-components/InputRow";
+import SaveButton from "legacy/components/SaveButton";
 import styled from "styled-components";
-
-import InputRow from "components/form-components/InputRow";
-import SaveButton from "components/SaveButton";
 
 type PropsType = {
   closeForm: () => void;
@@ -24,12 +23,8 @@ export default class DockerHubForm extends Component<PropsType, StateType> {
   };
 
   isDisabled = (): boolean => {
-    let {
-      registryURL,
-      dockerEmail,
-      dockerUsername,
-      dockerPassword,
-    } = this.state;
+    let { registryURL, dockerEmail, dockerUsername, dockerPassword } =
+      this.state;
     if (
       registryURL === "" ||
       dockerEmail === "" ||

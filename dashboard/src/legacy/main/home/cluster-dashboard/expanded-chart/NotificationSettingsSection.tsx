@@ -1,21 +1,22 @@
-import React, { useContext, useState, useEffect } from "react";
-import Heading from "components/form-components/Heading";
-import CheckboxRow from "components/form-components/CheckboxRow";
-import Helper from "components/form-components/Helper";
-import SaveButton from "components/SaveButton";
-import api from "shared/api";
-import { Context } from "shared/Context";
-import { ChartType } from "shared/types";
-import Loading from "components/Loading";
-import Banner from "components/porter/Banner";
+import React, { useContext, useEffect, useState } from "react";
+import CheckboxRow from "legacy/components/form-components/CheckboxRow";
+import Heading from "legacy/components/form-components/Heading";
+import Helper from "legacy/components/form-components/Helper";
+import Loading from "legacy/components/Loading";
+import Banner from "legacy/components/porter/Banner";
+import SaveButton from "legacy/components/SaveButton";
+import api from "legacy/shared/api";
+import { type ChartType } from "legacy/shared/types";
 import styled from "styled-components";
+
+import { Context } from "shared/Context";
 
 const NOTIF_CATEGORIES = ["success", "fail"];
 
-interface Props {
+type Props = {
   disabled?: boolean;
   currentChart: ChartType;
-}
+};
 
 const NotificationSettingsSection: React.FC<Props> = (props) => {
   const [notificationsOn, setNotificationsOn] = useState(true);
@@ -75,7 +76,7 @@ const NotificationSettingsSection: React.FC<Props> = (props) => {
 
   const saveChanges = () => {
     setSaveLoading(true);
-    let payload = {
+    const payload = {
       enabled: notificationsOn,
       ...categories,
     };
@@ -130,7 +131,9 @@ const NotificationSettingsSection: React.FC<Props> = (props) => {
               <CheckboxRow
                 label={"Enable notifications"}
                 checked={notificationsOn}
-                toggle={() => setNotificationsOn(!notificationsOn)}
+                toggle={() => {
+                  setNotificationsOn(!notificationsOn);
+                }}
                 disabled={props.disabled}
               />
               {notificationsOn && (
@@ -143,14 +146,14 @@ const NotificationSettingsSection: React.FC<Props> = (props) => {
                           <CheckboxRow
                             label={`Deploy ${k}`}
                             checked={v}
-                            toggle={() =>
+                            toggle={() => {
                               setCategories((prev) => {
                                 return {
                                   ...prev,
                                   [k]: !v,
                                 };
-                              })
-                            }
+                              });
+                            }}
                             disabled={props.disabled}
                           />
                         </React.Fragment>
@@ -161,7 +164,9 @@ const NotificationSettingsSection: React.FC<Props> = (props) => {
               )}
               <br />
               <SaveButton
-                onClick={() => saveChanges()}
+                onClick={() => {
+                  saveChanges();
+                }}
                 text="Save Notification Settings"
                 clearPosition={true}
                 statusPosition={"right"}

@@ -1,4 +1,4 @@
-import { ChartTypeWithExtendedConfig } from "shared/types";
+import { ChartTypeWithExtendedConfig } from "legacy/shared/types";
 
 export const isDeployedFromGithub = (release: ChartTypeWithExtendedConfig) => {
   const githubRepository = release?.git_action_config?.git_repo;

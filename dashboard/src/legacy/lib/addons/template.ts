@@ -1,3 +1,5 @@
+import quivr from "legacy/assets/quivr.png";
+
 import Logs from "main/home/add-on-dashboard/common/Logs";
 import Settings from "main/home/add-on-dashboard/common/Settings";
 import DatadogForm from "main/home/add-on-dashboard/datadog/DatadogForm";
@@ -7,8 +9,6 @@ import NewRelicForm from "main/home/add-on-dashboard/newrelic/NewRelicForm";
 import QuivrForm from "main/home/add-on-dashboard/quivr/QuivrForm";
 import TailscaleForm from "main/home/add-on-dashboard/tailscale/TailscaleForm";
 import TailscaleOverview from "main/home/add-on-dashboard/tailscale/TailscaleOverview";
-
-import quivr from "assets/quivr.png";
 
 import { type ClientAddon, type ClientAddonType } from ".";
 

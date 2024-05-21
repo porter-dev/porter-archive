@@ -1,14 +1,15 @@
-import DynamicLink from "components/DynamicLink";
-import TitleSection from "components/TitleSection";
 import React, { useMemo, useState } from "react";
+import sliders from "legacy/assets/sliders.svg";
+import DynamicLink from "legacy/components/DynamicLink";
+import Heading from "legacy/components/form-components/Heading";
+import Helper from "legacy/components/form-components/Helper";
+import InputRow from "legacy/components/form-components/InputRow";
+import TitleSection from "legacy/components/TitleSection";
+import { isAlphanumeric } from "legacy/shared/common";
 import styled from "styled-components";
-import { BackButton, Polymer, SubmitButton } from "../launch/components/styles";
-import sliders from "assets/sliders.svg";
+
 import EnvGroupArray, { KeyValueType } from "../../env-groups/EnvGroupArray";
-import Heading from "components/form-components/Heading";
-import { isAlphanumeric } from "shared/common";
-import InputRow from "components/form-components/InputRow";
-import Helper from "components/form-components/Helper";
+import { BackButton, Polymer, SubmitButton } from "../launch/components/styles";
 
 const envArrayToObject = (variables: KeyValueType[]) => {
   return variables.reduce<{ [key: string]: string }>((acc, curr) => {

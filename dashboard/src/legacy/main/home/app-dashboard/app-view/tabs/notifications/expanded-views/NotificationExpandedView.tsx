@@ -1,9 +1,8 @@
 import React from "react";
+import Banner from "legacy/components/porter/Banner";
 import AnimateHeight from "react-animate-height";
 import styled from "styled-components";
 import { match } from "ts-pattern";
-
-import Banner from "components/porter/Banner";
 
 import { useNotificationContext } from "./NotificationContextProvider";
 import RevisionNotificationExpandedView from "./RevisionNotificationExpandedView";

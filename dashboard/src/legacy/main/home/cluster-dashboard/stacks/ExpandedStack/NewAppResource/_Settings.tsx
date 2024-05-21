@@ -1,10 +1,12 @@
-import { AxiosError } from "axios";
-import { PopulatedEnvGroup } from "components/porter-form/types";
 import React, { useContext, useEffect, useState } from "react";
+import { AxiosError } from "axios";
+import { PopulatedEnvGroup } from "legacy/components/porter-form/types";
+import api from "legacy/shared/api";
+import { useRouting } from "legacy/shared/routing";
 import { useParams } from "react-router";
-import api from "shared/api";
+
 import { Context } from "shared/Context";
-import { useRouting } from "shared/routing";
+
 import NewAppResourceForm from "../../components/NewAppResourceForm";
 import { CreateStackBody } from "../../types";
 import { ExpandedStackStore } from "../Store";
@@ -37,9 +39,8 @@ const Settings = () => {
     template_version: string;
   }>();
   const { stack, refreshStack } = useContext(ExpandedStackStore);
-  const { currentProject, currentCluster, setCurrentError } = useContext(
-    Context
-  );
+  const { currentProject, currentCluster, setCurrentError } =
+    useContext(Context);
   const [availableEnvGroups, setAvailableEnvGroups] = useState<
     {
       name: string;

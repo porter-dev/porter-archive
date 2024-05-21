@@ -1,6 +1,6 @@
-import Loading from "components/Loading";
 import React, { useRef, useState } from "react";
-import { useOutsideAlerter } from "shared/hooks/useOutsideAlerter";
+import Loading from "legacy/components/Loading";
+import { useOutsideAlerter } from "legacy/shared/hooks/useOutsideAlerter";
 import styled from "styled-components";
 
 export type SelectProps<T> = {

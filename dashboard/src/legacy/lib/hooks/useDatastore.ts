@@ -1,11 +1,11 @@
 import { useCallback, useContext } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { type DbFormData } from "legacy/lib/databases/types";
+import api from "legacy/shared/api";
 import { match } from "ts-pattern";
 
 import { DATASTORE_TEMPLATE_MANAGED_POSTGRES } from "main/home/database-dashboard/constants";
-import { type DbFormData } from "lib/databases/types";
 
-import api from "shared/api";
 import { Context } from "shared/Context";
 
 type DatastoreHook = {

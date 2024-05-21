@@ -1,28 +1,27 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import axios from "axios";
+import connect from "legacy/assets/connect.svg";
+import Loading from "legacy/components/Loading";
+import Button from "legacy/components/porter/Button";
+import Error from "legacy/components/porter/Error";
+import Icon from "legacy/components/porter/Icon";
+import Modal from "legacy/components/porter/Modal";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import { useDatastore } from "legacy/lib/hooks/useDatastore";
+import { useEnvGroupList } from "legacy/lib/hooks/useEnvGroups";
+import { useIntercom } from "legacy/lib/hooks/useIntercom";
+import api from "legacy/shared/api";
 import pluralize from "pluralize";
 import styled from "styled-components";
 import { z } from "zod";
 
-import Loading from "components/Loading";
-import Button from "components/porter/Button";
-import Error from "components/porter/Error";
-import Icon from "components/porter/Icon";
-import Modal from "components/porter/Modal";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
 import SelectableAppList from "main/home/app-dashboard/apps/SelectableAppList";
 import {
   appRevisionWithSourceValidator,
   type AppRevisionWithSource,
 } from "main/home/app-dashboard/apps/types";
 import EnvGroupRow from "main/home/app-dashboard/validate-apply/app-settings/EnvGroupRow";
-import { useDatastore } from "lib/hooks/useDatastore";
-import { useEnvGroupList } from "lib/hooks/useEnvGroups";
-import { useIntercom } from "lib/hooks/useIntercom";
-
-import api from "shared/api";
-import connect from "assets/connect.svg";
 
 import { useDatastoreContext } from "../DatabaseContextProvider";
 

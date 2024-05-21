@@ -1,11 +1,10 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { type LoginFlow, type UpdateLoginFlowBody } from "@ory/client";
 import { UserAuthCard } from "@ory/elements";
+import Container from "legacy/components/porter/Container";
 import { useLocation } from "react-router";
 import { useHistory } from "react-router-dom";
 import styled from "styled-components";
-
-import Container from "components/porter/Container";
 
 import { basePath, ory, sdkError } from "shared/auth/ory";
 

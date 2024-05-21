@@ -1,8 +1,10 @@
-import SaveButton from "components/SaveButton";
 import React, { useContext, useReducer, useRef, useState } from "react";
-import api from "shared/api";
-import { Context } from "shared/Context";
+import SaveButton from "legacy/components/SaveButton";
+import api from "legacy/shared/api";
 import styled from "styled-components";
+
+import { Context } from "shared/Context";
+
 import { FullStackRevision, SourceConfig } from "../types";
 import SourceEditorDocker from "./components/SourceEditorDocker";
 
@@ -17,9 +19,8 @@ const _SourceConfig = ({
   readOnly: boolean;
   onSourceConfigUpdate: () => void;
 }) => {
-  const { currentProject, currentCluster, setCurrentError } = useContext(
-    Context
-  );
+  const { currentProject, currentCluster, setCurrentError } =
+    useContext(Context);
   const [sourceConfigArrayCopy, setSourceConfigArrayCopy] = useState<
     SourceConfig[]
   >(() => revision.source_configs);

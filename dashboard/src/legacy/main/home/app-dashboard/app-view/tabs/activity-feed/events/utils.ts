@@ -1,11 +1,10 @@
 import { differenceInSeconds, intervalToDuration } from "date-fns";
+import canceled from "legacy/assets/canceled.svg";
+import failure from "legacy/assets/failure.svg";
+import loading from "legacy/assets/loading.gif";
+import healthy from "legacy/assets/status-healthy.png";
+import api from "legacy/shared/api";
 import { match } from "ts-pattern";
-
-import api from "shared/api";
-import canceled from "assets/canceled.svg";
-import failure from "assets/failure.svg";
-import loading from "assets/loading.gif";
-import healthy from "assets/status-healthy.png";
 
 import { type PorterAppRecord } from "../../../AppView";
 import {

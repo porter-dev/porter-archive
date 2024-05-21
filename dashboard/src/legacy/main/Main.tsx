@@ -1,11 +1,10 @@
 import React, { useContext, useEffect, useState } from "react";
+import Loading from "legacy/components/Loading";
+import api from "legacy/shared/api";
+import { PorterUrls, type PorterUrl } from "legacy/shared/routing";
 import { Redirect, Route, Switch } from "react-router-dom";
 
-import Loading from "components/Loading";
-
-import api from "shared/api";
 import { Context } from "shared/Context";
-import { PorterUrls, type PorterUrl } from "shared/routing";
 
 import { useAuthn } from "../shared/auth/AuthnContext";
 import CurrentError from "./CurrentError";

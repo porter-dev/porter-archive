@@ -1,12 +1,12 @@
 import React, { Component } from "react";
+import Loading from "legacy/components/Loading";
+import { ClusterType } from "legacy/shared/types";
 import styled from "styled-components";
 
 import { Context } from "shared/Context";
-import { ClusterType } from "shared/types";
 
-import ClusterList from "./OldClusterList";
-import Loading from "components/Loading";
 import NoClusterPlaceholder from "../NoClusterPlaceholder";
+import ClusterList from "./OldClusterList";
 
 type PropsType = {
   currentCluster: ClusterType;

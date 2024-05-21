@@ -1,15 +1,13 @@
 import React from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import box from "legacy/assets/box.png";
+import postgresql from "legacy/assets/postgresql.svg";
+import redis from "legacy/assets/redis.svg";
+import Spacer from "legacy/components/porter/Spacer";
+import { type ClientAddon } from "legacy/lib/addons";
 import { type UseFieldArrayUpdate } from "react-hook-form";
 import styled from "styled-components";
 import { match } from "ts-pattern";
-
-import Spacer from "components/porter/Spacer";
-import { type ClientAddon } from "lib/addons";
-
-import box from "assets/box.png";
-import postgresql from "assets/postgresql.svg";
-import redis from "assets/redis.svg";
 
 import { type AppTemplateFormData } from "../cluster-dashboard/preview-environments/v2/EnvTemplateContextProvider";
 import { PostgresTabs } from "./tabs/PostgresTabs";

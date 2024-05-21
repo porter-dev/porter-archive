@@ -1,11 +1,10 @@
 import React, { Component } from "react";
+import Heading from "legacy/components/form-components/Heading";
+import Helper from "legacy/components/form-components/Helper";
+import InputRow from "legacy/components/form-components/InputRow";
+import TextArea from "legacy/components/form-components/TextArea";
+import SaveButton from "legacy/components/SaveButton";
 import styled from "styled-components";
-
-import InputRow from "components/form-components/InputRow";
-import TextArea from "components/form-components/TextArea";
-import SaveButton from "components/SaveButton";
-import Heading from "components/form-components/Heading";
-import Helper from "components/form-components/Helper";
 
 type PropsType = {
   closeForm: () => void;
@@ -27,12 +26,8 @@ export default class GKEForm extends Component<PropsType, StateType> {
   };
 
   isDisabled = (): boolean => {
-    let {
-      clusterName,
-      clusterEndpoint,
-      clusterCA,
-      serviceAccountKey,
-    } = this.state;
+    let { clusterName, clusterEndpoint, clusterCA, serviceAccountKey } =
+      this.state;
     if (
       clusterName === "" ||
       clusterEndpoint === "" ||

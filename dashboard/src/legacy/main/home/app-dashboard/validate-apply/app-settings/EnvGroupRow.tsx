@@ -1,21 +1,21 @@
 import React, { useContext, useMemo } from "react";
+import database from "legacy/assets/database.svg";
+import doppler from "legacy/assets/doppler.png";
+import infisical from "legacy/assets/infisical.svg";
+import key from "legacy/assets/key.svg";
+import Container from "legacy/components/porter/Container";
+import Expandable from "legacy/components/porter/Expandable";
+import FileArray from "legacy/components/porter/FileArray";
+import Image from "legacy/components/porter/Image";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import { envGroupPath } from "legacy/shared/util";
 import { useHistory } from "react-router";
 import styled from "styled-components";
 
-import Container from "components/porter/Container";
-import Expandable from "components/porter/Expandable";
-import FileArray from "components/porter/FileArray";
-import Image from "components/porter/Image";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
 import EnvGroupArray from "main/home/env-dashboard/EnvGroupArray";
 
 import { Context } from "shared/Context";
-import { envGroupPath } from "shared/util";
-import database from "assets/database.svg";
-import doppler from "assets/doppler.png";
-import infisical from "assets/infisical.svg";
-import key from "assets/key.svg";
 
 type Props = {
   maxHeight?: string;

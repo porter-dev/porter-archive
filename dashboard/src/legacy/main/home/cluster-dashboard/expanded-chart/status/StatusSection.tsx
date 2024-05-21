@@ -1,13 +1,13 @@
 import React, { useContext, useEffect, useState } from "react";
+import Loading from "legacy/components/Loading";
+import api from "legacy/shared/api";
+import { type ChartType } from "legacy/shared/types";
 import styled from "styled-components";
 
-import api from "shared/api";
 import { Context } from "shared/Context";
-import { ChartType } from "shared/types";
-import Loading from "components/Loading";
 
-import Logs from "./Logs";
 import ControllerTab from "./ControllerTab";
+import Logs from "./Logs";
 
 type Props = {
   selectors?: string[];
@@ -27,9 +27,8 @@ const StatusSectionFC: React.FunctionComponent<Props> = ({
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [podError, setPodError] = useState<string>("");
 
-  const { currentProject, currentCluster, setCurrentError } = useContext(
-    Context
-  );
+  const { currentProject, currentCluster, setCurrentError } =
+    useContext(Context);
 
   useEffect(() => {
     let isSubscribed = true;
@@ -49,7 +48,7 @@ const StatusSectionFC: React.FunctionComponent<Props> = ({
         if (!isSubscribed) {
           return;
         }
-        let controllers =
+        const controllers =
           currentChart.chart.metadata.name == "job"
             ? res.data[0]?.status.active
             : res.data;
@@ -91,7 +90,9 @@ const StatusSectionFC: React.FunctionComponent<Props> = ({
           controller={c}
           isLast={i === controllers?.length - 1}
           isFirst={i === 0}
-          setPodError={(x: string) => setPodError(x)}
+          setPodError={(x: string) => {
+            setPodError(x);
+          }}
         />
       );
     });

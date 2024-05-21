@@ -1,6 +1,6 @@
 import React, { Component } from "react";
+import upload from "legacy/assets/upload.svg";
 import styled from "styled-components";
-import upload from "assets/upload.svg";
 
 type PropsType = {
   label?: string;

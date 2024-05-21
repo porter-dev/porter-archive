@@ -1,30 +1,29 @@
 import React, { useEffect, useMemo, useState } from "react";
+import database from "legacy/assets/database.svg";
+import Back from "legacy/components/porter/Back";
+import BlockSelect, {
+  type BlockSelectOption,
+} from "legacy/components/porter/BlockSelect";
+import Button from "legacy/components/porter/Button";
+import { ControlledInput } from "legacy/components/porter/ControlledInput";
+import { Error as ErrorComponent } from "legacy/components/porter/Error";
+import Selector from "legacy/components/porter/Selector";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import VerticalSteps from "legacy/components/porter/VerticalSteps";
+import { isAWSCluster } from "legacy/lib/clusters/types";
+import {
+  type DatastoreTemplate,
+  type DbFormData,
+  type ResourceOption,
+} from "legacy/lib/databases/types";
+import { useClusterList } from "legacy/lib/hooks/useCluster";
 import { Controller, useFormContext } from "react-hook-form";
 import styled, { keyframes } from "styled-components";
 import { match } from "ts-pattern";
 import { v4 as uuidv4 } from "uuid";
 
-import Back from "components/porter/Back";
-import BlockSelect, {
-  type BlockSelectOption,
-} from "components/porter/BlockSelect";
-import Button from "components/porter/Button";
-import { ControlledInput } from "components/porter/ControlledInput";
-import { Error as ErrorComponent } from "components/porter/Error";
-import Selector from "components/porter/Selector";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import VerticalSteps from "components/porter/VerticalSteps";
 import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
-import { isAWSCluster } from "lib/clusters/types";
-import {
-  type DatastoreTemplate,
-  type DbFormData,
-  type ResourceOption,
-} from "lib/databases/types";
-import { useClusterList } from "lib/hooks/useCluster";
-
-import database from "assets/database.svg";
 
 import {
   DATASTORE_ENGINE_POSTGRES,

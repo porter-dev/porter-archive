@@ -1,7 +1,6 @@
 import React from "react";
+import DynamicLink from "legacy/components/DynamicLink";
 import styled from "styled-components";
-
-import DynamicLink from "components/DynamicLink";
 
 type Props = {
   to?: string;
@@ -29,12 +28,7 @@ const Link: React.FC<Props> = ({
   return (
     <LinkWrapper hoverColor={hoverColor} color={color}>
       {to ? (
-        <StyledLink
-          to={to}
-          target={target}
-          color={color}
-          inline={inline}
-        >
+        <StyledLink to={to} target={target} color={color} inline={inline}>
           {children}
           {target === "_blank" && showTargetBlankIcon && (
             <Svg

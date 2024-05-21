@@ -1,18 +1,17 @@
 import React, { useContext, useMemo } from "react";
-import { useHistory, useLocation } from "react-router";
-import styled from "styled-components";
-
-import Back from "components/porter/Back";
-import Spacer from "components/porter/Spacer";
-import { type ClientAddonType } from "lib/addons";
+import addOnGrad from "legacy/assets/add-on-grad.svg";
+import Back from "legacy/components/porter/Back";
+import Spacer from "legacy/components/porter/Spacer";
+import { type ClientAddonType } from "legacy/lib/addons";
 import {
   AddonTemplateTagColor,
   SUPPORTED_ADDON_TEMPLATES,
   type AddonTemplate,
-} from "lib/addons/template";
+} from "legacy/lib/addons/template";
+import { useHistory, useLocation } from "react-router";
+import styled from "styled-components";
 
 import { Context } from "shared/Context";
-import addOnGrad from "assets/add-on-grad.svg";
 
 import DashboardHeader from "../cluster-dashboard/DashboardHeader";
 import AddonForm from "./AddonForm";

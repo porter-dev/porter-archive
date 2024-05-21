@@ -1,6 +1,5 @@
 import React, { Component } from "react";
-
-import { pushQueryParams } from "shared/routing";
+import { pushQueryParams } from "legacy/shared/routing";
 import {
   NilCluster,
   type CapabilityType,
@@ -9,7 +8,7 @@ import {
   type ProjectListType,
   type ProjectType,
   type UsageData,
-} from "shared/types";
+} from "legacy/shared/types";
 
 import api from "./api";
 

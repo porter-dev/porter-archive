@@ -1,14 +1,13 @@
 import React, { useEffect, useState } from "react";
+import upload from "legacy/assets/upload.svg";
+import Button from "legacy/components/porter/Button";
+import Image from "legacy/components/porter/Image";
+import Spacer from "legacy/components/porter/Spacer";
+import { dotenv_parse } from "legacy/shared/string_utils";
 import styled from "styled-components";
 
-import Button from "components/porter/Button";
-import Image from "components/porter/Image";
-import Spacer from "components/porter/Spacer";
 import EnvEditorModal from "main/home/modals/EnvEditorModal";
 import Modal from "main/home/modals/Modal";
-
-import { dotenv_parse } from "shared/string_utils";
-import upload from "assets/upload.svg";
 
 export type KeyValueType = {
   key: string;

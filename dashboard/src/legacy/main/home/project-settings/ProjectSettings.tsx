@@ -1,4 +1,16 @@
 import React, { Component, useContext, useEffect, useState } from "react";
+import settingsGrad from "legacy/assets/settings-grad.svg";
+import Heading from "legacy/components/form-components/Heading";
+import Helper from "legacy/components/form-components/Helper";
+import Button from "legacy/components/porter/Button";
+import Error from "legacy/components/porter/Error";
+import Input from "legacy/components/porter/Input";
+import Link from "legacy/components/porter/Link";
+import Spacer from "legacy/components/porter/Spacer";
+import TabRegion from "legacy/components/TabRegion";
+import api from "legacy/shared/api";
+import { isAlphanumeric } from "legacy/shared/common";
+import { getQueryParam } from "legacy/shared/routing";
 import _ from "lodash";
 import {
   withRouter,
@@ -7,21 +19,8 @@ import {
 } from "react-router";
 import styled from "styled-components";
 
-import Heading from "components/form-components/Heading";
-import Helper from "components/form-components/Helper";
-import Button from "components/porter/Button";
-import Error from "components/porter/Error";
-import Input from "components/porter/Input";
-import Link from "components/porter/Link";
-import Spacer from "components/porter/Spacer";
-import TabRegion from "components/TabRegion";
-
-import api from "shared/api";
 import { withAuth, type WithAuthProps } from "shared/auth/AuthorizationHoc";
-import { isAlphanumeric } from "shared/common";
 import { Context } from "shared/Context";
-import { getQueryParam } from "shared/routing";
-import settingsGrad from "assets/settings-grad.svg";
 
 import DashboardHeader from "../cluster-dashboard/DashboardHeader";
 import APITokensSection from "./APITokensSection";

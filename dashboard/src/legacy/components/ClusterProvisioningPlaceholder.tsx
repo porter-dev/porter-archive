@@ -1,14 +1,13 @@
 import React, { useContext, useEffect, useState } from "react";
+import loading from "legacy/assets/loading.gif";
+import Heading from "legacy/components/form-components/Heading";
+import Helper from "legacy/components/form-components/Helper";
+import PorterLink from "legacy/components/porter/Link";
+import { pushFiltered } from "legacy/shared/routing";
 import { withRouter, type RouteComponentProps } from "react-router";
 import styled from "styled-components";
 
-import Heading from "components/form-components/Heading";
-import Helper from "components/form-components/Helper";
-import PorterLink from "components/porter/Link";
-
 import { Context } from "shared/Context";
-import { pushFiltered } from "shared/routing";
-import loading from "assets/loading.gif";
 
 import Button from "./porter/Button";
 import DashboardPlaceholder from "./porter/DashboardPlaceholder";

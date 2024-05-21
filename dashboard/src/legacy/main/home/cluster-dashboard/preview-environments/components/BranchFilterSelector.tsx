@@ -1,5 +1,5 @@
-import SearchSelector from "components/SearchSelector";
 import React, { useMemo } from "react";
+import SearchSelector from "legacy/components/SearchSelector";
 import styled from "styled-components";
 
 const BranchFilterSelector = ({

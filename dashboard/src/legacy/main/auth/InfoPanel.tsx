@@ -1,12 +1,10 @@
 import React, { useState } from "react";
+import gift from "legacy/assets/gift.svg";
+import logo from "legacy/assets/logo.png";
+import Container from "legacy/components/porter/Container";
+import Image from "legacy/components/porter/Image";
+import Spacer from "legacy/components/porter/Spacer";
 import styled from "styled-components";
-
-import Container from "components/porter/Container";
-import Image from "components/porter/Image";
-import Spacer from "components/porter/Spacer";
-
-import gift from "assets/gift.svg";
-import logo from "assets/logo.png";
 
 const InfoPanel: React.FC = () => {
   if (window.location.hostname === "cloud.porter.run") {

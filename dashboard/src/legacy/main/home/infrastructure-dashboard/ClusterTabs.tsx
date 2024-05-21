@@ -1,18 +1,17 @@
 import React, { useContext, useEffect, useMemo } from "react";
 import { Contract } from "@porter-dev/api-contracts";
+import Banner from "legacy/components/porter/Banner";
+import Spacer from "legacy/components/porter/Spacer";
+import TabSelector from "legacy/components/TabSelector";
+import { type ClientClusterContract } from "legacy/lib/clusters/types";
+import { valueExists } from "legacy/shared/util";
 import AnimateHeight from "react-animate-height";
 import { useFormContext } from "react-hook-form";
 import { useHistory } from "react-router";
 import styled from "styled-components";
 import { match } from "ts-pattern";
 
-import Banner from "components/porter/Banner";
-import Spacer from "components/porter/Spacer";
-import TabSelector from "components/TabSelector";
-import { type ClientClusterContract } from "lib/clusters/types";
-
 import { Context } from "shared/Context";
-import { valueExists } from "shared/util";
 
 import { useClusterContext } from "./ClusterContextProvider";
 import { useClusterFormContext } from "./ClusterFormContextProvider";

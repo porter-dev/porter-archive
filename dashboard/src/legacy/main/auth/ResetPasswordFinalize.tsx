@@ -1,10 +1,10 @@
 import React, { ChangeEvent, Component } from "react";
+import logo from "legacy/assets/logo.png";
+import Loading from "legacy/components/Loading";
+import api from "legacy/shared/api";
 import styled from "styled-components";
-import logo from "assets/logo.png";
 
-import api from "shared/api";
 import { Context } from "shared/Context";
-import Loading from "components/Loading";
 
 type PropsType = {};
 
@@ -109,13 +109,8 @@ export default class ResetPasswordInit extends Component<PropsType, StateType> {
   };
 
   render() {
-    let {
-      password,
-      passwordError,
-      submitted,
-      loading,
-      tokenError,
-    } = this.state;
+    let { password, passwordError, submitted, loading, tokenError } =
+      this.state;
 
     let inputSection = (
       <div>
@@ -203,7 +198,9 @@ const Footer = styled.div`
   color: #aaaabb;
   font-size: 13px;
   padding-right: 8px;
-  font: Work Sans, sans-serif;
+  font:
+    Work Sans,
+    sans-serif;
 `;
 
 const DarkMatter = styled.div`

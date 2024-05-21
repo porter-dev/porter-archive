@@ -1,16 +1,17 @@
 import React, { useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import Input from "legacy/components/porter/Input";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import {
+  type PorterAppFormData,
+  type SourceOptions,
+} from "legacy/lib/porter-apps";
+import { type BuildOptions } from "legacy/lib/porter-apps/build";
+import api from "legacy/shared/api";
 import { Controller, useFormContext } from "react-hook-form";
 import styled from "styled-components";
 import { z } from "zod";
-
-import Input from "components/porter/Input";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import { type PorterAppFormData, type SourceOptions } from "lib/porter-apps";
-import { type BuildOptions } from "lib/porter-apps/build";
-
-import api from "shared/api";
 
 import BranchSelector from "../build-settings/BranchSelector";
 import RepositorySelector from "../build-settings/RepositorySelector";

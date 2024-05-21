@@ -1,16 +1,16 @@
 import React, { useContext, useEffect, useState } from "react";
+import github from "legacy/assets/github-white.png";
+import DynamicLink from "legacy/components/DynamicLink";
+import Loading from "legacy/components/Loading";
+import SearchBar from "legacy/components/SearchBar";
+import api from "legacy/shared/api";
+import { type RepoType } from "legacy/shared/types";
 import styled from "styled-components";
-import github from "assets/github-white.png";
 
-import api from "shared/api";
-import { RepoType } from "shared/types";
 import { Context } from "shared/Context";
 
-import DynamicLink from "components/DynamicLink";
-import Loading from "components/Loading";
-import SearchBar from "components/SearchBar";
+import { type PorterApp } from "../types/porterApp";
 import ProviderSelector from "./ProviderSelector";
-import { PorterApp } from "../types/porterApp";
 
 type Props = {
   readOnly: boolean;
@@ -20,15 +20,15 @@ type Props = {
 
 type Provider =
   | {
-    provider: "github";
-    name: string;
-    installation_id: number;
-  }
+      provider: "github";
+      name: string;
+      installation_id: number;
+    }
   | {
-    provider: "gitlab";
-    instance_url: string;
-    integration_id: number;
-  };
+      provider: "gitlab";
+      instance_url: string;
+      integration_id: number;
+    };
 
 const RepositorySelector: React.FC<Props> = ({
   readOnly,
@@ -89,16 +89,16 @@ const RepositorySelector: React.FC<Props> = ({
   const loadGithubRepos = async (repoId: number) => {
     try {
       const res = await api.getGitRepoList<
-        { FullName: string; Kind: "github" }[]
+        Array<{ FullName: string; Kind: "github" }>
       >("<token>", {}, { project_id: currentProject.id, git_repo_id: repoId });
 
       const repos = res.data.map((repo) => ({ ...repo, GHRepoID: repoId }));
       return repos;
-    } catch (error) { }
+    } catch (error) {}
   };
 
-  const loadRepos = (provider: any) => {
-    return loadGithubRepos(provider.installation_id);
+  const loadRepos = async (provider: any) => {
+    return await loadGithubRepos(provider.installation_id);
   };
 
   useEffect(() => {
@@ -169,23 +169,23 @@ const RepositorySelector: React.FC<Props> = ({
     }
 
     // show 10 most recently used repos if user hasn't searched anything yet
-    let results =
+    const results =
       searchFilter != null
         ? repos
-          .filter((repo: RepoType) => {
-            return repo.FullName.toLowerCase().includes(
-              searchFilter.toLowerCase()
-            );
-          })
-          .sort((a: RepoType, b: RepoType) => {
-            const aIndex = a.FullName.toLowerCase().indexOf(
-              searchFilter.toLowerCase()
-            );
-            const bIndex = b.FullName.toLowerCase().indexOf(
-              searchFilter.toLowerCase()
-            );
-            return aIndex - bIndex;
-          })
+            .filter((repo: RepoType) => {
+              return repo.FullName.toLowerCase().includes(
+                searchFilter.toLowerCase()
+              );
+            })
+            .sort((a: RepoType, b: RepoType) => {
+              const aIndex = a.FullName.toLowerCase().indexOf(
+                searchFilter.toLowerCase()
+              );
+              const bIndex = b.FullName.toLowerCase().indexOf(
+                searchFilter.toLowerCase()
+              );
+              return aIndex - bIndex;
+            })
         : repos.slice(0, 10);
 
     if (results.length == 0) {
@@ -197,7 +197,9 @@ const RepositorySelector: React.FC<Props> = ({
             key={i}
             isSelected={repo.FullName === git_repo_name}
             lastItem={i === repos.length - 1}
-            onClick={() => setRepo(repo)}
+            onClick={() => {
+              setRepo(repo);
+            }}
             readOnly={readOnly}
             disabled={false}
           >
@@ -291,7 +293,7 @@ const ConnectToGithubButton = styled.a`
     props.disabled ? "#aaaabbee" : "#2E3338"};
   :hover {
     background: ${(props: { disabled?: boolean }) =>
-    props.disabled ? "" : "#353a3e"};
+      props.disabled ? "" : "#353a3e"};
   }
 
   > i {

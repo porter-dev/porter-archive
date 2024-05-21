@@ -1,15 +1,15 @@
 import { useContext } from "react";
 import { useQuery } from "@tanstack/react-query";
-
-import { SUPPORTED_DATASTORE_TEMPLATES } from "main/home/database-dashboard/constants";
 import {
   datastoreListResponseValidator,
   type ClientDatastore,
-} from "lib/databases/types";
+} from "legacy/lib/databases/types";
+import api from "legacy/shared/api";
+import { valueExists } from "legacy/shared/util";
 
-import api from "shared/api";
+import { SUPPORTED_DATASTORE_TEMPLATES } from "main/home/database-dashboard/constants";
+
 import { Context } from "shared/Context";
-import { valueExists } from "shared/util";
 
 type DatastoreListType = {
   datastores: ClientDatastore[];

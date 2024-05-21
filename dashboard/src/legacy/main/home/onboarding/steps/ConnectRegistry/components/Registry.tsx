@@ -1,11 +1,13 @@
-import Loading from "components/Loading";
-import { OFState } from "main/home/onboarding/state";
 import React, { useContext, useState } from "react";
-import api from "shared/api";
-import { integrationList } from "shared/common";
-import { Context } from "shared/Context";
+import Loading from "legacy/components/Loading";
+import api from "legacy/shared/api";
+import { integrationList } from "legacy/shared/common";
 import styled from "styled-components";
 import { useSnapshot } from "valtio";
+
+import { OFState } from "main/home/onboarding/state";
+
+import { Context } from "shared/Context";
 
 const serviceToProvider: {
   [key: string]: string;

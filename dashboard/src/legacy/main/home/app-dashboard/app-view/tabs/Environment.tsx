@@ -1,14 +1,13 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import { type PorterAppFormData } from "legacy/lib/porter-apps";
+import api from "legacy/shared/api";
 import { useFormContext } from "react-hook-form";
 import { z } from "zod";
 
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
 import PreviewSaveButton from "main/home/cluster-dashboard/preview-environments/v2/setup-app/PreviewSaveButton";
-import { type PorterAppFormData } from "lib/porter-apps";
-
-import api from "shared/api";
 
 import EnvSettings from "../../validate-apply/app-settings/EnvSettings";
 import { populatedEnvGroup } from "../../validate-apply/app-settings/types";

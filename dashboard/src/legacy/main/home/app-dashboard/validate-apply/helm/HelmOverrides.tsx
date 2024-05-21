@@ -1,12 +1,11 @@
 import React from "react";
-import styled from "styled-components";
-
 import yaml from "js-yaml";
-import YamlEditor from "components/YamlEditor";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import {useFormContext} from "react-hook-form";
-import {PorterAppFormData} from "lib/porter-apps";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import YamlEditor from "legacy/components/YamlEditor";
+import { PorterAppFormData } from "legacy/lib/porter-apps";
+import { useFormContext } from "react-hook-form";
+import styled from "styled-components";
 
 type PropsType = {
   projectId: number;
@@ -20,39 +19,41 @@ type PropsType = {
 
 const HelmOverrides: React.FunctionComponent<PropsType> = ({
   overrideValues,
-    setError,
+  setError,
 }) => {
-
   const { setValue } = useFormContext<PorterAppFormData>();
-  const [currentOverrideValues, setOverrideValues] = React.useState<string>(overrideValues);
+  const [currentOverrideValues, setOverrideValues] =
+    React.useState<string>(overrideValues);
 
   const setFormValue = (value: string) => {
-        setOverrideValues(value);
-        try {
-            const jsonValues = value.trim() ? JSON.stringify(yaml.load(value)) : ""
-            setValue("app.helmOverrides", jsonValues);
-            setError("");
-        } catch (e) {
-            setError(e.toString());
-        }
-  }
+    setOverrideValues(value);
+    try {
+      const jsonValues = value.trim() ? JSON.stringify(yaml.load(value)) : "";
+      setValue("app.helmOverrides", jsonValues);
+      setError("");
+    } catch (e) {
+      setError(e.toString());
+    }
+  };
 
   return (
-        <StyledValuesYaml>
-            <Spacer y={.5} />
-            <Text color="warner">Note: Values set in Helm overrides will take precedence over corresponding fields in the UI, causing the dashboard to be out of sync.</Text>
-            <Spacer y={.5} />
-            <Wrapper>
-                <YamlEditor
-                    value={currentOverrideValues}
-                    height="calc(100vh - 412px)"
-                    onChange={setFormValue}
-                />
-            </Wrapper>
-        </StyledValuesYaml>
+    <StyledValuesYaml>
+      <Spacer y={0.5} />
+      <Text color="warner">
+        Note: Values set in Helm overrides will take precedence over
+        corresponding fields in the UI, causing the dashboard to be out of sync.
+      </Text>
+      <Spacer y={0.5} />
+      <Wrapper>
+        <YamlEditor
+          value={currentOverrideValues}
+          height="calc(100vh - 412px)"
+          onChange={setFormValue}
+        />
+      </Wrapper>
+    </StyledValuesYaml>
   );
-
-}
+};
 
 export default HelmOverrides;
 

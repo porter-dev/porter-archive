@@ -1,28 +1,30 @@
 import React, { useMemo, useState } from "react";
+import copy from "legacy/assets/copy-left.svg";
+import upload from "legacy/assets/upload.svg";
+import CopyToClipboard from "legacy/components/CopyToClipboard";
+import Loading from "legacy/components/Loading";
+import Button from "legacy/components/porter/Button";
+import Checkbox from "legacy/components/porter/Checkbox";
+import CollapsibleContainer from "legacy/components/porter/CollapsibleContainer";
+import Container from "legacy/components/porter/Container";
+import { ControlledInput } from "legacy/components/porter/ControlledInput";
+import Image from "legacy/components/porter/Image";
+import Modal from "legacy/components/porter/Modal";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import { type ClientAddon } from "legacy/lib/addons";
+import {
+  datastoreValidator,
+  type ClientDatastore,
+} from "legacy/lib/databases/types";
+import { useDatastoreList } from "legacy/lib/hooks/useDatabaseList";
+import api from "legacy/shared/api";
 import { Controller, useFormContext } from "react-hook-form";
 import { useHistory } from "react-router";
 import styled from "styled-components";
 import { z } from "zod";
 
-import CopyToClipboard from "components/CopyToClipboard";
-import Loading from "components/Loading";
-import Button from "components/porter/Button";
-import Checkbox from "components/porter/Checkbox";
-import CollapsibleContainer from "components/porter/CollapsibleContainer";
-import Container from "components/porter/Container";
-import { ControlledInput } from "components/porter/ControlledInput";
-import Image from "components/porter/Image";
-import Modal from "components/porter/Modal";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import { type ClientAddon } from "lib/addons";
-import { datastoreValidator, type ClientDatastore } from "lib/databases/types";
-import { useDatastoreList } from "lib/hooks/useDatabaseList";
-
-import api from "shared/api";
 import { stringifiedDNSRecordType } from "utils/ip";
-import copy from "assets/copy-left.svg";
-import upload from "assets/upload.svg";
 
 import { DATASTORE_ENGINE_POSTGRES } from "../../database-dashboard/constants";
 import { DatastoreList } from "../../database-dashboard/DatabaseDashboard";

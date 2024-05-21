@@ -1,25 +1,24 @@
 import React, { useContext, useMemo } from "react";
+import chip from "legacy/assets/computer-chip.svg";
+import world from "legacy/assets/world.svg";
+import Button from "legacy/components/porter/Button";
+import Container from "legacy/components/porter/Container";
+import Expandable from "legacy/components/porter/Expandable";
+import Image from "legacy/components/porter/Image";
+import Input from "legacy/components/porter/Input";
+import PorterOperatorComponent from "legacy/components/porter/PorterOperatorComponent";
+import Select from "legacy/components/porter/Select";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import {
+  type ClientClusterContract,
+  type ClientMachineType,
+} from "legacy/lib/clusters/types";
 import _ from "lodash";
 import { Controller, useFieldArray, useFormContext } from "react-hook-form";
 import styled from "styled-components";
 
-import Button from "components/porter/Button";
-import Container from "components/porter/Container";
-import Expandable from "components/porter/Expandable";
-import Image from "components/porter/Image";
-import Input from "components/porter/Input";
-import PorterOperatorComponent from "components/porter/PorterOperatorComponent";
-import Select from "components/porter/Select";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import {
-  type ClientClusterContract,
-  type ClientMachineType,
-} from "lib/clusters/types";
-
 import { Context } from "shared/Context";
-import chip from "assets/computer-chip.svg";
-import world from "assets/world.svg";
 
 type Props = {
   availableMachineTypes: ClientMachineType[];

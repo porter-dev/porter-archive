@@ -1,17 +1,16 @@
 import React, { useContext, useState } from "react";
+import trash from "legacy/assets/trash.png";
+import Container from "legacy/components/porter/Container";
+import Icon from "legacy/components/porter/Icon";
+import Spacer from "legacy/components/porter/Spacer";
+import StatusDot from "legacy/components/porter/StatusDot";
+import Text from "legacy/components/porter/Text";
+import Tooltip from "legacy/components/porter/Tooltip";
+import { readableDate } from "legacy/shared/string_utils";
 import styled from "styled-components";
 import { match } from "ts-pattern";
 
-import Container from "components/porter/Container";
-import Icon from "components/porter/Icon";
-import Spacer from "components/porter/Spacer";
-import StatusDot from "components/porter/StatusDot";
-import Text from "components/porter/Text";
-import Tooltip from "components/porter/Tooltip";
-
 import { Context } from "shared/Context";
-import { readableDate } from "shared/string_utils";
-import trash from "assets/trash.png";
 
 import { useDatastoreContext } from "./DatabaseContextProvider";
 import { DeleteDatastoreModal } from "./tabs/SettingsTab";

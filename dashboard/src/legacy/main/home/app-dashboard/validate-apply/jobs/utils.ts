@@ -1,10 +1,8 @@
 import { differenceInSeconds, intervalToDuration } from "date-fns";
+import { type JobRun } from "legacy/lib/hooks/useJobs";
+import api from "legacy/shared/api";
+import { timeFrom } from "legacy/shared/string_utils";
 import { z } from "zod";
-
-import { type JobRun } from "lib/hooks/useJobs";
-
-import api from "shared/api";
-import { timeFrom } from "shared/string_utils";
 
 export const ranFor = (start: string, end?: string | number) => {
   const duration = timeFrom(start, end);

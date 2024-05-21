@@ -1,21 +1,20 @@
 import React, { useContext, useState } from "react";
+import prGrad from "legacy/assets/pr-grad.svg";
+import ClusterProvisioningPlaceholder from "legacy/components/ClusterProvisioningPlaceholder";
+import Loading from "legacy/components/Loading";
+import Button from "legacy/components/porter/Button";
+import Container from "legacy/components/porter/Container";
+import DashboardPlaceholder from "legacy/components/porter/DashboardPlaceholder";
+import PorterLink from "legacy/components/porter/Link";
+import ShowIntercomButton from "legacy/components/porter/ShowIntercomButton";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import TabSelector from "legacy/components/TabSelector";
+import { useDeploymentTargetList } from "legacy/lib/hooks/useDeploymentTarget";
 import styled from "styled-components";
 import { match } from "ts-pattern";
 
-import ClusterProvisioningPlaceholder from "components/ClusterProvisioningPlaceholder";
-import Loading from "components/Loading";
-import Button from "components/porter/Button";
-import Container from "components/porter/Container";
-import DashboardPlaceholder from "components/porter/DashboardPlaceholder";
-import PorterLink from "components/porter/Link";
-import ShowIntercomButton from "components/porter/ShowIntercomButton";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import TabSelector from "components/TabSelector";
-import { useDeploymentTargetList } from "lib/hooks/useDeploymentTarget";
-
 import { Context } from "shared/Context";
-import prGrad from "assets/pr-grad.svg";
 
 import DashboardHeader from "../../DashboardHeader";
 import { ConfigurableAppList } from "./ConfigurableAppList";

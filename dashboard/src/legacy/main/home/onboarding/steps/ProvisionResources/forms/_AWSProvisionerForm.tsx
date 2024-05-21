@@ -1,19 +1,20 @@
+import React, { useEffect, useState } from "react";
+import Helper from "legacy/components/form-components/Helper";
+import InputRow from "legacy/components/form-components/InputRow";
+import SelectRow from "legacy/components/form-components/SelectRow";
+import Loading from "legacy/components/Loading";
+import SaveButton from "legacy/components/SaveButton";
+import api from "legacy/shared/api";
+import { readableDate } from "legacy/shared/string_utils";
+import { Infrastructure } from "legacy/shared/types";
 import styled from "styled-components";
-import InputRow from "components/form-components/InputRow";
-import SelectRow from "components/form-components/SelectRow";
-import SaveButton from "components/SaveButton";
+import { useSnapshot } from "valtio";
+
 import { OFState } from "main/home/onboarding/state";
 import {
   AWSProvisionerConfig,
   AWSRegistryConfig,
 } from "main/home/onboarding/types";
-import React, { useEffect, useState } from "react";
-import api from "shared/api";
-import { useSnapshot } from "valtio";
-import Loading from "components/Loading";
-import Helper from "components/form-components/Helper";
-import { readableDate } from "shared/string_utils";
-import { Infrastructure } from "shared/types";
 
 const regionOptions = [
   { value: "us-east-1", label: "US East (N. Virginia) us-east-1" },

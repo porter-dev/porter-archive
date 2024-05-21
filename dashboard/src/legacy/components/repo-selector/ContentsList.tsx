@@ -1,14 +1,13 @@
 import React, { Component } from "react";
+import close from "legacy/assets/close.png";
+import file from "legacy/assets/file.svg";
+import folder from "legacy/assets/folder.svg";
+import info from "legacy/assets/info.svg";
 import styled from "styled-components";
-import file from "assets/file.svg";
-import folder from "assets/folder.svg";
-import info from "assets/info.svg";
-import close from "assets/close.png";
 
 import api from "../../shared/api";
 import { Context } from "../../shared/Context";
 import { ActionConfigType, FileType } from "../../shared/types";
-
 import Loading from "../Loading";
 
 interface AutoBuildpack {

@@ -1,8 +1,9 @@
 import React from "react";
+import danger from "legacy/assets/danger.svg";
+import info from "legacy/assets/info.svg";
+import TitleSection from "legacy/components/TitleSection";
 import styled from "styled-components";
-import TitleSection from "components/TitleSection";
-import danger from "assets/danger.svg";
-import info from "assets/info.svg";
+
 import Modal from "main/home/modals/Modal";
 
 interface PorterYAMLErrorsModalProps {

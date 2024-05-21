@@ -1,4 +1,4 @@
-import api from "shared/api";
+import api from "legacy/shared/api";
 
 export const useClusterAnalytics = (): {
   reportToAnalytics: ({

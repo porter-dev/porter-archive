@@ -1,8 +1,8 @@
-import Loading from "components/Loading";
-import ProvisionerStatus from "components/ProvisionerStatus";
 import React, { useEffect, useRef, useState } from "react";
-import api from "shared/api";
-import { Infrastructure } from "shared/types";
+import Loading from "legacy/components/Loading";
+import ProvisionerStatus from "legacy/components/ProvisionerStatus";
+import api from "legacy/shared/api";
+import { Infrastructure } from "legacy/shared/types";
 import styled from "styled-components";
 
 type Props = {
@@ -194,7 +194,7 @@ const Placeholder = styled.div`
   color: #ffffff44;
   min-height: 400px;
   height: 50vh;
-  background: ${props => props.theme.fg};
+  background: ${(props) => props.theme.fg};
   border-radius: 8px;
   width: 100%;
   display: flex;

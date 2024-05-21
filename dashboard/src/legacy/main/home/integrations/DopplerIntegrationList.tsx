@@ -1,21 +1,20 @@
 import React, { useContext, useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
+import Loading from "legacy/components/Loading";
+import Placeholder from "legacy/components/Placeholder";
+import Banner from "legacy/components/porter/Banner";
+import Button from "legacy/components/porter/Button";
+import Input from "legacy/components/porter/Input";
+import Link from "legacy/components/porter/Link";
+import Modal from "legacy/components/porter/Modal";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import ToggleRow from "legacy/components/porter/ToggleRow";
+import api from "legacy/shared/api";
 import { useHistory } from "react-router";
 import { z } from "zod";
 
-import Loading from "components/Loading";
-import Placeholder from "components/Placeholder";
-import Banner from "components/porter/Banner";
-import Button from "components/porter/Button";
-import Input from "components/porter/Input";
-import Link from "components/porter/Link";
-import Modal from "components/porter/Modal";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import ToggleRow from "components/porter/ToggleRow";
-
-import api from "shared/api";
 import { Context } from "shared/Context";
 
 const DopplerIntegrationList: React.FC = (_) => {

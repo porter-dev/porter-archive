@@ -1,7 +1,6 @@
 import React from "react";
+import placeholder from "legacy/assets/placeholder.svg";
 import styled from "styled-components";
-
-import placeholder from "assets/placeholder.svg";
 
 type Props = {
   children: React.ReactNode;

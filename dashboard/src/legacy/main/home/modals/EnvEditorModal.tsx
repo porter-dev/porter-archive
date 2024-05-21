@@ -1,17 +1,17 @@
 import React, { Component } from "react";
-import styled from "styled-components";
-import close from "assets/close.png";
+import close from "legacy/assets/close.png";
 import AceEditor from "react-ace";
+import styled from "styled-components";
 
 import "shared/ace-porter-theme";
 import "ace-builds/src-noconflict/mode-text";
 
-import { Context } from "shared/Context";
+import Button from "legacy/components/porter/Button";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import SaveButton from "legacy/components/SaveButton";
 
-import SaveButton from "components/SaveButton";
-import Text from "components/porter/Text";
-import Spacer from "components/porter/Spacer";
-import Button from "components/porter/Button";
+import { Context } from "shared/Context";
 
 type PropsType = {
   closeModal: () => void;

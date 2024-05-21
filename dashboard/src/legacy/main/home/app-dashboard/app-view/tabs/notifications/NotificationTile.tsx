@@ -1,22 +1,20 @@
 import React, { useMemo } from "react";
-import styled from "styled-components";
-import { match } from "ts-pattern";
-
-import Container from "components/porter/Container";
-import Spacer from "components/porter/Spacer";
-import Tag from "components/porter/Tag";
-import Text from "components/porter/Text";
-import { ERROR_CODE_TO_SUMMARY } from "lib/porter-apps/error";
+import job from "legacy/assets/job.png";
+import web from "legacy/assets/web.png";
+import worker from "legacy/assets/worker.png";
+import Container from "legacy/components/porter/Container";
+import Spacer from "legacy/components/porter/Spacer";
+import Tag from "legacy/components/porter/Tag";
+import Text from "legacy/components/porter/Text";
+import { ERROR_CODE_TO_SUMMARY } from "legacy/lib/porter-apps/error";
 import {
   isClientRevisionNotification,
   isClientServiceNotification,
   type ClientNotification,
-} from "lib/porter-apps/notification";
-
-import { feedDate } from "shared/string_utils";
-import job from "assets/job.png";
-import web from "assets/web.png";
-import worker from "assets/worker.png";
+} from "legacy/lib/porter-apps/notification";
+import { feedDate } from "legacy/shared/string_utils";
+import styled from "styled-components";
+import { match } from "ts-pattern";
 
 type Props = {
   notification: ClientNotification;

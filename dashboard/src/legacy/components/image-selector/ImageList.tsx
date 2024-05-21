@@ -1,39 +1,39 @@
 import React, { Component } from "react";
+import api from "legacy/shared/api";
+import { integrationList } from "legacy/shared/common";
+import { ImageType } from "legacy/shared/types";
 import styled from "styled-components";
 
-import api from "shared/api";
-import { integrationList } from "shared/common";
 import { Context } from "shared/Context";
-import { ImageType } from "shared/types";
 
 import Loading from "../Loading";
 import TagList from "./TagList";
 
 type PropsType =
   | {
-    selectedImageUrl: string | null;
-    selectedTag: string | null;
-    clickedImage: ImageType | null;
-    registry?: any;
-    noTagSelection?: boolean;
-    setSelectedImageUrl: (x: string) => void;
-    setSelectedTag: (x: string) => void;
-    setClickedImage: (x: ImageType) => void;
-    disableImageSelect?: boolean;
-    readOnly?: boolean;
-  }
+      selectedImageUrl: string | null;
+      selectedTag: string | null;
+      clickedImage: ImageType | null;
+      registry?: any;
+      noTagSelection?: boolean;
+      setSelectedImageUrl: (x: string) => void;
+      setSelectedTag: (x: string) => void;
+      setClickedImage: (x: ImageType) => void;
+      disableImageSelect?: boolean;
+      readOnly?: boolean;
+    }
   | {
-    selectedImageUrl: string | null;
-    selectedTag: string | null;
-    clickedImage: ImageType | null;
-    registry?: any;
-    noTagSelection?: boolean;
-    setSelectedImageUrl?: (x: string) => void;
-    setSelectedTag?: (x: string) => void;
-    setClickedImage?: (x: ImageType) => void;
-    disableImageSelect?: boolean;
-    readOnly: true;
-  };
+      selectedImageUrl: string | null;
+      selectedTag: string | null;
+      clickedImage: ImageType | null;
+      registry?: any;
+      noTagSelection?: boolean;
+      setSelectedImageUrl?: (x: string) => void;
+      setSelectedTag?: (x: string) => void;
+      setClickedImage?: (x: ImageType) => void;
+      disableImageSelect?: boolean;
+      readOnly: true;
+    };
 
 type StateType = {
   loading: boolean;

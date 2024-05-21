@@ -1,8 +1,7 @@
 import React, { Component } from "react";
+import { edgeColors } from "legacy/shared/rosettaStone";
+import { EdgeType } from "legacy/shared/types";
 import styled from "styled-components";
-
-import { edgeColors } from "shared/rosettaStone";
-import { EdgeType } from "shared/types";
 
 const thickness = 12;
 

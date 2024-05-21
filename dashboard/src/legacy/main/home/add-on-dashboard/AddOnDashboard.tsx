@@ -1,30 +1,29 @@
 import React, { useContext, useMemo, useState } from "react";
+import addOnGrad from "legacy/assets/add-on-grad.svg";
+import grid from "legacy/assets/grid.png";
+import list from "legacy/assets/list.png";
+import notFound from "legacy/assets/not-found.png";
+import healthy from "legacy/assets/status-healthy.png";
+import ClusterProvisioningPlaceholder from "legacy/components/ClusterProvisioningPlaceholder";
+import Loading from "legacy/components/Loading";
+import Button from "legacy/components/porter/Button";
+import Container from "legacy/components/porter/Container";
+import DashboardPlaceholder from "legacy/components/porter/DashboardPlaceholder";
+import Fieldset from "legacy/components/porter/Fieldset";
+import PorterLink from "legacy/components/porter/Link";
+import SearchBar from "legacy/components/porter/SearchBar";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import Toggle from "legacy/components/porter/Toggle";
+import { type ClientAddon, type LegacyClientAddon } from "legacy/lib/addons";
+import { useAddonList } from "legacy/lib/hooks/useAddon";
+import { useDefaultDeploymentTarget } from "legacy/lib/hooks/useDeploymentTarget";
+import { hardcodedIcons } from "legacy/shared/hardcodedNameDict";
 import _ from "lodash";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
 
-import ClusterProvisioningPlaceholder from "components/ClusterProvisioningPlaceholder";
-import Loading from "components/Loading";
-import Button from "components/porter/Button";
-import Container from "components/porter/Container";
-import DashboardPlaceholder from "components/porter/DashboardPlaceholder";
-import Fieldset from "components/porter/Fieldset";
-import PorterLink from "components/porter/Link";
-import SearchBar from "components/porter/SearchBar";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import Toggle from "components/porter/Toggle";
-import { type ClientAddon, type LegacyClientAddon } from "lib/addons";
-import { useAddonList } from "lib/hooks/useAddon";
-import { useDefaultDeploymentTarget } from "lib/hooks/useDeploymentTarget";
-
 import { Context } from "shared/Context";
-import { hardcodedIcons } from "shared/hardcodedNameDict";
-import addOnGrad from "assets/add-on-grad.svg";
-import grid from "assets/grid.png";
-import list from "assets/list.png";
-import notFound from "assets/not-found.png";
-import healthy from "assets/status-healthy.png";
 
 import DashboardHeader from "../cluster-dashboard/DashboardHeader";
 

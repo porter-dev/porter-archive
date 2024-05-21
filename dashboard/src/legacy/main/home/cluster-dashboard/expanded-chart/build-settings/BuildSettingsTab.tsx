@@ -1,24 +1,26 @@
-import Heading from "components/form-components/Heading";
-import Helper from "components/form-components/Helper";
-import KeyValueArray from "components/form-components/KeyValueArray";
-import MultiSaveButton from "components/MultiSaveButton";
-import _ from "lodash";
 import React, { useContext, useMemo, useRef, useState } from "react";
-import api from "shared/api";
-import { Context } from "shared/Context";
-import {
-  BuildConfig,
-  ChartTypeWithExtendedConfig,
-  FullActionConfigType,
-} from "shared/types";
-import styled from "styled-components";
+import { type AxiosError } from "axios";
 import yaml from "js-yaml";
-import { AxiosError } from "axios";
-import BranchList from "components/repo-selector/BranchList";
-import Banner from "components/porter/Banner";
-import { UpdateBuildconfigResponse } from "./types";
+import Heading from "legacy/components/form-components/Heading";
+import Helper from "legacy/components/form-components/Helper";
+import InputRow from "legacy/components/form-components/InputRow";
+import KeyValueArray from "legacy/components/form-components/KeyValueArray";
+import MultiSaveButton from "legacy/components/MultiSaveButton";
+import Banner from "legacy/components/porter/Banner";
+import BranchList from "legacy/components/repo-selector/BranchList";
+import api from "legacy/shared/api";
+import {
+  type BuildConfig,
+  type ChartTypeWithExtendedConfig,
+  type FullActionConfigType,
+} from "legacy/shared/types";
+import _ from "lodash";
+import styled from "styled-components";
+
+import { Context } from "shared/Context";
+
 import BuildpackConfigSection from "./_BuildpackConfigSection";
-import InputRow from "components/form-components/InputRow";
+import { type UpdateBuildconfigResponse } from "./types";
 
 type Props = {
   chart: ChartTypeWithExtendedConfig;
@@ -31,9 +33,8 @@ const BuildSettingsTab: React.FC<Props> = ({
   isPreviousVersion,
   onSave,
 }) => {
-  const { currentCluster, currentProject, setCurrentError } = useContext(
-    Context
-  );
+  const { currentCluster, currentProject, setCurrentError } =
+    useContext(Context);
 
   const [envVariables, setEnvVariables] = useState(
     chart.config?.container?.env?.build || null
@@ -53,9 +54,8 @@ const BuildSettingsTab: React.FC<Props> = ({
   const [gitHubSettingsExpanded, setGitHubSettingsExpanded] = useState(true);
   const [envVariablesExpanded, setEnvVariablesExpanded] = useState(false);
   const [branchSelectionExpanded, setBranchSelectionExpanded] = useState(false);
-  const [buildpackSettingsExpanded, setBuildpackSettingsExpanded] = useState(
-    false
-  );
+  const [buildpackSettingsExpanded, setBuildpackSettingsExpanded] =
+    useState(false);
 
   const buildpackConfigRef = useRef<{
     isLoading: boolean;
@@ -116,8 +116,8 @@ const BuildSettingsTab: React.FC<Props> = ({
     }
   };
 
-  const saveEnvVariables = async (envs: { [key: string]: string }) => {
-    let values = { ...chart.config };
+  const saveEnvVariables = async (envs: Record<string, string>) => {
+    const values = { ...chart.config };
     if (envs === null) {
       return;
     }
@@ -163,7 +163,7 @@ const BuildSettingsTab: React.FC<Props> = ({
         throw error;
       }
 
-      let tmpError: AxiosError = error;
+      const tmpError: AxiosError = error;
 
       /**
        * @smell
@@ -195,7 +195,7 @@ const BuildSettingsTab: React.FC<Props> = ({
         }
         setCurrentError(
           'The workflow is still running. You can "Save" the current build settings for the next workflow run and view the current status of the workflow here: ' +
-          tmpError.response.data
+            tmpError.response.data
         );
         return;
       }
@@ -286,7 +286,7 @@ const BuildSettingsTab: React.FC<Props> = ({
 
   const currentActionConfig = useMemo(() => {
     const actionConf = chart.git_action_config;
-    if (actionConf && actionConf.gitlab_integration_id) {
+    if (actionConf?.gitlab_integration_id) {
       return {
         kind: "gitlab",
         ...actionConf,
@@ -338,7 +338,9 @@ const BuildSettingsTab: React.FC<Props> = ({
       ) : null} */}
         <Heading isAtTop>
           <ExpandHeader
-            onClick={() => setGitHubSettingsExpanded(!gitHubSettingsExpanded)}
+            onClick={() => {
+              setGitHubSettingsExpanded(!gitHubSettingsExpanded);
+            }}
             isExpanded={!gitHubSettingsExpanded}
           >
             Github Settings
@@ -387,7 +389,9 @@ const BuildSettingsTab: React.FC<Props> = ({
         )}
         <Heading>
           <ExpandHeader
-            onClick={() => setBranchSelectionExpanded(!branchSelectionExpanded)}
+            onClick={() => {
+              setBranchSelectionExpanded(!branchSelectionExpanded);
+            }}
             isExpanded={!branchSelectionExpanded}
           >
             Select default branch
@@ -413,7 +417,9 @@ const BuildSettingsTab: React.FC<Props> = ({
 
         <Heading>
           <ExpandHeader
-            onClick={() => setEnvVariablesExpanded(!envVariablesExpanded)}
+            onClick={() => {
+              setEnvVariablesExpanded(!envVariablesExpanded);
+            }}
             isExpanded={!envVariablesExpanded}
           >
             Build environment variables
@@ -441,9 +447,9 @@ const BuildSettingsTab: React.FC<Props> = ({
           <>
             <Heading>
               <ExpandHeader
-                onClick={() =>
-                  setBuildpackSettingsExpanded(!buildpackSettingsExpanded)
-                }
+                onClick={() => {
+                  setBuildpackSettingsExpanded(!buildpackSettingsExpanded);
+                }}
                 isExpanded={!buildpackSettingsExpanded}
               >
                 Buildpacks settings

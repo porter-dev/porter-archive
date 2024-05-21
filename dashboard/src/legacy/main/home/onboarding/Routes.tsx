@@ -1,7 +1,9 @@
 import React, { useContext } from "react";
+import PorterErrorBoundary from "legacy/shared/error_handling/PorterErrorBoundary";
 import { Route, Switch } from "react-router";
+
 import { Context } from "shared/Context";
-import PorterErrorBoundary from "shared/error_handling/PorterErrorBoundary";
+
 import { OFState } from "./state";
 import ConnectRegistry from "./steps/ConnectRegistry/ConnectRegistry";
 import ConnectSource from "./steps/ConnectSource";

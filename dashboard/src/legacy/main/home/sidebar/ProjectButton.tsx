@@ -1,13 +1,12 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
+import gradient from "legacy/assets/gradient.png";
+import Spacer from "legacy/components/porter/Spacer";
+import { pushFiltered } from "legacy/shared/routing";
+import { type ProjectListType, type ProjectType } from "legacy/shared/types";
 import { withRouter, type RouteComponentProps } from "react-router";
 import styled from "styled-components";
 
-import Spacer from "components/porter/Spacer";
-
 import { Context } from "shared/Context";
-import { pushFiltered } from "shared/routing";
-import { type ProjectListType, type ProjectType } from "shared/types";
-import gradient from "assets/gradient.png";
 
 import ProjectSelectionModal from "./ProjectSelectionModal";
 

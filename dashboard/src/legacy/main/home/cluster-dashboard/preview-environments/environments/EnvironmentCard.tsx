@@ -1,11 +1,13 @@
 import React, { useContext, useState } from "react";
-import { capitalize } from "shared/string_utils";
+import DynamicLink from "legacy/components/DynamicLink";
+import api from "legacy/shared/api";
+import { capitalize } from "legacy/shared/string_utils";
 import styled from "styled-components";
-import { Environment } from "../types";
-import api from "shared/api";
+
 import { Context } from "shared/Context";
-import DynamicLink from "components/DynamicLink";
+
 import { RepoLink } from "../components/styled";
+import { type Environment } from "../types";
 
 type Props = {
   environment: Environment;
@@ -13,14 +15,12 @@ type Props = {
 };
 
 const EnvironmentCard = ({ environment, onDelete }: Props) => {
-  const { currentCluster, currentProject, setCurrentError } = useContext(
-    Context
-  );
+  const { currentCluster, currentProject, setCurrentError } =
+    useContext(Context);
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [deleteConfirmationRepoName, setDeleteConfirmationRepoName] = useState(
-    ""
-  );
+  const [deleteConfirmationRepoName, setDeleteConfirmationRepoName] =
+    useState("");
 
   const {
     id,
@@ -40,14 +40,14 @@ const EnvironmentCard = ({ environment, onDelete }: Props) => {
       .deleteEnvironment(
         "<token>",
         {
-          name: name,
+          name,
         },
         {
           project_id: currentProject.id,
           cluster_id: currentCluster.id,
-          git_installation_id: git_installation_id,
-          git_repo_owner: git_repo_owner,
-          git_repo_name: git_repo_name,
+          git_installation_id,
+          git_repo_owner,
+          git_repo_name,
         }
       )
       .then(() => {

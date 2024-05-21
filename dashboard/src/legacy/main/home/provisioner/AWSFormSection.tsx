@@ -1,21 +1,20 @@
 import React, { Component, useContext, useEffect, useState } from "react";
+import close from "legacy/assets/close.png";
+import CheckboxList from "legacy/components/form-components/CheckboxList";
+import CheckboxRow from "legacy/components/form-components/CheckboxRow";
+import Heading from "legacy/components/form-components/Heading";
+import Helper from "legacy/components/form-components/Helper";
+import InputRow from "legacy/components/form-components/InputRow";
+import SelectRow from "legacy/components/form-components/SelectRow";
+import SaveButton from "legacy/components/SaveButton";
+import api from "legacy/shared/api";
+import { isAlphanumeric } from "legacy/shared/common";
+import { pushFiltered } from "legacy/shared/routing";
+import { type InfraType } from "legacy/shared/types";
+import { useHistory, useLocation } from "react-router";
 import styled from "styled-components";
 
-import close from "assets/close.png";
-import { isAlphanumeric } from "shared/common";
-import api from "shared/api";
 import { Context } from "shared/Context";
-import { InfraType } from "shared/types";
-import { pushFiltered } from "shared/routing";
-
-import SelectRow from "components/form-components/SelectRow";
-import InputRow from "components/form-components/InputRow";
-import CheckboxRow from "components/form-components/CheckboxRow";
-import Helper from "components/form-components/Helper";
-import Heading from "components/form-components/Heading";
-import SaveButton from "components/SaveButton";
-import CheckboxList from "components/form-components/CheckboxList";
-import { useHistory, useLocation } from "react-router";
 
 type PropsType = {
   setSelectedProvisioner: (x: string | null) => void;
@@ -129,7 +128,7 @@ const AWSFormSectionFC: React.FC<PropsType> = (props) => {
       // From the dashboard, only uncheck and disable if "creating" or "created"
       let filtered = selectedInfras;
       props.infras.forEach((infra: InfraType, i: number) => {
-        let { kind, status } = infra;
+        const { kind, status } = infra;
         if (status === "creating" || status === "created") {
           filtered = filtered.filter((item: any) => {
             return item.value !== kind;
@@ -145,7 +144,7 @@ const AWSFormSectionFC: React.FC<PropsType> = (props) => {
   }, [props.projectName]);
 
   const setClusterNameIfNotSet = () => {
-    let projectName = props.projectName || context.currentProject?.name;
+    const projectName = props.projectName || context.currentProject?.name;
 
     if (!clusterNameSet && !clusterName.includes(`${projectName}-cluster`)) {
       setClusterName(
@@ -264,11 +263,12 @@ const AWSFormSectionFC: React.FC<PropsType> = (props) => {
     const infraCreationRequests = selectedInfras
       // Check that we don't include any other key into the infra creation than ecr and eks
       .filter(filterNonAWSInfras)
-      .map((infra) => {
+      .map(async (infra) => {
         if (infra.value === "ecr") {
-          return provisionECR(awsIntegrationId?.id);
+          await provisionECR(awsIntegrationId?.id);
+          return;
         }
-        return provisionEKS(awsIntegrationId?.id);
+        await provisionEKS(awsIntegrationId?.id);
       });
     // Wait for all promises to be completed (could be just one)
     await Promise.all(infraCreationRequests);
@@ -330,12 +330,20 @@ const AWSFormSectionFC: React.FC<PropsType> = (props) => {
   return (
     <StyledAWSFormSection>
       <FormSection>
-        <CloseButton onClick={() => props.setSelectedProvisioner(null)}>
+        <CloseButton
+          onClick={() => {
+            props.setSelectedProvisioner(null);
+          }}
+        >
           <CloseButtonImg src={close} />
         </CloseButton>
         <Heading isAtTop={true}>
           AWS Credentials
-          <GuideButton onClick={() => goToGuide()}>
+          <GuideButton
+            onClick={() => {
+              goToGuide();
+            }}
+          >
             <i className="material-icons-outlined">help</i>
             Guide
           </GuideButton>
@@ -394,7 +402,7 @@ const AWSFormSectionFC: React.FC<PropsType> = (props) => {
         <CheckboxList
           options={provisionOptions}
           selected={selectedInfras}
-          setSelected={(x: { value: string; label: string }[]) => {
+          setSelected={(x: Array<{ value: string; label: string }>) => {
             setIsFormDirty(true);
             // console.log(x);
             setSelectedInfras(x);

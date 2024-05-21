@@ -1,15 +1,15 @@
 import React from "react";
-import styled from "styled-components";
-import { ProjectType } from "shared/types";
+import Button from "legacy/components/porter/Button";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import { type ProjectType } from "legacy/shared/types";
 import { useHistory } from "react-router-dom";
-import Button from "components/porter/Button";
-import Text from "components/porter/Text";
-import Spacer from "components/porter/Spacer";
+import styled from "styled-components";
 
-interface PreviewEnvDeletedProps {
+type PreviewEnvDeletedProps = {
   repository?: string;
   currentProject?: ProjectType;
-}
+};
 
 const PreviewEnvDeleted: React.FC<PreviewEnvDeletedProps> = ({}) => {
   const history = useHistory();

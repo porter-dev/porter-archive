@@ -1,16 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import Loading from "legacy/components/Loading";
+import Link from "legacy/components/porter/Link";
+import Spacer from "legacy/components/porter/Spacer";
+import api from "legacy/shared/api";
 import _ from "lodash";
 import { useLocation } from "react-router";
 import styled from "styled-components";
 import { match } from "ts-pattern";
 
-import Loading from "components/Loading";
-import Link from "components/porter/Link";
-import Spacer from "components/porter/Spacer";
 import { useLatestRevision } from "main/home/app-dashboard/app-view/LatestRevisionContext";
-
-import api from "shared/api";
 
 import {
   porterAppEventValidator,

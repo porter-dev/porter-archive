@@ -1,22 +1,21 @@
 import React, { useMemo, useState } from "react";
 import dayjs from "dayjs";
+import chat from "legacy/assets/chat.svg";
+import document from "legacy/assets/document.svg";
+import time from "legacy/assets/time.svg";
+import Button from "legacy/components/porter/Button";
+import CollapsibleContainer from "legacy/components/porter/CollapsibleContainer";
+import Container from "legacy/components/porter/Container";
+import Link from "legacy/components/porter/Link";
+import Spacer from "legacy/components/porter/Spacer";
+import Tag from "legacy/components/porter/Tag";
+import Text from "legacy/components/porter/Text";
+import { useIntercom } from "legacy/lib/hooks/useIntercom";
+import { type ClientService } from "legacy/lib/porter-apps/services";
+import { feedDate } from "legacy/shared/string_utils";
 
-import Button from "components/porter/Button";
-import CollapsibleContainer from "components/porter/CollapsibleContainer";
-import Container from "components/porter/Container";
-import Link from "components/porter/Link";
-import Spacer from "components/porter/Spacer";
-import Tag from "components/porter/Tag";
-import Text from "components/porter/Text";
 import { useLatestRevision } from "main/home/app-dashboard/app-view/LatestRevisionContext";
 import Logs from "main/home/app-dashboard/validate-apply/logs/Logs";
-import { useIntercom } from "lib/hooks/useIntercom";
-import { type ClientService } from "lib/porter-apps/services";
-
-import { feedDate } from "shared/string_utils";
-import chat from "assets/chat.svg";
-import document from "assets/document.svg";
-import time from "assets/time.svg";
 
 import { type PorterAppServiceNotification } from "../../../activity-feed/events/types";
 import { Message, NotificationWrapper } from "../NotificationExpandedView";

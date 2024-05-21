@@ -1,21 +1,20 @@
 import React, { useMemo, useState } from "react";
 import { Switch } from "@material-ui/core";
+import infra from "legacy/assets/cluster.svg";
+import Loading from "legacy/components/Loading";
+import Button from "legacy/components/porter/Button";
+import Container from "legacy/components/porter/Container";
+import Link from "legacy/components/porter/Link";
+import Modal from "legacy/components/porter/Modal";
+import Spacer from "legacy/components/porter/Spacer";
+import Tag from "legacy/components/porter/Tag";
+import Text from "legacy/components/porter/Text";
+import { type PorterAppFormData } from "legacy/lib/porter-apps";
 import { Controller, useFormContext } from "react-hook-form";
 import { useHistory } from "react-router";
 import styled from "styled-components";
 
-import Loading from "components/Loading";
-import Button from "components/porter/Button";
-import Container from "components/porter/Container";
-import Link from "components/porter/Link";
-import Modal from "components/porter/Modal";
-import Spacer from "components/porter/Spacer";
-import Tag from "components/porter/Tag";
-import Text from "components/porter/Text";
 import { useClusterContext } from "main/home/infrastructure-dashboard/ClusterContextProvider";
-import { type PorterAppFormData } from "lib/porter-apps";
-
-import infra from "assets/cluster.svg";
 
 type Props = {
   index: number;

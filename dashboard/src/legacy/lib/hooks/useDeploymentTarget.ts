@@ -1,8 +1,8 @@
 import { useContext } from "react";
 import { useQuery } from "@tanstack/react-query";
+import api from "legacy/shared/api";
 import { z } from "zod";
 
-import api from "shared/api";
 import { Context } from "shared/Context";
 
 export const deploymentTargetValidator = z.object({
@@ -85,7 +85,11 @@ export function useDeploymentTargetList(input: { preview: boolean }): {
 } {
   const { currentProject, currentCluster } = useContext(Context);
 
-  const { data = [], isLoading, refetch } = useQuery(
+  const {
+    data = [],
+    isLoading,
+    refetch,
+  } = useQuery(
     [
       "listDeploymentTargets",
       currentProject?.id,

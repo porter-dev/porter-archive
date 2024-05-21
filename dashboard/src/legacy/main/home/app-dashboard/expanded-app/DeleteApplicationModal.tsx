@@ -1,10 +1,9 @@
-import Button from "components/porter/Button";
-import Checkbox from "components/porter/Checkbox";
-import Modal from "components/porter/Modal";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-
 import React, { useState } from "react";
+import Button from "legacy/components/porter/Button";
+import Checkbox from "legacy/components/porter/Checkbox";
+import Modal from "legacy/components/porter/Modal";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
 import styled from "styled-components";
 
 type Props = {

@@ -1,27 +1,30 @@
 import React, { useContext, useEffect, useState } from "react";
-import styled from "styled-components";
-import TitleSection from "components/TitleSection";
-import pr_icon from "assets/pull_request_icon.svg";
-import { useRouteMatch, useLocation } from "react-router";
-import DynamicLink from "components/DynamicLink";
-import { DeploymentStatus, PRDeployment } from "../types";
-import PullRequestIcon from "assets/pull_request_icon.svg";
-import Loading from "components/Loading";
-import { Context } from "shared/Context";
-import api from "shared/api";
-import ChartList from "../../chart/ChartList";
-import github from "assets/github-white.png";
-import { integrationList } from "shared/common";
-import { capitalize } from "shared/string_utils";
-import Banner from "components/porter/Banner";
-import Modal from "main/home/modals/Modal";
-import { validatePorterYAML } from "../utils";
-import Placeholder from "components/Placeholder";
-import GithubIcon from "assets/GithubIcon";
-import Dropdown from "components/Dropdown";
+import github from "legacy/assets/github-white.png";
+import GithubIcon from "legacy/assets/GithubIcon";
+import pr_icon from "legacy/assets/pull_request_icon.svg";
+import PullRequestIcon from "legacy/assets/pull_request_icon.svg";
+import Dropdown from "legacy/components/Dropdown";
+import DynamicLink from "legacy/components/DynamicLink";
+import Loading from "legacy/components/Loading";
+import Placeholder from "legacy/components/Placeholder";
+import Banner from "legacy/components/porter/Banner";
+import Button from "legacy/components/porter/Button";
+import TitleSection from "legacy/components/TitleSection";
+import api from "legacy/shared/api";
+import { integrationList } from "legacy/shared/common";
+import { capitalize } from "legacy/shared/string_utils";
+import { useLocation, useRouteMatch } from "react-router";
 import { useHistory } from "react-router-dom";
+import styled from "styled-components";
+
+import Modal from "main/home/modals/Modal";
+
+import { Context } from "shared/Context";
+
+import ChartList from "../../chart/ChartList";
+import { DeploymentStatus, type PRDeployment } from "../types";
+import { validatePorterYAML } from "../utils";
 import PreviewEnvDeleted from "./PreviewEnvDeleted";
-import Button from "components/porter/Button";
 
 const DeploymentDetail = () => {
   const [showDropdown, setShowDropdown] = useState(false);
@@ -34,20 +37,18 @@ const DeploymentDetail = () => {
   const [expandedPorterYAMLErrors, setExpandedPorterYAMLErrors] = useState<
     string[]
   >([]);
-  const [
-    expandedLastDeploymentErrors,
-    setExpandedLastDeploymentErrors,
-  ] = useState<string[]>([]);
+  const [expandedLastDeploymentErrors, setExpandedLastDeploymentErrors] =
+    useState<string[]>([]);
 
   const { currentProject, currentCluster } = useContext(Context);
 
   const { search } = useLocation();
-  let searchParams = new URLSearchParams(search);
+  const searchParams = new URLSearchParams(search);
   const history = useHistory();
 
   useEffect(() => {
-    let isSubscribed = true;
-    let environment_id = parseInt(searchParams.get("environment_id"));
+    const isSubscribed = true;
+    const environment_id = parseInt(searchParams.get("environment_id"));
     setEnvironmentId(searchParams.get("environment_id"));
     api
       .getPRDeploymentByID(
@@ -58,7 +59,7 @@ const DeploymentDetail = () => {
         {
           project_id: currentProject.id,
           cluster_id: currentCluster.id,
-          environment_id: environment_id,
+          environment_id,
         }
       )
       .then(({ data }) => {
@@ -110,7 +111,7 @@ const DeploymentDetail = () => {
   const repository = `${prDeployment.gh_repo_owner}/${prDeployment.gh_repo_name}`;
 
   const deleteDeployment = () => {
-    //setIsDeleting(true);
+    // setIsDeleting(true);
 
     api
       .deletePRDeployment(
@@ -123,7 +124,7 @@ const DeploymentDetail = () => {
         }
       )
       .then(() => {
-        //setIsDeleting(false);
+        // setIsDeleting(false);
         history.push(
           `/preview-environments/deployments/${currentProject.id}/${repository}`
         ); // Navigate to deployments page
@@ -165,7 +166,9 @@ const DeploymentDetail = () => {
                 {prDeployment.gh_pr_name}
               </Title>
               <span
-                onClick={() => setShowDropdown(!showDropdown)}
+                onClick={() => {
+                  setShowDropdown(!showDropdown);
+                }}
                 style={{ cursor: "pointer" }}
               >
                 <I className="material-icons">settings</I>
@@ -237,7 +240,9 @@ const DeploymentDetail = () => {
     <>
       {expandedPorterYAMLErrors.length > 0 && (
         <Modal
-          onRequestClose={() => setExpandedPorterYAMLErrors([])}
+          onRequestClose={() => {
+            setExpandedPorterYAMLErrors([]);
+          }}
           height="auto"
         >
           <Message>
@@ -254,7 +259,9 @@ const DeploymentDetail = () => {
       )}
       {expandedLastDeploymentErrors.length > 0 && (
         <Modal
-          onRequestClose={() => setExpandedLastDeploymentErrors([])}
+          onRequestClose={() => {
+            setExpandedLastDeploymentErrors([]);
+          }}
           height="auto"
         >
           <Message>

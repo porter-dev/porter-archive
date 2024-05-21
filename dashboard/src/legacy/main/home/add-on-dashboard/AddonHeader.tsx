@@ -1,14 +1,13 @@
 import React, { useMemo } from "react";
+import Container from "legacy/components/porter/Container";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import Tooltip from "legacy/components/porter/Tooltip";
+import TitleSection from "legacy/components/TitleSection";
+import { type ClientAddonPod } from "legacy/lib/hooks/useAddon";
+import { prefixSubdomain } from "legacy/lib/porter-apps/services";
 import styled from "styled-components";
 import { match, P } from "ts-pattern";
-
-import Container from "components/porter/Container";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import Tooltip from "components/porter/Tooltip";
-import TitleSection from "components/TitleSection";
-import { type ClientAddonPod } from "lib/hooks/useAddon";
-import { prefixSubdomain } from "lib/porter-apps/services";
 
 import { useAddonContext } from "./AddonContextProvider";
 

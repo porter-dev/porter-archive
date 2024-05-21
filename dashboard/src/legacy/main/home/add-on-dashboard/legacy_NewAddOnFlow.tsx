@@ -1,22 +1,21 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
+import addOnGrad from "legacy/assets/add-on-grad.svg";
+import notFound from "legacy/assets/not-found.png";
+import Loading from "legacy/components/Loading";
+import Back from "legacy/components/porter/Back";
+import Container from "legacy/components/porter/Container";
+import Fieldset from "legacy/components/porter/Fieldset";
+import SearchBar from "legacy/components/porter/SearchBar";
+import Select from "legacy/components/porter/Select";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import api from "legacy/shared/api";
+import { search } from "legacy/shared/search";
 import _ from "lodash";
 import semver from "semver";
 import styled from "styled-components";
 
-import Loading from "components/Loading";
-import Back from "components/porter/Back";
-import Container from "components/porter/Container";
-import Fieldset from "components/porter/Fieldset";
-import SearchBar from "components/porter/SearchBar";
-import Select from "components/porter/Select";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-
-import api from "shared/api";
 import { Context } from "shared/Context";
-import { search } from "shared/search";
-import addOnGrad from "assets/add-on-grad.svg";
-import notFound from "assets/not-found.png";
 
 import DashboardHeader from "../cluster-dashboard/DashboardHeader";
 import TemplateList from "../launch/TemplateList";

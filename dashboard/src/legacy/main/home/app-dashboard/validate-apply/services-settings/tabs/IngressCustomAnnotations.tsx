@@ -1,11 +1,10 @@
 import React from "react";
+import Button from "legacy/components/porter/Button";
+import { ControlledInput } from "legacy/components/porter/ControlledInput";
+import Spacer from "legacy/components/porter/Spacer";
+import { type PorterAppFormData } from "legacy/lib/porter-apps";
 import { useFieldArray, useFormContext } from "react-hook-form";
 import styled from "styled-components";
-
-import Button from "components/porter/Button";
-import { ControlledInput } from "components/porter/ControlledInput";
-import Spacer from "components/porter/Spacer";
-import { type PorterAppFormData } from "lib/porter-apps";
 
 type Props = {
   index: number;

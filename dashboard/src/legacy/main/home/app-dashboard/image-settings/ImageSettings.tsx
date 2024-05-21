@@ -1,13 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import Input from "legacy/components/porter/Input";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import api from "legacy/shared/api";
 import styled from "styled-components";
 import { z } from "zod";
-
-import Input from "components/porter/Input";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-
-import api from "shared/api";
 
 import ImageList from "./ImageList";
 import TagList from "./TagList";

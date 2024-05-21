@@ -1,13 +1,12 @@
 import React, { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-
-import Link from "components/porter/Link";
-import Modal from "components/porter/Modal";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import { useAuthWindow } from "lib/hooks/useAuthWindow";
-import { useNeon } from "lib/hooks/useNeon";
-import { useUpstash } from "lib/hooks/useUpstash";
+import Link from "legacy/components/porter/Link";
+import Modal from "legacy/components/porter/Modal";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import { useAuthWindow } from "legacy/lib/hooks/useAuthWindow";
+import { useNeon } from "legacy/lib/hooks/useNeon";
+import { useUpstash } from "legacy/lib/hooks/useUpstash";
 
 import { useDatastoreFormContext } from "../DatastoreFormContextProvider";
 

@@ -1,6 +1,5 @@
-import { type DeploymentTarget } from "lib/hooks/useDeploymentTarget";
-
-import { type ProjectType } from "shared/types";
+import { type DeploymentTarget } from "legacy/lib/hooks/useDeploymentTarget";
+import { type ProjectType } from "legacy/shared/types";
 
 export const formattedPath = ({
   currentProject,

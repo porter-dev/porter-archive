@@ -1,15 +1,14 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
+import infra from "legacy/assets/cluster.svg";
+import Icon from "legacy/components/porter/Icon";
+import { useClusterList } from "legacy/lib/hooks/useCluster";
+import api from "legacy/shared/api";
+import { pushFiltered } from "legacy/shared/routing";
+import { type ClusterType } from "legacy/shared/types";
 import { withRouter } from "react-router";
 import styled from "styled-components";
 
-import Icon from "components/porter/Icon";
-import { useClusterList } from "lib/hooks/useCluster";
-
-import api from "shared/api";
 import { Context } from "shared/Context";
-import { pushFiltered } from "shared/routing";
-import { type ClusterType } from "shared/types";
-import infra from "assets/cluster.svg";
 
 import ProvisionClusterModal from "./ProvisionClusterModal";
 import SidebarLink from "./SidebarLink";

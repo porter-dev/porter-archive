@@ -1,12 +1,10 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
+import folder from "legacy/assets/folder-outline.svg";
+import RadioFilter from "legacy/components/RadioFilter";
+import api from "legacy/shared/api";
 import styled from "styled-components";
 
-import folder from "assets/folder-outline.svg";
-
 import { Context } from "shared/Context";
-import api from "shared/api";
-
-import RadioFilter from "components/RadioFilter";
 
 type Props = {
   setNamespace: (x: string) => void;
@@ -14,7 +12,7 @@ type Props = {
 };
 
 type StateType = {
-  namespaceOptions: { label: string; value: string }[];
+  namespaceOptions: Array<{ label: string; value: string }>;
 };
 
 // TODO: fix update to unmounted component
@@ -23,12 +21,12 @@ export const NamespaceSelector: React.FunctionComponent<Props> = ({
   namespace,
 }) => {
   const context = useContext(Context);
-  let _isMounted = true;
+  const _isMounted = true;
   const [namespaceOptions, setNamespaceOptions] = useState<
-    {
+    Array<{
       label: string;
       value: string;
-    }[]
+    }>
   >([]);
   const [defaultNamespace, setDefaultNamespace] = useState<string>(
     localStorage.getItem(
@@ -37,7 +35,7 @@ export const NamespaceSelector: React.FunctionComponent<Props> = ({
   );
 
   const updateOptions = () => {
-    let { currentCluster, currentProject } = context;
+    const { currentCluster, currentProject } = context;
 
     api
       .getNamespaces(
@@ -50,13 +48,13 @@ export const NamespaceSelector: React.FunctionComponent<Props> = ({
       )
       .then((res) => {
         if (_isMounted) {
-          let namespaceOptions: { label: string; value: string }[] = [
+          const namespaceOptions: Array<{ label: string; value: string }> = [
             // { label: "All", value: "ALL" },
           ];
 
           // Set namespace from URL if specified
-          let queryString = window.location.search;
-          let urlParams = new URLSearchParams(queryString);
+          const queryString = window.location.search;
+          const urlParams = new URLSearchParams(queryString);
           let urlNamespace = urlParams.get("namespace");
           if (urlNamespace === "ALL") {
             urlNamespace = "ALL";
@@ -79,7 +77,10 @@ export const NamespaceSelector: React.FunctionComponent<Props> = ({
             setDefaultNamespace("default");
           }
           availableNamespaces.forEach((x: { name: string }, i: number) => {
-            if (currentProject?.capi_provisioner_enabled && x.name.startsWith("porter-stack-")) {
+            if (
+              currentProject?.capi_provisioner_enabled &&
+              x.name.startsWith("porter-stack-")
+            ) {
               namespaceOptions.push({
                 label: x.name.replace("porter-stack-", ""),
                 value: x.name,
@@ -105,8 +106,8 @@ export const NamespaceSelector: React.FunctionComponent<Props> = ({
   };
 
   useEffect(() => {
-    let urlParams = new URLSearchParams(window.location.search);
-    let urlNamespace = urlParams.get("namespace");
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlNamespace = urlParams.get("namespace");
     if (
       urlNamespace === "" ||
       defaultNamespace === "" ||

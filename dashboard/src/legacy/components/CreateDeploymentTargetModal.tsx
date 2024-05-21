@@ -1,9 +1,8 @@
 import React, { useContext, useEffect, useState } from "react";
 import axios from "axios";
+import target from "legacy/assets/target.svg";
 import styled from "styled-components";
 import { z } from "zod";
-
-import target from "assets/target.svg";
 
 import { useDeploymentTargetList } from "../lib/hooks/useDeploymentTarget";
 import { RestrictedNamespaces } from "../main/home/add-on-dashboard/legacy_AddOnDashboard";

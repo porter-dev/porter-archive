@@ -1,6 +1,5 @@
+import { cloudProviderValidator } from "legacy/lib/clusters/types";
 import { z } from "zod";
-
-import { cloudProviderValidator } from "lib/clusters/types";
 
 export const datastoreEnvValidator = z.object({
   name: z.string(),

@@ -1,40 +1,43 @@
 import React, { useContext, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import database from "legacy/assets/database.svg";
+import doppler from "legacy/assets/doppler.png";
+import envGroupGrad from "legacy/assets/env-group-grad.svg";
+import grid from "legacy/assets/grid.png";
+import infisical from "legacy/assets/infisical.svg";
+import key from "legacy/assets/key.svg";
+import list from "legacy/assets/list.png";
+import notFound from "legacy/assets/not-found.png";
+import time from "legacy/assets/time.png";
+import ClusterProvisioningPlaceholder from "legacy/components/ClusterProvisioningPlaceholder";
+import Loading from "legacy/components/Loading";
+import Button from "legacy/components/porter/Button";
+import Container from "legacy/components/porter/Container";
+import DashboardPlaceholder from "legacy/components/porter/DashboardPlaceholder";
+import Fieldset from "legacy/components/porter/Fieldset";
+import Image from "legacy/components/porter/Image";
+import PorterLink from "legacy/components/porter/Link";
+import SearchBar from "legacy/components/porter/SearchBar";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import Toggle from "legacy/components/porter/Toggle";
+import {
+  envGroupValidator,
+  type ClientEnvGroup,
+} from "legacy/lib/env-groups/types";
+import api from "legacy/shared/api";
+import { search } from "legacy/shared/search";
+import { readableDate } from "legacy/shared/string_utils";
 import _ from "lodash";
 import { withRouter, type RouteComponentProps } from "react-router";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
 import { z } from "zod";
 
-import ClusterProvisioningPlaceholder from "components/ClusterProvisioningPlaceholder";
-import Loading from "components/Loading";
-import Button from "components/porter/Button";
-import Container from "components/porter/Container";
-import DashboardPlaceholder from "components/porter/DashboardPlaceholder";
-import Fieldset from "components/porter/Fieldset";
-import Image from "components/porter/Image";
-import PorterLink from "components/porter/Link";
-import SearchBar from "components/porter/SearchBar";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import Toggle from "components/porter/Toggle";
 import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
-import { envGroupValidator, type ClientEnvGroup } from "lib/env-groups/types";
 
-import api from "shared/api";
 import { withAuth, type WithAuthProps } from "shared/auth/AuthorizationHoc";
 import { Context } from "shared/Context";
-import { search } from "shared/search";
-import { readableDate } from "shared/string_utils";
-import database from "assets/database.svg";
-import doppler from "assets/doppler.png";
-import envGroupGrad from "assets/env-group-grad.svg";
-import grid from "assets/grid.png";
-import infisical from "assets/infisical.svg";
-import key from "assets/key.svg";
-import list from "assets/list.png";
-import notFound from "assets/not-found.png";
-import time from "assets/time.png";
 
 import { envGroupPath } from "../../../shared/util";
 

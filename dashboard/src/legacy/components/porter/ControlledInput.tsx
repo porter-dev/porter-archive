@@ -1,8 +1,7 @@
 import React, { useState } from "react";
+import eyeOff from "legacy/assets/eye-off.svg";
+import eye from "legacy/assets/eye.svg";
 import styled from "styled-components";
-
-import eyeOff from "assets/eye-off.svg";
-import eye from "assets/eye.svg";
 
 import Container from "./Container";
 import Icon from "./Icon";

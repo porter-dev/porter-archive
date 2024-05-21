@@ -1,16 +1,15 @@
 import React, { createContext, useMemo, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
+import Loading from "legacy/components/Loading";
+import { Error as ErrorComponent } from "legacy/components/porter/Error";
+import { clientAddonValidator, type ClientAddon } from "legacy/lib/addons";
+import { useAddon } from "legacy/lib/hooks/useAddon";
+import { getErrorMessageFromNetworkCall } from "legacy/lib/hooks/useCluster";
+import { useDefaultDeploymentTarget } from "legacy/lib/hooks/useDeploymentTarget";
 import { FormProvider, useForm } from "react-hook-form";
 import { useHistory } from "react-router";
 import styled from "styled-components";
-
-import Loading from "components/Loading";
-import { Error as ErrorComponent } from "components/porter/Error";
-import { clientAddonValidator, type ClientAddon } from "lib/addons";
-import { useAddon } from "lib/hooks/useAddon";
-import { getErrorMessageFromNetworkCall } from "lib/hooks/useCluster";
-import { useDefaultDeploymentTarget } from "lib/hooks/useDeploymentTarget";
 
 import { type UpdateClusterButtonProps } from "../infrastructure-dashboard/ClusterFormContextProvider";
 

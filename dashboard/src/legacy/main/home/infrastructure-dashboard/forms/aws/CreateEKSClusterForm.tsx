@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from "react";
+import { CloudProviderAWS } from "legacy/lib/clusters/constants";
+import { type ClientClusterContract } from "legacy/lib/clusters/types";
+import { useClusterAnalytics } from "legacy/lib/hooks/useClusterAnalytics";
 import { useFormContext } from "react-hook-form";
 import { match } from "ts-pattern";
-
-import { CloudProviderAWS } from "lib/clusters/constants";
-import { type ClientClusterContract } from "lib/clusters/types";
-import { useClusterAnalytics } from "lib/hooks/useClusterAnalytics";
 
 import { useClusterFormContext } from "../../ClusterFormContextProvider";
 import ConfigureEKSCluster from "./ConfigureEKSCluster";

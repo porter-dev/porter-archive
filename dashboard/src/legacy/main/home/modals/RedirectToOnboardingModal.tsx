@@ -1,12 +1,13 @@
 import React, { useContext, useEffect, useState } from "react";
+import Heading from "legacy/components/form-components/Heading";
+import Helper from "legacy/components/form-components/Helper";
+import { Link } from "react-router-dom";
 import styled from "styled-components";
 
-import api from "../../../shared/api";
-import Loading from "../../../components/Loading";
-import Heading from "components/form-components/Heading";
-import Helper from "components/form-components/Helper";
-import { Link } from "react-router-dom";
 import { Context } from "shared/Context";
+
+import Loading from "../../../components/Loading";
+import api from "../../../shared/api";
 
 const RedirectToOnboardingModal = () => {
   const { setCurrentModal } = useContext(Context);

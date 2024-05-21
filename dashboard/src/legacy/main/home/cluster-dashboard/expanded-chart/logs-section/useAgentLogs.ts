@@ -1,13 +1,17 @@
-import Anser, { AnserJsonEntry } from "anser";
+import { useContext, useEffect, useRef, useState } from "react";
+import Anser, { type AnserJsonEntry } from "anser";
 import dayjs from "dayjs";
+import api from "legacy/shared/api";
+import {
+  useWebsockets,
+  type NewWebsocketOptions,
+} from "legacy/shared/hooks/useWebsockets";
+import { type ChartType } from "legacy/shared/types";
+import { isJSON } from "legacy/shared/util";
 import _ from "lodash";
 import { z } from "zod";
-import { useContext, useEffect, useRef, useState } from "react";
-import api from "shared/api";
+
 import { Context } from "shared/Context";
-import { useWebsockets, NewWebsocketOptions } from "shared/hooks/useWebsockets";
-import { ChartType } from "shared/types";
-import { isJSON } from "shared/util";
 
 const MAX_LOGS = 5000;
 const MAX_BUFFER_LOGS = 1000;
@@ -18,11 +22,11 @@ export enum Direction {
   backward = "backward",
 }
 
-export interface Log {
+export type Log = {
   line: AnserJsonEntry[];
   lineNumber: number;
   timestamp?: string;
-}
+};
 
 const LogSchema = z.object({
   log: z.string(),
@@ -65,10 +69,10 @@ export const parseLogs = (logs: string[] = []): Log[] => {
   });
 };
 
-interface PaginationInfo {
+type PaginationInfo = {
   previousCursor: string | null;
   nextCursor: string | null;
-}
+};
 
 export const useLogs = (
   currentPod: string,
@@ -82,9 +86,8 @@ export const useLogs = (
 ) => {
   const isLive = !setDate;
   const logsBufferRef = useRef<Log[]>([]);
-  const { currentCluster, currentProject, setCurrentError } = useContext(
-    Context
-  );
+  const { currentCluster, currentProject, setCurrentError } =
+    useContext(Context);
   const [logs, setLogs] = useState<Log[]>([]);
   const [paginationInfo, setPaginationInfo] = useState<PaginationInfo>({
     previousCursor: null,
@@ -107,12 +110,8 @@ export const useLogs = (
   //   result of the initial query
   // - moving the cursor both forward and backward changes the start and end dates
 
-  const {
-    newWebsocket,
-    openWebsocket,
-    closeWebsocket,
-    closeAllWebsockets,
-  } = useWebsockets();
+  const { newWebsocket, openWebsocket, closeWebsocket, closeAllWebsockets } =
+    useWebsockets();
 
   const updateLogs = (
     newLogs: Log[],
@@ -198,7 +197,7 @@ export const useLogs = (
 
     const q = new URLSearchParams({
       pod_selector: currentPod + "-.*",
-      namespace: namespace,
+      namespace,
       search_param: searchParam,
       revision: currentChart.version.toString(),
     }).toString();
@@ -230,7 +229,7 @@ export const useLogs = (
     openWebsocket(websocketKey);
   };
 
-  const queryLogs = (
+  const queryLogs = async (
     startDate: string,
     endDate: string,
     direction: Direction,
@@ -240,12 +239,12 @@ export const useLogs = (
     previousCursor: string | null;
     nextCursor: string | null;
   }> => {
-    return api
+    return await api
       .getLogs(
         "<token>",
         {
           pod_selector: currentPod + "-.*",
-          namespace: namespace,
+          namespace,
           revision: currentChart.version.toString(),
           search_param: searchParam,
           start_range: startDate,
@@ -300,7 +299,11 @@ export const useLogs = (
     const endDate = dayjs(setDate);
     const sixHoursAgo = endDate.subtract(6, "hour");
 
-    const { logs: initialLogs, previousCursor, nextCursor } = await queryLogs(
+    const {
+      logs: initialLogs,
+      previousCursor,
+      nextCursor,
+    } = await queryLogs(
       sixHoursAgo.toISOString(),
       endDate.toISOString(),
       Direction.backward
@@ -327,7 +330,9 @@ export const useLogs = (
       setupWebsocket(websocketKey);
     }
 
-    return () => isLive && closeWebsocket(websocketKey);
+    return () => {
+      isLive && closeWebsocket(websocketKey);
+    };
   };
 
   const moveCursor = async (direction: Direction) => {
@@ -413,7 +418,9 @@ export const useLogs = (
 
     const flushLogsBufferInterval = setInterval(flushLogsBuffer, 3000);
 
-    return () => clearInterval(flushLogsBufferInterval);
+    return () => {
+      clearInterval(flushLogsBufferInterval);
+    };
   }, []);
 
   useEffect(() => {

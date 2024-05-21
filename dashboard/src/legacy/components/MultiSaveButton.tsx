@@ -1,6 +1,7 @@
 import React, { useState } from "react";
+import loading from "legacy/assets/loading.gif";
 import styled from "styled-components";
-import loading from "assets/loading.gif";
+
 import Description from "./Description";
 
 type MultiSelectOption = {

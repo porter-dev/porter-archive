@@ -1,24 +1,24 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
+import backArrow from "legacy/assets/back_arrow.png";
+import CopyToClipboard from "legacy/components/CopyToClipboard";
+import Heading from "legacy/components/form-components/Heading";
+import Helper from "legacy/components/form-components/Helper";
+import InputRow from "legacy/components/form-components/InputRow";
+import SelectRow from "legacy/components/form-components/SelectRow";
+import Loading from "legacy/components/Loading";
+import Table from "legacy/components/OldTable";
+import RadioSelector from "legacy/components/RadioSelector";
+import SaveButton from "legacy/components/SaveButton";
+import api from "legacy/shared/api";
+import { InviteType } from "legacy/shared/types";
+import { Column } from "react-table";
 import styled from "styled-components";
 
-import { InviteType } from "shared/types";
-import api from "shared/api";
+import { PolicyDocType, Verbs } from "shared/auth/types";
 import { Context } from "shared/Context";
-import backArrow from "assets/back_arrow.png";
 
-import Loading from "components/Loading";
-import InputRow from "components/form-components/InputRow";
-import Helper from "components/form-components/Helper";
-import Heading from "components/form-components/Heading";
-import CopyToClipboard from "components/CopyToClipboard";
-import { Column } from "react-table";
-import Table from "components/OldTable";
-import RadioSelector from "components/RadioSelector";
-import SelectRow from "components/form-components/SelectRow";
-import SaveButton from "components/SaveButton";
 import { APIToken } from "../APITokensSection";
 import CustomPolicyForm from "./CustomPolicyForm";
-import { PolicyDocType, Verbs } from "shared/auth/types";
 
 type Props = {
   onCreate: () => void;

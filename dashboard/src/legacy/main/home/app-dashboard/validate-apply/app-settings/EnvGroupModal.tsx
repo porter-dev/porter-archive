@@ -5,15 +5,14 @@ import React, {
   type Dispatch,
   type SetStateAction,
 } from "react";
+import Button from "legacy/components/porter/Button";
+import Modal from "legacy/components/porter/Modal";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import { type PorterAppFormData } from "legacy/lib/porter-apps";
 import { useFormContext } from "react-hook-form";
 import styled from "styled-components";
 import { type IterableElement } from "type-fest";
-
-import Button from "components/porter/Button";
-import Modal from "components/porter/Modal";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import { type PorterAppFormData } from "lib/porter-apps";
 
 import EnvGroupRow from "./EnvGroupRow";
 import { type PopulatedEnvGroup } from "./types";

@@ -1,14 +1,14 @@
 import React, { useEffect, useMemo, useState } from "react";
+import Spacer from "legacy/components/porter/Spacer";
+import TabSelector from "legacy/components/TabSelector";
+import { clientAddonFromProto } from "legacy/lib/addons";
+import { useAppWithPreviewOverrides } from "legacy/lib/hooks/useAppWithPreviewOverrides";
 import _ from "lodash";
 import { useFormContext } from "react-hook-form";
 import { match } from "ts-pattern";
 
-import Spacer from "components/porter/Spacer";
-import TabSelector from "components/TabSelector";
 import { useLatestRevision } from "main/home/app-dashboard/app-view/LatestRevisionContext";
 import Environment from "main/home/app-dashboard/app-view/tabs/Environment";
-import { clientAddonFromProto } from "lib/addons";
-import { useAppWithPreviewOverrides } from "lib/hooks/useAppWithPreviewOverrides";
 
 import {
   useEnvTemplate,

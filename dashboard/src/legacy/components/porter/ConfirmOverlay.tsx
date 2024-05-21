@@ -1,5 +1,5 @@
-import Loading from "components/Loading";
 import React from "react";
+import Loading from "legacy/components/Loading";
 import { createPortal } from "react-dom";
 import styled from "styled-components";
 
@@ -10,32 +10,25 @@ type Props = {
   loading?: boolean;
 };
 
-const ConfirmOverlay: React.FC<Props> = ({
-  message,
-  onYes,
-  onNo,
-  loading,
-}) => {
+const ConfirmOverlay: React.FC<Props> = ({ message, onYes, onNo, loading }) => {
   return (
     <>
-      {
-        createPortal(
-          <StyledConfirmOverlay>
-            {loading ? (
-              <Loading />
-            ) : (
-              <>
-                {message}
-                <ButtonRow>
-                  <ConfirmButton onClick={onYes}>Yes</ConfirmButton>
-                  <ConfirmButton onClick={onNo}>No</ConfirmButton>
-                </ButtonRow>
-              </>
-            )}
-          </StyledConfirmOverlay>,
-          document.body
-        )
-      }
+      {createPortal(
+        <StyledConfirmOverlay>
+          {loading ? (
+            <Loading />
+          ) : (
+            <>
+              {message}
+              <ButtonRow>
+                <ConfirmButton onClick={onYes}>Yes</ConfirmButton>
+                <ConfirmButton onClick={onNo}>No</ConfirmButton>
+              </ButtonRow>
+            </>
+          )}
+        </StyledConfirmOverlay>,
+        document.body
+      )}
     </>
   );
 };

@@ -1,31 +1,32 @@
+import React, { useMemo } from "react";
+import Breadcrumb from "legacy/components/Breadcrumb";
+import {
+  provisionResourcesTracks,
+  trackRedirectToGuide,
+} from "legacy/shared/anayltics";
+import { integrationList } from "legacy/shared/common";
+import styled from "styled-components";
+import { useSnapshot } from "valtio";
+
+import { OFState } from "main/home/onboarding/state";
 import {
   ProvisionerConfig,
   StateHandler,
 } from "main/home/onboarding/state/StateHandler";
+import { StepHandler } from "main/home/onboarding/state/StepHandler";
 import {
   SkipProvisionConfig,
   SupportedProviders,
 } from "main/home/onboarding/types";
-import React, { useMemo } from "react";
-import styled from "styled-components";
-import Breadcrumb from "components/Breadcrumb";
-import { integrationList } from "shared/common";
+
 import {
   CredentialsForm as AWSCredentialsForm,
   SettingsForm as AWSSettingsForm,
 } from "./_AWSProvisionerForm";
-
 import {
   CredentialsForm as GCPCredentialsForm,
   SettingsForm as GCPSettingsForm,
 } from "./_GCPProvisionerForm";
-import { OFState } from "main/home/onboarding/state";
-import { useSnapshot } from "valtio";
-import {
-  provisionResourcesTracks,
-  trackRedirectToGuide,
-} from "shared/anayltics";
-import { StepHandler } from "main/home/onboarding/state/StepHandler";
 
 const Forms = {
   aws: {

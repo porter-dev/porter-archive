@@ -6,15 +6,15 @@ import React, {
   type SetStateAction,
 } from "react";
 import { PorterApp } from "@porter-dev/api-contracts";
+import SearchBar from "legacy/components/porter/SearchBar";
+import { useLatestAppRevisions } from "legacy/lib/hooks/useLatestAppRevisions";
+import { search } from "legacy/shared/search";
 import styled from "styled-components";
 
-import SearchBar from "components/porter/SearchBar";
 import { AppIcon } from "main/home/app-dashboard/apps/AppMeta";
 import { type AppInstance } from "main/home/app-dashboard/apps/types";
-import { useLatestAppRevisions } from "lib/hooks/useLatestAppRevisions";
 
 import { Context } from "shared/Context";
-import { search } from "shared/search";
 
 type Props = {
   selectedApp: AppInstance | null;

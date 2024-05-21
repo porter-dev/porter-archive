@@ -1,6 +1,6 @@
-import styled from "styled-components";
-import DynamicLink from "components/DynamicLink";
 import React, { useState } from "react";
+import DynamicLink from "legacy/components/DynamicLink";
+import styled from "styled-components";
 
 export const EllipsisTextWrapper: React.FC<
   { tooltipText?: string } & React.HTMLAttributes<HTMLDivElement>

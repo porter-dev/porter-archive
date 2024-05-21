@@ -1,7 +1,8 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
-import { integrationList } from "shared/common";
-import styled, { keyframes } from "styled-components";
-import { readableDate } from "shared/string_utils";
+import api from "legacy/shared/api";
+import { integrationList } from "legacy/shared/common";
+import { useWebsockets } from "legacy/shared/hooks/useWebsockets";
+import { readableDate } from "legacy/shared/string_utils";
 import {
   Infrastructure,
   KindMap,
@@ -10,13 +11,14 @@ import {
   OperationType,
   TFResourceState,
   TFState,
-} from "shared/types";
-import api from "shared/api";
-import Placeholder from "./OldPlaceholder";
-import Loading from "./Loading";
+} from "legacy/shared/types";
+import styled, { keyframes } from "styled-components";
+
 import { Context } from "shared/Context";
-import { useWebsockets } from "shared/hooks/useWebsockets";
+
 import Description from "./Description";
+import Loading from "./Loading";
+import Placeholder from "./OldPlaceholder";
 
 type Props = {
   infras: Infrastructure[];
@@ -398,13 +400,9 @@ type OperationDetailsProps = {
   padding?: string;
 };
 
-export const OperationDetails: React.FunctionComponent<OperationDetailsProps> = ({
-  infra,
-  can_delete,
-  refreshInfra,
-  useOperation,
-  padding,
-}) => {
+export const OperationDetails: React.FunctionComponent<
+  OperationDetailsProps
+> = ({ infra, can_delete, refreshInfra, useOperation, padding }) => {
   const [isLoading, setIsLoading] = useState(!useOperation);
   const [hasError, setHasError] = useState(false);
   const [operation, setOperation] = useState<Operation>(useOperation);

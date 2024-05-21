@@ -10,19 +10,19 @@ import {
   NodePoolType,
 } from "@porter-dev/api-contracts";
 import { Label } from "@tanstack/react-query-devtools/build/lib/Explorer";
+import dotVertical from "legacy/assets/dot-vertical.svg";
+import Heading from "legacy/components/form-components/Heading";
+import SelectRow from "legacy/components/form-components/SelectRow";
+import { useIntercom } from "legacy/lib/hooks/useIntercom";
+import api from "legacy/shared/api";
+import { pushFiltered } from "legacy/shared/routing";
+import { type ClusterType } from "legacy/shared/types";
 import { withRouter, type RouteComponentProps } from "react-router";
 import styled from "styled-components";
 
-import Heading from "components/form-components/Heading";
-import SelectRow from "components/form-components/SelectRow";
 import { OFState } from "main/home/onboarding/state";
-import { useIntercom } from "lib/hooks/useIntercom";
 
-import api from "shared/api";
 import { Context } from "shared/Context";
-import { pushFiltered } from "shared/routing";
-import { type ClusterType } from "shared/types";
-import dotVertical from "assets/dot-vertical.svg";
 
 import {
   AzureLocationOptions,

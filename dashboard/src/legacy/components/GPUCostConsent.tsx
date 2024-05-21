@@ -1,17 +1,17 @@
-import React, { useState, useContext } from "react";
+import React, { useContext, useState } from "react";
+import api from "legacy/shared/api";
 import styled from "styled-components";
 
 import { Context } from "shared/Context";
-import api from "shared/api";
 
-import Modal from "./porter/Modal";
-import Text from "./porter/Text";
-import Spacer from "./porter/Spacer";
-import Fieldset from "./porter/Fieldset";
 import Button from "./porter/Button";
 import ExpandableSection from "./porter/ExpandableSection";
+import Fieldset from "./porter/Fieldset";
 import Input from "./porter/Input";
 import Link from "./porter/Link";
+import Modal from "./porter/Modal";
+import Spacer from "./porter/Spacer";
+import Text from "./porter/Text";
 
 type Props = {
   setCurrentStep: (step: string) => void;
@@ -26,13 +26,12 @@ const GPUCostConsent: React.FC<Props> = ({
 
   return (
     <>
-
       <Text size={16}>Base AWS cost consent</Text>
       <Spacer height="15px" />
       <Text color="helper">
         Porter will create the underlying infrastructure in your own AWS
-        account. You will be separately charged by AWS for this
-        infrastructure. The cost for this base infrastructure is as follows:
+        account. You will be separately charged by AWS for this infrastructure.
+        The cost for this base infrastructure is as follows:
       </Text>
       <Spacer y={1} />
       <ExpandableSection
@@ -52,17 +51,15 @@ const GPUCostConsent: React.FC<Props> = ({
               <Spacer height="15px" />
               <Tab />+ Monitoring workloads: t3.large instance (1) = $60.74/mo
               <Spacer height="15px" />
-              <Tab />+ Application workloads: t3.medium instance (1) =
-              $30.1/mo
+              <Tab />+ Application workloads: t3.medium instance (1) = $30.1/mo
             </Fieldset>
           </>
         }
       />
       <Spacer y={1} />
       <Text color="helper">
-        The base AWS infrastructure covers up to 2 vCPU and 4GB of RAM.
-        Separate from the AWS cost, Porter charges based on your resource
-        usage.
+        The base AWS infrastructure covers up to 2 vCPU and 4GB of RAM. Separate
+        from the AWS cost, Porter charges based on your resource usage.
       </Text>
       <Spacer inline width="5px" />
       <Spacer y={0.5} />
@@ -108,7 +105,6 @@ const GPUCostConsent: React.FC<Props> = ({
       >
         Continue
       </Button>
-
     </>
   );
 };

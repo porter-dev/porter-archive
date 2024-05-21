@@ -1,9 +1,11 @@
 import axios from "axios";
-
-import api from "shared/api";
+import api from "legacy/shared/api";
 
 // GithubResultErrorCode is an enum of possible errors that may occur when hitting the Github API.
-export type GithubResultErrorCode = "NO_PERMISSION" | "FILE_NOT_FOUND" | "UNKNOWN";
+export type GithubResultErrorCode =
+  | "NO_PERMISSION"
+  | "FILE_NOT_FOUND"
+  | "UNKNOWN";
 
 // GithubResult is a generic type that should be returned to handle common errors resulting from hitting the Github API.
 export type GithubResult<T extends object> =

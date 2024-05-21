@@ -1,3 +1,10 @@
+import awsRDS from "legacy/assets/amazon-rds.png";
+import awsElastiCache from "legacy/assets/aws-elasticache.png";
+import infra from "legacy/assets/cluster.svg";
+import neon from "legacy/assets/neon.svg";
+import postgresql from "legacy/assets/postgresql.svg";
+import redis from "legacy/assets/redis.svg";
+import upstash from "legacy/assets/upstash.svg";
 import {
   DATASTORE_STATE_AVAILABLE,
   DATASTORE_STATE_AWAITING_DELETION,
@@ -18,15 +25,7 @@ import {
   DATASTORE_TYPE_UPSTASH,
   type DatastoreEngine,
   type DatastoreTemplate,
-} from "lib/databases/types";
-
-import awsRDS from "assets/amazon-rds.png";
-import awsElastiCache from "assets/aws-elasticache.png";
-import infra from "assets/cluster.svg";
-import neon from "assets/neon.svg";
-import postgresql from "assets/postgresql.svg";
-import redis from "assets/redis.svg";
-import upstash from "assets/upstash.svg";
+} from "legacy/lib/databases/types";
 
 import ConfigurationTab from "./tabs/ConfigurationTab";
 import ConnectTab from "./tabs/ConnectTab";

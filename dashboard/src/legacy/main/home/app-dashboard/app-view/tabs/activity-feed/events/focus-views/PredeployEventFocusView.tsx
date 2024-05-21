@@ -1,15 +1,14 @@
 import React from "react";
 import dayjs from "dayjs";
+import loading from "legacy/assets/loading.gif";
+import Container from "legacy/components/porter/Container";
+import Icon from "legacy/components/porter/Icon";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import { readableDate } from "legacy/shared/string_utils";
 
-import Container from "components/porter/Container";
-import Icon from "components/porter/Icon";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
 import { useLatestRevision } from "main/home/app-dashboard/app-view/LatestRevisionContext";
 import Logs from "main/home/app-dashboard/validate-apply/logs/Logs";
-
-import { readableDate } from "shared/string_utils";
-import loading from "assets/loading.gif";
 
 import { type PorterAppPreDeployEvent } from "../types";
 import { getDuration, getStatusColor } from "../utils";

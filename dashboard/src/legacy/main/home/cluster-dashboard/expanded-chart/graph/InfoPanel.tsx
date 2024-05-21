@@ -1,11 +1,9 @@
 import React, { Component } from "react";
-import styled from "styled-components";
 import yaml from "js-yaml";
-
-import { edgeColors, kindToIcon } from "shared/rosettaStone";
-import { EdgeType, NodeType } from "shared/types";
-
-import YamlEditor from "components/YamlEditor";
+import YamlEditor from "legacy/components/YamlEditor";
+import { edgeColors, kindToIcon } from "legacy/shared/rosettaStone";
+import { EdgeType, NodeType } from "legacy/shared/types";
+import styled from "styled-components";
 
 type PropsType = {
   currentNode: NodeType;

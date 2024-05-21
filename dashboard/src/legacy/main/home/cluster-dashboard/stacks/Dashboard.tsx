@@ -1,13 +1,15 @@
-import DynamicLink from "components/DynamicLink";
-import RadioFilter from "components/RadioFilter";
 import React, { useEffect, useState } from "react";
+import sort from "legacy/assets/sort.svg";
+import DynamicLink from "legacy/components/DynamicLink";
+import RadioFilter from "legacy/components/RadioFilter";
+import { useRouting } from "legacy/shared/routing";
 import { useHistory, useLocation } from "react-router";
-import { useRouting } from "shared/routing";
 import styled from "styled-components";
+
 import DashboardHeader from "../DashboardHeader";
 import { NamespaceSelector } from "../NamespaceSelector";
-import sort from "assets/sort.svg";
 import StackList from "./_StackList";
+
 const Dashboard = () => {
   const [currentNamespace, setCurrentNamespace] = useState("default");
   const [currentSort, setCurrentSort] = useState<
@@ -112,7 +114,7 @@ const Button = styled(DynamicLink)`
     props.disabled ? "#aaaabbee" : "#616FEEcc"};
   :hover {
     background: ${(props: { disabled?: boolean }) =>
-    props.disabled ? "" : "#505edddd"};
+      props.disabled ? "" : "#505edddd"};
   }
 
   > i {

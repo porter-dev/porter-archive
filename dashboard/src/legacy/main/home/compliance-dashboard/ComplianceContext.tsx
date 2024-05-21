@@ -12,13 +12,11 @@ import {
   EKSLogging,
 } from "@porter-dev/api-contracts";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { type APIContract } from "legacy/lib/clusters/types";
+import { useLatestClusterContract } from "legacy/lib/hooks/useCluster";
+import api from "legacy/shared/api";
 import { match } from "ts-pattern";
 import { z } from "zod";
-
-import { type APIContract } from "lib/clusters/types";
-import { useLatestClusterContract } from "lib/hooks/useCluster";
-
-import api from "shared/api";
 
 import {
   checkGroupValidator,

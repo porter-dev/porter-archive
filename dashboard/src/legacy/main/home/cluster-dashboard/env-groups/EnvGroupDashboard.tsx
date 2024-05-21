@@ -1,19 +1,22 @@
 import React, { Component, useContext, useEffect, useState } from "react";
+import sliders from "legacy/assets/env-groups.svg";
+import ClusterProvisioningPlaceholder from "legacy/components/ClusterProvisioningPlaceholder";
+import PorterButton from "legacy/components/porter/Button";
+import DashboardPlaceholder from "legacy/components/porter/DashboardPlaceholder";
+import PorterLink from "legacy/components/porter/Link";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import {
+  getQueryParam,
+  pushFiltered,
+  pushQueryParams,
+} from "legacy/shared/routing";
+import { type ClusterType } from "legacy/shared/types";
 import { withRouter, type RouteComponentProps } from "react-router";
 import styled from "styled-components";
 
-import ClusterProvisioningPlaceholder from "components/ClusterProvisioningPlaceholder";
-import PorterButton from "components/porter/Button";
-import DashboardPlaceholder from "components/porter/DashboardPlaceholder";
-import PorterLink from "components/porter/Link";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-
 import { withAuth, type WithAuthProps } from "shared/auth/AuthorizationHoc";
 import { Context } from "shared/Context";
-import { getQueryParam, pushFiltered, pushQueryParams } from "shared/routing";
-import { type ClusterType } from "shared/types";
-import sliders from "assets/env-groups.svg";
 
 import DashboardHeader from "../DashboardHeader";
 import { NamespaceSelector } from "../NamespaceSelector";
@@ -92,7 +95,9 @@ const EnvGroupDashboard = (props: PropsType) => {
     if (currentProject?.sandbox_enabled) {
       return (
         <DashboardPlaceholder>
-          <Text size={16}>Environment groups are not enabled on the Porter Cloud.</Text>
+          <Text size={16}>
+            Environment groups are not enabled on the Porter Cloud.
+          </Text>
           <Spacer y={0.5} />
           <Text color={"helper"}>
             Eject to your own cloud account to enable environment groups.

@@ -1,16 +1,18 @@
 import React, { useState } from "react";
+import { ControlledInput } from "legacy/components/porter/ControlledInput";
+import LoadingBar from "legacy/components/porter/LoadingBar";
+import Select from "legacy/components/porter/Select";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import {
+  type PorterAppFormData,
+  type SourceOptions,
+} from "legacy/lib/porter-apps";
+import { type BuildOptions } from "legacy/lib/porter-apps/build";
 import AnimateHeight from "react-animate-height";
 import { Controller, useFormContext } from "react-hook-form";
 import styled from "styled-components";
 import { match } from "ts-pattern";
-
-import { ControlledInput } from "components/porter/ControlledInput";
-import LoadingBar from "components/porter/LoadingBar";
-import Select from "components/porter/Select";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import { type PorterAppFormData, type SourceOptions } from "lib/porter-apps";
-import { type BuildOptions } from "lib/porter-apps/build";
 
 import BuildpackSettings, {
   DEFAULT_BUILDERS,

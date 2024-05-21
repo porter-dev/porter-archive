@@ -1,10 +1,3 @@
-import { DeviconsNameList } from "assets/devicons-name-list";
-import Helper from "components/form-components/Helper";
-import SelectRow from "components/form-components/SelectRow";
-import Loading from "components/Loading";
-import Placeholder from "components/OldPlaceholder";
-import { AddCustomBuildpackForm } from "components/repo-selector/BuildpackSelection";
-import { differenceBy } from "lodash";
 import React, {
   forwardRef,
   useContext,
@@ -14,15 +7,28 @@ import React, {
   useRef,
   useState,
 } from "react";
-import api from "shared/api";
-import { Context } from "shared/Context";
+import { DeviconsNameList } from "legacy/assets/devicons-name-list";
+import Helper from "legacy/components/form-components/Helper";
+import SelectRow from "legacy/components/form-components/SelectRow";
+import Loading from "legacy/components/Loading";
+import Placeholder from "legacy/components/OldPlaceholder";
+import { AddCustomBuildpackForm } from "legacy/components/repo-selector/BuildpackSelection";
+import api from "legacy/shared/api";
 import {
-  BuildConfig,
-  ChartTypeWithExtendedConfig,
-  FullActionConfigType,
-} from "shared/types";
+  type BuildConfig,
+  type ChartTypeWithExtendedConfig,
+  type FullActionConfigType,
+} from "legacy/shared/types";
+import { differenceBy } from "lodash";
 import styled, { keyframes } from "styled-components";
-import { Buildpack, DetectBuildpackResponse, DetectedBuildpack } from "./types";
+
+import { Context } from "shared/Context";
+
+import {
+  type Buildpack,
+  type DetectBuildpackResponse,
+  type DetectedBuildpack,
+} from "./types";
 
 const BuildpackConfigSection = forwardRef<
   {
@@ -50,13 +56,14 @@ const BuildpackConfigSection = forwardRef<
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(false);
 
-  const state = useRef<null | {
-    [builder: string]: {
+  const state = useRef<null | Record<
+    string,
+    {
       stack: string;
       selectedBuildpacks: Buildpack[];
       availableBuildpacks: Buildpack[];
-    };
-  }>(null);
+    }
+  >>(null);
 
   const populateState = (
     builder: string,
@@ -67,9 +74,9 @@ const BuildpackConfigSection = forwardRef<
     state.current = {
       ...state.current,
       [builder]: {
-        stack: stack,
-        availableBuildpacks: availableBuildpacks,
-        selectedBuildpacks: selectedBuildpacks,
+        stack,
+        availableBuildpacks,
+        selectedBuildpacks,
       },
     };
   };
@@ -79,7 +86,7 @@ const BuildpackConfigSection = forwardRef<
     detectedBuildpacks: Buildpack[]
   ) => {
     const customBuildpackFactory = (name: string): Buildpack => ({
-      name: name,
+      name,
       buildpack: name,
       config: null,
     });
@@ -91,9 +98,9 @@ const BuildpackConfigSection = forwardRef<
     );
   };
 
-  const detectBuildpack = () => {
+  const detectBuildpack = async () => {
     if (actionConfig.kind === "gitlab") {
-      return api.detectGitlabBuildpack<DetectBuildpackResponse>(
+      return await api.detectGitlabBuildpack<DetectBuildpackResponse>(
         "<token>",
         {
           repo_path: actionConfig.git_repo,
@@ -107,7 +114,7 @@ const BuildpackConfigSection = forwardRef<
       );
     }
 
-    return api.detectBuildpack<DetectBuildpackResponse>(
+    return await api.detectBuildpack<DetectBuildpackResponse>(
       "<token>",
       {
         dir: actionConfig.folder_path || ".",
@@ -214,7 +221,7 @@ const BuildpackConfigSection = forwardRef<
     ref,
     () => {
       return {
-        isLoading: isLoading,
+        isLoading,
         getBuildConfig: () => {
           const currentBuildConfig = currentChart?.build_config;
 
@@ -232,7 +239,7 @@ const BuildpackConfigSection = forwardRef<
             }
           }
 
-          let buildConfig: BuildConfig = {} as BuildConfig;
+          const buildConfig: BuildConfig = {} as BuildConfig;
 
           buildConfig.builder = selectedStack;
           buildConfig.buildpacks = selectedBuildpacks?.map((buildpack) => {
@@ -299,7 +306,6 @@ const BuildpackConfigSection = forwardRef<
       setSelectedStack(stateBuilder.stack);
       setAvailableBuildpacks(stateBuilder.availableBuildpacks);
       setSelectedBuildpacks(stateBuilder.selectedBuildpacks);
-      return;
     }
   };
 
@@ -347,14 +353,18 @@ const BuildpackConfigSection = forwardRef<
           <ActionContainer>
             {action === "add" && (
               <DeleteButton
-                onClick={() => handleAddBuildpack(buildpack.buildpack)}
+                onClick={() => {
+                  handleAddBuildpack(buildpack.buildpack);
+                }}
               >
                 <span className="material-icons-outlined">add</span>
               </DeleteButton>
             )}
             {action === "remove" && (
               <DeleteButton
-                onClick={() => handleRemoveBuildpack(buildpack.buildpack)}
+                onClick={() => {
+                  handleRemoveBuildpack(buildpack.buildpack);
+                }}
               >
                 <span className="material-icons">delete</span>
               </DeleteButton>
@@ -434,14 +444,18 @@ const BuildpackConfigSection = forwardRef<
           value={selectedBuilder}
           width="100%"
           options={builderOptions}
-          setActiveValue={(option) => handleSelectBuilder(option)}
+          setActiveValue={(option) => {
+            handleSelectBuilder(option);
+          }}
           label="Select a builder"
         />
         <SelectRow
           value={selectedStack}
           width="100%"
           options={stackOptions}
-          setActiveValue={(option) => setSelectedStack(option)}
+          setActiveValue={(option) => {
+            setSelectedStack(option);
+          }}
           label="Select your stack"
         />
         <Helper>

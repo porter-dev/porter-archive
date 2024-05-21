@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import styled from "styled-components";
+import loading from "legacy/assets/loading.gif";
+import Loading from "legacy/components/Loading";
 import {
   Column,
   Row,
@@ -7,10 +8,10 @@ import {
   usePagination,
   useTable,
 } from "react-table";
-import Loading from "components/Loading";
-import Selector from "./Selector";
-import loading from "assets/loading.gif";
+import styled from "styled-components";
+
 import Button from "./porter/Button";
+import Selector from "./Selector";
 
 const GlobalFilter: React.FunctionComponent<any> = ({
   setGlobalFilter,
@@ -249,10 +250,14 @@ const Table: React.FC<TableProps> = ({
             <PageCounter>
               {currentPageIndex + 1} of {pageCount ? pageCount : pageCount + 1}
             </PageCounter>
-            <PaginationAction disabled={!canNextPage} onClick={() => {
-              nextPage();
-              setCurrentPageIndex(currentPageIndex + 1);
-            }} type={"button"}>
+            <PaginationAction
+              disabled={!canNextPage}
+              onClick={() => {
+                nextPage();
+                setCurrentPageIndex(currentPageIndex + 1);
+              }}
+              type={"button"}
+            >
               {">"}
             </PaginationAction>
           </PaginationActionsWrapper>
@@ -320,7 +325,7 @@ export const StyledTr = styled.tr`
   background: ${(props: StyledTrProps) => (props.selected ? "#ffffff11" : "")};
   :hover {
     background: ${(props: StyledTrProps) =>
-    props.disableHover ? "" : "#ffffff22"};
+      props.disableHover ? "" : "#ffffff22"};
   }
   cursor: ${(props: StyledTrProps) =>
     props.enablePointer ? "pointer" : "unset"};

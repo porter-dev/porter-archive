@@ -1,10 +1,12 @@
 import { useContext } from "react";
 import { useQuery } from "@tanstack/react-query";
+import {
+  envGroupValidator,
+  type ClientEnvGroup,
+} from "legacy/lib/env-groups/types";
+import api from "legacy/shared/api";
 import { z } from "zod";
 
-import { envGroupValidator, type ClientEnvGroup } from "lib/env-groups/types";
-
-import api from "shared/api";
 import { Context } from "shared/Context";
 
 type TUseEnvGroupList = {

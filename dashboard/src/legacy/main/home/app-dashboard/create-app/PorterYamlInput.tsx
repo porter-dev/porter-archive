@@ -1,8 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
+import { type PorterAppFormData } from "legacy/lib/porter-apps";
 import { Controller, useFormContext } from "react-hook-form";
 import styled from "styled-components";
-
-import { type PorterAppFormData } from "lib/porter-apps";
 
 import FileSelector from "../validate-apply/build-settings/FileSelector";
 

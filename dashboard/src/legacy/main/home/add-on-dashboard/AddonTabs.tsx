@@ -1,14 +1,13 @@
 import React, { useContext, useEffect, useMemo } from "react";
+import Banner from "legacy/components/porter/Banner";
+import Spacer from "legacy/components/porter/Spacer";
+import TabSelector from "legacy/components/TabSelector";
+import { type ClientAddon } from "legacy/lib/addons";
 import AnimateHeight from "react-animate-height";
 import { useFormContext } from "react-hook-form";
 import { useHistory } from "react-router";
 import styled from "styled-components";
 import { match } from "ts-pattern";
-
-import Banner from "components/porter/Banner";
-import Spacer from "components/porter/Spacer";
-import TabSelector from "components/TabSelector";
-import { type ClientAddon } from "lib/addons";
 
 import { Context } from "shared/Context";
 

@@ -1,5 +1,23 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
+import job from "legacy/assets/job.png";
+import web from "legacy/assets/web.png";
+import worker from "legacy/assets/worker.png";
+import Button from "legacy/components/porter/Button";
+import { ControlledInput } from "legacy/components/porter/ControlledInput";
+import Modal from "legacy/components/porter/Modal";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import { type ClientCluster } from "legacy/lib/clusters/types";
+import { type ClientServiceStatus } from "legacy/lib/hooks/useAppStatus";
+import { type PorterAppFormData } from "legacy/lib/porter-apps";
+import {
+  defaultSerialized,
+  deserializeService,
+  getServiceResourceAllowances,
+  isInitdeployService,
+  isPredeployService,
+} from "legacy/lib/porter-apps/services";
 import {
   Controller,
   useFieldArray,
@@ -9,27 +27,9 @@ import {
 import styled from "styled-components";
 import { z } from "zod";
 
-import Button from "components/porter/Button";
-import { ControlledInput } from "components/porter/ControlledInput";
-import Modal from "components/porter/Modal";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
 import { useClusterContext } from "main/home/infrastructure-dashboard/ClusterContextProvider";
-import { type ClientCluster } from "lib/clusters/types";
-import { type ClientServiceStatus } from "lib/hooks/useAppStatus";
-import { type PorterAppFormData } from "lib/porter-apps";
-import {
-  defaultSerialized,
-  deserializeService,
-  getServiceResourceAllowances,
-  isInitdeployService,
-  isPredeployService,
-} from "lib/porter-apps/services";
 
 import { Context } from "shared/Context";
-import job from "assets/job.png";
-import web from "assets/web.png";
-import worker from "assets/worker.png";
 
 import Tiles from "../../../../../components/porter/Tiles";
 import ServiceContainer from "./ServiceContainer";

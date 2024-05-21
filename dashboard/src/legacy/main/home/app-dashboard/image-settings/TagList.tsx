@@ -1,11 +1,9 @@
 import React, { useState } from "react";
+import addCircle from "legacy/assets/add-circle.png";
+import tag_icon from "legacy/assets/tag.png";
+import Loading from "legacy/components/Loading";
+import SearchBar from "legacy/components/SearchBar";
 import styled from "styled-components";
-
-import Loading from "components/Loading";
-import SearchBar from "components/SearchBar";
-
-import addCircle from "assets/add-circle.png";
-import tag_icon from "assets/tag.png";
 
 import { type ArtifactType, type ImageType } from "./types";
 

@@ -1,15 +1,13 @@
-import React, { useEffect, useState, useContext } from "react";
+import React, { useContext, useEffect, useState } from "react";
+import aws from "legacy/assets/aws.png";
+import azure from "legacy/assets/azure.png";
+import LoadingBar from "legacy/components/porter/LoadingBar";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import api from "legacy/shared/api";
 import styled from "styled-components";
 
-import aws from "assets/aws.png";
-import azure from "assets/azure.png";
-
-import api from "shared/api";
-
 import { Context } from "shared/Context";
-import LoadingBar from "components/porter/LoadingBar";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
 
 type Props = {
   provisionFailureReason: string;
@@ -17,7 +15,7 @@ type Props = {
 
 const PROVISIONING_STATUS_POLL_INTERVAL = 60 * 1000; // poll every minute
 
-const ProvisionerStatus: React.FC<Props> = ( props ) => {
+const ProvisionerStatus: React.FC<Props> = (props) => {
   const { currentProject, currentCluster } = useContext(Context);
   const [progress, setProgress] = useState<number>(1);
   const [provisionType, setProvisionType] = useState("CREATE");
@@ -34,11 +32,8 @@ const ProvisionerStatus: React.FC<Props> = ( props ) => {
             cluster_id: currentCluster.id,
           }
         );
-        const {
-          is_control_plane_ready,
-          is_infrastructure_ready,
-          phase,
-        } = resState.data;
+        const { is_control_plane_ready, is_infrastructure_ready, phase } =
+          resState.data;
         let newProgress = 1;
         if (is_control_plane_ready) {
           newProgress += 1;
@@ -76,27 +71,29 @@ const ProvisionerStatus: React.FC<Props> = ( props ) => {
       PROVISIONING_STATUS_POLL_INTERVAL
     );
     pollProvisioningAndClusterStatus();
-    return () => clearInterval(intervalId);
+    return () => {
+      clearInterval(intervalId);
+    };
   }, []);
 
   useEffect(() => {
     // check if this is create or update operation
     // TODO: CCP should distinguish between create vs update.
     api
-    .getContracts("<token>", {}, { project_id: currentProject.id })
-    .then(({ data }) => {
-      const filtered_data = data.filter((x: any) => {
-        return x.cluster_id === currentCluster.id;
-      });
+      .getContracts("<token>", {}, { project_id: currentProject.id })
+      .then(({ data }) => {
+        const filtered_data = data.filter((x: any) => {
+          return x.cluster_id === currentCluster.id;
+        });
 
-      if (filtered_data.length > 1) {
-        setProvisionType("UPDATE");
-      }
-    })
-    .catch((err) => {
-      console.error(err);
-    });
-  })
+        if (filtered_data.length > 1) {
+          setProvisionType("UPDATE");
+        }
+      })
+      .catch((err) => {
+        console.error(err);
+      });
+  });
 
   return (
     <StyledProvisionerStatus>
@@ -124,10 +121,9 @@ const ProvisionerStatus: React.FC<Props> = ( props ) => {
         />
         <Spacer height="18px" />
         <Text color="#aaaabb">
-          {
-            provisionType == "UPDATE" ? "Updating your infrastructure may take up to 30 minutes and will not incur any downtime for your applications. You can still deploy and manage your applications while the update is in effect.":
-            "Setup can take up to 20 minutes. You can close this window and come back later."
-          }
+          {provisionType == "UPDATE"
+            ? "Updating your infrastructure may take up to 30 minutes and will not incur any downtime for your applications. You can still deploy and manage your applications while the update is in effect."
+            : "Setup can take up to 20 minutes. You can close this window and come back later."}
         </Text>
       </HeaderSection>
       {props?.provisionFailureReason && (

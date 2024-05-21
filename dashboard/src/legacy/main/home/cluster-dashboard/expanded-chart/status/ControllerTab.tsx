@@ -1,12 +1,17 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
-import styled from "styled-components";
-import api from "shared/api";
-import { Context } from "shared/Context";
-import ResourceTab from "components/ResourceTab";
-import ConfirmOverlay from "components/ConfirmOverlay";
-import { NewWebsocketOptions, useWebsockets } from "shared/hooks/useWebsockets";
-import PodRow from "./PodRow";
 import { timeFormat } from "d3-time-format";
+import ConfirmOverlay from "legacy/components/ConfirmOverlay";
+import ResourceTab from "legacy/components/ResourceTab";
+import api from "legacy/shared/api";
+import {
+  useWebsockets,
+  type NewWebsocketOptions,
+} from "legacy/shared/hooks/useWebsockets";
+import styled from "styled-components";
+
+import { Context } from "shared/Context";
+
+import PodRow from "./PodRow";
 
 type Props = {
   controller: any;
@@ -49,26 +54,21 @@ const ControllerTabFC: React.FunctionComponent<Props> = ({
   const [total, setTotal] = useState<number>(null);
   const [userSelectedPod, setUserSelectedPod] = useState<boolean>(false);
 
-  const { currentCluster, currentProject, setCurrentError } = useContext(
-    Context
-  );
-  const {
-    newWebsocket,
-    openWebsocket,
-    closeAllWebsockets,
-    closeWebsocket,
-  } = useWebsockets();
+  const { currentCluster, currentProject, setCurrentError } =
+    useContext(Context);
+  const { newWebsocket, openWebsocket, closeAllWebsockets, closeWebsocket } =
+    useWebsockets();
 
   const currentSelectors = useMemo(() => {
     if (controller.kind.toLowerCase() == "job" && selectors) {
       return [...selectors];
     }
-    let newSelectors = [] as string[];
-    let ml =
+    const newSelectors = [] as string[];
+    const ml =
       controller?.spec?.selector?.matchLabels || controller?.spec?.selector;
     let i = 1;
     let selector = "";
-    for (var key in ml) {
+    for (const key in ml) {
       selector += key + "=" + ml[key];
       if (i != Object.keys(ml).length) {
         selector += ",";
@@ -84,7 +84,9 @@ const ControllerTabFC: React.FunctionComponent<Props> = ({
     [controller?.kind, "pod"].forEach((kind) => {
       setupWebsocket(kind, controller?.metadata?.uid);
     });
-    () => closeAllWebsockets();
+    () => {
+      closeAllWebsockets();
+    };
   }, [currentSelectors, controller, currentCluster, currentProject]);
 
   const updatePods = async () => {
@@ -101,7 +103,7 @@ const ControllerTabFC: React.FunctionComponent<Props> = ({
         }
       );
       const data = res?.data as any[];
-      let newPods = data
+      const newPods = data
         // Parse only data that we need
         .map<ControllerTabPodType>((pod: any) => {
           const replicaSetName =
@@ -129,9 +131,7 @@ const ControllerTabFC: React.FunctionComponent<Props> = ({
             containerStatus,
             podAge: pod?.metadata?.creationTimestamp ? podAge : "N/A",
             revisionNumber:
-              (pod?.metadata?.annotations &&
-                pod?.metadata?.annotations["helm.sh/revision"]) ||
-              "N/A",
+              pod?.metadata?.annotations?.["helm.sh/revision"] || "N/A",
           };
         });
 
@@ -139,7 +139,7 @@ const ControllerTabFC: React.FunctionComponent<Props> = ({
       setRawPodList(data);
       // If the user didn't click a pod, select the first returned from list.
       if (!userSelectedPod) {
-        let status = getPodStatus(newPods[0].status);
+        const status = getPodStatus(newPods[0].status);
         status === "failed" &&
           newPods[0].status?.message &&
           setPodError(newPods[0].status?.message);
@@ -251,18 +251,19 @@ const ControllerTabFC: React.FunctionComponent<Props> = ({
   };
 
   const replicaSetArray = useMemo(() => {
-    const podsDividedByReplicaSet = pods.reduce<
-      Array<Array<ControllerTabPodType>>
-    >(function (prev, currentPod, i) {
-      if (
-        !i ||
-        prev[prev.length - 1][0].replicaSetName !== currentPod.replicaSetName
-      ) {
-        return prev.concat([[currentPod]]);
-      }
-      prev[prev.length - 1].push(currentPod);
-      return prev;
-    }, []);
+    const podsDividedByReplicaSet = pods.reduce<ControllerTabPodType[][]>(
+      function (prev, currentPod, i) {
+        if (
+          !i ||
+          prev[prev.length - 1][0].replicaSetName !== currentPod.replicaSetName
+        ) {
+          return prev.concat([[currentPod]]);
+        }
+        prev[prev.length - 1].push(currentPod);
+        return prev;
+      },
+      []
+    );
 
     if (podsDividedByReplicaSet.length === 1) {
       return [];
@@ -305,8 +306,8 @@ const ControllerTabFC: React.FunctionComponent<Props> = ({
     };
 
     options.onmessage = (evt: MessageEvent) => {
-      let event = JSON.parse(evt.data);
-      let object = event.Object;
+      const event = JSON.parse(evt.data);
+      const object = event.Object;
       object.metadata.kind = event.Kind;
 
       // Make a new API call to update pods only when the event type is UPDATE
@@ -320,7 +321,10 @@ const ControllerTabFC: React.FunctionComponent<Props> = ({
       }
 
       if (event.Kind != "pod") {
-        let [available, total] = getAvailability(object.metadata.kind, object);
+        const [available, total] = getAvailability(
+          object.metadata.kind,
+          object
+        );
         setAvailable(available);
         setTotal(total);
         return;
@@ -343,7 +347,7 @@ const ControllerTabFC: React.FunctionComponent<Props> = ({
 
   const mapPods = (podList: ControllerTabPodType[]) => {
     return podList.map((pod, i, arr) => {
-      let status = getPodStatus(pod.status);
+      const status = getPodStatus(pod.status);
       return (
         <PodRow
           key={i}
@@ -359,7 +363,9 @@ const ControllerTabFC: React.FunctionComponent<Props> = ({
             handleSelectPod(pod);
             setUserSelectedPod(true);
           }}
-          onDeleteClick={() => setPodPendingDelete(pod)}
+          onDeleteClick={() => {
+            setPodPendingDelete(pod);
+          }}
         />
       );
     });
@@ -396,8 +402,12 @@ const ControllerTabFC: React.FunctionComponent<Props> = ({
       <ConfirmOverlay
         message="Are you sure you want to delete this pod?"
         show={podPendingDelete}
-        onYes={() => handleDeletePod(podPendingDelete)}
-        onNo={() => setPodPendingDelete(null)}
+        onYes={() => {
+          handleDeletePod(podPendingDelete);
+        }}
+        onNo={() => {
+          setPodPendingDelete(null);
+        }}
       />
     </ResourceTab>
   );

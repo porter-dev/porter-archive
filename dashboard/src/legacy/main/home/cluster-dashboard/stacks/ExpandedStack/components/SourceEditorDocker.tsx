@@ -1,12 +1,14 @@
-import SelectRow from "components/form-components/SelectRow";
-import SearchSelector from "components/SearchSelector";
-import Selector from "components/Selector";
 import React, { useContext, useEffect, useMemo, useState } from "react";
-import api from "shared/api";
-import { Context } from "shared/Context";
-import { useOutsideAlerter } from "shared/hooks/useOutsideAlerter";
+import SelectRow from "legacy/components/form-components/SelectRow";
+import SearchSelector from "legacy/components/SearchSelector";
+import Selector from "legacy/components/Selector";
+import api from "legacy/shared/api";
+import { useOutsideAlerter } from "legacy/shared/hooks/useOutsideAlerter";
 import styled from "styled-components";
 import { proxy, useSnapshot } from "valtio";
+
+import { Context } from "shared/Context";
+
 import { SourceConfig } from "../../types";
 import Select from "./Select";
 

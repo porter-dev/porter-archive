@@ -1,14 +1,14 @@
 import React, { useContext, useState } from "react";
+import settings from "legacy/assets/settings-bold.png";
+import userIcon from "legacy/assets/user-icon.png";
 import styled from "styled-components";
 
+import { useAuthn } from "shared/auth/AuthnContext";
 import { withAuth, type WithAuthProps } from "shared/auth/AuthorizationHoc";
 import { Context } from "shared/Context";
-import settings from "assets/settings-bold.png";
-import userIcon from "assets/user-icon.png";
 
 import Container from "../../../components/porter/Container";
 import StatusDot from "../../../components/porter/StatusDot";
-import { useAuthn } from "../../../shared/auth/AuthnContext";
 import Help from "./Help";
 
 type PropsType = WithAuthProps & {
@@ -20,7 +20,7 @@ const Navbar: React.FC<PropsType> = ({ logOut }) => {
   const { capabilities, user, setCurrentModal } = useContext(Context);
   const [showDropdown, setShowDropdown] = useState(false);
 
-  // const { session } = useAuthn();
+  const { session } = useAuthn();
 
   const renderSettingsDropdown = (): JSX.Element | null => {
     if (!showDropdown) {

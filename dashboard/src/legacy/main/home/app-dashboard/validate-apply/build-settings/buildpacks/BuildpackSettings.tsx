@@ -1,14 +1,20 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import Button from "legacy/components/porter/Button";
+import Error from "legacy/components/porter/Error";
+import Select from "legacy/components/porter/Select";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import {
+  type PorterAppFormData,
+  type SourceOptions,
+} from "legacy/lib/porter-apps";
+import { type BuildOptions } from "legacy/lib/porter-apps/build";
+import api from "legacy/shared/api";
 import { Controller, useFieldArray, useFormContext } from "react-hook-form";
 import styled, { keyframes } from "styled-components";
 import { z } from "zod";
 
-import Button from "components/porter/Button";
-import Error from "components/porter/Error";
-import Select from "components/porter/Select";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
 import {
   DEFAULT_BUILDER_NAME,
   DEFAULT_HEROKU_STACK,
@@ -16,10 +22,6 @@ import {
   type Buildpack,
   type DetectedBuildpack,
 } from "main/home/app-dashboard/types/buildpack";
-import { type PorterAppFormData, type SourceOptions } from "lib/porter-apps";
-import { type BuildOptions } from "lib/porter-apps/build";
-
-import api from "shared/api";
 
 import BuildpackConfigurationModal from "./BuildpackConfigurationModal";
 import BuildpackList from "./BuildpackList";

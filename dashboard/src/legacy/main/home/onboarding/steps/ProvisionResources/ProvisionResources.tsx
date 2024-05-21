@@ -1,28 +1,28 @@
-import Helper from "components/form-components/Helper";
-import SaveButton from "components/SaveButton";
-import TitleSection from "components/TitleSection";
 import React, { useEffect, useMemo, useState } from "react";
+import backArrow from "legacy/assets/back_arrow.png";
+import Description from "legacy/components/Description";
+import DocsHelper from "legacy/components/DocsHelper";
+import Helper from "legacy/components/form-components/Helper";
+import Loading from "legacy/components/Loading";
+import MultiSaveButton from "legacy/components/MultiSaveButton";
+import Placeholder from "legacy/components/OldPlaceholder";
+import SaveButton from "legacy/components/SaveButton";
+import TitleSection from "legacy/components/TitleSection";
+import { provisionResourcesTracks } from "legacy/shared/anayltics";
+import api from "legacy/shared/api";
+import buildLogger from "legacy/shared/error_handling/logger";
 import { useParams } from "react-router";
 import styled from "styled-components";
+import { useSnapshot } from "valtio";
+
 import ProviderSelector, {
   provisionerOptions,
   provisionerOptionsWithExternal,
 } from "../../components/ProviderSelector";
-
-import FormFlowWrapper from "./forms/FormFlow";
-import ConnectExternalCluster from "./forms/_ConnectExternalCluster";
-import backArrow from "assets/back_arrow.png";
-import { StatusPage } from "./forms/StatusPage";
-import { useSnapshot } from "valtio";
 import { OFState } from "../../state";
-import { provisionResourcesTracks } from "shared/anayltics";
-import DocsHelper from "components/DocsHelper";
-import Description from "components/Description";
-import api from "shared/api";
-import Placeholder from "components/OldPlaceholder";
-import Loading from "components/Loading";
-import MultiSaveButton from "components/MultiSaveButton";
-import buildLogger from "shared/error_handling/logger";
+import ConnectExternalCluster from "./forms/_ConnectExternalCluster";
+import FormFlowWrapper from "./forms/FormFlow";
+import { StatusPage } from "./forms/StatusPage";
 
 const ProvisionResourcesLogger = buildLogger("onboarding.provision_resources");
 

@@ -1,13 +1,13 @@
 import React, { Component } from "react";
+import sliders from "legacy/assets/sliders.svg";
+import upload from "legacy/assets/upload.svg";
+import { MultiLineInput } from "legacy/components/porter-form/field-components/KeyValueArray";
+import { dotenv_parse } from "legacy/shared/string_utils";
 import styled from "styled-components";
-import Modal from "../../main/home/modals/Modal";
-import LoadEnvGroupModal from "../../main/home/modals/LoadEnvGroupModal";
-import EnvEditorModal from "../../main/home/modals/EnvEditorModal";
-import { dotenv_parse } from "shared/string_utils";
 
-import sliders from "assets/sliders.svg";
-import upload from "assets/upload.svg";
-import { MultiLineInput } from "components/porter-form/field-components/KeyValueArray";
+import EnvEditorModal from "../../main/home/modals/EnvEditorModal";
+import LoadEnvGroupModal from "../../main/home/modals/LoadEnvGroupModal";
+import Modal from "../../main/home/modals/Modal";
 
 export type KeyValue = {
   key: string;

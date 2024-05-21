@@ -1,22 +1,21 @@
 import React, { useContext, useEffect, useState } from "react";
-import styled from "styled-components";
+import github from "legacy/assets/github-icon.png";
+import GoogleIcon from "legacy/assets/GoogleIcon";
+import logo from "legacy/assets/logo.png";
+import Heading from "legacy/components/form-components/Heading";
+import Button from "legacy/components/porter/Button";
+import Container from "legacy/components/porter/Container";
+import Input from "legacy/components/porter/Input";
+import Link from "legacy/components/porter/Link";
+import Select from "legacy/components/porter/Select";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import api from "legacy/shared/api";
+import { emailRegex } from "legacy/shared/regex";
 import { useLocation } from "react-router-dom";
+import styled from "styled-components";
 
-import Heading from "components/form-components/Heading";
-import Button from "components/porter/Button";
-import Container from "components/porter/Container";
-import Input from "components/porter/Input";
-import Link from "components/porter/Link";
-import Select from "components/porter/Select";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-
-import api from "shared/api";
 import { Context } from "shared/Context";
-import { emailRegex } from "shared/regex";
-import github from "assets/github-icon.png";
-import GoogleIcon from "assets/GoogleIcon";
-import logo from "assets/logo.png";
 
 import InfoPanel from "./InfoPanel";
 
@@ -75,9 +74,9 @@ const Register: React.FC<Props> = ({ authenticate }) => {
     { value: "Other", label: "Other" },
   ];
 
-  const { search } = useLocation()
-  const searchParams = new URLSearchParams(search)
-  const referralCodeFromUrl = searchParams.get("referral")
+  const { search } = useLocation();
+  const searchParams = new URLSearchParams(search);
+  const referralCodeFromUrl = searchParams.get("referral");
 
   useEffect(() => {
     if (referralCodeFromUrl) {

@@ -1,18 +1,17 @@
 import React, { useContext, useState } from "react";
+import loading from "legacy/assets/loading.gif";
+import Button from "legacy/components/porter/Button";
+import Container from "legacy/components/porter/Container";
+import Error from "legacy/components/porter/Error";
+import Image from "legacy/components/porter/Image";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import api from "legacy/shared/api";
+import { envGroupPath } from "legacy/shared/util";
 import { useHistory } from "react-router";
 import styled from "styled-components";
 
-import Button from "components/porter/Button";
-import Container from "components/porter/Container";
-import Error from "components/porter/Error";
-import Image from "components/porter/Image";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-
-import api from "shared/api";
 import { Context } from "shared/Context";
-import { envGroupPath } from "shared/util";
-import loading from "assets/loading.gif";
 
 type Props = {
   envGroup: {

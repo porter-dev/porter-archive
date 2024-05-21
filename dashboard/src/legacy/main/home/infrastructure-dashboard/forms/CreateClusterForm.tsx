@@ -1,16 +1,16 @@
 import React, { useContext, useState } from "react";
+import infraGrad from "legacy/assets/infra-grad.svg";
+import Loading from "legacy/components/Loading";
+import RequestToEnable from "legacy/components/porter/RequestToEnable";
+import { type ClientCloudProvider } from "legacy/lib/clusters/types";
+import { useClusterList } from "legacy/lib/hooks/useCluster";
+import api from "legacy/shared/api";
 import styled from "styled-components";
 import { match } from "ts-pattern";
 
-import Loading from "components/Loading";
-import RequestToEnable from "components/porter/RequestToEnable";
 import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
-import { type ClientCloudProvider } from "lib/clusters/types";
-import { useClusterList } from "lib/hooks/useCluster";
 
-import api from "shared/api";
 import { Context } from "shared/Context";
-import infraGrad from "assets/infra-grad.svg";
 
 import ClusterFormContextProvider from "../ClusterFormContextProvider";
 import CreateEKSClusterForm from "./aws/CreateEKSClusterForm";

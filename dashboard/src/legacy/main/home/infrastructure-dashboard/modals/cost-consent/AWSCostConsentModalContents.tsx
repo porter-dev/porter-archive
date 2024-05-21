@@ -1,11 +1,10 @@
 import React from "react";
+import ExpandableSection from "legacy/components/porter/ExpandableSection";
+import Fieldset from "legacy/components/porter/Fieldset";
+import Link from "legacy/components/porter/Link";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
 import styled from "styled-components";
-
-import ExpandableSection from "components/porter/ExpandableSection";
-import Fieldset from "components/porter/Fieldset";
-import Link from "components/porter/Link";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
 
 type Props = {
   baseCost: number;

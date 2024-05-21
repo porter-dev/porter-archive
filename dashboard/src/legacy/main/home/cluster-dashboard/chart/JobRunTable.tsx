@@ -1,14 +1,18 @@
-import DynamicLink from "components/DynamicLink";
-import Loading from "components/Loading";
-import Table from "components/OldTable";
 import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
+import DynamicLink from "legacy/components/DynamicLink";
+import Loading from "legacy/components/Loading";
+import Table from "legacy/components/OldTable";
+import api from "legacy/shared/api";
+import {
+  NewWebsocketOptions,
+  useWebsockets,
+} from "legacy/shared/hooks/useWebsockets";
+import { useRouting } from "legacy/shared/routing";
+import { relativeDate, timeFrom } from "legacy/shared/string_utils";
 import { CellProps, Column, Row } from "react-table";
-import api from "shared/api";
-import { Context } from "shared/Context";
-import { NewWebsocketOptions, useWebsockets } from "shared/hooks/useWebsockets";
-import { useRouting } from "shared/routing";
-import { relativeDate, timeFrom } from "shared/string_utils";
 import styled from "styled-components";
+
+import { Context } from "shared/Context";
 
 type Props = {
   lastRunStatus: "failed" | "succeeded" | "active" | "all";

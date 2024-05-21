@@ -1,14 +1,13 @@
 import React, { useContext, useMemo } from "react";
+import info from "legacy/assets/information-circle-contained.svg";
+import Container from "legacy/components/porter/Container";
+import Icon from "legacy/components/porter/Icon";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import { readableDate } from "legacy/shared/string_utils";
 import styled from "styled-components";
 
-import Container from "components/porter/Container";
-import Icon from "components/porter/Icon";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-
 import { Context } from "shared/Context";
-import { readableDate } from "shared/string_utils";
-import info from "assets/information-circle-contained.svg";
 
 import { useClusterContext } from "./ClusterContextProvider";
 import ClusterContractViewModal from "./ClusterContractViewModal";

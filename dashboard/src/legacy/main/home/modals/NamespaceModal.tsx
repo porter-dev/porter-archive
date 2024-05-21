@@ -1,12 +1,11 @@
 import React, { Component } from "react";
+import close from "legacy/assets/close.png";
+import InputRow from "legacy/components/form-components/InputRow";
+import SaveButton from "legacy/components/SaveButton";
+import api from "legacy/shared/api";
 import styled from "styled-components";
-import close from "assets/close.png";
 
-import api from "shared/api";
 import { Context } from "shared/Context";
-
-import SaveButton from "components/SaveButton";
-import InputRow from "components/form-components/InputRow";
 
 type PropsType = {};
 

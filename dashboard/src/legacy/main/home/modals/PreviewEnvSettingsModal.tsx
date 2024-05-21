@@ -1,14 +1,14 @@
 import React, { useContext, useEffect, useState } from "react";
+import github from "legacy/assets/github.png";
+import Heading from "legacy/components/form-components/Heading";
+import Helper from "legacy/components/form-components/Helper";
 import styled from "styled-components";
 
-import github from "assets/github.png";
-
-import api from "../../../shared/api";
 import { Context } from "shared/Context";
-import Loading from "../../../components/Loading";
-import Heading from "components/form-components/Heading";
-import Helper from "components/form-components/Helper";
+
 import ConfirmOverlay from "../../../components/ConfirmOverlay";
+import Loading from "../../../components/Loading";
+import api from "../../../shared/api";
 
 interface Environment {
   id: Number;
@@ -26,9 +26,8 @@ const PreviewEnvSettingsModal = () => {
   const [accessData, setAccessData] = useState<Environment[]>([]);
   const [selectedEnvironment, setSelectedEnvironment] = useState<Environment>();
 
-  const { currentProject, currentCluster, setCurrentError } = useContext(
-    Context
-  );
+  const { currentProject, currentCluster, setCurrentError } =
+    useContext(Context);
 
   useEffect(() => {
     api

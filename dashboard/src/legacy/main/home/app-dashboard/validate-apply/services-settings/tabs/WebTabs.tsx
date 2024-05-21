@@ -1,9 +1,8 @@
 import React from "react";
+import Spacer from "legacy/components/porter/Spacer";
+import TabSelector from "legacy/components/TabSelector";
+import { type ClientService } from "legacy/lib/porter-apps/services";
 import { match } from "ts-pattern";
-
-import Spacer from "components/porter/Spacer";
-import TabSelector from "components/TabSelector";
-import { type ClientService } from "lib/porter-apps/services";
 
 import Advanced from "./Advanced";
 import Health from "./Health";

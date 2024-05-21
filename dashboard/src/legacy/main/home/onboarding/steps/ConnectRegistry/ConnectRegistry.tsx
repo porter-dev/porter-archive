@@ -1,23 +1,22 @@
-import Helper from "components/form-components/Helper";
-import SaveButton from "components/SaveButton";
-import TitleSection from "components/TitleSection";
 import React, { useEffect, useMemo, useState } from "react";
+import backArrow from "legacy/assets/back_arrow.png";
+import DocsHelper from "legacy/components/DocsHelper";
+import Helper from "legacy/components/form-components/Helper";
+import Loading from "legacy/components/Loading";
+import SaveButton from "legacy/components/SaveButton";
+import TitleSection from "legacy/components/TitleSection";
+import { connectRegistryTracks } from "legacy/shared/anayltics";
+import api from "legacy/shared/api";
 import { useParams } from "react-router";
-
 import styled from "styled-components";
+import { useSnapshot } from "valtio";
+
 import ProviderSelector, {
   registryOptions,
 } from "../../components/ProviderSelector";
-import backArrow from "assets/back_arrow.png";
-
-import FormFlowWrapper from "./forms/FormFlow";
 import { OFState } from "../../state";
-import { useSnapshot } from "valtio";
-import api from "shared/api";
-import Loading from "components/Loading";
 import Registry from "./components/Registry";
-import { connectRegistryTracks } from "shared/anayltics";
-import DocsHelper from "components/DocsHelper";
+import FormFlowWrapper from "./forms/FormFlow";
 
 const ConnectRegistry: React.FC<{}> = ({}) => {
   const snap = useSnapshot(OFState);

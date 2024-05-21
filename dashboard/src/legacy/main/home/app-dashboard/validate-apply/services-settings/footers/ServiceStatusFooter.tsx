@@ -1,18 +1,16 @@
 import React, { useState } from "react";
+import alert from "legacy/assets/alert-warning.svg";
+import Button from "legacy/components/porter/Button";
+import Container from "legacy/components/porter/Container";
+import Link from "legacy/components/porter/Link";
+import Tag from "legacy/components/porter/Tag";
+import Text from "legacy/components/porter/Text";
+import { type ClientServiceStatus } from "legacy/lib/hooks/useAppStatus";
+import { isClientServiceNotification } from "legacy/lib/porter-apps/notification";
 import _ from "lodash";
 import AnimateHeight, { type Height } from "react-animate-height";
 import styled from "styled-components";
 import { match } from "ts-pattern";
-
-import Button from "components/porter/Button";
-import Container from "components/porter/Container";
-import Link from "components/porter/Link";
-import Tag from "components/porter/Tag";
-import Text from "components/porter/Text";
-import { type ClientServiceStatus } from "lib/hooks/useAppStatus";
-import { isClientServiceNotification } from "lib/porter-apps/notification";
-
-import alert from "assets/alert-warning.svg";
 
 import { useLatestRevision } from "../../../app-view/LatestRevisionContext";
 

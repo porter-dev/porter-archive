@@ -1,15 +1,13 @@
 import React from "react";
+import copy from "legacy/assets/copy-left.svg";
+import CopyToClipboard from "legacy/components/CopyToClipboard";
+import Link from "legacy/components/porter/Link";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import { type PorterAppFormData } from "legacy/lib/porter-apps";
 import { useFormContext } from "react-hook-form";
 import styled from "styled-components";
 import { match } from "ts-pattern";
-
-import CopyToClipboard from "components/CopyToClipboard";
-import Link from "components/porter/Link";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import { type PorterAppFormData } from "lib/porter-apps";
-
-import copy from "assets/copy-left.svg";
 
 import ImageSettings from "../../image-settings/ImageSettings";
 import { type ButtonStatus } from "../AppDataContainer";

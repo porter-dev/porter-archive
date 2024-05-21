@@ -1,8 +1,10 @@
-import Modal from "main/home/modals/Modal";
 import React, { useContext } from "react";
-import { Context } from "shared/Context";
-import { ChartType } from "shared/types";
+import { ChartType } from "legacy/shared/types";
 import styled from "styled-components";
+
+import Modal from "main/home/modals/Modal";
+
+import { Context } from "shared/Context";
 
 const ConnectToJobInstructionsModal: React.FC<{
   show: boolean;
@@ -16,14 +18,20 @@ const ConnectToJobInstructionsModal: React.FC<{
 
   return (
     <Modal
-      onRequestClose={() => onClose()}
+      onRequestClose={() => {
+        onClose();
+      }}
       width="700px"
       height="300px"
       title="Shell Access Instructions"
     >
       To get shell access to this job run, make sure you have the Porter CLI
       installed (installation instructions&nbsp;
-      <a href={"https://docs.porter.run/cli/installation"} target="_blank">
+      <a
+        href={"https://docs.porter.run/cli/installation"}
+        target="_blank"
+        rel="noreferrer"
+      >
         here
       </a>
       ).

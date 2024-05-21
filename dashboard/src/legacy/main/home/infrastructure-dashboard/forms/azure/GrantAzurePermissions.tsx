@@ -1,20 +1,19 @@
 import React, { useMemo, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
+import Button from "legacy/components/porter/Button";
+import Container from "legacy/components/porter/Container";
+import { ControlledInput } from "legacy/components/porter/ControlledInput";
+import { Error as ErrorComponent } from "legacy/components/porter/Error";
+import Link from "legacy/components/porter/Link";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import VerticalSteps from "legacy/components/porter/VerticalSteps";
+import { CloudProviderAzure } from "legacy/lib/clusters/constants";
+import { connectToAzureAccount } from "legacy/lib/hooks/useCloudProvider";
+import { useIntercom } from "legacy/lib/hooks/useIntercom";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-
-import Button from "components/porter/Button";
-import Container from "components/porter/Container";
-import { ControlledInput } from "components/porter/ControlledInput";
-import { Error as ErrorComponent } from "components/porter/Error";
-import Link from "components/porter/Link";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import VerticalSteps from "components/porter/VerticalSteps";
-import { CloudProviderAzure } from "lib/clusters/constants";
-import { connectToAzureAccount } from "lib/hooks/useCloudProvider";
-import { useIntercom } from "lib/hooks/useIntercom";
 
 import { BackButton, Img } from "../CreateClusterForm";
 

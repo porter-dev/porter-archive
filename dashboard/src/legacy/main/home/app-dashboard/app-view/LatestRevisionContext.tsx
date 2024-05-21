@@ -8,33 +8,35 @@ import React, {
 } from "react";
 import { PorterApp } from "@porter-dev/api-contracts";
 import { useQuery } from "@tanstack/react-query";
-import styled from "styled-components";
-import { z } from "zod";
-
-import Loading from "components/Loading";
-import Container from "components/porter/Container";
-import Link from "components/porter/Link";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import { type DeploymentTarget } from "lib/hooks/useDeploymentTarget";
-import { usePorterYaml } from "lib/hooks/usePorterYaml";
-import { clientAppFromProto, type SourceOptions } from "lib/porter-apps";
+import notFound from "legacy/assets/not-found.png";
+import Loading from "legacy/components/Loading";
+import Container from "legacy/components/porter/Container";
+import Link from "legacy/components/porter/Link";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import { type DeploymentTarget } from "legacy/lib/hooks/useDeploymentTarget";
+import { usePorterYaml } from "legacy/lib/hooks/usePorterYaml";
+import { clientAppFromProto, type SourceOptions } from "legacy/lib/porter-apps";
 import {
   deserializeNotifications,
   type ClientNotification,
-} from "lib/porter-apps/notification";
-import { formattedPath } from "lib/porter-apps/routing";
+} from "legacy/lib/porter-apps/notification";
+import { formattedPath } from "legacy/lib/porter-apps/routing";
 import {
   type ClientService,
   type DetectedServices,
-} from "lib/porter-apps/services";
-import { appRevisionValidator, type AppRevision } from "lib/revisions/types";
+} from "legacy/lib/porter-apps/services";
+import {
+  appRevisionValidator,
+  type AppRevision,
+} from "legacy/lib/revisions/types";
+import api from "legacy/shared/api";
+import { valueExists } from "legacy/shared/util";
+import styled from "styled-components";
+import { z } from "zod";
 
-import api from "shared/api";
 import { Context } from "shared/Context";
 import { useDeploymentTarget } from "shared/DeploymentTargetContext";
-import { valueExists } from "shared/util";
-import notFound from "assets/not-found.png";
 
 import {
   populatedEnvGroup,

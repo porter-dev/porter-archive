@@ -1,16 +1,15 @@
 import { useCallback, useContext } from "react";
 import { type PorterApp } from "@porter-dev/api-contracts";
-import { match } from "ts-pattern";
-import { z } from "zod";
-
 import {
   clientAppToProto,
   type ClientPorterApp,
   type PorterAppFormData,
   type SourceOptions,
-} from "lib/porter-apps";
+} from "legacy/lib/porter-apps";
+import api from "legacy/shared/api";
+import { match } from "ts-pattern";
+import { z } from "zod";
 
-import api from "shared/api";
 import { Context } from "shared/Context";
 
 export type AppValidationResult = {

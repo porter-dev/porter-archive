@@ -1,12 +1,13 @@
-import DynamicLink from "components/DynamicLink";
 import React, { useState } from "react";
-import styled from "styled-components";
+import PullRequestIcon from "legacy/assets/pull_request_icon.svg";
+import DynamicLink from "legacy/components/DynamicLink";
+import TabSelector from "legacy/components/TabSelector";
 import { useParams } from "react-router";
+import styled from "styled-components";
+
 import DashboardHeader from "../../DashboardHeader";
-import PullRequestIcon from "assets/pull_request_icon.svg";
-import CreatePREnvironment from "./CreatePREnvironment";
-import TabSelector from "components/TabSelector";
 import CreateBranchEnvironment from "./CreateBranchEnvironment";
+import CreatePREnvironment from "./CreatePREnvironment";
 
 const TAB_OPTIONS = [
   { label: "Pull Requests", value: "pull_requests" },
@@ -14,7 +15,7 @@ const TAB_OPTIONS = [
 ];
 
 const CreateEnvironment: React.FC = () => {
-  const [currentTab, setCurrentTab] = useState<typeof TAB_OPTIONS[0]>(
+  const [currentTab, setCurrentTab] = useState<(typeof TAB_OPTIONS)[0]>(
     TAB_OPTIONS[0]
   );
   const { environment_id, repo_name, repo_owner } = useParams<{

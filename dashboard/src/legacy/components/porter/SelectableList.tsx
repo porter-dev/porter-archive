@@ -1,7 +1,6 @@
 import React from "react";
+import Icon from "legacy/components/porter/Icon";
 import styled, { css } from "styled-components";
-
-import Icon from "components/porter/Icon";
 
 import Checkbox from "./Checkbox";
 

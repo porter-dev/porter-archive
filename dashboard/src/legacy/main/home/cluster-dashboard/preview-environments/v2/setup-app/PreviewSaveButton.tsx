@@ -1,6 +1,6 @@
 import React from "react";
+import Button from "legacy/components/porter/Button";
 
-import Button from "components/porter/Button";
 import { type ButtonStatus } from "main/home/app-dashboard/app-view/AppDataContainer";
 
 type Props = {

@@ -1,15 +1,13 @@
 import React, { useState } from "react";
+import copy from "legacy/assets/copy-left.svg";
+import CopyToClipboard from "legacy/components/CopyToClipboard";
+import Banner from "legacy/components/porter/Banner";
+import Container from "legacy/components/porter/Container";
+import Link from "legacy/components/porter/Link";
+import ShowIntercomButton from "legacy/components/porter/ShowIntercomButton";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
 import styled from "styled-components";
-
-import CopyToClipboard from "components/CopyToClipboard";
-import Banner from "components/porter/Banner";
-import Container from "components/porter/Container";
-import Link from "components/porter/Link";
-import ShowIntercomButton from "components/porter/ShowIntercomButton";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-
-import copy from "assets/copy-left.svg";
 
 import { useDatastoreContext } from "../DatabaseContextProvider";
 import ConnectAppsModal from "../shared/ConnectAppsModal";

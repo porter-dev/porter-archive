@@ -1,8 +1,7 @@
 import React from "react";
+import { type ClientClusterContract } from "legacy/lib/clusters/types";
 import { useFormContext } from "react-hook-form";
 import { match } from "ts-pattern";
-
-import { type ClientClusterContract } from "lib/clusters/types";
 
 import EKSClusterAdvancedSettings from "./EKSClusterAdvancedSettings";
 

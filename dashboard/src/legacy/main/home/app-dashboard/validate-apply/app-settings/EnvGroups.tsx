@@ -1,17 +1,16 @@
 import React, { useContext, useMemo, useState } from "react";
+import Button from "legacy/components/porter/Button";
+import Icon from "legacy/components/porter/Icon";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import { type PorterAppFormData } from "legacy/lib/porter-apps";
+import { valueExists } from "legacy/shared/util";
 import { useFieldArray, useFormContext } from "react-hook-form";
 import { useHistory } from "react-router";
 import styled from "styled-components";
 import { type IterableElement } from "type-fest";
 
-import Button from "components/porter/Button";
-import Icon from "components/porter/Icon";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import { type PorterAppFormData } from "lib/porter-apps";
-
 import { Context } from "shared/Context";
-import { valueExists } from "shared/util";
 
 import EnvGroupModal from "./EnvGroupModal";
 import EnvGroupRow from "./EnvGroupRow";

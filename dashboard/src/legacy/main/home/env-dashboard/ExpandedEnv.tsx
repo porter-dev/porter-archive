@@ -1,28 +1,27 @@
 import React, { useContext, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import database from "legacy/assets/database.svg";
+import doppler from "legacy/assets/doppler.png";
+import infisical from "legacy/assets/infisical.svg";
+import key from "legacy/assets/key.svg";
+import notFound from "legacy/assets/not-found.png";
+import time from "legacy/assets/time.png";
+import Loading from "legacy/components/Loading";
+import Back from "legacy/components/porter/Back";
+import Container from "legacy/components/porter/Container";
+import Image from "legacy/components/porter/Image";
+import Link from "legacy/components/porter/Link";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import TabSelector from "legacy/components/TabSelector";
+import { envGroupValidator } from "legacy/lib/env-groups/types";
+import api from "legacy/shared/api";
 import { useHistory, useParams } from "react-router";
 import styled from "styled-components";
 import { match } from "ts-pattern";
 import { z } from "zod";
 
-import Loading from "components/Loading";
-import Back from "components/porter/Back";
-import Container from "components/porter/Container";
-import Image from "components/porter/Image";
-import Link from "components/porter/Link";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import TabSelector from "components/TabSelector";
-import { envGroupValidator } from "lib/env-groups/types";
-
-import api from "shared/api";
 import { Context } from "shared/Context";
-import database from "assets/database.svg";
-import doppler from "assets/doppler.png";
-import infisical from "assets/infisical.svg";
-import key from "assets/key.svg";
-import notFound from "assets/not-found.png";
-import time from "assets/time.png";
 
 import { envGroupPath } from "../../../shared/util";
 import EnvVarsTab from "./tabs/EnvVarsTab";

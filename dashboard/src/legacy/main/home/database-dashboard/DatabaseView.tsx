@@ -1,10 +1,9 @@
 import React, { useMemo } from "react";
+import Back from "legacy/components/porter/Back";
+import Spacer from "legacy/components/porter/Spacer";
 import { withRouter, type RouteComponentProps } from "react-router";
 import styled from "styled-components";
 import { z } from "zod";
-
-import Back from "components/porter/Back";
-import Spacer from "components/porter/Spacer";
 
 import { DatastoreContextProvider } from "./DatabaseContextProvider";
 import DatabaseHeader from "./DatabaseHeader";

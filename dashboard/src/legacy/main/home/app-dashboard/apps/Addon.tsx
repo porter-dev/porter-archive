@@ -1,18 +1,17 @@
 import React, { useMemo } from "react";
+import copy from "legacy/assets/copy-left.svg";
+import postgresql from "legacy/assets/postgresql.svg";
+import redis from "legacy/assets/redis.svg";
+import CopyToClipboard from "legacy/components/CopyToClipboard";
+import Container from "legacy/components/porter/Container";
+import Icon from "legacy/components/porter/Icon";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import { type ClientAddon } from "legacy/lib/addons";
 import styled from "styled-components";
 import { match } from "ts-pattern";
 
-import CopyToClipboard from "components/CopyToClipboard";
-import Container from "components/porter/Container";
-import Icon from "components/porter/Icon";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import { type ClientAddon } from "lib/addons";
-
 import { useDeploymentTarget } from "shared/DeploymentTargetContext";
-import copy from "assets/copy-left.svg";
-import postgresql from "assets/postgresql.svg";
-import redis from "assets/redis.svg";
 
 import { Block, Row } from "./AppGrid";
 

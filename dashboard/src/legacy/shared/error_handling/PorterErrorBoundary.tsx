@@ -1,9 +1,10 @@
-import UnexpectedErrorPage from "components/UnexpectedErrorPage";
 import React from "react";
-import { ErrorBoundary } from "react-error-boundary";
 import * as Sentry from "@sentry/react";
-import StackTrace from "stacktrace-js";
 import { Context, Primitive } from "@sentry/types";
+import UnexpectedErrorPage from "legacy/components/UnexpectedErrorPage";
+import { ErrorBoundary } from "react-error-boundary";
+import StackTrace from "stacktrace-js";
+
 import { stackFramesToString } from "./stack_trace_utils";
 
 export type PorterErrorBoundaryProps<OnResetProps = {}> = {

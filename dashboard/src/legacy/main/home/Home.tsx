@@ -1,6 +1,29 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
+import ConfirmOverlay from "legacy/components/ConfirmOverlay";
+import Loading from "legacy/components/Loading";
+import NoClusterPlaceHolder from "legacy/components/NoClusterPlaceHolder";
+import Button from "legacy/components/porter/Button";
+import Link from "legacy/components/porter/Link";
+import Modal from "legacy/components/porter/Modal";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import { useCustomerPlan } from "legacy/lib/hooks/useLago";
+import { checkIfProjectHasPayment } from "legacy/lib/hooks/useStripe";
+import api from "legacy/shared/api";
+import {
+  pushFiltered,
+  pushQueryParams,
+  type PorterUrl,
+} from "legacy/shared/routing";
+import midnight from "legacy/shared/themes/midnight";
+import standard from "legacy/shared/themes/standard";
+import {
+  type ClusterType,
+  type ProjectListType,
+  type ProjectType,
+} from "legacy/shared/types";
 import { createPortal } from "react-dom";
 import {
   Route,
@@ -11,31 +34,11 @@ import {
 import { Redirect } from "react-router-dom";
 import styled, { ThemeProvider } from "styled-components";
 
-import ConfirmOverlay from "components/ConfirmOverlay";
-import Loading from "components/Loading";
-import NoClusterPlaceHolder from "components/NoClusterPlaceHolder";
-import Button from "components/porter/Button";
-import Link from "components/porter/Link";
-import Modal from "components/porter/Modal";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import { useCustomerPlan } from "lib/hooks/useLago";
-import { checkIfProjectHasPayment } from "lib/hooks/useStripe";
-
-import api from "shared/api";
 import { useAuthn } from "shared/auth/AuthnContext";
 import { withAuth, type WithAuthProps } from "shared/auth/AuthorizationHoc";
 import { fakeGuardedRoute } from "shared/auth/RouteGuard";
 import { Context } from "shared/Context";
 import DeploymentTargetProvider from "shared/DeploymentTargetContext";
-import { pushFiltered, pushQueryParams, type PorterUrl } from "shared/routing";
-import midnight from "shared/themes/midnight";
-import standard from "shared/themes/standard";
-import {
-  type ClusterType,
-  type ProjectListType,
-  type ProjectType,
-} from "shared/types";
 
 import OryLogin from "../auth/OryLogin";
 import AddonDashboard from "./add-on-dashboard/AddOnDashboard";

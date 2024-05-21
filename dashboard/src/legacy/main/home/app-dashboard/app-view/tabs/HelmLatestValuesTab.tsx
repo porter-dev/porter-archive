@@ -1,7 +1,6 @@
 import React, { useContext } from "react";
-
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
 
 import { Context } from "shared/Context";
 

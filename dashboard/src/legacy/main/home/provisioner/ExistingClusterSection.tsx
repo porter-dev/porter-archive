@@ -1,14 +1,13 @@
 import React, { Component } from "react";
+import SaveButton from "legacy/components/SaveButton";
+import api from "legacy/shared/api";
+import { isAlphanumeric } from "legacy/shared/common";
+import { pushFiltered } from "legacy/shared/routing";
+import { ProjectType } from "legacy/shared/types";
+import { withRouter, type RouteComponentProps } from "react-router";
 import styled from "styled-components";
 
-import api from "shared/api";
-import { ProjectType } from "shared/types";
-import { isAlphanumeric } from "shared/common";
 import { Context } from "shared/Context";
-import { pushFiltered } from "shared/routing";
-
-import SaveButton from "components/SaveButton";
-import { RouteComponentProps, withRouter } from "react-router";
 
 type PropsType = RouteComponentProps & {
   projectName: string;
@@ -35,15 +34,15 @@ class ExistingClusterSection extends Component<PropsType, StateType> {
   };
 
   render() {
-    let { children, projectName } = this.props;
-    let { buttonStatus } = this.state;
+    const { children, projectName } = this.props;
+    const { buttonStatus } = this.state;
     return (
       <StyledExistingClusterSection>
         <Placeholder>
           You can manually link to an existing cluster once this project has
           been created.
         </Placeholder>
-        {children ? children : <Padding />}
+        {children || <Padding />}
         <SaveButton
           text="Submit"
           disabled={!isAlphanumeric(projectName)}

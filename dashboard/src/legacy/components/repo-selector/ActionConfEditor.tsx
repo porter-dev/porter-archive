@@ -1,12 +1,11 @@
 import React from "react";
+import { ActionConfigType } from "legacy/shared/types";
 import styled from "styled-components";
 
-import { ActionConfigType } from "shared/types";
-
-import RepoList from "./RepoList";
+import ActionDetails from "./ActionDetails";
 import BranchList from "./BranchList";
 import ContentsList from "./ContentsList";
-import ActionDetails from "./ActionDetails";
+import RepoList from "./RepoList";
 
 type Props = {
   actionConfig: ActionConfigType | null;

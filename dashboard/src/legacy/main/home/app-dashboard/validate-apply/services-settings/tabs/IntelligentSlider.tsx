@@ -2,9 +2,8 @@ import React, { useMemo, useState } from "react";
 import Slider, { type Mark } from "@material-ui/core/Slider";
 import { withStyles } from "@material-ui/core/styles";
 import Tooltip from "@material-ui/core/Tooltip";
+import Spacer from "legacy/components/porter/Spacer";
 import styled from "styled-components";
-
-import Spacer from "components/porter/Spacer";
 
 const SMART_LIMIT_FRACTION = 0.5;
 

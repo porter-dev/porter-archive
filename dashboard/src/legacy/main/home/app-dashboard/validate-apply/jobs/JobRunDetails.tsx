@@ -1,25 +1,24 @@
 import React, { useCallback, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
+import cancel from "legacy/assets/cancel.svg";
+import loading from "legacy/assets/loading.gif";
+import Button from "legacy/components/porter/Button";
+import Container from "legacy/components/porter/Container";
+import Error from "legacy/components/porter/Error";
+import Icon from "legacy/components/porter/Icon";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import { getErrorMessageFromNetworkCall } from "legacy/lib/hooks/useCluster";
+import { type JobRun } from "legacy/lib/hooks/useJobs";
+import api from "legacy/shared/api";
+import { readableDate } from "legacy/shared/string_utils";
 import { Link, useHistory } from "react-router-dom";
 import styled from "styled-components";
 import { match } from "ts-pattern";
 
-import Button from "components/porter/Button";
-import Container from "components/porter/Container";
-import Error from "components/porter/Error";
-import Icon from "components/porter/Icon";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
 import { useLatestRevision } from "main/home/app-dashboard/app-view/LatestRevisionContext";
 import Logs from "main/home/app-dashboard/validate-apply/logs/Logs";
-import { getErrorMessageFromNetworkCall } from "lib/hooks/useCluster";
-import { type JobRun } from "lib/hooks/useJobs";
-
-import api from "shared/api";
-import { readableDate } from "shared/string_utils";
-import cancel from "assets/cancel.svg";
-import loading from "assets/loading.gif";
 
 import { AppearingView } from "../../app-view/tabs/activity-feed/events/focus-views/EventFocusView";
 import { getStatusColor } from "../../app-view/tabs/activity-feed/events/utils";

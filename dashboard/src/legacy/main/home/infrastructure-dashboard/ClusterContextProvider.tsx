@@ -1,27 +1,26 @@
 import React, { createContext, useCallback, useContext, useMemo } from "react";
 import { Contract } from "@porter-dev/api-contracts";
 import { useQueryClient } from "@tanstack/react-query";
-import styled from "styled-components";
-import { z } from "zod";
-
-import Loading from "components/Loading";
-import Container from "components/porter/Container";
-import Link from "components/porter/Link";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import { updateExistingClusterContract } from "lib/clusters";
+import notFound from "legacy/assets/not-found.png";
+import Loading from "legacy/components/Loading";
+import Container from "legacy/components/porter/Container";
+import Link from "legacy/components/porter/Link";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import { updateExistingClusterContract } from "legacy/lib/clusters";
 import {
   clusterValidator,
   type ClientCluster,
   type ClientClusterContract,
   type ClientNode,
-} from "lib/clusters/types";
-import { useCluster, useClusterNodeList } from "lib/hooks/useCluster";
-import { useClusterAnalytics } from "lib/hooks/useClusterAnalytics";
+} from "legacy/lib/clusters/types";
+import { useCluster, useClusterNodeList } from "legacy/lib/hooks/useCluster";
+import { useClusterAnalytics } from "legacy/lib/hooks/useClusterAnalytics";
+import api from "legacy/shared/api";
+import styled from "styled-components";
+import { z } from "zod";
 
-import api from "shared/api";
 import { Context } from "shared/Context";
-import notFound from "assets/not-found.png";
 
 type ClusterContextType = {
   cluster: ClientCluster;

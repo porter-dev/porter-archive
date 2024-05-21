@@ -1,24 +1,26 @@
 import React, { useEffect, useMemo, useState } from "react";
+import database from "legacy/assets/database.svg";
+import Back from "legacy/components/porter/Back";
+import BlockSelect, {
+  type BlockSelectOption,
+} from "legacy/components/porter/BlockSelect";
+import Button from "legacy/components/porter/Button";
+import { ControlledInput } from "legacy/components/porter/ControlledInput";
+import Selector from "legacy/components/porter/Selector";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import VerticalSteps from "legacy/components/porter/VerticalSteps";
+import {
+  type DatastoreTemplate,
+  type DbFormData,
+} from "legacy/lib/databases/types";
+import { useClusterList } from "legacy/lib/hooks/useCluster";
+import { valueExists } from "legacy/shared/util";
 import { Controller, useFormContext } from "react-hook-form";
 import styled from "styled-components";
 import { match } from "ts-pattern";
 
-import Back from "components/porter/Back";
-import BlockSelect, {
-  type BlockSelectOption,
-} from "components/porter/BlockSelect";
-import Button from "components/porter/Button";
-import { ControlledInput } from "components/porter/ControlledInput";
-import Selector from "components/porter/Selector";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import VerticalSteps from "components/porter/VerticalSteps";
 import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
-import { type DatastoreTemplate, type DbFormData } from "lib/databases/types";
-import { useClusterList } from "lib/hooks/useCluster";
-
-import { valueExists } from "shared/util";
-import database from "assets/database.svg";
 
 import {
   DATASTORE_ENGINE_POSTGRES,

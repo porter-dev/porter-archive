@@ -1,11 +1,10 @@
 import React from "react";
+import Container from "legacy/components/porter/Container";
+import Icon from "legacy/components/porter/Icon";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import Tooltip from "legacy/components/porter/Tooltip";
 import styled from "styled-components";
-
-import Container from "components/porter/Container";
-import Icon from "components/porter/Icon";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import Tooltip from "components/porter/Tooltip";
 
 export type BlockSelectOption = {
   name: string;

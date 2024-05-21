@@ -1,26 +1,24 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { match } from "ts-pattern";
-import { z } from "zod";
-
-import Loading from "components/Loading";
+import Loading from "legacy/components/Loading";
 import {
   StyledTable,
   StyledTd,
   StyledTh,
   StyledTHead,
   StyledTr,
-} from "components/OldTable";
-import ClickToCopy from "components/porter/ClickToCopy";
-import { Error as ErrorComponent } from "components/porter/Error";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
+} from "legacy/components/OldTable";
+import ClickToCopy from "legacy/components/porter/ClickToCopy";
+import { Error as ErrorComponent } from "legacy/components/porter/Error";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
 import {
   tailscaleServiceValidator,
   type ClientTailscaleService,
-} from "lib/addons";
-
-import api from "shared/api";
+} from "legacy/lib/addons";
+import api from "legacy/shared/api";
+import { match } from "ts-pattern";
+import { z } from "zod";
 
 import { useAddonContext } from "../AddonContextProvider";
 

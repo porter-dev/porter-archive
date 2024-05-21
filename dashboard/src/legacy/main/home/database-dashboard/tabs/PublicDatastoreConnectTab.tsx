@@ -1,11 +1,10 @@
 import React from "react";
+import Banner from "legacy/components/porter/Banner";
+import Container from "legacy/components/porter/Container";
+import ShowIntercomButton from "legacy/components/porter/ShowIntercomButton";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
 import styled from "styled-components";
-
-import Banner from "components/porter/Banner";
-import Container from "components/porter/Container";
-import ShowIntercomButton from "components/porter/ShowIntercomButton";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
 
 import { useDatastoreContext } from "../DatabaseContextProvider";
 import ConnectionInfo from "../shared/ConnectionInfo";

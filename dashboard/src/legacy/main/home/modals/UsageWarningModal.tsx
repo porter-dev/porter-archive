@@ -1,11 +1,10 @@
 import React, { useContext, useEffect, useState } from "react";
+import Banner from "legacy/components/porter/Banner";
+import { Usage, UsageData } from "legacy/shared/types";
+import { Link } from "react-router-dom";
 import styled from "styled-components";
 
-import Banner from "components/porter/Banner";
-
 import { Context } from "shared/Context";
-import { Usage, UsageData } from "shared/types";
-import { Link } from "react-router-dom";
 
 type UsageKeys = keyof Usage;
 

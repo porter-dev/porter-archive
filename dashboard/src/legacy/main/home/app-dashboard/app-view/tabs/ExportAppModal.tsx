@@ -1,15 +1,13 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
+import CopyToClipboard from "legacy/components/CopyToClipboard";
+import Loading from "legacy/components/Loading";
+import Modal from "legacy/components/porter/Modal";
+import Spacer from "legacy/components/porter/Spacer";
+import YamlEditor from "legacy/components/YamlEditor";
+import api from "legacy/shared/api";
 import styled from "styled-components";
 import { z } from "zod";
-
-import CopyToClipboard from "components/CopyToClipboard";
-import Loading from "components/Loading";
-import Modal from "components/porter/Modal";
-import Spacer from "components/porter/Spacer";
-import YamlEditor from "components/YamlEditor";
-
-import api from "shared/api";
 
 import { useLatestRevision } from "../LatestRevisionContext";
 

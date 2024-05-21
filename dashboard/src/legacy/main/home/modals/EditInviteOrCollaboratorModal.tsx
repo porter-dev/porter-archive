@@ -1,11 +1,12 @@
-import React, { useContext, useEffect, useState } from "react";
-import styled from "styled-components";
-import close from "assets/close.png";
-import SaveButton from "components/SaveButton";
-import { Context } from "shared/Context";
-import RadioSelector from "components/RadioSelector";
-import api from "shared/api";
 import { setTimeout } from "timers";
+import React, { useContext, useEffect, useState } from "react";
+import close from "legacy/assets/close.png";
+import RadioSelector from "legacy/components/RadioSelector";
+import SaveButton from "legacy/components/SaveButton";
+import api from "legacy/shared/api";
+import styled from "styled-components";
+
+import { Context } from "shared/Context";
 
 const EditCollaboratorModal = () => {
   const {

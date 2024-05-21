@@ -1,12 +1,11 @@
 import React, { useContext, useEffect, useState } from "react";
+import branch_icon from "legacy/assets/branch.png";
+import Loading from "legacy/components/Loading";
+import SearchBar from "legacy/components/SearchBar";
+import api from "legacy/shared/api";
 import styled from "styled-components";
-import branch_icon from "assets/branch.png";
 
-import Loading from "components/Loading";
-import SearchBar from "components/SearchBar";
 import { Context } from "shared/Context";
-import api from "shared/api";
-
 
 type Props = {
   setBranch: (x: string) => void;
@@ -58,7 +57,6 @@ const BranchSelector: React.FC<Props> = ({
         setLoading(false);
         setError(true);
       });
-
   }, [searchFilter]);
 
   const renderBranchList = () => {
@@ -72,21 +70,21 @@ const BranchSelector: React.FC<Props> = ({
       return <LoadingWrapper>Error loading branches</LoadingWrapper>;
     }
 
-    let results =
+    const results =
       searchFilter != null
         ? branches
-          .filter((branch) => {
-            return branch.toLowerCase().includes(searchFilter.toLowerCase());
-          })
-          .sort((a: string, b: string) => {
-            const aIndex = a
-              .toLowerCase()
-              .indexOf(searchFilter.toLowerCase());
-            const bIndex = b
-              .toLowerCase()
-              .indexOf(searchFilter.toLowerCase());
-            return aIndex - bIndex;
-          })
+            .filter((branch) => {
+              return branch.toLowerCase().includes(searchFilter.toLowerCase());
+            })
+            .sort((a: string, b: string) => {
+              const aIndex = a
+                .toLowerCase()
+                .indexOf(searchFilter.toLowerCase());
+              const bIndex = b
+                .toLowerCase()
+                .indexOf(searchFilter.toLowerCase());
+              return aIndex - bIndex;
+            })
         : sortBranches(branches).slice(0, 10);
 
     if (results.length == 0) {
@@ -97,7 +95,9 @@ const BranchSelector: React.FC<Props> = ({
         <BranchName
           key={i}
           lastItem={i === branches.length - 1}
-          onClick={() => setBranch(branch)}
+          onClick={() => {
+            setBranch(branch);
+          }}
         >
           <img src={branch_icon} alt={"branch icon"} />
           {branch}

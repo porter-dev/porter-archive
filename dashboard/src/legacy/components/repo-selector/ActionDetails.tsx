@@ -1,13 +1,14 @@
 import React, { useContext, useEffect, useState } from "react";
+import Heading from "legacy/components/form-components/Heading";
+import Loading from "legacy/components/Loading";
+import api from "legacy/shared/api";
+import { integrationList } from "legacy/shared/common";
 import styled, { keyframes } from "styled-components";
 
-import { integrationList } from "shared/common";
 import { Context } from "shared/Context";
-import api from "shared/api";
-import Loading from "components/Loading";
+
 import { ActionConfigType } from "../../shared/types";
 import InputRow from "../form-components/InputRow";
-import Heading from "components/form-components/Heading";
 import { BuildpackSelection } from "./BuildpackSelection";
 
 type PropsType = {

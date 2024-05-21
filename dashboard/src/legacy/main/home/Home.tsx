@@ -23,6 +23,7 @@ import { useCustomerPlan } from "lib/hooks/useLago";
 import { checkIfProjectHasPayment } from "lib/hooks/useStripe";
 
 import api from "shared/api";
+import { useAuthn } from "shared/auth/AuthnContext";
 import { withAuth, type WithAuthProps } from "shared/auth/AuthorizationHoc";
 import { fakeGuardedRoute } from "shared/auth/RouteGuard";
 import { Context } from "shared/Context";
@@ -36,7 +37,6 @@ import {
   type ProjectType,
 } from "shared/types";
 
-import { useAuthn } from "../../shared/auth/AuthnContext";
 import OryLogin from "../auth/OryLogin";
 import AddonDashboard from "./add-on-dashboard/AddOnDashboard";
 import AddonTemplates from "./add-on-dashboard/AddonTemplates";

@@ -20,7 +20,7 @@ const Navbar: React.FC<PropsType> = ({ logOut }) => {
   const { capabilities, user, setCurrentModal } = useContext(Context);
   const [showDropdown, setShowDropdown] = useState(false);
 
-  const { session } = useAuthn();
+  // const { session } = useAuthn();
 
   const renderSettingsDropdown = (): JSX.Element | null => {
     if (!showDropdown) {

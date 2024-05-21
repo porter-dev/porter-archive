@@ -8,7 +8,6 @@ import Spacer from "components/porter/Spacer";
 import { withAuth, type WithAuthProps } from "shared/auth/AuthorizationHoc";
 import { Context } from "shared/Context";
 import { pushFiltered, pushQueryParams, type PorterUrl } from "shared/routing";
-import { JobStatusType } from "shared/types";
 import web from "assets/web.png";
 
 import ChartList from "../chart/ChartList";

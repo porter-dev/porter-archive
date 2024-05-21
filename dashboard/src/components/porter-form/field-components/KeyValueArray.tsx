@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from "react";
-import _, { differenceBy, isObject, omit } from "lodash";
+import { differenceBy, isObject, omit } from "lodash";
 import styled, { keyframes } from "styled-components";
 
 import Heading from "components/form-components/Heading";

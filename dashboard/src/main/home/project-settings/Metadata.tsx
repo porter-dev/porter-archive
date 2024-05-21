@@ -2,22 +2,16 @@ import React, { useContext, useEffect, useState } from "react";
 import styled from "styled-components";
 
 import CopyToClipboard from "components/CopyToClipboard";
-import Heading from "components/form-components/Heading";
-import Helper from "components/form-components/Helper";
 import Icon from "components/porter/Icon";
-import Link from "components/porter/Link";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
-import TabSelector from "components/TabSelector";
 
 import { type ClusterType } from "shared/types";
 import copy from "assets/copy-left.svg";
 import gear from "assets/gear.svg";
-import github from "assets/github.png";
 import globe from "assets/globe.svg";
 import infra from "assets/infra.png";
 
-import Loading from "../../../components/Loading";
 import api from "../../../shared/api";
 import { Context } from "../../../shared/Context";
 

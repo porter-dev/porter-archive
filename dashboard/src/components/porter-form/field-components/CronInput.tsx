@@ -3,7 +3,6 @@ import { isValidCron } from "cron-validator";
 import CronParser from "cronstrue";
 import styled from "styled-components";
 
-import DocsHelper from "components/DocsHelper";
 import DynamicLink from "components/DynamicLink";
 import InputRow from "components/form-components/InputRow";
 

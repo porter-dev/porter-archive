@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import ParentSize from "@visx/responsive/lib/components/ParentSize";
 import styled from "styled-components";
 

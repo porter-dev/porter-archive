@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useRef, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import styled, { keyframes } from "styled-components";
 
 import api from "shared/api";

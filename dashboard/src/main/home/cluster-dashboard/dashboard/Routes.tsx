@@ -1,5 +1,5 @@
 import React, { useContext } from "react";
-import { Redirect, Route, Switch, useRouteMatch } from "react-router";
+import { Route, Switch, useRouteMatch } from "react-router";
 
 import { Context } from "shared/Context";
 

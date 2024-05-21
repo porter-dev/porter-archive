@@ -1,4 +1,4 @@
-import React, { Component, useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useParams, withRouter, type RouteComponentProps } from "react-router";
 import styled from "styled-components";
@@ -9,9 +9,8 @@ import Placeholder from "components/Placeholder";
 import api from "shared/api";
 import { withAuth, type WithAuthProps } from "shared/auth/AuthorizationHoc";
 import { Context } from "shared/Context";
-import { getQueryParam, pushQueryParams } from "shared/routing";
+import { getQueryParam } from "shared/routing";
 import { type ClusterType } from "shared/types";
-import sliders from "assets/sliders.svg";
 
 import ExpandedEnvGroup from "./ExpandedEnvGroup";
 

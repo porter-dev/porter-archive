@@ -3,17 +3,13 @@ import _ from "lodash";
 import { useHistory } from "react-router";
 import styled from "styled-components";
 
-import Clickable from "components/porter/Clickable";
-import Container from "components/porter/Container";
 import Fieldset from "components/porter/Fieldset";
-import Image from "components/porter/Image";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import SelectableAppList from "main/home/app-dashboard/apps/SelectableAppList";
 import { useLatestAppRevisions } from "lib/hooks/useLatestAppRevisions";
 
 import { Context } from "shared/Context";
-import box from "assets/box.png";
 
 type Props = {
   envGroup: {

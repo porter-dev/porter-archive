@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import styled from "styled-components";
 
 import DocsHelper from "components/DocsHelper";
@@ -9,10 +8,8 @@ import TitleSection from "components/TitleSection";
 
 import { connectSourceTracks } from "shared/anayltics";
 import api from "shared/api";
-import { useRouting } from "shared/routing";
 import github from "assets/github.png";
 
-import { OFState } from "../state";
 
 type GithubAppAccessData = {
   username?: string;

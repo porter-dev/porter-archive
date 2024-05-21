@@ -4,7 +4,6 @@ import styled from "styled-components";
 import TabSelector from "components/TabSelector";
 
 import { Context } from "shared/Context";
-import close from "assets/close.png";
 
 type PropsType = {};
 

@@ -1,6 +1,5 @@
-import { merge, unionBy } from "lodash";
+import { unionBy } from "lodash";
 
-import { KeyValueType } from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
 
 import { type GenericInputField } from "./types";
 

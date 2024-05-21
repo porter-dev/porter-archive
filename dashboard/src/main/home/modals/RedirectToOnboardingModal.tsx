@@ -1,14 +1,11 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext } from "react";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
 
-import Heading from "components/form-components/Heading";
 import Helper from "components/form-components/Helper";
 
 import { Context } from "shared/Context";
 
-import Loading from "../../../components/Loading";
-import api from "../../../shared/api";
 
 const RedirectToOnboardingModal = () => {
   const { setCurrentModal } = useContext(Context);

@@ -7,7 +7,6 @@ import InputRow from "components/form-components/InputRow";
 import SelectRow from "components/form-components/SelectRow";
 import Loading from "components/Loading";
 import SaveButton from "components/SaveButton";
-import IntegrationCategories from "main/home/integrations/IntegrationCategories";
 import RegistryImageList from "main/home/onboarding/components/RegistryImageList";
 import { StateHandler } from "main/home/onboarding/state/StateHandler";
 import { type AWSRegistryConfig } from "main/home/onboarding/types";

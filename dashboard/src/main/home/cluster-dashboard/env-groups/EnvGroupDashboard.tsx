@@ -1,4 +1,4 @@
-import React, { Component, useContext, useEffect, useState } from "react";
+import React, { useContext, useState } from "react";
 import { withRouter, type RouteComponentProps } from "react-router";
 import styled from "styled-components";
 
@@ -11,7 +11,7 @@ import Text from "components/porter/Text";
 
 import { withAuth, type WithAuthProps } from "shared/auth/AuthorizationHoc";
 import { Context } from "shared/Context";
-import { getQueryParam, pushFiltered, pushQueryParams } from "shared/routing";
+import { getQueryParam, pushQueryParams } from "shared/routing";
 import { type ClusterType } from "shared/types";
 import sliders from "assets/env-groups.svg";
 

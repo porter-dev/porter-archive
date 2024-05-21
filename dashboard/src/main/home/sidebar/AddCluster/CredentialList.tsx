@@ -1,7 +1,6 @@
 import React from "react";
 import styled from "styled-components";
 
-import { readableDate } from "shared/string_utils";
 
 type Props = {
   selectCredential: (id: number) => void;

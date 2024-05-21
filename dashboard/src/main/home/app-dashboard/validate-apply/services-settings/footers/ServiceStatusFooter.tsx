@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import _ from "lodash";
 import AnimateHeight, { type Height } from "react-animate-height";
 import styled from "styled-components";
 import { match } from "ts-pattern";

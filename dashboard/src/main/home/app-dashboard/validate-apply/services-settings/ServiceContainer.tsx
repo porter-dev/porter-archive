@@ -1,6 +1,5 @@
 import React from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import _ from "lodash";
 import { type UseFieldArrayUpdate } from "react-hook-form";
 import styled, { keyframes } from "styled-components";
 import { match } from "ts-pattern";

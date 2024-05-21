@@ -1,8 +1,7 @@
-import React, { useEffect } from "react";
+import React from "react";
 
 import DictionaryEditor from "components/porter/DictionaryEditor";
 
-import InputRow from "../../form-components/InputRow";
 import useFormField from "../hooks/useFormField";
 import {
   type DictionaryField,

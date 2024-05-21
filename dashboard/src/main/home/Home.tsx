@@ -40,6 +40,7 @@ import OryLogin from "../auth/OryLogin";
 import AddonDashboard from "./add-on-dashboard/AddOnDashboard";
 import AddonTemplates from "./add-on-dashboard/AddonTemplates";
 import AddonView from "./add-on-dashboard/AddonView";
+import InferenceDashboard from "./add-on-dashboard/InferenceDashboard";
 import LegacyAddOnDashboard from "./add-on-dashboard/legacy_AddOnDashboard";
 import LegacyNewAddOnFlow from "./add-on-dashboard/legacy_NewAddOnFlow";
 import AppView from "./app-dashboard/app-view/AppView";
@@ -550,6 +551,18 @@ const Home: React.FC<Props> = (props) => {
                 ) : (
                   <LegacyAddOnDashboard />
                 )}
+              </Route>
+              <Route path="/inference/new">
+                <AddonTemplates filterModels />
+              </Route>
+              <Route path="/inference/:addonName">
+                <AddonView filterModels />
+              </Route>
+              <Route path="/inference/:addonName/:tab">
+                <AddonView filterModels />
+              </Route>
+              <Route path="/inference">
+                <InferenceDashboard />
               </Route>
               <Route
                 path="/new-project"

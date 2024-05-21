@@ -1,6 +1,8 @@
 import Logs from "main/home/add-on-dashboard/common/Logs";
 import Settings from "main/home/add-on-dashboard/common/Settings";
 import DatadogForm from "main/home/add-on-dashboard/datadog/DatadogForm";
+import DeepgramForm from "main/home/add-on-dashboard/deepgram/DeepgramForm";
+import DeepgramOverview from "main/home/add-on-dashboard/deepgram/DeepgramOverview";
 import MetabaseForm from "main/home/add-on-dashboard/metabase/MetabaseForm";
 import MezmoForm from "main/home/add-on-dashboard/mezmo/MezmoForm";
 import NewRelicForm from "main/home/add-on-dashboard/newrelic/NewRelicForm";
@@ -50,6 +52,7 @@ export type AddonTemplate<T extends ClientAddonType> = {
   tags: AddonTemplateTag[];
   tabs: AddonTab[]; // this what is rendered on the dashboard after the addon is deployed
   defaultValues: ClientAddon["config"] & { type: T };
+  isModelTemplate?: boolean;
 };
 
 export const ADDON_TEMPLATE_REDIS: AddonTemplate<"redis"> = {
@@ -282,6 +285,46 @@ export const ADDON_TEMPLATE_TAILSCALE: AddonTemplate<"tailscale"> = {
   },
 };
 
+export const ADDON_TEMPLATE_DEEPGRAM: AddonTemplate<"deepgram"> = {
+  type: "deepgram",
+  displayName: "Deepgram",
+  description: "A popular speech-to-text service.",
+  icon: "https://play-lh.googleusercontent.com/wczDL05-AOb39FcL58L32h6j_TrzzGTXDLlOrOmJ-aNsnoGsT1Gkk2vU4qyTb7tGxRw=w240-h480-rw",
+  tags: ["Networking"],
+  tabs: [
+    {
+      name: "overview",
+      displayName: "Overview",
+      component: DeepgramOverview,
+    },
+    {
+      name: "configuration",
+      displayName: "Configuration",
+      component: DeepgramForm,
+    },
+    {
+      name: "logs",
+      displayName: "Logs",
+      component: Logs,
+      isOnlyForPorterOperators: true,
+    },
+    {
+      name: "settings",
+      displayName: "Settings",
+      component: Settings,
+    },
+  ],
+  defaultValues: {
+    type: "deepgram",
+    deepgramAPIKey: "",
+    quayUsername: "",
+    quaySecret: "",
+    quayEmail: "",
+    releaseTag: "",
+    modelUrls: [{ url: "" }],
+  },
+  isModelTemplate: true,
+};
 export const ADDON_TEMPLATE_QUIVR: AddonTemplate<"quivr"> = {
   type: "quivr",
   displayName: "Quivr",
@@ -331,3 +374,7 @@ export const SUPPORTED_ADDON_TEMPLATES: Array<AddonTemplate<ClientAddonType>> =
     ADDON_TEMPLATE_TAILSCALE,
     ADDON_TEMPLATE_QUIVR,
   ];
+
+export const SUPPORTED_MODEL_ADDON_TEMPLATES: Array<
+  AddonTemplate<ClientAddonType>
+> = [ADDON_TEMPLATE_DEEPGRAM];

@@ -1,6 +1,7 @@
 import React from "react";
 import { match } from "ts-pattern";
 
+import DeepgramForm from "main/home/add-on-dashboard/deepgram/DeepgramForm";
 import { type ClientAddon } from "lib/addons";
 
 import DatadogForm from "../datadog/DatadogForm";
@@ -21,6 +22,7 @@ const Configuration: React.FC<Props> = ({ type }) => {
     .with("metabase", () => <MetabaseForm />)
     .with("newrelic", () => <NewRelicForm />)
     .with("tailscale", () => <TailscaleForm />)
+    .with("deepgram", () => <DeepgramForm />)
     .with("quivr", () => <QuivrForm />)
     .otherwise(() => null);
 };

@@ -8,75 +8,100 @@ import { type ClientAddonType } from "lib/addons";
 import {
   AddonTemplateTagColor,
   SUPPORTED_ADDON_TEMPLATES,
+  SUPPORTED_MODEL_ADDON_TEMPLATES,
   type AddonTemplate,
 } from "lib/addons/template";
 
 import { Context } from "shared/Context";
 import addOnGrad from "assets/add-on-grad.svg";
+import inferenceGrad from "assets/inference-grad.svg";
 
 import DashboardHeader from "../cluster-dashboard/DashboardHeader";
+import ClusterContextProvider from "../infrastructure-dashboard/ClusterContextProvider";
 import AddonForm from "./AddonForm";
 import AddonFormContextProvider from "./AddonFormContextProvider";
 
-const AddonTemplates: React.FC = () => {
-  const { currentProject } = useContext(Context);
+type Props = {
+  filterModels?: boolean;
+};
+const AddonTemplates: React.FC<Props> = ({ filterModels }) => {
+  const { currentProject, currentCluster } = useContext(Context);
   const { search } = useLocation();
   const queryParams = new URLSearchParams(search);
   const history = useHistory();
 
   const templateMatch = useMemo(() => {
-    const addonName = queryParams.get("addon_name");
-    return SUPPORTED_ADDON_TEMPLATES.find((t) => t.type === addonName);
+    const addonName = filterModels
+      ? queryParams.get("model_name")
+      : queryParams.get("addon_name");
+    return (
+      filterModels ? SUPPORTED_MODEL_ADDON_TEMPLATES : SUPPORTED_ADDON_TEMPLATES
+    ).find((t) => t.type === addonName);
   }, [queryParams]);
 
   if (templateMatch) {
     return (
-      <AddonFormContextProvider projectId={currentProject?.id} redirectOnSubmit>
-        <AddonForm template={templateMatch} />
-      </AddonFormContextProvider>
+      <ClusterContextProvider
+        clusterId={currentCluster?.id}
+        refetchInterval={0}
+      >
+        <AddonFormContextProvider
+          projectId={currentProject?.id}
+          redirectOnSubmit
+        >
+          <AddonForm template={templateMatch} filterModels={filterModels} />
+        </AddonFormContextProvider>
+      </ClusterContextProvider>
     );
   }
 
   return (
     <StyledTemplateComponent>
-      <Back to="/addons" />
+      <Back to={filterModels ? "/inference" : "/addons"} />
       <DashboardHeader
-        image={addOnGrad}
-        title="Create a new add-on"
+        image={filterModels ? inferenceGrad : addOnGrad}
+        title={filterModels ? "Explore models" : "Create a new add-on"}
         capitalize={false}
-        description="Select an add-on to deploy to this project."
+        description={
+          filterModels
+            ? "Select a model to deploy to this project."
+            : "Select an add-on to deploy to this project."
+        }
         disableLineBreak
       />
       <TemplateListWrapper>
-        {SUPPORTED_ADDON_TEMPLATES.map(
-          (template: AddonTemplate<ClientAddonType>) => {
-            return (
-              <TemplateBlock
-                key={template.type}
-                onClick={() => {
-                  history.push(`/addons/new?addon_name=${template.type}`);
-                }}
-              >
-                <Icon src={template.icon} />
-                <TemplateTitle>{template.displayName}</TemplateTitle>
-                <TemplateDescription>
-                  {template.description}
-                </TemplateDescription>
-                <Spacer y={0.5} />
-                {template.tags.map((t) => (
-                  <Tag
-                    bottom="10px"
-                    left="12px"
-                    style={{ background: AddonTemplateTagColor[t] }}
-                    key={t}
-                  >
-                    {t}
-                  </Tag>
-                ))}
-              </TemplateBlock>
-            );
-          }
-        )}
+        {(filterModels
+          ? SUPPORTED_MODEL_ADDON_TEMPLATES
+          : SUPPORTED_ADDON_TEMPLATES
+        ).map((template: AddonTemplate<ClientAddonType>) => {
+          return (
+            <TemplateBlock
+              key={template.type}
+              onClick={() => {
+                history.push(
+                  filterModels
+                    ? `/inference/new?model_name=${template.type}`
+                    : `/addons/new?addon_name=${template.type}`
+                );
+              }}
+            >
+              <Icon src={template.icon} />
+              <TemplateTitle>{template.displayName}</TemplateTitle>
+              <TemplateDescription>{template.description}</TemplateDescription>
+              <Spacer y={0.5} />
+              {template.tags.map((t) => (
+                <Tag
+                  bottom="10px"
+                  left="12px"
+                  style={{ background: AddonTemplateTagColor[t] }}
+                  key={t}
+                >
+                  {t}
+                </Tag>
+              ))}
+            </TemplateBlock>
+          );
+        })}
       </TemplateListWrapper>
     </StyledTemplateComponent>
   );
@@ -89,7 +114,11 @@ const StyledTemplateComponent = styled.div`
   height: 100%;
 `;
 
-const Tag = styled.div<{ size?: string; bottom?: string; left?: string }>`
+export const Tag = styled.div<{
+  size?: string;
+  bottom?: string;
+  left?: string;
+}>`
   position: absolute;
   bottom: ${(props) => props.bottom || "auto"};
   left: ${(props) => props.left || "auto"};

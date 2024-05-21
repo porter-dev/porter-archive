@@ -22,9 +22,11 @@ import Configuration from "./common/Configuration";
 
 type Props<T extends ClientAddonType> = {
   template: AddonTemplate<T>;
+  filterModels?: boolean;
 };
 const AddonForm = <T extends ClientAddonType>({
   template,
+  filterModels,
 }: Props<T>): JSX.Element => {
   const { currentProject, currentCluster } = useContext(Context);
   const { defaultDeploymentTarget, isDefaultDeploymentTargetLoading } =
@@ -72,7 +74,9 @@ const AddonForm = <T extends ClientAddonType>({
       legacyAddons.some((a) => a.name === watchName)
     ) {
       setError("name.value", {
-        message: "An addon with this name already exists",
+        message: filterModels
+          ? "A model with this name already exists"
+          : "An addon with this name already exists",
       });
     } else {
       clearErrors("name.value");
@@ -94,7 +98,7 @@ const AddonForm = <T extends ClientAddonType>({
           <StyledConfigureTemplate>
             <Back
               onClick={() => {
-                history.push(`/addons/new`);
+                history.push(filterModels ? `/inference/new` : `/addons/new`);
               }}
             />
             <DashboardHeader
@@ -108,7 +112,9 @@ const AddonForm = <T extends ClientAddonType>({
               currentStep={currentStep}
               steps={[
                 <>
-                  <Text size={16}>Add-on name</Text>
+                  <Text size={16}>
+                    {filterModels ? "Model name" : "Add-on name"}
+                  </Text>
                   <Spacer y={0.5} />
                   <Text color="helper">
                     Lowercase letters, numbers, and &quot;-&quot; only.
@@ -117,7 +123,7 @@ const AddonForm = <T extends ClientAddonType>({
                   <ControlledInput
                     type="text"
                     width="300px"
-                    placeholder="ex: my-addon"
+                    placeholder={filterModels ? "ex: my-model" : "ex: my-addon"}
                     error={errors.name?.value?.message}
                     {...register("name.value")}
                   />

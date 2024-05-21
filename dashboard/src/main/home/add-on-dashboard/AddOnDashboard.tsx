@@ -29,8 +29,15 @@ import healthy from "assets/status-healthy.png";
 import DashboardHeader from "../cluster-dashboard/DashboardHeader";
 
 // filter out postgres and redis addons because those are managed in the datastores tab now
-const isDisplayableAddon = (addon: ClientAddon): boolean => {
-  return addon.config.type !== "postgres" && addon.config.type !== "redis";
+// filter out model template addons because those are managed in the infrastructure tab
+const isDisplayableAddon = (
+  addon: ClientAddon | LegacyClientAddon
+): boolean => {
+  return "chart" in addon
+    ? true
+    : addon.config.type !== "postgres" &&
+        addon.config.type !== "redis" &&
+        !addon.template.isModelTemplate;
 };
 
 const AddonDashboard: React.FC = () => {
@@ -52,20 +59,19 @@ const AddonDashboard: React.FC = () => {
   });
 
   const filteredAddons: Array<ClientAddon | LegacyClientAddon> = useMemo(() => {
-    const displayableAddons = addons.filter(isDisplayableAddon);
     const legacyDisplayableAddons = legacyAddons.sort((a, b) => {
       return a.info.last_deployed > b.info.last_deployed ? -1 : 1;
     });
 
     // If an addon name exists in both the legacy and new addon lists, show the new addon
-    const uniqueAddons: Array<ClientAddon | LegacyClientAddon> = [
-      ...displayableAddons,
+    const uniqueDisplayableAddons: Array<ClientAddon | LegacyClientAddon> = [
+      ...addons,
       ...legacyDisplayableAddons.filter(
-        (a) => !displayableAddons.some((b) => b.name.value === a.name)
+        (a) => !addons.some((b) => b.name.value === a.name)
       ),
-    ];
+    ].filter(isDisplayableAddon);
 
-    return uniqueAddons;
+    return uniqueDisplayableAddons;
   }, [addons, legacyAddons, defaultDeploymentTarget]);
 
   return (

@@ -25,9 +25,11 @@ import { type DeploymentTarget } from "./useDeploymentTarget";
 export const useAddonList = ({
   projectId,
   deploymentTarget,
+  includeLegacyAddons = true,
 }: {
   projectId?: number;
   deploymentTarget?: DeploymentTarget;
+  includeLegacyAddons?: boolean;
 }): {
   addons: ClientAddon[];
   legacyAddons: LegacyClientAddon[];
@@ -144,7 +146,11 @@ export const useAddonList = ({
           });
       },
       {
-        enabled: !!projectId && projectId !== -1 && !!deploymentTarget,
+        enabled:
+          !!projectId &&
+          projectId !== -1 &&
+          !!deploymentTarget &&
+          includeLegacyAddons,
         refetchOnWindowFocus: false,
         refetchInterval: 5000,
       }

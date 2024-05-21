@@ -3,6 +3,7 @@ import {
   Addon,
   AddonType,
   Datadog,
+  Deepgram,
   Metabase,
   Mezmo,
   Newrelic,
@@ -17,6 +18,7 @@ import { z } from "zod";
 import { serviceStringValidator } from "lib/porter-apps/values";
 
 import { datadogConfigValidator } from "./datadog";
+import { deepgramConfigValidator } from "./deepgram";
 import { metabaseConfigValidator } from "./metabase";
 import { mezmoConfigValidator } from "./mezmo";
 import { newrelicConfigValidator } from "./newrelic";
@@ -26,6 +28,7 @@ import { redisConfigValidator } from "./redis";
 import { tailscaleConfigValidator } from "./tailscale";
 import {
   ADDON_TEMPLATE_DATADOG,
+  ADDON_TEMPLATE_DEEPGRAM,
   ADDON_TEMPLATE_METABASE,
   ADDON_TEMPLATE_MEZMO,
   ADDON_TEMPLATE_NEWRELIC,
@@ -58,6 +61,7 @@ export const clientAddonValidator = z.object({
     metabaseConfigValidator,
     newrelicConfigValidator,
     tailscaleConfigValidator,
+    deepgramConfigValidator,
     quivrConfigValidator,
   ]),
 });
@@ -67,6 +71,13 @@ export type ClientAddonType = z.infer<
 export type ClientAddon = z.infer<typeof clientAddonValidator> & {
   template: AddonTemplate<ClientAddonType>;
 };
+export type ClientModelAddon = ClientAddon & {
+  template: AddonTemplate<ClientAddonType> & { isModelTemplate: true };
+};
+export const isClientModelAddon = (
+  addon: ClientAddon
+): addon is ClientModelAddon => addon.template.isModelTemplate ?? false;
+
 export const legacyAddonValidator = z.object({
   name: z.string(),
   namespace: z.string(),
@@ -157,6 +168,16 @@ export function defaultClientAddon(
       }),
       template: ADDON_TEMPLATE_TAILSCALE,
     }))
+    .with("deepgram", () => ({
+      ...clientAddonValidator.parse({
+        expanded: true,
+        name: { readOnly: false, value: "deepgram" },
+        config: deepgramConfigValidator.parse({
+          type: "deepgram",
+        }),
+      }),
+      template: ADDON_TEMPLATE_DEEPGRAM,
+    }))
     .with("quivr", () => ({
       ...clientAddonValidator.parse({
         expanded: true,
@@ -179,6 +200,7 @@ function addonTypeEnumProto(type: ClientAddon["config"]["type"]): AddonType {
     .with("metabase", () => AddonType.METABASE)
     .with("newrelic", () => AddonType.NEWRELIC)
     .with("tailscale", () => AddonType.TAILSCALE)
+    .with("deepgram", () => AddonType.DEEPGRAM)
     .with("quivr", () => AddonType.QUIVR)
     .exhaustive();
 }
@@ -268,6 +290,17 @@ export function clientAddonToProto(
           .filter((r) => r !== ""),
       }),
       case: "tailscale" as const,
+    }))
+    .with({ type: "deepgram" }, (data) => ({
+      value: new Deepgram({
+        apiKey: data.deepgramAPIKey,
+        ecrUsername: data.quayUsername,
+        ecrPassword: data.quaySecret,
+        ecrEmail: data.quayEmail,
+        releaseTag: data.releaseTag,
+        modelUrls: data.modelUrls.map(({ url }) => url),
+      }),
+      case: "deepgram" as const,
     }))
     .with({ type: "quivr" }, (data) => ({
       value: new Quivr({
@@ -405,6 +438,15 @@ export function clientAddonFromProto({
       authKey: data.value.authKey ?? "",
       subnetRoutes: data.value.subnetRoutes.map((r) => ({ route: r })),
     }))
+    .with({ case: "deepgram" }, (data) => ({
+      type: "deepgram" as const,
+      deepgramAPIKey: data.value.apiKey ?? "",
+      quayUsername: data.value.ecrUsername ?? "",
+      quaySecret: data.value.ecrPassword ?? "",
+      quayEmail: data.value.ecrEmail ?? "",
+      releaseTag: data.value.releaseTag ?? "",
+      modelUrls: data.value.modelUrls.map((url) => ({ url })) ?? [],
+    }))
     .with({ case: "quivr" }, (data) => ({
       type: "quivr" as const,
       exposedToExternalTraffic: data.value.ingressEnabled ?? false,
@@ -434,6 +476,7 @@ export function clientAddonFromProto({
     .with({ case: "metabase" }, () => ADDON_TEMPLATE_METABASE)
     .with({ case: "newrelic" }, () => ADDON_TEMPLATE_NEWRELIC)
     .with({ case: "tailscale" }, () => ADDON_TEMPLATE_TAILSCALE)
+    .with({ case: "deepgram" }, () => ADDON_TEMPLATE_DEEPGRAM)
     .with({ case: "quivr" }, () => ADDON_TEMPLATE_QUIVR)
     .exhaustive();
 

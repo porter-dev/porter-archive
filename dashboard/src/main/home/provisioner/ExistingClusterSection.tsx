@@ -4,11 +4,9 @@ import styled from "styled-components";
 
 import SaveButton from "components/SaveButton";
 
-import api from "shared/api";
 import { isAlphanumeric } from "shared/common";
 import { Context } from "shared/Context";
 import { pushFiltered } from "shared/routing";
-import { ProjectType } from "shared/types";
 
 type PropsType = RouteComponentProps & {
   projectName: string;

@@ -1,5 +1,4 @@
 import React, { Component } from "react";
-import Markdown from "markdown-to-jsx";
 import styled from "styled-components";
 
 import Loading from "components/Loading";
@@ -8,7 +7,6 @@ import SaveButton from "components/SaveButton";
 import api from "shared/api";
 import { Context } from "shared/Context";
 import { type ChartType } from "shared/types";
-import close from "assets/close.png";
 
 type PropsType = {
   currentChart: ChartType;

@@ -9,7 +9,6 @@ import api from "shared/api";
 import { Context } from "shared/Context";
 import { pushFiltered } from "shared/routing";
 import {
-  StorageType,
   type ChartType,
   type ChartTypeWithExtendedConfig,
 } from "shared/types";

@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import axios from "axios";
 import dayjs, { type Dayjs } from "dayjs";
-import _ from "lodash";
 import { useLocation } from "react-router";
 import { useTimer } from "react-timer-hook";
 import styled from "styled-components";

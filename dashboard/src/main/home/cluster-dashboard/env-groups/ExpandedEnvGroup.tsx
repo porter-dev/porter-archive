@@ -1,6 +1,5 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
-import yaml from "js-yaml";
-import _, { remove } from "lodash";
+import { remove } from "lodash";
 import styled, { keyframes } from "styled-components";
 
 import DocsHelper from "components/DocsHelper";

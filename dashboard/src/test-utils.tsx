@@ -4,9 +4,8 @@ import {
   type RenderOptions,
   type RenderResult,
 } from "@testing-library/react";
-import { useHistory, useLocation } from "react-router";
 import { BrowserRouter } from "react-router-dom";
-import { createGlobalStyle, ThemeProvider } from "styled-components";
+import { ThemeProvider } from "styled-components";
 
 import AuthzProvider from "shared/auth/AuthzContext";
 import { ContextProvider } from "shared/Context";

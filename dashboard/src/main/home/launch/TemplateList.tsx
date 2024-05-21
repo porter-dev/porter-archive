@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useMemo, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import semver from "semver";
 import styled from "styled-components";
 
@@ -13,7 +13,6 @@ import {
   hardcodedNames,
 } from "shared/hardcodedNameDict";
 import { type PorterTemplate } from "shared/types";
-import fire from "assets/fire.svg";
 import job from "assets/job.png";
 import web from "assets/web.png";
 import worker from "assets/worker.png";

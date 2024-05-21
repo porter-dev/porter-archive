@@ -1,4 +1,4 @@
-import React, { Component, useContext, useEffect } from "react";
+import React, { useContext } from "react";
 import styled from "styled-components";
 
 import { baseApi } from "shared/baseApi";

@@ -1,11 +1,9 @@
 import React, { type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import styled, { keyframes } from "styled-components";
+import styled from "styled-components";
 
 import Container from "./Container";
 import Spacer from "./Spacer";
-import Tag from "./Tag";
-import Text from "./Text";
 
 type Props = {
   key: string;

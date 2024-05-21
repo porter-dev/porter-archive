@@ -7,7 +7,6 @@ import Loading from "components/Loading";
 import PorterFormWrapper from "components/porter-form/PorterFormWrapper";
 import Banner from "components/porter/Banner";
 import Spacer from "components/porter/Spacer";
-import StatusIndicator from "components/StatusIndicator";
 import TitleSection from "components/TitleSection";
 
 import api from "shared/api";

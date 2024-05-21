@@ -1,5 +1,4 @@
 import React from "react";
-import _ from "lodash";
 import { useFormContext } from "react-hook-form";
 
 import Spacer from "components/porter/Spacer";

@@ -1,18 +1,16 @@
 import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
-import { Row, type CellProps, type Column } from "react-table";
+import { type CellProps, type Column } from "react-table";
 import styled from "styled-components";
 
 import DynamicLink from "components/DynamicLink";
 import Loading from "components/Loading";
 import Table from "components/OldTable";
 
-import api from "shared/api";
 import { Context } from "shared/Context";
 import {
   useWebsockets,
   type NewWebsocketOptions,
 } from "shared/hooks/useWebsockets";
-import { useRouting } from "shared/routing";
 import { relativeDate, timeFrom } from "shared/string_utils";
 
 type Props = {

@@ -1,5 +1,4 @@
 import React, {
-  Component,
   useContext,
   useEffect,
   useMemo,

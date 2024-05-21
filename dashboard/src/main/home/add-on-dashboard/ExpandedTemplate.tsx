@@ -1,12 +1,10 @@
-import React, { useContext, useEffect, useMemo, useState } from "react";
-import _ from "lodash";
+import React, { useContext, useEffect, useState } from "react";
 import Markdown from "markdown-to-jsx";
 import styled from "styled-components";
 
 import Loading from "components/Loading";
 import Button from "components/porter/Button";
 import Container from "components/porter/Container";
-import Icon from "components/porter/Icon";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 

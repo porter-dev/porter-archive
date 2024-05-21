@@ -1,13 +1,9 @@
 import React, { useContext, useEffect, useState } from "react";
 import styled from "styled-components";
 
-import Helper from "components/form-components/Helper";
 import UploadArea from "components/form-components/UploadArea";
-import Loading from "components/Loading";
-import Placeholder from "components/OldPlaceholder";
 import Button from "components/porter/Button";
 import Text from "components/porter/Text";
-import { Flex } from "main/home/cluster-dashboard/stacks/components/styles";
 
 import api from "shared/api";
 import { Context } from "shared/Context";

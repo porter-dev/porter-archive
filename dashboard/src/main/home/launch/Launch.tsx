@@ -11,7 +11,6 @@ import Fieldset from "components/porter/Fieldset";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import TabSelector from "components/TabSelector";
-import TitleSection from "components/TitleSection";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
@@ -23,7 +22,6 @@ import {
 } from "shared/types";
 
 import DashboardHeader from "../cluster-dashboard/DashboardHeader";
-import NoClusterPlaceholder from "../NoClusterPlaceholder";
 import ExpandedTemplate from "./expanded-template/ExpandedTemplate";
 import LaunchFlow from "./launch-flow/LaunchFlow";
 import TemplateList from "./TemplateList";

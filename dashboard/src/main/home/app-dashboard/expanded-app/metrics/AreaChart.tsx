@@ -9,7 +9,6 @@ import { AreaClosed, Bar, Line, LinePath } from "@visx/shape";
 import { defaultStyles, TooltipWithBounds, useTooltip } from "@visx/tooltip";
 import { bisector, extent, max } from "d3-array";
 import { timeFormat } from "d3-time-format";
-import _ from "lodash";
 import styled from "styled-components";
 
 import { type NormalizedMetricsData } from "../../../cluster-dashboard/expanded-chart/metrics/types";

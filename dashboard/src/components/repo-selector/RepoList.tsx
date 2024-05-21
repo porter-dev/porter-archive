@@ -2,7 +2,6 @@ import React, { useContext, useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 
 import DynamicLink from "components/DynamicLink";
-import Text from "components/porter/Text";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
@@ -10,7 +9,6 @@ import { useOutsideAlerter } from "shared/hooks/useOutsideAlerter";
 import { type ActionConfigType, type RepoType } from "shared/types";
 import github from "assets/github-white.png";
 
-import { search } from "../../shared/search";
 import Loading from "../Loading";
 import SearchBar from "../SearchBar";
 

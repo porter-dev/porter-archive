@@ -1,6 +1,5 @@
-import React, { useContext, useEffect, useMemo, useState } from "react";
+import React, { useContext, useState } from "react";
 import _ from "lodash";
-import { generateSlug } from "random-word-slugs";
 import { withRouter, type RouteComponentProps } from "react-router";
 import styled from "styled-components";
 

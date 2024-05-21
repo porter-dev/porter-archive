@@ -9,7 +9,6 @@ import { Tooltip, Zoom } from "@material-ui/core";
 import {
   createTheme,
   MuiThemeProvider,
-  withStyles,
 } from "@material-ui/core/styles";
 import CronParser from "cron-parser";
 import _ from "lodash";
@@ -21,11 +20,9 @@ import StatusIndicator from "components/StatusIndicator";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
-import { pushFiltered } from "shared/routing";
 import { readableDate } from "shared/string_utils";
 import {
   JobStatusType,
-  StorageType,
   type ChartType,
   type JobStatusWithTimeType,
 } from "shared/types";

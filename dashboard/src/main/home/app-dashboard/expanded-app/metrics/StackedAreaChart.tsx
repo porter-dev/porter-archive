@@ -6,7 +6,6 @@ import { scaleLinear, scaleTime } from "@visx/scale";
 import { AreaSeries, AreaStack, Tooltip, XYChart } from "@visx/xychart";
 import { bisector, extent, max } from "d3-array";
 import { timeFormat } from "d3-time-format";
-import _ from "lodash";
 import styled from "styled-components";
 
 import { type NormalizedNginxStatusMetricsData } from "../../../cluster-dashboard/expanded-chart/metrics/types";

@@ -1,5 +1,4 @@
-import React, { useContext, useEffect, useMemo, useState } from "react";
-import { Column } from "react-table";
+import React, { useContext, useState } from "react";
 import styled from "styled-components";
 
 import CopyToClipboard from "components/CopyToClipboard";
@@ -7,15 +6,11 @@ import Heading from "components/form-components/Heading";
 import Helper from "components/form-components/Helper";
 import InputRow from "components/form-components/InputRow";
 import SelectRow from "components/form-components/SelectRow";
-import Loading from "components/Loading";
-import Table from "components/OldTable";
-import RadioSelector from "components/RadioSelector";
 import SaveButton from "components/SaveButton";
 
 import api from "shared/api";
 import { type PolicyDocType, type Verbs } from "shared/auth/types";
 import { Context } from "shared/Context";
-import { InviteType } from "shared/types";
 import backArrow from "assets/back_arrow.png";
 
 import { type APIToken } from "../APITokensSection";

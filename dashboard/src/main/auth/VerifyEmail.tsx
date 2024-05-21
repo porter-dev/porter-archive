@@ -3,15 +3,12 @@ import styled from "styled-components";
 
 import Heading from "components/form-components/Heading";
 import Button from "components/porter/Button";
-import Container from "components/porter/Container";
-import Input from "components/porter/Input";
 import Link from "components/porter/Link";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
-import github from "assets/github-icon.png";
 import GoogleIcon from "assets/GoogleIcon";
 import logo from "assets/logo.png";
 

@@ -2,7 +2,6 @@ import React, { Component } from "react";
 import AceEditor from "react-ace";
 import styled from "styled-components";
 
-import close from "assets/close.png";
 
 import "shared/ace-porter-theme";
 import "ace-builds/src-noconflict/mode-text";
@@ -10,7 +9,6 @@ import "ace-builds/src-noconflict/mode-text";
 import Button from "components/porter/Button";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
-import SaveButton from "components/SaveButton";
 
 import { Context } from "shared/Context";
 

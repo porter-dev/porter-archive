@@ -1,7 +1,6 @@
-import React, { useContext, useRef, useState } from "react";
+import React, { useContext, useState } from "react";
 import styled from "styled-components";
 
-import DynamicLink from "components/DynamicLink";
 
 import { integrationList } from "shared/common";
 

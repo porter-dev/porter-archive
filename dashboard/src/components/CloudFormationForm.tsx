@@ -5,7 +5,6 @@ import { v4 as uuidv4 } from "uuid";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
-import theme from "shared/themes/midnight";
 import aws from "assets/aws.png";
 import cloudformationStatus from "assets/cloud-formation-stack-complete.png";
 

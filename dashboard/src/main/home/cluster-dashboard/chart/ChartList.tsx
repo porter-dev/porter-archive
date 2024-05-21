@@ -12,7 +12,6 @@ import { useWebsockets } from "shared/hooks/useWebsockets";
 import { type PorterUrl } from "shared/routing";
 import {
   JobStatusType,
-  StorageType,
   type ChartType,
   type ClusterType,
   type JobStatusWithTimeType,

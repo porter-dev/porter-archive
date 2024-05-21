@@ -1,12 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import AnimateHeight from "react-animate-height";
 import styled from "styled-components";
 
 import check from "assets/check.png";
 
-import Button from "./Button";
-import Container from "./Container";
-import Spacer from "./Spacer";
 
 type Props = {
   steps: React.ReactNode[];

@@ -16,7 +16,6 @@ import { type ProjectListType } from "shared/types";
 import backArrow from "assets/back_arrow.png";
 import gradient from "assets/gradient.png";
 
-import WelcomeForm from "./WelcomeForm";
 
 type ValidationError = {
   hasError: boolean;

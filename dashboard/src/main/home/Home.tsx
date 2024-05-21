@@ -36,6 +36,7 @@ import {
   type ProjectType,
 } from "shared/types";
 
+import LegacyHome from "../../legacy/main/home/Home";
 import { useAuthn } from "../../shared/auth/AuthnContext";
 import OryLogin from "../auth/OryLogin";
 import AddonDashboard from "./add-on-dashboard/AddOnDashboard";
@@ -392,6 +393,10 @@ const Home: React.FC<Props> = (props) => {
 
   const showCardBanner = !hasPaymentEnabled;
   const trialExpired = plan && isTrialExpired(plan.trial_info.ending_before);
+
+  if (currentProject?.simplified_view_enabled) {
+    return <LegacyHome {...props} />;
+  }
 
   return (
     <ThemeProvider

@@ -7,6 +7,7 @@ import api from "shared/api";
 import { Context } from "shared/Context";
 import { PorterUrls, type PorterUrl } from "shared/routing";
 
+import LegacyHome from "../legacy/main/home/Home";
 import { useAuthn } from "../shared/auth/AuthnContext";
 import CurrentError from "./CurrentError";
 import Home from "./home/Home";
@@ -75,6 +76,23 @@ const Main: React.FC<PropsType> = () => {
                   logOut={handleLogOut}
                 />
               );
+              // return currentProject?.simplified_view_enabled ? (
+              //   <Home
+              //     key="home"
+              //     currentProject={currentProject}
+              //     currentCluster={currentCluster}
+              //     currentRoute={baseRoute as PorterUrl}
+              //     logOut={handleLogOut}
+              //   />
+              // ) : (
+              //   <LegacyHome
+              //     key="home"
+              //     currentProject={currentProject}
+              //     currentCluster={currentCluster}
+              //     currentRoute={baseRoute as PorterUrl}
+              //     logOut={handleLogOut}
+              //   />
+              // );
             } else {
               return <Redirect to="/" />;
             }

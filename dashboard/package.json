@@ -180,6 +180,7 @@
       "eslint --fix",
       "prettier --write"
     ],
+    "!src/legacy/**/*.{js,ts,jsx,tsx}": [],
     "**/*.(md|json)": [
       "prettier --write"
     ]

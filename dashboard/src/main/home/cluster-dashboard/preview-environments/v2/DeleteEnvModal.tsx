@@ -1,8 +1,9 @@
 import React from "react";
-import Button from "legacy/components/porter/Button";
-import Modal from "legacy/components/porter/Modal";
-import Spacer from "legacy/components/porter/Spacer";
-import Text from "legacy/components/porter/Text";
+
+import Button from "components/porter/Button";
+import Modal from "components/porter/Modal";
+import Spacer from "components/porter/Spacer";
+import Text from "components/porter/Text";
 
 type Props = {
   closeModal: () => void;

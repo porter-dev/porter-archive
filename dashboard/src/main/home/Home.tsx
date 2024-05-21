@@ -394,7 +394,7 @@ const Home: React.FC<Props> = (props) => {
   const showCardBanner = !hasPaymentEnabled;
   const trialExpired = plan && isTrialExpired(plan.trial_info.ending_before);
 
-  if (currentProject?.simplified_view_enabled) {
+  if (!currentProject?.simplified_view_enabled) {
     return <LegacyHome {...props} />;
   }
 

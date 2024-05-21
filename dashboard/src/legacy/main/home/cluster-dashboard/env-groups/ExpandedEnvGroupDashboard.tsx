@@ -20,13 +20,13 @@ type PropsType = RouteComponentProps &
   };
 
 const EnvGroupDashboard = (props: PropsType) => {
+  const params = useParams<{ name: string }>();
+  const { currentProject } = useContext(Context);
   const namespace =
     currentProject?.simplified_view_enabled &&
     currentProject?.capi_provisioner_enabled
       ? "porter-env-group"
       : getQueryParam(props, "namespace");
-  const params = useParams<{ name: string }>();
-  const { currentProject } = useContext(Context);
   const [expandedEnvGroup, setExpandedEnvGroup] = useState<any>();
   const isTabActive = () => {
     return !document.hidden;

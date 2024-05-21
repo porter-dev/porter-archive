@@ -7,7 +7,7 @@ import { z } from "zod";
 import { useDeploymentTargetList } from "../lib/hooks/useDeploymentTarget";
 import { RestrictedNamespaces } from "../main/home/add-on-dashboard/legacy_AddOnDashboard";
 import api from "../shared/api";
-import { Context } from "../shared/Context";
+import { Context } from "shared/Context";
 import InputRow from "./form-components/InputRow";
 import Button from "./porter/Button";
 import Modal from "./porter/Modal";

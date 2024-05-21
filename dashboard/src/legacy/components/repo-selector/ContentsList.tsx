@@ -6,7 +6,7 @@ import info from "legacy/assets/info.svg";
 import styled from "styled-components";
 
 import api from "../../shared/api";
-import { Context } from "../../shared/Context";
+import { Context } from "shared/Context";
 import { ActionConfigType, FileType } from "../../shared/types";
 import Loading from "../Loading";
 

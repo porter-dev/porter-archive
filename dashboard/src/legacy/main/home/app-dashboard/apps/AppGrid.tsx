@@ -17,7 +17,7 @@ import { match } from "ts-pattern";
 
 import { useDeploymentTarget } from "shared/DeploymentTargetContext";
 
-import { Context } from "../../../../shared/Context";
+import { Context } from "shared/Context";
 import { Addon } from "./Addon";
 import { AppIcon, AppSource } from "./AppMeta";
 import { type AppRevisionWithSource } from "./types";

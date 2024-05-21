@@ -18,7 +18,7 @@ import {
 import _ from "lodash";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
-import * as traverse from "traverse";
+import traverse from "traverse";
 
 import useAuth from "shared/auth/useAuth";
 import { Context } from "shared/Context";

@@ -298,6 +298,7 @@ export function clientAddonToProto(
         ecrPassword: data.quaySecret,
         ecrEmail: data.quayEmail,
         releaseTag: data.releaseTag,
+        modelUrls: data.modelUrls.map(({ url }) => url),
       }),
       case: "deepgram" as const,
     }))
@@ -444,6 +445,7 @@ export function clientAddonFromProto({
       quaySecret: data.value.ecrPassword ?? "",
       quayEmail: data.value.ecrEmail ?? "",
       releaseTag: data.value.releaseTag ?? "",
+      modelUrls: data.value.modelUrls.map((url) => ({ url })) ?? [],
     }))
     .with({ case: "quivr" }, (data) => ({
       type: "quivr" as const,

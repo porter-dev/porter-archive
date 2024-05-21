@@ -321,6 +321,7 @@ export const ADDON_TEMPLATE_DEEPGRAM: AddonTemplate<"deepgram"> = {
     quaySecret: "",
     quayEmail: "",
     releaseTag: "",
+    modelUrls: [{ url: "" }],
   },
   isModelTemplate: true,
 };

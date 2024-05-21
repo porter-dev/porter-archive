@@ -182,6 +182,7 @@
     ],
     "**/*.(md|json)": [
       "prettier --write"
-    ]
+    ],
+    "ignore": "src/legacy/**/*"
   }
 }

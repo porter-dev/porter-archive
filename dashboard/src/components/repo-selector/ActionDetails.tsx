@@ -5,7 +5,7 @@ import { integrationList } from "shared/common";
 import { Context } from "shared/Context";
 import api from "shared/api";
 import Loading from "components/Loading";
-import { ActionConfigType } from "../../shared/types";
+import { type ActionConfigType } from "../../shared/types";
 import InputRow from "../form-components/InputRow";
 import Heading from "components/form-components/Heading";
 import { BuildpackSelection } from "./BuildpackSelection";
@@ -59,7 +59,7 @@ const ActionDetails: React.FC<PropsType> = (props) => {
           setSelectedRegistry(res.data[0]);
         }
       })
-      .catch((err: any) => console.log(err));
+      .catch((err: any) => { console.log(err); });
   }, [currentProject]);
 
   const renderIntegrationList = () => {
@@ -73,11 +73,10 @@ const ActionDetails: React.FC<PropsType> = (props) => {
 
     return registries.map((registry: any, i: number) => {
       let icon =
-        integrationList[registry?.service] &&
         integrationList[registry?.service]?.icon;
 
       if (!icon) {
-        icon = integrationList["dockerhub"]?.icon;
+        icon = integrationList.dockerhub?.icon;
       }
 
       return (
@@ -85,7 +84,7 @@ const ActionDetails: React.FC<PropsType> = (props) => {
           key={i}
           isSelected={selectedRegistry && registry.id === selectedRegistry?.id}
           lastItem={i === registries?.length - 1}
-          onClick={() => setSelectedRegistry(registry)}
+          onClick={() => { setSelectedRegistry(registry); }}
         >
           <img src={icon && icon} />
           {registry.url}
@@ -96,7 +95,7 @@ const ActionDetails: React.FC<PropsType> = (props) => {
 
   const renderRegistrySection = () => {
     if (!registries || registries.length === 0 || registries.length === 1) {
-      return;
+      
     } else {
       return (
         <>
@@ -143,9 +142,9 @@ const ActionDetails: React.FC<PropsType> = (props) => {
         type="text"
         width="100%"
         setValue={(value) =>
-          typeof value === "string" && dockerfilePath
+          { typeof value === "string" && dockerfilePath
             ? setFolderPath(value)
-            : typeof value === "string" && setProcfilePath(value)
+            : typeof value === "string" && setProcfilePath(value); }
         }
         value={
           dockerfilePath
@@ -163,7 +162,7 @@ const ActionDetails: React.FC<PropsType> = (props) => {
         <>
           <Heading>
             <ExpandHeader
-              onClick={() => setShowBuildpacksConfig((prev) => !prev)}
+              onClick={() => { setShowBuildpacksConfig((prev) => !prev); }}
               isExpanded={showBuildpacksConfig}
             >
               Buildpacks settings

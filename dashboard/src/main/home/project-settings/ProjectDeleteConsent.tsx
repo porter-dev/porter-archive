@@ -73,7 +73,7 @@ const ProjectDeleteConsent: React.FC<Props> = ({
           onClick={() => {
             setShowCostConfirmModal(false);
             setCurrentModal("UpdateProjectModal", {
-              currentProject: currentProject,
+              currentProject,
             });
           }}
           status={confirmDelete == currentProject?.name ? "This action cannot be undone" : ""}

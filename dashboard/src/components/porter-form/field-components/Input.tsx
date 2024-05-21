@@ -2,9 +2,9 @@ import React from "react";
 import InputRow from "../../form-components/InputRow";
 import useFormField from "../hooks/useFormField";
 import {
-  GetFinalVariablesFunction,
-  InputField,
-  StringInputFieldState,
+  type GetFinalVariablesFunction,
+  type InputField,
+  type StringInputFieldState,
 } from "../types";
 import { hasSetValue } from "../utils";
 

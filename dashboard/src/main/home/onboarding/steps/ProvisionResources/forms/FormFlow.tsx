@@ -1,10 +1,10 @@
 import {
-  ProvisionerConfig,
+  type ProvisionerConfig,
   StateHandler,
 } from "main/home/onboarding/state/StateHandler";
 import {
-  SkipProvisionConfig,
-  SupportedProviders,
+  type SkipProvisionConfig,
+  type SupportedProviders,
 } from "main/home/onboarding/types";
 import React, { useMemo } from "react";
 import styled from "styled-components";
@@ -41,17 +41,17 @@ const Forms = {
 const FormTitle = {
   aws: {
     label: "Amazon Web Services (AWS)",
-    icon: integrationList["aws"].icon,
+    icon: integrationList.aws.icon,
     doc: "https://docs.porter.run/getting-started/provisioning-on-aws",
   },
   gcp: {
     label: "Google Cloud Platform (GCP)",
-    icon: integrationList["gcp"].icon,
+    icon: integrationList.gcp.icon,
     doc: "https://docs.porter.run/getting-started/provisioning-on-gcp",
   },
   external: {
     label: "Connect an existing cluster",
-    icon: integrationList["kubernetes"],
+    icon: integrationList.kubernetes,
     doc: "",
   },
 };
@@ -83,14 +83,14 @@ const FormFlowWrapper: React.FC<Props> = ({ currentStep }) => {
   ) => {
     if (currentStep === "credentials") {
       provisionResourcesTracks.trackProvisionAddCredentials({
-        provider: provider,
+        provider,
         step: stepHandler.currentStepName,
       });
       handleContinue(data);
     } else if (currentStep === "settings") {
       const settings: any = data?.settings;
       provisionResourcesTracks.trackProvisionResourcesClicked({
-        provider: provider,
+        provider,
         cluster_name: settings?.cluster_name,
         machine_type: settings?.aws_machine_type,
         region: settings?.region,
@@ -112,9 +112,9 @@ const FormFlowWrapper: React.FC<Props> = ({ currentStep }) => {
         return null;
       }
 
-      return React.createElement(currentForm as any, {
+      return React.createElement(currentForm , {
         nextFormStep,
-        project: project,
+        project,
       });
     }
   }, [currentStep, provider]);
@@ -123,11 +123,11 @@ const FormFlowWrapper: React.FC<Props> = ({ currentStep }) => {
     <FormWrapper>
       <Header>
         <FormHeader>
-          <CloseButton onClick={() => handleGoBack()}>
+          <CloseButton onClick={() => { handleGoBack(); }}>
             <i className="material-icons">keyboard_backspace</i>
           </CloseButton>
           {FormTitle[provider] && <img src={FormTitle[provider].icon} />}
-          {FormTitle[provider] && FormTitle[provider].label}
+          {FormTitle[provider]?.label}
         </FormHeader>
         <GuideButton
           href={FormTitle[provider]?.doc}

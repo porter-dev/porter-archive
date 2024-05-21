@@ -11,7 +11,7 @@ import "ace-builds/src-noconflict/mode-text";
 
 import Heading from "../form-components/Heading";
 import Helper from "../form-components/Helper";
-import { ChartType } from "shared/types";
+import { type ChartType } from "shared/types";
 
 type PropsType = {
   goBack: () => void;
@@ -78,7 +78,7 @@ export default class FormDebugger extends Component<PropsType, StateType> {
             mode="yaml"
             value={this.state.rawYaml}
             theme="porter"
-            onChange={(e: string) => this.setState({ rawYaml: e })}
+            onChange={(e: string) => { this.setState({ rawYaml: e }); }}
             name="codeEditor"
             editorProps={{ $blockScrolling: true }}
             height="450px"
@@ -99,30 +99,30 @@ export default class FormDebugger extends Component<PropsType, StateType> {
           label="Show form state debugger"
           checked={this.state.showStateDebugger}
           toggle={() =>
-            this.setState({ showStateDebugger: !this.state.showStateDebugger })
+            { this.setState({ showStateDebugger: !this.state.showStateDebugger }); }
           }
         />
         <CheckboxRow
           label="Read-only"
           checked={this.state.isReadOnly}
           toggle={() =>
-            this.setState({
+            { this.setState({
               isReadOnly: !this.state.isReadOnly,
-            })
+            }); }
           }
         />
         <CheckboxRow
           label="Include non-form dummy tabs"
           checked={this.state.showBonusTabs}
           toggle={() =>
-            this.setState({ showBonusTabs: !this.state.showBonusTabs })
+            { this.setState({ showBonusTabs: !this.state.showBonusTabs }); }
           }
         />
         <CheckboxRow
           label="checkbox_a"
           checked={this.state.checkbox_a}
           toggle={() =>
-            this.setState({
+            { this.setState({
               checkbox_a: !this.state.checkbox_a,
 
               // Override the form value for checkbox_a
@@ -132,14 +132,14 @@ export default class FormDebugger extends Component<PropsType, StateType> {
                   value: !this.state.checkbox_a,
                 },
               },
-            })
+            }); }
           }
         />
         <InputRow
           type="string"
           value={this.state.input_a}
           setValue={(x: string) =>
-            this.setState({
+            { this.setState({
               input_a: x,
 
               // Override the form value for input_a
@@ -149,7 +149,7 @@ export default class FormDebugger extends Component<PropsType, StateType> {
                   value: x,
                 },
               },
-            })
+            }); }
           }
           label={"input_a"}
           placeholder="ex: override text"

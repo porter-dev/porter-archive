@@ -16,7 +16,7 @@ import Text from "components/porter/Text";
 import CopyToClipboard from "components/CopyToClipboard";
 import copy from "assets/copy-left.svg"
 import Icon from "components/porter/Icon";
-import { ClusterType } from "shared/types";
+import { type ClusterType } from "shared/types";
 import globe from "assets/globe.svg"
 import infra from "assets/infra.png";
 import gear from "assets/gear.svg"
@@ -56,16 +56,16 @@ const Metadata: React.FC<Props> = ({
                 .then((res: any) => {
                     setRegistries(res.data);
                 })
-                .catch((err: any) => console.log(err));
+                .catch((err: any) => { console.log(err); });
 
             api
                 .getClusters("<token>", {}, { id: currentProject?.id })
                 .then((res) => {
                     if (res.data) {
-                        let clusters = res.data;
+                        const clusters = res.data;
                         clusters.sort((a: any, b: any) => a.id - b.id);
                         if (clusters.length > 0) {
-                            let options = clusters.map((item: { name: any; vanity_name: string; }) => ({
+                            const options = clusters.map((item: { name: any; vanity_name: string; }) => ({
                                 label: (item.vanity_name ? item.vanity_name : item.name),
                                 value: item.name
                             }));

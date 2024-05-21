@@ -6,7 +6,7 @@ import YamlEditor from "components/YamlEditor";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import {useFormContext} from "react-hook-form";
-import {PorterAppFormData} from "lib/porter-apps";
+import {type PorterAppFormData} from "lib/porter-apps";
 
 type PropsType = {
   projectId: number;

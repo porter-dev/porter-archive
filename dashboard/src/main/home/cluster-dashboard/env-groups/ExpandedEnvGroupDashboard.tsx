@@ -4,12 +4,12 @@ import styled from "styled-components";
 import sliders from "assets/sliders.svg";
 
 import { Context } from "shared/Context";
-import { ClusterType } from "shared/types";
+import { type ClusterType } from "shared/types";
 
 import ExpandedEnvGroup from "./ExpandedEnvGroup";
-import { RouteComponentProps, useParams, withRouter } from "react-router";
+import { type RouteComponentProps, useParams, withRouter } from "react-router";
 import { getQueryParam, pushQueryParams } from "shared/routing";
-import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
+import { withAuth, type WithAuthProps } from "shared/auth/AuthorizationHoc";
 import { useQuery } from "@tanstack/react-query";
 import api from "shared/api";
 import Loading from "components/Loading";
@@ -111,7 +111,7 @@ const EnvGroupDashboard = (props: PropsType) => {
         namespace={(currentProject?.simplified_view_enabled && currentProject?.capi_provisioner_enabled) ? "porter-env-group" : expandedEnvGroup?.namespace ?? namespace}
         currentCluster={props.currentCluster}
         envGroup={expandedEnvGroup}
-        closeExpanded={() => props.history.push("/env-groups")}
+        closeExpanded={() => { props.history.push("/env-groups"); }}
       />
     );
   };

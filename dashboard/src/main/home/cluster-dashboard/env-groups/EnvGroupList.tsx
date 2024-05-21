@@ -3,12 +3,12 @@ import styled from "styled-components";
 
 import { Context } from "shared/Context";
 import api from "shared/api";
-import { ClusterType } from "shared/types";
+import { type ClusterType } from "shared/types";
 
 import EnvGroup from "./EnvGroup";
 import Loading from "components/Loading";
 import { getQueryParam, pushQueryParams } from "shared/routing";
-import { RouteComponentProps, withRouter } from "react-router";
+import { type RouteComponentProps, withRouter } from "react-router";
 
 import Placeholder from "components/Placeholder";
 
@@ -35,7 +35,7 @@ const EnvGroupList: React.FunctionComponent<Props> = (props) => {
   const [hasError, setHasError] = useState<boolean>(false);
 
   const updateEnvGroups = async () => {
-    let { currentProject, currentCluster } = context;
+    const { currentProject, currentCluster } = context;
     try {
       let envGroups: any[] = []
       if (currentProject?.simplified_view_enabled) {
@@ -58,7 +58,7 @@ const EnvGroupList: React.FunctionComponent<Props> = (props) => {
             {},
             {
               id: currentProject.id,
-              namespace: namespace,
+              namespace,
               cluster_id: currentCluster.id,
             }
           )
@@ -66,7 +66,7 @@ const EnvGroupList: React.FunctionComponent<Props> = (props) => {
             return res.data;
           });
       }
-      let sortedGroups = envGroups;
+      const sortedGroups = envGroups;
       if (sortedGroups) {
         switch (sortType) {
           case "Oldest":

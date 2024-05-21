@@ -1,5 +1,5 @@
 import React from "react";
-import { ServiceIPListField } from "../types";
+import { type ServiceIPListField } from "../types";
 import ServiceRow from "./ServiceRow";
 import styled from "styled-components";
 

@@ -1,9 +1,9 @@
 import React from "react";
 import styled from "styled-components";
 import {
-  DictionaryArrayField,
-  DictionaryArrayFieldState,
-  GetFinalVariablesFunction,
+  type DictionaryArrayField,
+  type DictionaryArrayFieldState,
+  type GetFinalVariablesFunction,
 } from "../types";
 import useFormField from "../hooks/useFormField";
 import { hasSetValue } from "../utils";

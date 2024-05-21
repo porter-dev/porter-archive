@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import {
-  Column,
-  Row,
+  type Column,
+  type Row,
   useGlobalFilter,
   usePagination,
   useTable,
@@ -51,7 +51,7 @@ const GlobalFilter: React.FunctionComponent<any> = ({
 };
 
 export type TableProps = {
-  columns: Column<any>[];
+  columns: Array<Column<any>>;
   data: any[];
   onRowClick?: (row: Row) => void;
   isLoading: boolean;
@@ -158,7 +158,7 @@ const Table: React.FC<TableProps> = ({
               disableHover={disableHover}
               {...row.getRowProps()}
               enablePointer={!!onRowClick}
-              onClick={() => onRowClick && onRowClick(row)}
+              onClick={() => { onRowClick && onRowClick(row); }}
               selected={false}
             >
               {/* TODO: This is actually broken, not sure why but we need the width to be properly setted, this is a temporary solution */}
@@ -247,7 +247,7 @@ const Table: React.FC<TableProps> = ({
               {"<"}
             </PaginationAction>
             <PageCounter>
-              {currentPageIndex + 1} of {pageCount ? pageCount : pageCount + 1}
+              {currentPageIndex + 1} of {pageCount || pageCount + 1}
             </PageCounter>
             <PaginationAction disabled={!canNextPage} onClick={() => {
               nextPage();

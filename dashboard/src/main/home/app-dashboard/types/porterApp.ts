@@ -1,4 +1,4 @@
-export interface PorterApp {
+export type PorterApp = {
     name: string;
     git_branch: string;
     git_repo_id: number;

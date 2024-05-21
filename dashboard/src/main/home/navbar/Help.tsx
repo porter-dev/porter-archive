@@ -15,7 +15,7 @@ const Help: React.FC<HelpProps> = () => {
       return (
         <>
           <CloseOverlay
-            onClick={() => setShowHelpDropdown(false)}
+            onClick={() => { setShowHelpDropdown(false); }}
           />
           <Dropdown dropdownWidth="155px" dropdownMaxHeight="300px">
             <Option
@@ -41,8 +41,8 @@ const Help: React.FC<HelpProps> = () => {
   };
 
   return (
-    <FeedbackButton selected={showHelpDropdown === true}>
-      <Flex onClick={() => setShowHelpDropdown(!showHelpDropdown)}>
+    <FeedbackButton selected={showHelpDropdown}>
+      <Flex onClick={() => { setShowHelpDropdown(!showHelpDropdown); }}>
         <i className="material-icons-outlined">help_outline</i>
         Help
       </Flex>

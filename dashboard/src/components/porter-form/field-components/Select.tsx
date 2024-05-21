@@ -1,8 +1,8 @@
 import React, { useContext } from "react";
 import {
-  GetFinalVariablesFunction,
-  SelectField,
-  SelectFieldState,
+  type GetFinalVariablesFunction,
+  type SelectField,
+  type SelectFieldState,
 } from "../types";
 import Selector from "../../Selector";
 import styled from "styled-components";

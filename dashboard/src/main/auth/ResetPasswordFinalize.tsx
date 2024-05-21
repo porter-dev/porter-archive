@@ -1,4 +1,4 @@
-import React, { ChangeEvent, Component } from "react";
+import React, { type ChangeEvent, Component } from "react";
 import styled from "styled-components";
 import logo from "assets/logo.png";
 
@@ -36,11 +36,11 @@ export default class ResetPasswordInit extends Component<PropsType, StateType> {
   };
 
   componentDidMount() {
-    let urlParams = new URLSearchParams(window.location.search);
+    const urlParams = new URLSearchParams(window.location.search);
 
-    let emailFromParam = urlParams.get("email");
-    let tokenFromParams = urlParams.get("token");
-    let tokenIDFromParams = urlParams.get("token_id");
+    const emailFromParam = urlParams.get("email");
+    const tokenFromParams = urlParams.get("token");
+    const tokenIDFromParams = urlParams.get("token_id");
 
     api
       .createPasswordResetVerify(
@@ -55,7 +55,7 @@ export default class ResetPasswordInit extends Component<PropsType, StateType> {
       .then(() => {
         this.setState({ loading: false });
       })
-      .catch((err) => this.setState({ loading: false, tokenError: true }));
+      .catch((err) => { this.setState({ loading: false, tokenError: true }); });
 
     document.addEventListener("keydown", this.handleKeyDown);
 
@@ -71,7 +71,7 @@ export default class ResetPasswordInit extends Component<PropsType, StateType> {
   }
 
   renderPasswordError = () => {
-    let { passwordError } = this.state;
+    const { passwordError } = this.state;
     if (passwordError) {
       return (
         <ErrorHelper>
@@ -83,16 +83,16 @@ export default class ResetPasswordInit extends Component<PropsType, StateType> {
   };
 
   handleResetPasswordFinalize = (): void => {
-    let { email, token, token_id, password } = this.state;
+    const { email, token, token_id, password } = this.state;
 
     // Call reset password
     api
       .createPasswordResetFinalize(
         "",
         {
-          email: email,
-          token: token,
-          token_id: token_id,
+          email,
+          token,
+          token_id,
           new_password: password,
         },
         {}
@@ -105,11 +105,11 @@ export default class ResetPasswordInit extends Component<PropsType, StateType> {
           window.location.href = "/login";
         }, 2000);
       })
-      .catch((err) => this.setState({ tokenError: true }));
+      .catch((err) => { this.setState({ tokenError: true }); });
   };
 
   render() {
-    let {
+    const {
       password,
       passwordError,
       submitted,
@@ -125,10 +125,10 @@ export default class ResetPasswordInit extends Component<PropsType, StateType> {
             placeholder="Password"
             value={password}
             onChange={(e: ChangeEvent<HTMLInputElement>) =>
-              this.setState({
+              { this.setState({
                 password: e.target.value,
                 passwordError: false,
-              })
+              }); }
             }
             valid={!passwordError}
           />

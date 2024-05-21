@@ -4,7 +4,7 @@ import close from "assets/close.png";
 import api from "shared/api";
 
 import { Context } from "shared/Context";
-import { ChartType } from "shared/types";
+import { type ChartType } from "shared/types";
 
 import Loading from "components/Loading";
 
@@ -29,7 +29,7 @@ export default class UpgradeChartModal extends Component<PropsType, StateType> {
   componentDidMount() {
     // get the chart update notes from the api
     let repoURL = this.context.capabilities.default_addon_helm_repo_url;
-    let chartName = this.props.currentChart.chart.metadata.name
+    const chartName = this.props.currentChart.chart.metadata.name
       .toLowerCase()
       .trim();
 
@@ -62,7 +62,7 @@ No upgrade notes available. This update should be backwards-compatible.
           return;
         }
 
-        let noteArr = res.data.upgrade_notes.map((note: any) => {
+        const noteArr = res.data.upgrade_notes.map((note: any) => {
           return `
 ## Version ${note.previous} -> ${note.target}
 ${note.note}

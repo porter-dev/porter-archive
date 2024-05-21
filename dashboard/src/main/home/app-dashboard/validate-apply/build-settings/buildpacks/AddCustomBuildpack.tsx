@@ -1,5 +1,5 @@
 import InputRow from "components/form-components/InputRow";
-import { Buildpack } from "main/home/app-dashboard/types/buildpack";
+import { type Buildpack } from "main/home/app-dashboard/types/buildpack";
 import React, { useState } from "react";
 import styled, { keyframes } from "styled-components";
 
@@ -56,7 +56,7 @@ const AddCustomBuildpack: React.FC<{
         </EventInformation>
       </ContentContainer>
       <ActionContainer>
-        <ActionButton onClick={() => handleAddCustomBuildpack()} type="button">
+        <ActionButton onClick={() => { handleAddCustomBuildpack(); }} type="button">
           <span className="material-icons-outlined">add</span>
         </ActionButton>
       </ActionContainer>

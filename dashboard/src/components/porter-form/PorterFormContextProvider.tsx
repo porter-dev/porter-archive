@@ -1,19 +1,19 @@
 import React, { createContext, useContext, useReducer } from "react";
 import {
-  GetFinalVariablesFunction,
-  GetMetadataFunction,
-  PorterFormAction,
-  PorterFormData,
-  PorterFormState,
-  PorterFormValidationInfo,
-  PorterFormVariableList,
+  type GetFinalVariablesFunction,
+  type GetMetadataFunction,
+  type PorterFormAction,
+  type PorterFormData,
+  type PorterFormState,
+  type PorterFormValidationInfo,
+  type PorterFormVariableList,
 } from "./types";
 import {
-  ShowIf,
-  ShowIfAnd,
-  ShowIfIs,
-  ShowIfNot,
-  ShowIfOr,
+  type ShowIf,
+  type ShowIfAnd,
+  type ShowIfIs,
+  type ShowIfNot,
+  type ShowIfOr,
 } from "../../shared/types";
 import { getFinalVariablesForStringInput } from "./field-components/Input";
 import {
@@ -25,7 +25,7 @@ import { getFinalVariablesForArrayInput } from "./field-components/ArrayInput";
 import { getFinalVariablesForCheckbox } from "./field-components/Checkbox";
 import { getFinalVariablesForSelect } from "./field-components/Select";
 
-export interface BaseProps {
+export type BaseProps = {
   rawFormData: PorterFormData;
   initialVariables?: PorterFormVariableList;
   overrideVariables?: PorterFormVariableList;
@@ -34,22 +34,22 @@ export interface BaseProps {
   doDebug?: boolean;
 }
 
-export interface PropsWithMetadata extends BaseProps {
+export type PropsWithMetadata = {
   onSubmit: (
     data: { vars: PorterFormVariableList; metadata: PorterFormVariableList },
     cb?: () => void
   ) => void;
   includeMetadata: true;
-}
+} & BaseProps
 
-export interface PropsWithoutMetadata extends BaseProps {
+export type PropsWithoutMetadata = {
   onSubmit: (vars: PorterFormVariableList, cb?: () => void) => void;
   includeMetadata: false;
-}
+} & BaseProps
 
 export type Props = PropsWithMetadata | PropsWithoutMetadata;
 
-interface ContextProps {
+type ContextProps = {
   formData: PorterFormData;
   formState: PorterFormState;
   onSubmit: (cb?: () => void) => void;
@@ -192,7 +192,7 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
             return;
           if (
             field.required &&
-            (field.settings?.default || (field.value && field.value[0]))
+            (field.settings?.default || (field.value?.[0]))
           ) {
             ret[`${i}-${j}-${k}`] = {
               validated: true,
@@ -221,7 +221,7 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
     if (!vals) {
       return false;
     }
-    if (typeof vals == "string") {
+    if (typeof vals === "string") {
       return !!variables[vals];
     }
     if ((vals as ShowIfIs).is) {
@@ -532,7 +532,7 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
   return (
     <Provider
       value={{
-        formData: formData,
+        formData,
         formState: state,
         dispatchAction: dispatch,
         isReadOnly: props.isReadOnly,

@@ -1,7 +1,7 @@
 import React from "react";
 import styled from "styled-components";
 
-interface Props {
+type Props = {
   children: React.ReactNode;
   icon?: any;
   iconWidth?: string;

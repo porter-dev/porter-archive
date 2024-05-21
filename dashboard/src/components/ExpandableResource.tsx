@@ -20,12 +20,12 @@ const ExpandableResource: React.FC<Props> = (props) => {
   const { currentCluster, currentProject } = useContext(Context);
 
   const onSave = () => {
-    let projID = currentProject.id;
-    let clusterID = currentCluster.id;
-    let config = button.actions[0].delete.context.config;
+    const projID = currentProject.id;
+    const clusterID = currentCluster.id;
+    const config = button.actions[0].delete.context.config;
 
     // TODO: construct the endpoint scope, right now we're just using release scope
-    let uri = `/api/projects/${projID}/clusters/${clusterID}/namespaces/${resource.metadata.namespace}${button.actions[0].delete.relative_uri}`;
+    const uri = `/api/projects/${projID}/clusters/${clusterID}/namespaces/${resource.metadata.namespace}${button.actions[0].delete.relative_uri}`;
 
     // compute the endpoint using button and target context
     baseApi<
@@ -49,7 +49,7 @@ const ExpandableResource: React.FC<Props> = (props) => {
       {}
     )
       .then((res) => {})
-      .catch((err) => console.log(err));
+      .catch((err) => { console.log(err); });
   };
 
   return (

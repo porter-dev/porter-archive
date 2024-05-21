@@ -3,7 +3,7 @@ import styled from "styled-components";
 
 import { Context } from "shared/Context";
 import { integrationList } from "shared/common";
-import { RouteComponentProps, withRouter } from "react-router";
+import { type RouteComponentProps, withRouter } from "react-router";
 import IntegrationList from "./IntegrationList";
 import DopplerIntegrationList from "./DopplerIntegrationList";
 import api from "shared/api";
@@ -49,10 +49,10 @@ const IntegrationCategories: React.FC<Props> = (props) => {
           .getProjectRegistries("<token>", {}, { id: currentProject.id })
           .then((res) => {
             // Sort res.data into service type and sort each service's registry alphabetically
-            let grouped: any = {};
+            const grouped: any = {};
             let final: any = [];
             for (let i = 0; i < res.data.length; i++) {
-              let p = res.data[i].service;
+              const p = res.data[i].service;
               if (!grouped[p]) {
                 grouped[p] = [];
               }
@@ -63,8 +63,8 @@ const IntegrationCategories: React.FC<Props> = (props) => {
                 val.sort((a: any, b: any) => (a.name > b.name ? 1 : -1))
               );
             });
-            let newCurrentOptions = [] as string[];
-            let newCurrentTitles = [] as string[];
+            const newCurrentOptions = [] as string[];
+            const newCurrentTitles = [] as string[];
             final.forEach((integration: any, i: number) => {
               newCurrentOptions.push(integration.service);
               newCurrentTitles.push(integration.name);
@@ -111,18 +111,17 @@ const IntegrationCategories: React.FC<Props> = (props) => {
 
   const { category: currentCategory } = props;
   const icon =
-    integrationList[currentCategory] && integrationList[currentCategory].icon;
+    integrationList[currentCategory]?.icon;
   const label =
-    integrationList[currentCategory] && integrationList[currentCategory].label;
+    integrationList[currentCategory]?.label;
   const buttonText =
-    integrationList[currentCategory] &&
-    integrationList[currentCategory].buttonText;
+    integrationList[currentCategory]?.buttonText;
 
   return (
     <>
       <BreadcrumbRow>
         <Breadcrumb
-          onClick={() => pushFiltered(props, "/integrations", ["project_id"])}
+          onClick={() => { pushFiltered(props, "/integrations", ["project_id"]); }}
         >
           <ArrowIcon src={leftArrow} />
           <Wrap>Back</Wrap>
@@ -169,7 +168,7 @@ const IntegrationCategories: React.FC<Props> = (props) => {
         <GitlabIntegrationList
           gitlabData={gitlabData}
           updateIntegrationList={() =>
-            getIntegrationsForCategory(props.category)
+            { getIntegrationsForCategory(props.category); }
           }
         />
       ) : props.category === "slack" ? (
@@ -185,7 +184,7 @@ const IntegrationCategories: React.FC<Props> = (props) => {
           titles={currentTitles}
           itemIdentifier={currentIntegrationData}
           updateIntegrationList={() =>
-            getIntegrationsForCategory(props.category)
+            { getIntegrationsForCategory(props.category); }
           }
         />
       )}

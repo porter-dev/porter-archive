@@ -6,7 +6,7 @@ import api from "../../../shared/api";
 import { integrationList } from "shared/common";
 import DynamicLink from "components/DynamicLink";
 
-interface Props {
+type Props = {
   gitlabData: any[];
   updateIntegrationList: () => void;
 }
@@ -58,11 +58,11 @@ const GitlabIntegrationList: React.FC<Props> = (props) => {
         message={`Are you sure you want to delete the GitLab integration for instance ${currentState.deleteName}?`}
         onYes={handleDeleteIntegration}
         onNo={() =>
-          setCurrentState({
+          { setCurrentState({
             isDelete: false,
             deleteName: "",
             deleteID: 0,
-          })
+          }); }
         }
       />
       <StyledIntegrationList>

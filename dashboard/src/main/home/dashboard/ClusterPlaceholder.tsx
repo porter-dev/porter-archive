@@ -2,7 +2,7 @@ import React, { Component } from "react";
 import styled from "styled-components";
 
 import { Context } from "shared/Context";
-import { ClusterType } from "shared/types";
+import { type ClusterType } from "shared/types";
 
 import ClusterList from "./OldClusterList";
 import Loading from "components/Loading";

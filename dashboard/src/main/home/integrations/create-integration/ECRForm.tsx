@@ -29,7 +29,7 @@ export default class ECRForm extends Component<PropsType, StateType> {
   };
 
   isDisabled = (): boolean => {
-    let { awsRegion, awsAccessId, awsSecretKey, credentialsName } = this.state;
+    const { awsRegion, awsAccessId, awsSecretKey, credentialsName } = this.state;
     if (
       awsRegion === "" ||
       awsAccessId === "" ||
@@ -41,11 +41,11 @@ export default class ECRForm extends Component<PropsType, StateType> {
     return false;
   };
 
-  catchErr = (err: any) => console.log(err);
+  catchErr = (err: any) => { console.log(err); };
 
   handleSubmit = () => {
-    let { awsRegion, awsAccessId, awsSecretKey, credentialsName } = this.state;
-    let { currentProject } = this.context;
+    const { awsRegion, awsAccessId, awsSecretKey, credentialsName } = this.state;
+    const { currentProject } = this.context;
 
     api
       .createAWSIntegration(
@@ -57,8 +57,8 @@ export default class ECRForm extends Component<PropsType, StateType> {
         },
         { id: currentProject.id }
       )
-      .then((res) =>
-        api.connectECRRegistry(
+      .then(async (res) =>
+        await api.connectECRRegistry(
           "<token>",
           {
             name: credentialsName,
@@ -67,7 +67,7 @@ export default class ECRForm extends Component<PropsType, StateType> {
           { id: currentProject.id }
         )
       )
-      .then(() => this.props.closeForm())
+      .then(() => { this.props.closeForm(); })
       .catch(this.catchErr);
   };
 
@@ -82,7 +82,7 @@ export default class ECRForm extends Component<PropsType, StateType> {
           <InputRow
             type="text"
             value={this.state.credentialsName}
-            setValue={(x: string) => this.setState({ credentialsName: x })}
+            setValue={(x: string) => { this.setState({ credentialsName: x }); }}
             label="🏷️ Registry Name"
             placeholder="ex: paper-straw"
             width="100%"
@@ -92,7 +92,7 @@ export default class ECRForm extends Component<PropsType, StateType> {
           <InputRow
             type="text"
             value={this.state.awsRegion}
-            setValue={(x: string) => this.setState({ awsRegion: x })}
+            setValue={(x: string) => { this.setState({ awsRegion: x }); }}
             label="📍 AWS region"
             placeholder="ex: mars-north-12"
             width="100%"
@@ -100,7 +100,7 @@ export default class ECRForm extends Component<PropsType, StateType> {
           <InputRow
             type="text"
             value={this.state.awsAccessId}
-            setValue={(x: string) => this.setState({ awsAccessId: x })}
+            setValue={(x: string) => { this.setState({ awsAccessId: x }); }}
             label="👤 AWS access ID"
             placeholder="ex: AKIAIOSFODNN7EXAMPLE"
             width="100%"
@@ -108,7 +108,7 @@ export default class ECRForm extends Component<PropsType, StateType> {
           <InputRow
             type="password"
             value={this.state.awsSecretKey}
-            setValue={(x: string) => this.setState({ awsSecretKey: x })}
+            setValue={(x: string) => { this.setState({ awsSecretKey: x }); }}
             label="🔒 AWS secret key"
             placeholder="○ ○ ○ ○ ○ ○ ○ ○ ○"
             width="100%"

@@ -10,7 +10,7 @@ export default function Heading(props: {
     <StyledHeading isAtTop={props.isAtTop}>
       {props.children}
       {props.docs && (
-        <a href={props.docs} target="_blank">
+        <a href={props.docs} target="_blank" rel="noreferrer">
           <i className="material-icons">help_outline</i>
         </a>
       )}

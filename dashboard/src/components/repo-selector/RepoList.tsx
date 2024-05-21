@@ -3,7 +3,7 @@ import styled from "styled-components";
 import github from "assets/github-white.png";
 
 import api from "shared/api";
-import { ActionConfigType, RepoType } from "shared/types";
+import { type ActionConfigType, type RepoType } from "shared/types";
 import { Context } from "shared/Context";
 
 import Loading from "../Loading";
@@ -106,7 +106,7 @@ const RepoList: React.FC<Props> = ({
   const loadGithubRepos = async (repoId: number) => {
     try {
       const res = await api.getGitRepoList<
-        { FullName: string; Kind: "github" }[]
+        Array<{ FullName: string; Kind: "github" }>
       >("<token>", {}, { project_id: currentProject.id, git_repo_id: repoId });
 
       const repos = res.data.map((repo) => ({ ...repo, GHRepoID: repoId }));
@@ -132,11 +132,11 @@ const RepoList: React.FC<Props> = ({
     } catch (error) { }
   };
 
-  const loadRepos = (provider: any) => {
+  const loadRepos = async (provider: any) => {
     if (provider.provider === "github") {
-      return loadGithubRepos(provider.installation_id);
+      return await loadGithubRepos(provider.installation_id);
     } else {
-      return loadGitlabRepos(provider.integration_id);
+      return await loadGitlabRepos(provider.integration_id);
     }
   };
 
@@ -240,7 +240,7 @@ const RepoList: React.FC<Props> = ({
     }
 
     // show 10 most recently used repos if user hasn't searched anything yet
-    let results =
+    const results =
       searchFilter != null
         ? repos
           .filter((repo: RepoType) => {
@@ -271,7 +271,7 @@ const RepoList: React.FC<Props> = ({
             key={i}
             isSelected={repo.FullName === selectedRepo}
             lastItem={i === repos.length - 1}
-            onClick={() => setRepo(repo)}
+            onClick={() => { setRepo(repo); }}
             readOnly={readOnly}
             disabled={shouldDisable}
           >
@@ -417,7 +417,7 @@ const ProviderSelector = (props: {
         <ProviderSelectorStyles.Icon className={icon} />
 
         <ProviderSelectorStyles.Button
-          onClick={() => setIsOpen((prev) => !prev)}
+          onClick={() => { setIsOpen((prev) => !prev); }}
         >
           {currentValue?.name || currentValue?.instance_url}
         </ProviderSelectorStyles.Button>

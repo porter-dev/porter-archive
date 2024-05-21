@@ -4,7 +4,7 @@ import branch_icon from "assets/branch.png";
 
 import api from "../../shared/api";
 import { Context } from "../../shared/Context";
-import { ActionConfigType } from "../../shared/types";
+import { type ActionConfigType } from "../../shared/types";
 
 import Loading from "../Loading";
 import SearchBar from "../SearchBar";
@@ -100,7 +100,7 @@ const BranchList: React.FC<Props> = ({
       return <LoadingWrapper>Error loading branches</LoadingWrapper>;
     }
 
-    let results =
+    const results =
       searchFilter != null
         ? branches
             .filter((branch) => {
@@ -125,7 +125,7 @@ const BranchList: React.FC<Props> = ({
         <BranchName
           key={i}
           lastItem={i === branches.length - 1}
-          onClick={() => setBranch(branch)}
+          onClick={() => { setBranch(branch); }}
         >
           <img src={branch_icon} alt={"branch icon"} />
           {branch}

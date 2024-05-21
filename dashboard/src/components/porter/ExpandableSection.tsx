@@ -44,7 +44,7 @@ const ExpandableSection: React.FC<Props> = ({
           {copy ?
             (
               <CopyWrapper>
-                <ExpandButton onClick={() => setIsExpanded(!isExpanded)}>
+                <ExpandButton onClick={() => { setIsExpanded(!isExpanded); }}>
                   {isExpanded ? collapseText : expandText}
                 </ExpandButton>
                 <CopyToClipboard
@@ -59,7 +59,7 @@ const ExpandableSection: React.FC<Props> = ({
               </CopyWrapper>
             ) :
             (
-              <ExpandButton onClick={() => setIsExpanded(!isExpanded)}>
+              <ExpandButton onClick={() => { setIsExpanded(!isExpanded); }}>
                 {isExpanded ? collapseText : expandText}
               </ExpandButton>
             )
@@ -68,7 +68,7 @@ const ExpandableSection: React.FC<Props> = ({
       ) : (
         <HeaderRow
           isExpanded={isExpanded}
-          onClick={() => setIsExpanded(!isExpanded)}
+          onClick={() => { setIsExpanded(!isExpanded); }}
           color={color}
         >
           {!noWrapper && <i className="material-icons">arrow_drop_down</i>}

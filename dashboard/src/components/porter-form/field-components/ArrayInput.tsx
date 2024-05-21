@@ -1,9 +1,9 @@
 import React from "react";
 import styled from "styled-components";
 import {
-  ArrayInputField,
-  ArrayInputFieldState,
-  GetFinalVariablesFunction,
+  type ArrayInputField,
+  type ArrayInputFieldState,
+  type GetFinalVariablesFunction,
 } from "../types";
 import useFormField from "../hooks/useFormField";
 import { hasSetValue } from "../utils";

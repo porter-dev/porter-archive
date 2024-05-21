@@ -4,7 +4,7 @@ import Select from "./Select";
 import Spacer from "./Spacer";
 
 import filter from "assets/filter.svg";
-import { GenericFilter, FilterName } from "main/home/app-dashboard/expanded-app/logs/types";
+import { type GenericFilter, type FilterName } from "main/home/app-dashboard/expanded-app/logs/types";
 
 type Props = {
   filters: GenericFilter[];
@@ -19,9 +19,9 @@ const Filter: React.FC<Props> = ({
 
   const filterLabelString = useMemo(() => {
     let filterString = "";
-    const serviceName = selectedFilterValues["service_name"];
-    const podName = selectedFilterValues["pod_name"];
-    const revision = selectedFilterValues["revision"];
+    const serviceName = selectedFilterValues.service_name;
+    const podName = selectedFilterValues.pod_name;
+    const revision = selectedFilterValues.revision;
 
     if (serviceName && serviceName !== "all") {
       filterString += serviceName;
@@ -39,7 +39,7 @@ const Filter: React.FC<Props> = ({
 
   return (
     <Relative>
-      <StyledFilter onClick={() => setIsExpanded(!isExpanded)}>
+      <StyledFilter onClick={() => { setIsExpanded(!isExpanded); }}>
         <img src={filter} />
         Filter
         {filterLabelString !== "" && (
@@ -50,7 +50,7 @@ const Filter: React.FC<Props> = ({
           </>
         )}
       </StyledFilter>
-      <CloseOverlay onClick={() => setIsExpanded(false)} isExpanded={isExpanded} />
+      <CloseOverlay onClick={() => { setIsExpanded(false); }} isExpanded={isExpanded} />
       <Dropdown isExpanded={isExpanded}>
         {filters.map((filter: GenericFilter, i: number) => {
           return (

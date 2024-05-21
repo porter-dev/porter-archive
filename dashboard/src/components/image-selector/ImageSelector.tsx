@@ -5,7 +5,7 @@ import edit from "assets/edit.svg";
 
 import { integrationList } from "shared/common";
 import { Context } from "shared/Context";
-import { ImageType } from "shared/types";
+import { type ImageType } from "shared/types";
 
 import Loading from "../Loading";
 import ImageList from "./ImageList";
@@ -50,7 +50,7 @@ export default class ImageSelector extends Component<PropsType, StateType> {
   };
 
   renderImageList = () => {
-    let { images, loading, error } = this.state;
+    const { images, loading, error } = this.state;
 
     if (loading) {
       return (
@@ -66,9 +66,9 @@ export default class ImageSelector extends Component<PropsType, StateType> {
 
     return images.map((image: ImageType, i: number) => {
       let icon =
-        integrationList[image.kind] && integrationList[image.kind].icon;
+        integrationList[image.kind]?.icon;
       if (!icon) {
-        icon = integrationList["dockerhub"].icon;
+        icon = integrationList.dockerhub.icon;
       }
       return (
         <ImageItem
@@ -88,16 +88,15 @@ export default class ImageSelector extends Component<PropsType, StateType> {
   };
 
   renderSelected = () => {
-    let { selectedImageUrl, setSelectedImageUrl } = this.props;
-    let { clickedImage } = this.state;
+    const { selectedImageUrl, setSelectedImageUrl } = this.props;
+    const { clickedImage } = this.state;
     let icon = info;
     if (clickedImage) {
       icon = clickedImage.kind;
       icon =
-        integrationList[clickedImage.kind] &&
-        integrationList[clickedImage.kind].icon;
+        integrationList[clickedImage.kind]?.icon;
       if (!icon) {
-        icon = integrationList["dockerhub"].icon;
+        icon = integrationList.dockerhub.icon;
       }
     } else if (selectedImageUrl && selectedImageUrl !== "") {
       icon = edit;
@@ -151,7 +150,7 @@ export default class ImageSelector extends Component<PropsType, StateType> {
             setSelectedImageUrl={this.props.setSelectedImageUrl}
             setSelectedTag={this.props.setSelectedTag}
             setClickedImage={(x: ImageType) =>
-              this.setState({ clickedImage: x })
+              { this.setState({ clickedImage: x }); }
             }
             readOnly
           />
@@ -184,7 +183,7 @@ export default class ImageSelector extends Component<PropsType, StateType> {
             setSelectedImageUrl={this.props.setSelectedImageUrl}
             setSelectedTag={this.props.setSelectedTag}
             setClickedImage={(x: ImageType) =>
-              this.setState({ clickedImage: x })
+              { this.setState({ clickedImage: x }); }
             }
           />
         ) : null}

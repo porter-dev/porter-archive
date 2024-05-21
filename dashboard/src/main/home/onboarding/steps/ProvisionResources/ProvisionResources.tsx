@@ -141,7 +141,7 @@ const ProvisionResources: React.FC<{}> = () => {
           <SaveButton
             text="Continue"
             disabled={false}
-            onClick={() => handleContinue()}
+            onClick={() => { handleContinue(); }}
             makeFlush={true}
             clearPosition={true}
             statusPosition="right"

@@ -3,13 +3,13 @@ import styled from "styled-components";
 
 type PropsType = {
   label?: string;
-  options: { disabled?: boolean; value: string; label: string }[];
-  selected: { value: string; label: string }[];
-  setSelected: (x: { value: string; label: string }[]) => void;
+  options: Array<{ disabled?: boolean; value: string; label: string }>;
+  selected: Array<{ value: string; label: string }>;
+  setSelected: (x: Array<{ value: string; label: string }>) => void;
 };
 
 const CheckboxList = ({ label, options, selected, setSelected }: PropsType) => {
-  let onSelectOption = (option: { value: string; label: string }) => {
+  const onSelectOption = (option: { value: string; label: string }) => {
     const tmp = [...selected];
     if (!tmp.includes(option)) {
       setSelected([...tmp, option]);
@@ -26,7 +26,7 @@ const CheckboxList = ({ label, options, selected, setSelected }: PropsType) => {
         return (
           <CheckboxOption
             isLast={i === options.length - 1}
-            onClick={() => onSelectOption(option)}
+            onClick={() => { onSelectOption(option); }}
             key={i}
           >
             <Checkbox checked={selected.includes(option)}>

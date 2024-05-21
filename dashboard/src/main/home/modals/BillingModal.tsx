@@ -83,10 +83,10 @@ const BillingModal = ({
                 <Text
                   style={{ cursor: "pointer" }}
                   onClick={() =>
-                    showIntercomWithMessage({
+                    { showIntercomWithMessage({
                       message: "I have already redeemed my startup deal.",
                       delaySeconds: 0,
-                    })
+                    }); }
                   }
                 >
                   Already redeemed your startup deal?

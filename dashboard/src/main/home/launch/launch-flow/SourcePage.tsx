@@ -2,7 +2,7 @@ import React, { Component } from "react";
 import styled from "styled-components";
 
 import { Context } from "shared/Context";
-import { RouteComponentProps, withRouter } from "react-router";
+import { type RouteComponentProps, withRouter } from "react-router";
 import close from "assets/close.png";
 import { isAlphanumeric } from "shared/common";
 import { pushFiltered } from "shared/routing";
@@ -12,7 +12,7 @@ import Helper from "components/form-components/Helper";
 import ImageSelector from "components/image-selector/ImageSelector";
 import ActionConfEditor from "components/repo-selector/ActionConfEditor";
 import SaveButton from "components/SaveButton";
-import { ActionConfigType } from "shared/types";
+import { type ActionConfigType } from "shared/types";
 
 type PropsType = RouteComponentProps & {
   templateName: string;
@@ -62,8 +62,8 @@ const defaultActionConfig: ActionConfigType = {
 
 class SourcePage extends Component<PropsType, StateType> {
   renderSourceSelector = () => {
-    let { capabilities, setCurrentModal } = this.context;
-    let { sourceType, setSourceType, hasSource } = this.props;
+    const { capabilities, setCurrentModal } = this.context;
+    const { sourceType, setSourceType, hasSource } = this.props;
     console.log("GitHub:", capabilities.github);
     console.log("GitLab:", capabilities.gitlab);
     console.log("hasSource:", hasSource);
@@ -73,7 +73,7 @@ class SourcePage extends Component<PropsType, StateType> {
         <BlockList>
           {(capabilities.github || capabilities.gitlab) &&
             hasSource !== "registry-only" && (
-              <Block onClick={() => setSourceType("repo")}>
+              <Block onClick={() => { setSourceType("repo"); }}>
                 <BlockIcon src="https://git-scm.com/images/logos/downloads/Git-Icon-1788C.png" />
                 <BlockTitle>Git repository</BlockTitle>
                 <BlockDescription>
@@ -82,7 +82,7 @@ class SourcePage extends Component<PropsType, StateType> {
               </Block>
             )}
           {hasSource !== "repo-only" && (
-            <Block onClick={() => setSourceType("registry")}>
+            <Block onClick={() => { setSourceType("registry"); }}>
               <BlockIcon src="https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/97_Docker_logo_logos-512.png" />
               <BlockTitle>Docker registry</BlockTitle>
               <BlockDescription>
@@ -96,7 +96,7 @@ class SourcePage extends Component<PropsType, StateType> {
 
     // Display image selector
     if (sourceType === "registry") {
-      let { imageUrl, setImageUrl, imageTag, setImageTag } = this.props;
+      const { imageUrl, setImageUrl, imageTag, setImageTag } = this.props;
       return (
         <StyledSourceBox>
           <CloseButton
@@ -113,9 +113,9 @@ class SourcePage extends Component<PropsType, StateType> {
             template.
             <Highlight
               onClick={() =>
-                pushFiltered(this.props, "/integrations/registry", [
+                { pushFiltered(this.props, "/integrations/registry", [
                   "project_id",
-                ])
+                ]); }
               }
             >
               Manage Docker registries
@@ -136,7 +136,7 @@ class SourcePage extends Component<PropsType, StateType> {
     }
 
     // Display repo selector
-    let {
+    const {
       history,
       setValuesToOverride,
       setImageUrl,
@@ -226,13 +226,13 @@ class SourcePage extends Component<PropsType, StateType> {
   };
 
   checkSourceSelected = () => {
-    let { imageUrl, selectedRegistry } = this.props;
+    const { imageUrl, selectedRegistry } = this.props;
     return imageUrl || selectedRegistry;
   };
 
   // TODO: consolidate status w/ helper at button-level
   getButtonStatus = () => {
-    let { imageUrl, selectedRegistry, imageTag, templateName } = this.props;
+    const { imageUrl, selectedRegistry, imageTag, templateName } = this.props;
     if (!isAlphanumeric(templateName) && templateName !== "") {
       return "Name contains illegal characters";
     }
@@ -243,7 +243,7 @@ class SourcePage extends Component<PropsType, StateType> {
   };
 
   getButtonHelper = () => {
-    let { imageUrl, imageTag } = this.props;
+    const { imageUrl, imageTag } = this.props;
     if (imageUrl && !imageTag) {
       return 'Tag "latest" will be used by default';
     }
@@ -255,7 +255,7 @@ class SourcePage extends Component<PropsType, StateType> {
   };
 
   render() {
-    let { templateName, setTemplateName } = this.props;
+    const { templateName, setTemplateName } = this.props;
 
     return (
       <StyledSourcePage>

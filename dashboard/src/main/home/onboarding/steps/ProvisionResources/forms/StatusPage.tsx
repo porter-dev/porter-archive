@@ -2,7 +2,7 @@ import Loading from "components/Loading";
 import ProvisionerStatus from "components/ProvisionerStatus";
 import React, { useEffect, useRef, useState } from "react";
 import api from "shared/api";
-import { Infrastructure } from "shared/types";
+import { type Infrastructure } from "shared/types";
 import styled from "styled-components";
 
 type Props = {
@@ -71,7 +71,7 @@ export const StatusPage = ({
         new Date(latestSavedInfra.created_at).getTime()
       ) {
         infraMap.set(infra.kind, infra);
-        return;
+        
       }
     });
 
@@ -97,7 +97,7 @@ export const StatusPage = ({
       });
 
       // determine if all infras are in a final state, and if so report to parent
-      let inProgressInfras = newInfras.filter((newInfra) => {
+      const inProgressInfras = newInfras.filter((newInfra) => {
         if (newInfra.latest_operation) {
           return (
             newInfra.latest_operation.status != "completed" &&
@@ -112,7 +112,7 @@ export const StatusPage = ({
         );
       });
 
-      let erroredInfras = newInfras.filter((newInfra) => {
+      const erroredInfras = newInfras.filter((newInfra) => {
         if (newInfra.latest_operation) {
           return newInfra.latest_operation.errored;
         }
@@ -138,7 +138,7 @@ export const StatusPage = ({
 
   useEffect(() => {
     api
-      .getInfra<Infrastructure[]>("<token>", {}, { project_id: project_id })
+      .getInfra<Infrastructure[]>("<token>", {}, { project_id })
       .then(({ data }) => {
         const matchedInfras = data.filter(filterBySelectedInfras);
 

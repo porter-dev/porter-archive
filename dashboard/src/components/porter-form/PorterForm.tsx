@@ -1,22 +1,22 @@
 import React, { useContext } from "react";
 import {
-  ArrayInputField,
-  CheckboxField,
-  CronField,
-  FormField,
-  InjectedProps,
-  InputField,
-  KeyValueArrayField,
-  ResourceListField,
-  Section,
-  SelectField,
-  ServiceIPListField,
-  TextAreaField,
-  UrlLinkField,
-  DictionaryField,
-  DictionaryArrayField,
+  type ArrayInputField,
+  type CheckboxField,
+  type CronField,
+  type FormField,
+  type InjectedProps,
+  type InputField,
+  type KeyValueArrayField,
+  type ResourceListField,
+  type Section,
+  type SelectField,
+  type ServiceIPListField,
+  type TextAreaField,
+  type UrlLinkField,
+  type DictionaryField,
+  type DictionaryArrayField,
 } from "./types";
-import TabRegion, { TabOption } from "../TabRegion";
+import TabRegion, { type TabOption } from "../TabRegion";
 import Heading from "../form-components/Heading";
 import Helper from "../form-components/Helper";
 import Input from "./field-components/Input";
@@ -37,7 +37,7 @@ import Button from "components/porter/Button";
 import DictionaryArray from "./field-components/DictionaryArray";
 import Dictionary from "./field-components/Dictionary";
 
-interface Props {
+type Props = {
   leftTabOptions?: TabOption[];
   rightTabOptions?: TabOption[];
   renderTabContents?: (
@@ -135,7 +135,7 @@ const PorterForm: React.FC<Props> = (props) => {
   };
 
   const getTabOptions = (): TabOption[] => {
-    let options = (props.leftTabOptions || [])
+    const options = (props.leftTabOptions || [])
       .concat(
         formData?.tabs?.map((tab) => {
           if (props.isLaunch && tab?.settings?.omitFromLaunch) {

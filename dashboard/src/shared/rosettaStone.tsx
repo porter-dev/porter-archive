@@ -1,4 +1,4 @@
-export const kindToIcon: { [kind: string]: string } = {
+export const kindToIcon: Record<string, string> = {
   Deployment: "category",
   Pod: "fiber_manual_record",
   Service: "alt_route",
@@ -14,7 +14,7 @@ export const kindToIcon: { [kind: string]: string } = {
   PodSecurityPolicy: "security",
 };
 
-export const edgeColors: { [kind: string]: string } = {
+export const edgeColors: Record<string, string> = {
   LabelRel: "#32a85f",
   ControlRel: "#fcb603",
   SpecRel: "#949EFF",

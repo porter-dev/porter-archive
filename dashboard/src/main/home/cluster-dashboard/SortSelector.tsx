@@ -13,7 +13,7 @@ type PropsType = {
 };
 
 type StateType = {
-  sortOptions: { label: string; value: string }[];
+  sortOptions: Array<{ label: string; value: string }>;
 };
 
 // TODO: fix update to unmounted component
@@ -24,7 +24,7 @@ export default class SortSelector extends Component<PropsType, StateType> {
       { label: "Oldest", value: "Oldest" },
       { label: "Alphabetical", value: "Alphabetical" },
       { label: "Next Run", value: "Next Run" },
-    ] as { label: string; value: string }[],
+    ] as Array<{ label: string; value: string }>,
   };
 
   getSortOptions() {
@@ -49,7 +49,7 @@ export default class SortSelector extends Component<PropsType, StateType> {
       <StyledSortSelector>
         <RadioFilter
           selected={this.props.sortType}
-          setSelected={(sortType: any) => this.props.setSortType(sortType)}
+          setSelected={(sortType: any) => { this.props.setSortType(sortType); }}
           options={this.getSortOptions()}
           name="Sort"
           icon={sort}

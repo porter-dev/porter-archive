@@ -14,7 +14,7 @@ type Props = {
 };
 
 type StateType = {
-  namespaceOptions: { label: string; value: string }[];
+  namespaceOptions: Array<{ label: string; value: string }>;
 };
 
 // TODO: fix update to unmounted component
@@ -23,12 +23,12 @@ export const NamespaceSelector: React.FunctionComponent<Props> = ({
   namespace,
 }) => {
   const context = useContext(Context);
-  let _isMounted = true;
+  const _isMounted = true;
   const [namespaceOptions, setNamespaceOptions] = useState<
-    {
+    Array<{
       label: string;
       value: string;
-    }[]
+    }>
   >([]);
   const [defaultNamespace, setDefaultNamespace] = useState<string>(
     localStorage.getItem(
@@ -37,7 +37,7 @@ export const NamespaceSelector: React.FunctionComponent<Props> = ({
   );
 
   const updateOptions = () => {
-    let { currentCluster, currentProject } = context;
+    const { currentCluster, currentProject } = context;
 
     api
       .getNamespaces(
@@ -50,13 +50,13 @@ export const NamespaceSelector: React.FunctionComponent<Props> = ({
       )
       .then((res) => {
         if (_isMounted) {
-          let namespaceOptions: { label: string; value: string }[] = [
+          const namespaceOptions: Array<{ label: string; value: string }> = [
             // { label: "All", value: "ALL" },
           ];
 
           // Set namespace from URL if specified
-          let queryString = window.location.search;
-          let urlParams = new URLSearchParams(queryString);
+          const queryString = window.location.search;
+          const urlParams = new URLSearchParams(queryString);
           let urlNamespace = urlParams.get("namespace");
           if (urlNamespace === "ALL") {
             urlNamespace = "ALL";
@@ -105,8 +105,8 @@ export const NamespaceSelector: React.FunctionComponent<Props> = ({
   };
 
   useEffect(() => {
-    let urlParams = new URLSearchParams(window.location.search);
-    let urlNamespace = urlParams.get("namespace");
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlNamespace = urlParams.get("namespace");
     if (
       urlNamespace === "" ||
       defaultNamespace === "" ||

@@ -62,7 +62,7 @@ const EditCollaboratorModal = () => {
       );
       setStatus("successful");
       refetchCallerData().then(() => {
-        setTimeout(() => setCurrentModal(null, null), 500);
+        setTimeout(() => { setCurrentModal(null, null); }, 500);
       });
     } catch (error) {
       setStatus("error");
@@ -79,7 +79,7 @@ const EditCollaboratorModal = () => {
       );
       setStatus("successful");
       refetchCallerData().then(() => {
-        setTimeout(() => setCurrentModal(null, null), 500);
+        setTimeout(() => { setCurrentModal(null, null); }, 500);
       });
     } catch (error) {
       setStatus("error");
@@ -103,7 +103,7 @@ const EditCollaboratorModal = () => {
       <SaveButton
         text={`Update ${isInvite ? "invite" : "collaborator"}`}
         color="#616FEEcc"
-        onClick={() => handleUpdate()}
+        onClick={() => { handleUpdate(); }}
         status={status}
       />
     </>

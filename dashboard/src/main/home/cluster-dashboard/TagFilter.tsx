@@ -40,7 +40,7 @@ const TagFilter = ({ onSelect }: { onSelect: (tag: any) => void }) => {
           label: tag.name,
         }))
       )}
-      setSelected={(newVal: any) => setSelectedTag(newVal)}
+      setSelected={(newVal: any) => { setSelectedTag(newVal); }}
       name="Tag"
       icon={tag}
     />

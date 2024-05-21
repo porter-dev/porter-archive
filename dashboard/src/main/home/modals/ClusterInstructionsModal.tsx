@@ -66,19 +66,19 @@ export default class ClusterInstructionsModal extends Component<
           </Placeholder>
         );
       default:
-        return;
+        
     }
   };
 
   render() {
-    let { currentPage, currentTab } = this.state;
+    const { currentPage, currentTab } = this.state;
     return (
       <>
         <TabSelector
           options={tabOptions}
           currentTab={currentTab}
           setCurrentTab={(value: string) =>
-            this.setState({ currentTab: value })
+            { this.setState({ currentTab: value }); }
           }
         />
 
@@ -88,9 +88,9 @@ export default class ClusterInstructionsModal extends Component<
           <i
             className="material-icons"
             onClick={() =>
-              currentPage > 0
+              { currentPage > 0
                 ? this.setState({ currentPage: currentPage - 1 })
-                : null
+                : null; }
             }
           >
             arrow_back
@@ -98,9 +98,9 @@ export default class ClusterInstructionsModal extends Component<
           <i
             className="material-icons"
             onClick={() =>
-              currentPage < 1
+              { currentPage < 1
                 ? this.setState({ currentPage: currentPage + 1 })
-                : null
+                : null; }
             }
           >
             arrow_forward

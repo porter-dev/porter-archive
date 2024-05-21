@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import Button from "./Button";
 import styled from "styled-components";
 
-interface Props {
+type Props = {
   setSearchFilter: (x: string) => void;
   disabled: boolean;
   prompt?: string;
@@ -47,7 +47,7 @@ const SearchBar: React.FC<Props> = ({
       </SearchBarWrapper>
       <ButtonWrapper disabled={disabled}>
         <Button
-          onClick={() => setSearchFilter(searchInput)}
+          onClick={() => { setSearchFilter(searchInput); }}
           disabled={disabled}
         >
           Search

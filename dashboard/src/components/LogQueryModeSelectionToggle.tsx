@@ -4,7 +4,7 @@ import time from "assets/time.svg";
 import React from "react";
 import styled from "styled-components";
 
-interface LogQueryModeSelectionToggleProps {
+type LogQueryModeSelectionToggleProps = {
   selectedDate?: Date;
   setSelectedDate: (date?: Date) => void;
 }
@@ -32,7 +32,7 @@ const LogQueryModeSelectionToggle = (
         </ToggleOption>
         <ToggleOption
           nudgeLeft
-          onClick={() => props.setSelectedDate(dayjs().toDate())}
+          onClick={() => { props.setSelectedDate(dayjs().toDate()); }}
           selected={!!props.selectedDate}
         >
           <TimeIcon src={time} selected={!!props.selectedDate} />

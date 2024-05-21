@@ -5,7 +5,7 @@ import _, { cloneDeep } from "lodash";
 import loadingSrc from "assets/loading.gif";
 import leftArrow from "assets/left-arrow.svg";
 
-import { ChartType, ClusterType, ResourceType } from "shared/types";
+import { type ChartType, type ClusterType, type ResourceType } from "shared/types";
 import { Context } from "shared/Context";
 import api from "shared/api";
 import StatusIndicator from "components/StatusIndicator";
@@ -14,7 +14,7 @@ import RevisionSection from "./RevisionSection";
 import ValuesYaml from "./ValuesYaml";
 import GraphSection from "./GraphSection";
 import MetricsSection from "./metrics/MetricsSection";
-import LogsSection, { InitLogData } from "./logs-section/LogsSection";
+import LogsSection, { type InitLogData } from "./logs-section/LogsSection";
 import ListSection from "./ListSection";
 import StatusSection from "./status/StatusSection";
 import SettingsSection from "./SettingsSection";
@@ -147,7 +147,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
 
     setCurrentChart(updatedChart);
 
-    updateComponents(updatedChart).finally(() => setIsLoadingChartData(false));
+    updateComponents(updatedChart).finally(() => { setIsLoadingChartData(false); });
   };
 
   const getControllers = async (chart: ChartType) => {
@@ -176,7 +176,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
         }));
       });
 
-      return;
+      
     } catch (error) {
       if (typeof error !== "string") {
         setCurrentError(JSON.stringify(error));
@@ -275,8 +275,8 @@ const ExpandedChart: React.FC<Props> = (props) => {
     const addedEnvGroups = syncedEnvGroups?.added || [];
 
     const addApplicationToEnvGroupPromises = addedEnvGroups.map(
-      (envGroup: any) => {
-        return api.addApplicationToEnvGroup(
+      async (envGroup: any) => {
+        return await api.addApplicationToEnvGroup(
           "<token>",
           {
             name: envGroup?.name,
@@ -300,8 +300,8 @@ const ExpandedChart: React.FC<Props> = (props) => {
     }
 
     const removeApplicationToEnvGroupPromises = deletedEnvGroups.map(
-      (envGroup: any) => {
-        return api.removeApplicationFromEnvGroup(
+      async (envGroup: any) => {
+        return await api.removeApplicationFromEnvGroup(
           "<token>",
           {
             name: envGroup?.name,
@@ -368,7 +368,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
         error: err,
       });
 
-      return;
+      
     }
   };
 
@@ -389,7 +389,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
           "<token>",
           {
             values: valuesYaml,
-            version: version,
+            version,
             latest_revision: currentChart.version,
           },
           {
@@ -472,8 +472,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
                   <Spinner src={loadingSrc} /> This application is currently
                   being deployed
                 </Header>
-                {props.currentChart.git_action_config &&
-                  props.currentChart.git_action_config.gitlab_integration_id ? (
+                {props.currentChart.git_action_config?.gitlab_integration_id ? (
                   <>
                     Navigate to the{" "}
                     <A
@@ -503,7 +502,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
           return (
             <StatusSection
               currentChart={chart}
-              setFullScreenLogs={() => setFullScreenLogs(true)}
+              setFullScreenLogs={() => { setFullScreenLogs(true); }}
             />
           );
         }
@@ -511,13 +510,13 @@ const ExpandedChart: React.FC<Props> = (props) => {
         return (
           <SettingsSection
             currentChart={chart}
-            refreshChart={() => getChartData(currentChart)}
+            refreshChart={async () => { await getChartData(currentChart); }}
             setShowDeleteOverlay={(x: boolean) => {
               if (x) {
                 setCurrentOverlay({
                   message: `Are you sure you want to delete ${currentChart.name}?`,
                   onYes: handleUninstallChart,
-                  onNo: () => setCurrentOverlay(null),
+                  onNo: () => { setCurrentOverlay(null); },
                 });
               } else {
                 setCurrentOverlay(null);
@@ -548,7 +547,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
         return (
           <ValuesYaml
             currentChart={chart}
-            refreshChart={() => getChartData(currentChart)}
+            refreshChart={async () => { await getChartData(currentChart); }}
             disabled={!isAuthorized("application", "", ["get", "update"])}
           />
         );
@@ -627,7 +626,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
 
   const setRevision = (chart: ChartType, isCurrent?: boolean) => {
     // if we've set the revision, we also override the revision in log data
-    let newLogData = logData;
+    const newLogData = logData;
 
     newLogData.revision = `${chart.version}`;
 
@@ -647,7 +646,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
       return (
         <Url>
           <i className="material-icons">link</i>
-          <a href={url} target="_blank">
+          <a href={url} target="_blank" rel="noreferrer">
             {url}
           </a>
         </Url>
@@ -692,8 +691,8 @@ const ExpandedChart: React.FC<Props> = (props) => {
     setCurrentOverlay(null);
     const syncedEnvGroups = currentChart.config?.container?.env?.synced || [];
     const removeApplicationToEnvGroupPromises = syncedEnvGroups.map(
-      (envGroup: any) => {
-        return api.removeApplicationFromEnvGroup(
+      async (envGroup: any) => {
+        return await api.removeApplicationFromEnvGroup(
           "<token>",
           {
             name: envGroup?.name,
@@ -847,7 +846,6 @@ const ExpandedChart: React.FC<Props> = (props) => {
       (c) =>
         c.Kind === "Ingress" ||
         (c.Kind === "Gateway" &&
-          c.RawYAML?.apiVersion &&
           c.RawYAML?.apiVersion?.startsWith("networking.istio.io"))
     );
 
@@ -870,7 +868,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
         if (!isSubscribed) {
           return;
         }
-        if (res.data?.spec?.rules && res.data?.spec?.rules[0]?.host) {
+        if (res.data?.spec?.rules?.[0]?.host) {
           setUrl(`https://${res.data?.spec?.rules[0]?.host}`);
           return;
         }
@@ -883,12 +881,10 @@ const ExpandedChart: React.FC<Props> = (props) => {
         }
 
         if (
-          res.data?.spec?.servers &&
-          res.data?.spec?.servers[0]?.hosts &&
-          res.data?.spec?.servers[0]?.hosts[0]
+          res.data?.spec?.servers?.[0]?.hosts?.[0]
         ) {
           setUrl(`http://${res.data?.spec?.servers[0]?.hosts[0]}`);
-          return;
+          
         }
       })
       .catch(console.log);
@@ -902,7 +898,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
         <StatusSection
           fullscreen={true}
           currentChart={currentChart}
-          setFullScreenLogs={() => setFullScreenLogs(false)}
+          setFullScreenLogs={() => { setFullScreenLogs(false); }}
         />
       ) : (
         <>
@@ -990,10 +986,10 @@ const ExpandedChart: React.FC<Props> = (props) => {
                       setShowRevisions(!showRevisions);
                     }}
                     chart={currentChart}
-                    refreshChart={() => getChartData(currentChart)}
+                    refreshChart={async () => { await getChartData(currentChart); }}
                     setRevision={setRevision}
                     forceRefreshRevisions={forceRefreshRevisions}
-                    refreshRevisionsOff={() => setForceRefreshRevisions(false)}
+                    refreshRevisionsOff={() => { setForceRefreshRevisions(false); }}
                     shouldUpdate={
                       currentChart.latest_version &&
                       currentChart.latest_version !==

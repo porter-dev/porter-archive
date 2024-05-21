@@ -20,7 +20,7 @@ export const Routes = () => {
         <Switch>
           <Route path={`/onboarding/source/${currentProject}`}>
             <ConnectSource
-              onSuccess={(data) => OFState.actions.nextStep("continue", data)}
+              onSuccess={(data) => { OFState.actions.nextStep("continue", data); }}
             />
           </Route>
           <Route path={["/onboarding/registry/:step?"]}>

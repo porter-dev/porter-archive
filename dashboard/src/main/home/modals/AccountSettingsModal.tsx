@@ -13,7 +13,7 @@ import TabSelector from "components/TabSelector";
 import Link from "components/porter/Link";
 import Spacer from "components/porter/Spacer";
 
-interface GithubAppAccessData {
+type GithubAppAccessData = {
   username?: string;
   accounts?: string[];
 }
@@ -46,7 +46,7 @@ const AccountSettingsModal = () => {
       <TabSelector
         options={tabOptions}
         currentTab={currentTab}
-        setCurrentTab={(value: string) => setCurrentTab(value)}
+        setCurrentTab={(value: string) => { setCurrentTab(value); }}
       />
 
       <Heading>

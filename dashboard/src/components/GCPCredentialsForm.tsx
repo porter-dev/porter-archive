@@ -41,7 +41,7 @@ const GCPCredentialsForm: React.FC<Props> = ({ goBack, proceed }) => {
     gcpIntegration()
 
   }, [detected])
-  interface FailureState {
+  type FailureState = {
     condition: boolean;
     errorMessage: string;
   }
@@ -167,7 +167,7 @@ const GCPCredentialsForm: React.FC<Props> = ({ goBack, proceed }) => {
             <Text size={16}>Upload service account credentials</Text>
             <Spacer y={1} />
             <UploadArea
-              setValue={(x: string) => handleLoadJSON(x)}
+              setValue={(x: string) => { handleLoadJSON(x); }}
               label="🔒 GCP Key Data (JSON)"
               placeholder="Drag a GCP Service Account JSON here, or click to browse."
               width="100%"

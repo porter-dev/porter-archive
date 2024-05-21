@@ -4,14 +4,12 @@ import styled from "styled-components";
 import Banner from "components/porter/Banner";
 
 import { Context } from "shared/Context";
-import { Usage, UsageData } from "shared/types";
+import { type Usage, type UsageData } from "shared/types";
 import { Link } from "react-router-dom";
 
 type UsageKeys = keyof Usage;
 
-const ReadableNameMap: {
-  [key: string]: string;
-} = {
+const ReadableNameMap: Record<string, string> = {
   resource_cpu: "CPU Usage",
   resource_memory: "Memory Usage",
   clusters: "Clusters",
@@ -47,7 +45,7 @@ const getRemainingDays = (date: string) => {
   const end = new Date(date);
   end.setDate(end.getDate() + 7);
 
-  let distance = end.getTime() - start.getTime();
+  const distance = end.getTime() - start.getTime();
 
   if (distance < 0) {
     return;
@@ -106,7 +104,7 @@ const UpgradeChartModal: React.FC<{}> = () => {
       </Helper>
       <Helper>
         Have a question about billing? Email us at{" "}
-        <a target="_blank" href="mailto:contact@porter.run">
+        <a target="_blank" href="mailto:contact@porter.run" rel="noreferrer">
           contact@porter.run
         </a>
         .
@@ -117,7 +115,7 @@ const UpgradeChartModal: React.FC<{}> = () => {
           pathname: "/project-settings",
           search: "?selected_tab=billing",
         }}
-        onClick={() => setCurrentModal(null, null)}
+        onClick={() => { setCurrentModal(null, null); }}
       >
         Take me to billing
       </Button>

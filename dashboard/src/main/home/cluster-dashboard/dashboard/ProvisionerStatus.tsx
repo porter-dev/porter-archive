@@ -76,7 +76,7 @@ const ProvisionerStatus: React.FC<Props> = ( props ) => {
       PROVISIONING_STATUS_POLL_INTERVAL
     );
     pollProvisioningAndClusterStatus();
-    return () => clearInterval(intervalId);
+    return () => { clearInterval(intervalId); };
   }, []);
 
   useEffect(() => {

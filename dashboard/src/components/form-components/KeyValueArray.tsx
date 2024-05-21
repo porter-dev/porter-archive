@@ -40,7 +40,7 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
   };
 
   componentDidMount() {
-    let arr = [] as any[];
+    const arr = [] as any[];
     if (this.props.values) {
       Object.keys(this.props.values).forEach((key: string, i: number) => {
         arr.push({ key, value: this.props.values[key] });
@@ -50,7 +50,7 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
   }
 
   valuesToObject = () => {
-    let obj = {} as any;
+    const obj = {} as any;
     const rg = /(?:^|[^\\])(\\n)/g;
     const fixNewlines = (s: string) => {
       while (rg.test(s)) {
@@ -87,7 +87,7 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
             this.state.values.splice(i, 1);
             this.setState({ values: this.state.values });
 
-            let obj = this.valuesToObject();
+            const obj = this.valuesToObject();
             this.props.setValues(obj);
           }}
         >
@@ -129,7 +129,7 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
                   this.state.values[i].key = e.target.value;
                   this.setState({ values: this.state.values });
 
-                  let obj = this.valuesToObject();
+                  const obj = this.valuesToObject();
                   this.props.setValues(obj);
                 }}
                 disabled={
@@ -156,7 +156,7 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
                     this.state.values[i].value = e.target.value;
                     this.setState({ values: this.state.values });
 
-                    let obj = this.valuesToObject();
+                    const obj = this.valuesToObject();
                     this.props.setValues(obj);
                   }}
                   disabled={
@@ -179,7 +179,7 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
     if (this.state.showEnvModal) {
       return (
         <Modal
-          onRequestClose={() => this.setState({ showEnvModal: false })}
+          onRequestClose={() => { this.setState({ showEnvModal: false }); }}
           width="765px"
           height="542px"
         >
@@ -187,7 +187,7 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
             existingValues={this.props.values}
             namespace={this.props.externalValues?.namespace}
             clusterId={this.props.externalValues?.clusterId}
-            closeModal={() => this.setState({ showEnvModal: false })}
+            closeModal={() => { this.setState({ showEnvModal: false }); }}
             setValues={(values) => {
               const newValues = { ...this.props.values, ...values };
               this.props.setValues(newValues);
@@ -204,13 +204,13 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
     if (this.state.showEditorModal) {
       return (
         <Modal
-          onRequestClose={() => this.setState({ showEditorModal: false })}
+          onRequestClose={() => { this.setState({ showEditorModal: false }); }}
           width="60%"
           height="80%"
         >
           <EnvEditorModal
-            closeModal={() => this.setState({ showEditorModal: false })}
-            setEnvVariables={(envFile: string) => this.readFile(envFile)}
+            closeModal={() => { this.setState({ showEditorModal: false }); }}
+            setEnvVariables={(envFile: string) => { this.readFile(envFile); }}
           />
         </Modal>
       );
@@ -218,14 +218,14 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
   };
 
   readFile = (env: string) => {
-    let envObj = dotenv_parse(env);
+    const envObj = dotenv_parse(env);
     let push = true;
 
-    for (let key in envObj) {
-      for (var i = 0; i < this.state.values.length; i++) {
-        let existingKey = this.state.values[i]["key"];
+    for (const key in envObj) {
+      for (let i = 0; i < this.state.values.length; i++) {
+        const existingKey = this.state.values[i].key;
         if (key === existingKey) {
-          this.state.values[i]["value"] = envObj[key];
+          this.state.values[i].value = envObj[key];
           push = false;
         }
       }
@@ -236,7 +236,7 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
     }
 
     this.setState({ values: this.state.values }, () => {
-      let obj = this.valuesToObject();
+      const obj = this.valuesToObject();
       this.props.setValues(obj);
     });
   };
@@ -263,7 +263,7 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
               {this.props.externalValues?.namespace && this.props.envLoader && (
                 <LoadButton
                   onClick={() =>
-                    this.setState({ showEnvModal: !this.state.showEnvModal })
+                    { this.setState({ showEnvModal: !this.state.showEnvModal }); }
                   }
                 >
                   <img src={sliders} /> Load from Env Group

@@ -11,9 +11,9 @@ import { timeFormat } from "d3-time-format";
 
 import { ColorTheme } from "./utils";
 import { default as areaTheme } from "./themes/area";
-import { NormalizedNginxStatusMetricsData } from "../../../cluster-dashboard/expanded-chart/metrics/types";
+import { type NormalizedNginxStatusMetricsData } from "../../../cluster-dashboard/expanded-chart/metrics/types";
 
-var globalData: NormalizedNginxStatusMetricsData[];
+let globalData: NormalizedNginxStatusMetricsData[];
 
 // util
 const formatDate = timeFormat("%H:%M:%S %b %d, '%y");
@@ -25,7 +25,7 @@ const dateScaleConfig = { type: 'point' } as const;
 const yScaleConfig = { type: 'linear' } as const;
 
 // map resolutions to formats
-const formats: { [range: string]: (date: Date) => string } = {
+const formats: Record<string, (date: Date) => string> = {
     "1H": hourFormat,
     "6H": hourFormat,
     "1D": hourFormat,

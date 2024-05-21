@@ -4,7 +4,7 @@ import styled from "styled-components";
 import api from "shared/api";
 import { integrationList } from "shared/common";
 import { Context } from "shared/Context";
-import { ImageType } from "shared/types";
+import { type ImageType } from "shared/types";
 
 import Loading from "../Loading";
 import TagList from "./TagList";
@@ -51,14 +51,14 @@ export default class ImageList extends Component<PropsType, StateType> {
   // TODO: Try to unhook before unmount
   componentDidMount() {
     const { currentProject, setCurrentError } = this.context;
-    let images = [] as ImageType[];
-    let errors = [] as number[];
+    const images = [] as ImageType[];
+    const errors = [] as number[];
 
     if (!this.props.registry) {
       api
         .getProjectRegistries("<token>", {}, { id: currentProject?.id })
         .then((res) => {
-          let registries = res.data;
+          const registries = res.data;
           if (registries.length === 0) {
             this.setState({ loading: false });
           }
@@ -81,7 +81,7 @@ export default class ImageList extends Component<PropsType, StateType> {
                       a.name > b.name ? 1 : -1
                     );
                     // Loop over found image repositories
-                    let newImg = res.data.map((img: any) => {
+                    const newImg = res.data.map((img: any) => {
                       if (this.props.selectedImageUrl === img.uri) {
                         this.props.setClickedImage({
                           kind: registry.service,
@@ -103,12 +103,10 @@ export default class ImageList extends Component<PropsType, StateType> {
                   .catch((err) => errors.push(1))
                   .finally(() => {
                     if (i == registries.length - 1) {
-                      let error =
+                      const error =
                         errors.reduce((a, b) => {
                           return a + b;
-                        }) == registries.length
-                          ? true
-                          : false;
+                        }) == registries.length;
 
                       this.setState({
                         images,
@@ -143,7 +141,7 @@ export default class ImageList extends Component<PropsType, StateType> {
         .then((res) => {
           res.data.sort((a: any, b: any) => (a.name > b.name ? 1 : -1));
           // Loop over found image repositories
-          let newImg = res.data.map((img: any) => {
+          const newImg = res.data.map((img: any) => {
             if (this.props.selectedImageUrl === img.uri) {
               this.props.setClickedImage({
                 kind: this.props.registry.service,
@@ -168,16 +166,16 @@ export default class ImageList extends Component<PropsType, StateType> {
           });
         })
         .catch((err) =>
-          this.setState({
+          { this.setState({
             loading: false,
             error: true,
-          })
+          }); }
         );
     }
   }
 
   renderImageList = () => {
-    let { images, loading, error } = this.state;
+    const { images, loading, error } = this.state;
 
     if (loading) {
       return (
@@ -193,9 +191,9 @@ export default class ImageList extends Component<PropsType, StateType> {
 
     return images.map((image: ImageType, i: number) => {
       let icon =
-        integrationList[image.kind] && integrationList[image.kind].icon;
+        integrationList[image.kind]?.icon;
       if (!icon) {
-        icon = integrationList["dockerhub"].icon;
+        icon = integrationList.dockerhub.icon;
       }
       return (
         <ImageItem
@@ -215,7 +213,7 @@ export default class ImageList extends Component<PropsType, StateType> {
   };
 
   renderBackButton = () => {
-    let { setSelectedImageUrl, clickedImage, disableImageSelect } = this.props;
+    const { setSelectedImageUrl, clickedImage, disableImageSelect } = this.props;
     if (clickedImage && !disableImageSelect) {
       return (
         <BackButton
@@ -233,7 +231,7 @@ export default class ImageList extends Component<PropsType, StateType> {
   };
 
   renderExpanded = () => {
-    let { selectedTag, selectedImageUrl, setSelectedTag } = this.props;
+    const { selectedTag, selectedImageUrl, setSelectedTag } = this.props;
 
     if (this.props.readOnly && this.props.clickedImage) {
       return (

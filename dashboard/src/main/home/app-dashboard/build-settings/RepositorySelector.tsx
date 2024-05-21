@@ -3,14 +3,14 @@ import styled from "styled-components";
 import github from "assets/github-white.png";
 
 import api from "shared/api";
-import { RepoType } from "shared/types";
+import { type RepoType } from "shared/types";
 import { Context } from "shared/Context";
 
 import DynamicLink from "components/DynamicLink";
 import Loading from "components/Loading";
 import SearchBar from "components/SearchBar";
 import ProviderSelector from "./ProviderSelector";
-import { PorterApp } from "../types/porterApp";
+import { type PorterApp } from "../types/porterApp";
 
 type Props = {
   readOnly: boolean;
@@ -89,7 +89,7 @@ const RepositorySelector: React.FC<Props> = ({
   const loadGithubRepos = async (repoId: number) => {
     try {
       const res = await api.getGitRepoList<
-        { FullName: string; Kind: "github" }[]
+        Array<{ FullName: string; Kind: "github" }>
       >("<token>", {}, { project_id: currentProject.id, git_repo_id: repoId });
 
       const repos = res.data.map((repo) => ({ ...repo, GHRepoID: repoId }));
@@ -97,8 +97,8 @@ const RepositorySelector: React.FC<Props> = ({
     } catch (error) { }
   };
 
-  const loadRepos = (provider: any) => {
-    return loadGithubRepos(provider.installation_id);
+  const loadRepos = async (provider: any) => {
+    return await loadGithubRepos(provider.installation_id);
   };
 
   useEffect(() => {
@@ -169,7 +169,7 @@ const RepositorySelector: React.FC<Props> = ({
     }
 
     // show 10 most recently used repos if user hasn't searched anything yet
-    let results =
+    const results =
       searchFilter != null
         ? repos
           .filter((repo: RepoType) => {
@@ -197,7 +197,7 @@ const RepositorySelector: React.FC<Props> = ({
             key={i}
             isSelected={repo.FullName === git_repo_name}
             lastItem={i === repos.length - 1}
-            onClick={() => setRepo(repo)}
+            onClick={() => { setRepo(repo); }}
             readOnly={readOnly}
             disabled={false}
           >

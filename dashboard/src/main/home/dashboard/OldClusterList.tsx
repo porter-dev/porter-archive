@@ -3,11 +3,11 @@ import styled from "styled-components";
 
 import { Context } from "shared/Context";
 import api from "shared/api";
-import { ClusterType, DetailedClusterType } from "shared/types";
+import { type ClusterType, type DetailedClusterType } from "shared/types";
 import Helper from "components/form-components/Helper";
 import { pushFiltered } from "shared/routing";
 
-import { RouteComponentProps, withRouter } from "react-router";
+import { type RouteComponentProps, withRouter } from "react-router";
 
 import Modal from "../modals/Modal";
 import Heading from "components/form-components/Heading";
@@ -155,7 +155,7 @@ class Templates extends Component<PropsType, StateType> {
       <>
         {clusterError && (
           <Modal
-            onRequestClose={() => this.setState({ showErrorModal: undefined })}
+            onRequestClose={() => { this.setState({ showErrorModal: undefined }); }}
             width="665px"
             height="min-content"
           >

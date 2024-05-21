@@ -14,11 +14,11 @@ import { localPoint } from "@visx/event";
 import { LinearGradient } from "@visx/gradient";
 import { bisector, extent, max } from "d3-array";
 import { timeFormat } from "d3-time-format";
-import { NormalizedMetricsData } from "../../../cluster-dashboard/expanded-chart/metrics/types";
+import { type NormalizedMetricsData } from "../../../cluster-dashboard/expanded-chart/metrics/types";
 import { AggregatedDataColors } from "../../../cluster-dashboard/expanded-chart/metrics/utils";
 import { ColorTheme } from "./utils";
 
-var globalData: NormalizedMetricsData[];
+let globalData: NormalizedMetricsData[];
 
 // util
 const formatDate = timeFormat("%H:%M:%S %b %d, '%y");
@@ -27,7 +27,7 @@ const hourFormat = timeFormat("%H:%M");
 const dayFormat = timeFormat("%b %d");
 
 // map resolutions to formats
-const formats: { [range: string]: (date: Date) => string } = {
+const formats: Record<string, (date: Date) => string> = {
     "1H": hourFormat,
     "6H": hourFormat,
     "1D": hourFormat,
@@ -122,8 +122,8 @@ const AreaChart: React.FunctionComponent<AreaProps> = ({
     );
 
     const getAggregatedDataTooltip = (x0: Date) => {
-        let aggregatedTooltipData: Record<string, NormalizedMetricsData> = {};
-        for (let [key, values] of Object.entries(aggregatedData)) {
+        const aggregatedTooltipData: Record<string, NormalizedMetricsData> = {};
+        for (const [key, values] of Object.entries(aggregatedData)) {
             const index = bisectDate(values, x0, 1);
             const d0 = values[index - 1];
             const d1 = values[index];
@@ -198,9 +198,9 @@ const AreaChart: React.FunctionComponent<AreaProps> = ({
             const container: SVGSVGElement = svgContainer.current;
 
             let point = container.createSVGPoint();
-            // @ts-ignore
+            // @ts-expect-error
             point.x = (event as any)?.clientX || 0;
-            // @ts-ignore
+            // @ts-expect-error
             point.y = (event as any)?.clientY || 0;
             point = point?.matrixTransform(container.getScreenCTM().inverse());
 
@@ -364,7 +364,7 @@ const AreaChart: React.FunctionComponent<AreaProps> = ({
                     onTouchStart={handleTooltip}
                     onTouchMove={handleTooltip}
                     onMouseMove={handleTooltip}
-                    onMouseLeave={() => hideTooltip()}
+                    onMouseLeave={() => { hideTooltip(); }}
                 />
                 {tooltipData && (
                     <g>

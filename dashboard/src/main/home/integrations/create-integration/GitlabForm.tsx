@@ -45,7 +45,7 @@ const GitlabForm: React.FC<Props> = () => {
       return;
     }
 
-    if (!clientId || !clientId.trim().length) {
+    if (!clientId?.trim().length) {
       setError({
         message: "Invalid Client ID",
         input: "client_id",
@@ -53,7 +53,7 @@ const GitlabForm: React.FC<Props> = () => {
       return;
     }
 
-    if (!clientSecret || !clientSecret.trim().length) {
+    if (!clientSecret?.trim().length) {
       setError({
         message: "Invalid Client Secret",
         input: "client_secret",
@@ -97,7 +97,7 @@ const GitlabForm: React.FC<Props> = () => {
             type="string"
             label="Instance URL"
             value={instanceUrl}
-            setValue={(val: string) => setInstanceUrl(val)}
+            setValue={(val: string) => { setInstanceUrl(val); }}
             isRequired
             width="100%"
             hasError={error?.input === "instance_url"}
@@ -106,7 +106,7 @@ const GitlabForm: React.FC<Props> = () => {
             type="string"
             label="Client Application ID"
             value={clientId}
-            setValue={(val: string) => setClientId(val)}
+            setValue={(val: string) => { setClientId(val); }}
             isRequired
             width="100%"
             hasError={error?.input === "client_id"}
@@ -115,7 +115,7 @@ const GitlabForm: React.FC<Props> = () => {
             type="string"
             label="Client Secret"
             value={clientSecret}
-            setValue={(val: string) => setClientSecret(val)}
+            setValue={(val: string) => { setClientSecret(val); }}
             isRequired
             width="100%"
             hasError={error?.input === "client_secret"}

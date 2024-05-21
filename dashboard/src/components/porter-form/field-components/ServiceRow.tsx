@@ -20,7 +20,7 @@ const getIcon = (type: string) => {
   if (hardcodedIcons[type]) {
     return hardcodedIcons[type];
   }
-  return hardcodedIcons["web"];
+  return hardcodedIcons.web;
 }
 
 export default class ServiceRow extends Component<PropsType, StateType> {

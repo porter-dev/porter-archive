@@ -19,7 +19,7 @@ import SaveButton from "components/SaveButton";
 import { APIToken } from "../APITokensSection";
 import CheckboxList from "components/form-components/CheckboxList";
 import { PolicyDocType } from "shared/auth/types";
-import { ScopeOption } from "./CreateAPITokenForm";
+import { type ScopeOption } from "./CreateAPITokenForm";
 
 type Props = {
   selectedClusterFields: ScopeOption[];
@@ -94,7 +94,7 @@ const CustomPolicyForm: React.FunctionComponent<Props> = ({
       <InputRow
         value={policyName}
         type="text"
-        setValue={(newName: string) => setPolicyName(newName)}
+        setValue={(newName: string) => { setPolicyName(newName); }}
         label="Role Name"
         width="100%"
         placeholder="ex: custom-developer-role"

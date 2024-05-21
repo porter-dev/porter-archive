@@ -56,7 +56,7 @@ const SearchBar: React.FC<Props> = ({
         <Icon src={search} />
         <Input
           value={value}
-          onChange={e => setValue(e.target.value)}
+          onChange={e => { setValue(e.target.value); }}
           placeholder={placeholder}
           type={type || "text"}
           autoFocus={autoFocus}

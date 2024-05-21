@@ -6,7 +6,7 @@ import Loading from "components/Loading";
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import api from "shared/api";
 import { Context } from "shared/Context";
-import { ActionConfigType } from "shared/types";
+import { type ActionConfigType } from "shared/types";
 import styled, { keyframes } from "styled-components";
 
 const DEFAULT_BUILDER_NAME = "heroku";
@@ -16,17 +16,13 @@ const DEFAULT_HEROKU_STACK = "heroku/buildpacks:20";
 type BuildConfig = {
   builder: string;
   buildpacks: string[];
-  config: null | {
-    [key: string]: string;
-  };
+  config: null | Record<string, string>;
 };
 
 type Buildpack = {
   name: string;
   buildpack: string;
-  config: {
-    [key: string]: string;
-  };
+  config: Record<string, string>;
 };
 
 type DetectedBuildpack = {
@@ -59,7 +55,7 @@ export const BuildpackSelection: React.FC<{
   );
 
   useEffect(() => {
-    let buildConfig: BuildConfig = {} as BuildConfig;
+    const buildConfig: BuildConfig = {} as BuildConfig;
     buildConfig.builder = selectedStack;
     buildConfig.buildpacks = selectedBuildpacks?.map((buildpack) => {
       return buildpack.buildpack;
@@ -69,13 +65,13 @@ export const BuildpackSelection: React.FC<{
     }
   }, [selectedBuilder, selectedStack, selectedBuildpacks]);
 
-  const detectBuildpack = () => {
+  const detectBuildpack = async () => {
     if (actionConfig.kind === "gitlab") {
-      return api.detectGitlabBuildpack<DetectBuildpackResponse>(
+      return await api.detectGitlabBuildpack<DetectBuildpackResponse>(
         "<token>",
         {
           repo_path: actionConfig.git_repo,
-          branch: branch,
+          branch,
           dir: folderPath || ".",
         },
         {
@@ -85,7 +81,7 @@ export const BuildpackSelection: React.FC<{
       );
     }
 
-    return api.detectBuildpack<DetectBuildpackResponse>(
+    return await api.detectBuildpack<DetectBuildpackResponse>(
       "<token>",
       {
         dir: folderPath || ".",
@@ -96,7 +92,7 @@ export const BuildpackSelection: React.FC<{
         kind: "github",
         owner: actionConfig.git_repo.split("/")[0],
         name: actionConfig.git_repo.split("/")[1],
-        branch: branch,
+        branch,
       }
     );
   };
@@ -219,14 +215,14 @@ export const BuildpackSelection: React.FC<{
           <ActionContainer>
             {action === "add" && (
               <ActionButton
-                onClick={() => handleAddBuildpack(buildpack.buildpack)}
+                onClick={() => { handleAddBuildpack(buildpack.buildpack); }}
               >
                 <span className="material-icons-outlined">add</span>
               </ActionButton>
             )}
             {action === "remove" && (
               <ActionButton
-                onClick={() => handleRemoveBuildpack(buildpack.buildpack)}
+                onClick={() => { handleRemoveBuildpack(buildpack.buildpack); }}
               >
                 <span className="material-icons">delete</span>
               </ActionButton>
@@ -297,7 +293,7 @@ export const BuildpackSelection: React.FC<{
           value={selectedBuilder}
           width="100%"
           options={builderOptions}
-          setActiveValue={(option) => handleSelectBuilder(option)}
+          setActiveValue={(option) => { handleSelectBuilder(option); }}
           label="Select a builder"
         />
 
@@ -305,7 +301,7 @@ export const BuildpackSelection: React.FC<{
           value={selectedStack}
           width="100%"
           options={stackOptions}
-          setActiveValue={(option) => setSelectedStack(option)}
+          setActiveValue={(option) => { setSelectedStack(option); }}
           label="Select your stack"
         />
         <Helper>
@@ -367,7 +363,7 @@ export const AddCustomBuildpackForm: React.FC<{
         </EventInformation>
       </ContentContainer>
       <ActionContainer>
-        <ActionButton onClick={() => handleAddCustomBuildpack()}>
+        <ActionButton onClick={() => { handleAddCustomBuildpack(); }}>
           <span className="material-icons-outlined">add</span>
         </ActionButton>
       </ActionContainer>

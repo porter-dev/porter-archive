@@ -4,7 +4,7 @@ import styled from "styled-components";
 import api from "shared/api";
 import { pushFiltered } from "shared/routing";
 import { Context } from "shared/Context";
-import { ClusterType } from "shared/types";
+import { type ClusterType } from "shared/types";
 import { ClusterSection } from "./ClusterSection";
 import SidebarLink from "./SidebarLink";
 
@@ -13,7 +13,7 @@ import job from "assets/job-bold.png";
 import web from "assets/web-bold.png";
 import sliders from "assets/sliders.svg";
 
-import { RouteComponentProps, withRouter } from "react-router";
+import { type RouteComponentProps, withRouter } from "react-router";
 
 type PropsType = RouteComponentProps & {
   setWelcome: (x: boolean) => void;
@@ -42,7 +42,7 @@ class Clusters extends Component<PropsType, StateType> {
     if (!this.context.currentProject) {
       return;
     }
-    let {
+    const {
       user,
       currentProject,
       setCurrentCluster,
@@ -61,14 +61,14 @@ class Clusters extends Component<PropsType, StateType> {
         this.props.setWelcome(false);
         // TODO: handle uninitialized kubeconfig
         if (res.data) {
-          let clusters = res.data;
+          const clusters = res.data;
           clusters.sort((a: any, b: any) => a.id - b.id);
           if (clusters.length > 0) {
-            let queryString = window.location.search;
-            let urlParams = new URLSearchParams(queryString);
-            let paramClusterName = urlParams.get("cluster");
-            let params = this.props.match.params as any;
-            let pathClusterName = params.cluster;
+            const queryString = window.location.search;
+            const urlParams = new URLSearchParams(queryString);
+            const paramClusterName = urlParams.get("cluster");
+            const params = this.props.match.params as any;
+            const pathClusterName = params.cluster;
 
             // Set cluster from URL if in path or params
             let defaultCluster = null as ClusterType;
@@ -85,7 +85,7 @@ class Clusters extends Component<PropsType, StateType> {
             }
 
             this.setState({ clusters });
-            let saved = JSON.parse(
+            const saved = JSON.parse(
               localStorage.getItem(currentProject?.id + "-cluster")
             );
             if (!defaultCluster && saved && saved !== "null") {
@@ -117,7 +117,7 @@ class Clusters extends Component<PropsType, StateType> {
           }
         }
       })
-      .catch((err) => this.props.setWelcome(true));
+      .catch((err) => { this.props.setWelcome(true); });
   };
 
   componentDidMount() {
@@ -130,7 +130,7 @@ class Clusters extends Component<PropsType, StateType> {
       if (this.state.prevProjectId !== this.context.currentProject?.id) {
         this.updateClusters();
         this.setState({ prevProjectId: this.context.currentProject?.id });
-      } else if (this.props.forceRefreshClusters === true) {
+      } else if (this.props.forceRefreshClusters) {
         this.updateClusters();
         this.props.setRefreshClusters(false);
       }
@@ -144,8 +144,8 @@ class Clusters extends Component<PropsType, StateType> {
   };
 
   renderContents = (): React.ReactNode => {
-    let { clusters } = this.state;
-    let { currentCluster, setCurrentCluster, currentProject } = this.context;
+    const { clusters } = this.state;
+    const { currentCluster, setCurrentCluster, currentProject } = this.context;
 
     if (currentProject?.simplified_view_enabled) {
       return null;

@@ -9,9 +9,9 @@ import Placeholder from "components/OldPlaceholder";
 import ParentSize from "@visx/responsive/lib/components/ParentSize";
 import AreaChart from "../expanded-chart/metrics/AreaChart";
 import {
-  AvailableMetrics,
-  GenericMetricResponse,
-  NormalizedMetricsData,
+  type AvailableMetrics,
+  type GenericMetricResponse,
+  type NormalizedMetricsData,
 } from "../expanded-chart/metrics/types";
 import SelectRow from "../../../../components/form-components/SelectRow";
 import { MetricNormalizer } from "../expanded-chart/metrics/MetricNormalizer";
@@ -130,13 +130,13 @@ const Metrics: React.FC = () => {
     if (showMetricsSettings) {
       return (
         <>
-          <DropdownOverlay onClick={() => setShowMetricsSettings(false)} />
+          <DropdownOverlay onClick={() => { setShowMetricsSettings(false); }} />
           <DropdownAlt dropdownWidth="330px" dropdownMaxHeight="300px">
             <Label>Additional Settings</Label>
             <SelectRow
               label="Target Ingress"
               value={selectedIngress}
-              setActiveValue={(x: any) => setSelectedIngress(x)}
+              setActiveValue={(x: any) => { setSelectedIngress(x); }}
               options={ingressOptions}
               width="100%"
             />
@@ -174,11 +174,11 @@ const Metrics: React.FC = () => {
     if (dropdownExpanded) {
       return (
         <>
-          <DropdownOverlay onClick={() => setDropdownExpanded(false)} />
+          <DropdownOverlay onClick={() => { setDropdownExpanded(false); }} />
           <Dropdown
             dropdownWidth="230px"
             dropdownMaxHeight="200px"
-            onClick={() => setDropdownExpanded(false)}
+            onClick={() => { setDropdownExpanded(false); }}
           >
             {renderOptionList()}
           </Dropdown>
@@ -209,8 +209,8 @@ const Metrics: React.FC = () => {
 
   const getMetrics = async () => {
     try {
-      let shouldsum = true;
-      let namespace = "default";
+      const shouldsum = true;
+      const namespace = "default";
 
       // calculate start and end range
       const d = new Date();
@@ -315,14 +315,14 @@ const Metrics: React.FC = () => {
       <Header>
         <Flex>
           <MetricSelector
-            onClick={() => setDropdownExpanded(!dropdownExpanded)}
+            onClick={() => { setDropdownExpanded(!dropdownExpanded); }}
           >
             <MetricsLabel>{selectedMetricLabel}</MetricsLabel>
             <i className="material-icons">arrow_drop_down</i>
             {renderDropdown()}
           </MetricSelector>
           <Relative>
-            <IconWrapper onClick={() => setShowMetricsSettings(true)}>
+            <IconWrapper onClick={() => { setShowMetricsSettings(true); }}>
               <SettingsIcon src={settings} />
             </IconWrapper>
             {renderMetricsSettings()}
@@ -342,7 +342,7 @@ const Metrics: React.FC = () => {
               { value: "1M", label: "1M" },
             ]}
             currentTab={selectedRange}
-            setCurrentTab={(x: string) => setSelectedRange(x)}
+            setCurrentTab={(x: string) => { setSelectedRange(x); }}
           />
         </RangeWrapper>
       </Header>

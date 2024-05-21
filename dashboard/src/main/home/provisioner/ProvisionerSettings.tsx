@@ -9,7 +9,7 @@ import styled from "styled-components";
 
 import { Context } from "shared/Context";
 import { integrationList } from "shared/common";
-import { InfraType } from "shared/types";
+import { type InfraType } from "shared/types";
 
 import Helper from "components/form-components/Helper";
 import AWSFormSection from "./AWSFormSection";
@@ -107,7 +107,7 @@ const ProvisionerSettings: React.FC<Props> = ({
         {selectedProvider === "skipped" ? (
           <Helper>
             Don't have a Kubernetes cluster?
-            <Highlight onClick={() => handleSelectProvider(null)}>
+            <Highlight onClick={() => { handleSelectProvider(null); }}>
               Provision through Porter
             </Highlight>
           </Helper>
@@ -115,7 +115,7 @@ const ProvisionerSettings: React.FC<Props> = ({
           <PositionWrapper selectedProvider={selectedProvider}>
             <Helper>
               Already have a Kubernetes cluster?
-              <Highlight onClick={() => handleSelectProvider("skipped")}>
+              <Highlight onClick={() => { handleSelectProvider("skipped"); }}>
                 Skip
               </Highlight>
             </Helper>
@@ -141,7 +141,7 @@ const ProvisionerSettings: React.FC<Props> = ({
           setSelectedProvisioner={(x: string | null) => {
             handleSelectProvider(x);
           }}
-          trackOnSave={() => trackOnSave(selectedProvider)}
+          trackOnSave={() => { trackOnSave(selectedProvider); }}
         >
           {renderSkipHelper()}
         </AWSFormSection>
@@ -158,7 +158,7 @@ const ProvisionerSettings: React.FC<Props> = ({
           setSelectedProvisioner={(x: string | null) => {
             handleSelectProvider(x);
           }}
-          trackOnSave={() => trackOnSave(selectedProvider)}
+          trackOnSave={() => { trackOnSave(selectedProvider); }}
         >
           {renderSkipHelper()}
         </GCPFormSection>
@@ -175,7 +175,7 @@ const ProvisionerSettings: React.FC<Props> = ({
           setSelectedProvisioner={(x: string | null) => {
             handleSelectProvider(x);
           }}
-          trackOnSave={() => trackOnSave(selectedProvider)}
+          trackOnSave={() => { trackOnSave(selectedProvider); }}
         />
       );
     }
@@ -190,7 +190,7 @@ const ProvisionerSettings: React.FC<Props> = ({
           setSelectedProvisioner={(x: string | null) => {
             handleSelectProvider(x);
           }}
-          trackOnSave={() => trackOnSave(selectedProvider)}
+          trackOnSave={() => { trackOnSave(selectedProvider); }}
         />
       );
     }
@@ -198,7 +198,7 @@ const ProvisionerSettings: React.FC<Props> = ({
     return (
       <ExistingClusterSection
         projectName={projectName}
-        trackOnSave={() => trackOnSave(selectedProvider)}
+        trackOnSave={() => { trackOnSave(selectedProvider); }}
       >
         {renderSkipHelper()}
       </ExistingClusterSection>
@@ -206,7 +206,7 @@ const ProvisionerSettings: React.FC<Props> = ({
   };
 
   const renderFooter = () => {
-    let helper = provisioner
+    const helper = provisioner
       ? "Note: Provisioning can take up to 15 minutes"
       : "";
 
@@ -215,7 +215,7 @@ const ProvisionerSettings: React.FC<Props> = ({
         <>
           <Helper>
             Already have a Kubernetes cluster?
-            <Highlight onClick={() => handleSelectProvider("skipped")}>
+            <Highlight onClick={() => { handleSelectProvider("skipped"); }}>
               Skip
             </Highlight>
           </Helper>
@@ -254,7 +254,7 @@ const ProvisionerSettings: React.FC<Props> = ({
       {!selectedProvider ? (
         <BlockList>
           {providers.map((provider: string, i: number) => {
-            let providerInfo = integrationList[provider];
+            const providerInfo = integrationList[provider];
             return (
               <Block
                 key={i}

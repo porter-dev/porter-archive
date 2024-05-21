@@ -42,7 +42,7 @@ export default class CurrentError extends Component<PropsType, StateType> {
         return (
           <StyledCurrentError>
             <ErrorText>Error: {currentError}</ErrorText>
-            <ExpandButton onClick={() => this.setState({ expanded: true })}>
+            <ExpandButton onClick={() => { this.setState({ expanded: true }); }}>
               <i className="material-icons">launch</i>
             </ExpandButton>
             <CloseButton
@@ -65,7 +65,7 @@ export default class CurrentError extends Component<PropsType, StateType> {
           <ExpandedError>
             Porter encountered an error. Full error log:
             <CodeBlock>{currentError}</CodeBlock>
-            <ExpandButtonAlt onClick={() => this.setState({ expanded: false })}>
+            <ExpandButtonAlt onClick={() => { this.setState({ expanded: false }); }}>
               <i className="material-icons">remove</i>
             </ExpandButtonAlt>
             <CloseButtonAlt

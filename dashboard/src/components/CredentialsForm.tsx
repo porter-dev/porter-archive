@@ -131,7 +131,7 @@ const CredentialsForm: React.FC<Props> = ({
           <Br height="34px" />
           <SaveButton
             disabled={!selectedCredentials && true}
-            onClick={() => proceed(selectedCredentials.aws_arn)}
+            onClick={() => { proceed(selectedCredentials.aws_arn); }}
             clearPosition
             text="Continue"
           />
@@ -143,7 +143,7 @@ const CredentialsForm: React.FC<Props> = ({
         <StyledForm>
           {
             awsCredentials.length > 0 && (
-              <CloseButton onClick={() => setShowCreateForm(false)}>
+              <CloseButton onClick={() => { setShowCreateForm(false); }}>
                 <i className="material-icons">close</i>
               </CloseButton>
             )
@@ -151,7 +151,7 @@ const CredentialsForm: React.FC<Props> = ({
           <InputRow
             type="string"
             value={awsAccessKeyID}
-            setValue={(e: string) => setAWSAccessKeyID(e)}
+            setValue={(e: string) => { setAWSAccessKeyID(e); }}
             label="👤 AWS access ID"
             placeholder="ex: AKIAIOSFODNN7EXAMPLE"
             isRequired

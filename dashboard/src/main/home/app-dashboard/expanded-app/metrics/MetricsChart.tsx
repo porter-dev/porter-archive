@@ -7,7 +7,7 @@ import StatusCodeDataLegend from "./StatusCodeDataLegend";
 import AreaChart from "./AreaChart";
 import StackedAreaChart from "./StackedAreaChart";
 import Loading from "components/Loading";
-import { AggregatedMetric, Metric, NginxStatusMetric, isNginxMetric } from "./types";
+import { type AggregatedMetric, type Metric, type NginxStatusMetric, isNginxMetric } from "./types";
 
 type PropsType = {
     metric: Metric;

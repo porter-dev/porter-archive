@@ -27,7 +27,7 @@ export const DEFAULT_BUILDER_NAME = "heroku";
 export const DEFAULT_PAKETO_STACK = "paketobuildpacks/builder-jammy-full:latest";
 export const DEFAULT_HEROKU_STACK = "heroku/buildpacks:20";
 
-export const BUILDPACK_TO_NAME: { [key: string]: string } = {
+export const BUILDPACK_TO_NAME: Record<string, string> = {
   "heroku/nodejs": "NodeJS",
   "heroku/python": "Python",
   "heroku/java": "Java",

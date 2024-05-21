@@ -3,7 +3,7 @@ import React, { useRef, useState } from "react";
 import { useOutsideAlerter } from "shared/hooks/useOutsideAlerter";
 import styled from "styled-components";
 
-interface Props {
+type Props = {
     values: any[];
     currentValue: any;
     onChange: (provider: any) => void;
@@ -34,7 +34,7 @@ const ProviderSelector: React.FC<Props> = ({
                 <ProviderSelectorStyles.Icon className={icon} />
 
                 <ProviderSelectorStyles.Button
-                    onClick={() => setIsOpen((prev) => !prev)}
+                    onClick={() => { setIsOpen((prev) => !prev); }}
                 >
                     {currentValue?.name || currentValue?.instance_url}
                 </ProviderSelectorStyles.Button>

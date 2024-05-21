@@ -31,7 +31,7 @@ const ConnectRegistry: React.FC<{}> = ({}) => {
     snap.StepHandler.canGoBack && !snap.StepHandler.isSubFlow;
 
   useEffect(() => {
-    let hookState = { isSubscribed: true };
+    const hookState = { isSubscribed: true };
 
     getRegistries(hookState);
 

@@ -40,19 +40,19 @@ export default class ClusterInstructionsModal extends Component<
           </Placeholder>
         );
       default:
-        return;
+        
     }
   };
 
   render() {
-    let { currentPage, currentTab } = this.state;
+    const { currentPage, currentTab } = this.state;
     return (
       <>
         <TabSelector
           options={tabOptions}
           currentTab={currentTab}
           setCurrentTab={(value: string) =>
-            this.setState({ currentTab: value })
+            { this.setState({ currentTab: value }); }
           }
         />
 

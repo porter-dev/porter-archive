@@ -1,4 +1,4 @@
-import { HIERARCHY_TREE, PolicyDocType, ScopeType, Verbs } from "./types";
+import { type HIERARCHY_TREE, type PolicyDocType, type ScopeType, type Verbs } from "./types";
 
 export const ADMIN_POLICY_MOCK: PolicyDocType = {
   scope: "project",
@@ -53,8 +53,8 @@ export const POLICY_HIERARCHY_TREE: HIERARCHY_TREE = {
 export const isAuthorized = (
   policy: PolicyDocType,
   scope: string,
-  resource: string | Array<string>,
-  verb: Verbs | Array<Verbs>
+  resource: string | string[],
+  verb: Verbs | Verbs[]
 ): boolean => {
   if (!policy) {
     return false;
@@ -95,16 +95,16 @@ export const populatePolicy = (
   currPolicy: PolicyDocType,
   tree: HIERARCHY_TREE,
   currScope: ScopeType,
-  parentVerbs: Array<Verbs>
+  parentVerbs: Verbs[]
 ) => {
   const currTree = tree[currScope];
-  const treeKeys = Object.keys(currTree) as Array<ScopeType>;
+  const treeKeys = Object.keys(currTree) as ScopeType[];
 
   currPolicy.children = currPolicy?.children || {};
   currPolicy.resources = currPolicy?.resources || [];
 
   for (const child of treeKeys) {
-    let childPolicy = currPolicy?.children && currPolicy?.children[child];
+    let childPolicy = currPolicy?.children?.[child];
     if (!childPolicy) {
       childPolicy = {
         scope: child,

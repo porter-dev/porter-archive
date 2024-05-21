@@ -91,7 +91,7 @@ export default class NamespaceModal extends Component<PropsType, StateType> {
             type="string"
             value={this.state.namespaceName}
             setValue={(x: string) =>
-              this.setState({ namespaceName: x, status: null })
+              { this.setState({ namespaceName: x, status: null }); }
             }
             placeholder="ex: porter-workers"
             width="480px"
@@ -101,7 +101,7 @@ export default class NamespaceModal extends Component<PropsType, StateType> {
         <SaveButton
           text="Create Namespace"
           color="#616FEEcc"
-          onClick={() => this.createNamespace()}
+          onClick={() => { this.createNamespace(); }}
           status={this.state.status}
         />
       </>

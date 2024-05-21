@@ -2,7 +2,7 @@ import awsRDS from "assets/amazon-rds.png";
 import awsElasticache from "assets/aws-elasticache.png";
 import lightning from "../assets/lightning.png";
 
-const hardcodedNames: { [key: string]: string } = {
+const hardcodedNames: Record<string, string> = {
   agones: "Agones System",
   docker: "Docker",
   "https-issuer": "HTTPS Issuer",
@@ -32,7 +32,7 @@ const hardcodedNames: { [key: string]: string } = {
   "nri-bundle": "New Relic",
 };
 
-const hardcodedIcons: { [key: string]: string } = {
+const hardcodedIcons: Record<string, string> = {
   "elasticache-redis": awsElasticache,
   "https-issuer":
     "https://cdn4.iconfinder.com/data/icons/macster-2/100/https__-512.png",

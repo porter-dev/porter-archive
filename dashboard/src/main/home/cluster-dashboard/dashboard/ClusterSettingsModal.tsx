@@ -50,7 +50,7 @@ const ClusterSettingsModal: React.FC<Props> = ({
     <Modal
       width="600px"
       height="auto"
-      onRequestClose={() => setCurrentModal(null, null)}
+      onRequestClose={() => { setCurrentModal(null, null); }}
       title="Cluster name"
     >
       <Spacer height="15px" />

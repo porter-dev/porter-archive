@@ -106,7 +106,7 @@ const AzureCredentialForm: React.FC<Props> = ({ goBack, proceed }) => {
                 Follow our <Link to="https://docs.porter.run/provision/provisioning-on-azure" target="_blank">documentation</Link> to create your service principal and prepare your subscription for use with Porter.
               </Text>
               <Spacer y={1} />
-              <Button onClick={() => setCurrentStep(1)}>
+              <Button onClick={() => { setCurrentStep(1); }}>
                 Continue
               </Button>
             </>,
@@ -162,7 +162,7 @@ const AzureCredentialForm: React.FC<Props> = ({ goBack, proceed }) => {
                 />
               <Spacer y={1} />
               <Container row>
-                  <Button onClick={() => setCurrentStep(0)} color="#222222">Back</Button>
+                  <Button onClick={() => { setCurrentStep(0); }} color="#222222">Back</Button>
                   <Spacer inline x={0.5} />
                   <Button
                     onClick={saveCredentials}

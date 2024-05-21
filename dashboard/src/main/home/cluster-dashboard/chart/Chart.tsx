@@ -9,9 +9,9 @@ import styled from "styled-components";
 import { useHistory, useLocation, useRouteMatch } from "react-router";
 
 import {
-  ChartType,
+  type ChartType,
   JobStatusType,
-  JobStatusWithTimeType,
+  type JobStatusWithTimeType,
   StorageType,
 } from "shared/types";
 import { Context } from "shared/Context";
@@ -100,7 +100,7 @@ const Chart: React.FunctionComponent<Props> = ({
   }, [chart]);
 
   const filteredControllers = useMemo(() => {
-    let tmpControllers: any = {};
+    const tmpControllers: any = {};
     chartControllers.forEach((uid: any) => {
       if (!controllers[uid]) {
         return;
@@ -117,10 +117,10 @@ const Chart: React.FunctionComponent<Props> = ({
     });
   }
 
-  // @ts-ignore
+  // @ts-expect-error
   const rtf = new Intl.DateTimeFormat("en", {
     localeMatcher: "best fit", // other values: "lookup"
-    // @ts-ignore
+    // @ts-expect-error
     dateStyle: "full",
     timeStyle: "long",
   });
@@ -136,7 +136,7 @@ const Chart: React.FunctionComponent<Props> = ({
       }/${chart.name}`;
 
     const newParams = {
-      // @ts-ignore
+      // @ts-expect-error
       project_id: params.project_id,
       closeChartRedirectUrl,
     };

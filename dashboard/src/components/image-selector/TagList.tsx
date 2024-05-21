@@ -8,7 +8,7 @@ import { Context } from "shared/Context";
 
 import Loading from "../Loading";
 
-var ecrRepoRegex = /(^[a-zA-Z0-9][a-zA-Z0-9-_]*)\.dkr\.ecr(\-fips)?\.([a-zA-Z0-9][a-zA-Z0-9-_]*)\.amazonaws\.com(\.cn)?/gim;
+const ecrRepoRegex = /(^[a-zA-Z0-9][a-zA-Z0-9-_]*)\.dkr\.ecr(\-fips)?\.([a-zA-Z0-9][a-zA-Z0-9-_]*)\.amazonaws\.com(\.cn)?/gim;
 
 type PropsType =
   | {
@@ -45,7 +45,7 @@ export default class TagList extends Component<PropsType, StateType> {
     this.setState({ loading: true });
     const { currentProject } = this.context;
 
-    let splits = this.props.selectedImageUrl.split("/");
+    const splits = this.props.selectedImageUrl.split("/");
     let repoName: string;
 
     if (this.props.selectedImageUrl.includes("pkg.dev")) {
@@ -54,7 +54,7 @@ export default class TagList extends Component<PropsType, StateType> {
       repoName = splits[splits.length - 1];
     }
 
-    let matches = this.props.selectedImageUrl.match(ecrRepoRegex);
+    const matches = this.props.selectedImageUrl.match(ecrRepoRegex);
 
     if (matches) {
       repoName = this.props.selectedImageUrl.split(/\/(.+)/)[1];
@@ -75,8 +75,8 @@ export default class TagList extends Component<PropsType, StateType> {
         // Sort if timestamp is available
         if (res.data.length > 0 && res.data[0].pushed_at) {
           tags = tags.sort((a: any, b: any) => {
-            let d1 = new Date(a.pushed_at);
-            let d2 = new Date(b.pushed_at);
+            const d1 = new Date(a.pushed_at);
+            const d2 = new Date(b.pushed_at);
             return d2.getTime() - d1.getTime();
           });
         }
@@ -99,13 +99,13 @@ export default class TagList extends Component<PropsType, StateType> {
   }
 
   setTag = (tag: string) => {
-    let { selectedTag, setSelectedTag } = this.props;
+    const { selectedTag, setSelectedTag } = this.props;
     setSelectedTag(tag);
     this.setState({ currentTag: tag });
   };
 
   renderTagList = () => {
-    let { tags, loading, error } = this.state;
+    const { tags, loading, error } = this.state;
     if (loading) {
       return (
         <LoadingWrapper>
@@ -124,7 +124,7 @@ export default class TagList extends Component<PropsType, StateType> {
           key={i}
           isSelected={tag === this.state.currentTag}
           lastItem={i === tags.length - 1}
-          onClick={() => this.setTag(tag)}
+          onClick={() => { this.setTag(tag); }}
         >
           <img src={tag_icon} />
           {tag}

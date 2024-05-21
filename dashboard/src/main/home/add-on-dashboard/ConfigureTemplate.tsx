@@ -18,7 +18,7 @@ import PorterFormWrapper from "components/porter-form/PorterFormWrapper";
 import Placeholder from "components/Placeholder";
 import Button from "components/porter/Button";
 import { generateSlug } from "random-word-slugs";
-import { RouteComponentProps, withRouter } from "react-router";
+import { type RouteComponentProps, withRouter } from "react-router";
 import Error from "components/porter/Error";
 
 type Props = RouteComponentProps & {
@@ -71,8 +71,8 @@ const ConfigureTemplate: React.FC<Props> = ({
   const deployAddOn = async (wildcard?: any) => {
     setButtonStatus("loading");
     
-    let values: any = {};
-    for (let key in wildcard) {
+    const values: any = {};
+    for (const key in wildcard) {
       _.set(values, key, wildcard[key]);
     }
     api
@@ -81,7 +81,7 @@ const ConfigureTemplate: React.FC<Props> = ({
         {
           template_name: currentTemplate.name,
           template_version: "latest",
-          values: values,
+          values,
           name,
         },
         {
@@ -95,21 +95,21 @@ const ConfigureTemplate: React.FC<Props> = ({
         window.analytics?.track("Deployed Add-on", {
           name: currentTemplate.name,
           namespace: "default",
-          values: values,
+          values,
         });
         waitForHelmRelease();
       })
       .catch((err) => {
-        let parsedErr = err?.response?.data?.error;
+        const parsedErr = err?.response?.data?.error;
         err = parsedErr || err.message || JSON.stringify(err);
         setButtonStatus(err);
         window.analytics?.track("Failed to Deploy Add-on", {
           name: currentTemplate.name,
           namespace: "default",
-          values: values,
+          values,
           error: err,
         });
-        return;
+        
       });
   };
 

@@ -5,13 +5,13 @@ import _ from "lodash";
 import { Context } from "shared/Context";
 import api from "shared/api";
 import {
-  ChartType,
-  ClusterType,
+  type ChartType,
+  type ClusterType,
   JobStatusType,
-  JobStatusWithTimeType,
+  type JobStatusWithTimeType,
   StorageType,
 } from "shared/types";
-import { PorterUrl } from "shared/routing";
+import { type PorterUrl } from "shared/routing";
 
 import Chart from "./Chart";
 import Loading from "components/Loading";
@@ -33,9 +33,9 @@ type Props = {
   noPlaceholder?: boolean;
 };
 
-interface JobStatusWithTimeAndVersion extends JobStatusWithTimeType {
+type JobStatusWithTimeAndVersion = {
   resource_version: number;
-}
+} & JobStatusWithTimeType
 
 const ChartList: React.FunctionComponent<Props> = ({
   lastRunStatus,
@@ -92,7 +92,7 @@ const ChartList: React.FunctionComponent<Props> = ({
         {
           id: currentProject.id,
           cluster_id: currentCluster.id,
-          namespace: namespace,
+          namespace,
         }
       );
       const charts = res.data || [];
@@ -120,7 +120,7 @@ const ChartList: React.FunctionComponent<Props> = ({
         console.log(`connected to websocket: ${websocketID}`);
       },
       onmessage: (evt: MessageEvent) => {
-        let event = JSON.parse(evt.data);
+        const event = JSON.parse(evt.data);
         const newChart: ChartType = event.Object;
         const isSameChart = (chart: ChartType) =>
           getChartKey(chart.name, chart.namespace) ===
@@ -168,7 +168,7 @@ const ChartList: React.FunctionComponent<Props> = ({
   };
 
   const setupControllerWebsocket = (kind: string) => {
-    let { currentCluster, currentProject } = context;
+    const { currentCluster, currentProject } = context;
     const apiPath = `/api/projects/${currentProject.id}/clusters/${currentCluster.id}/${kind}/status`;
 
     const wsConfig = {
@@ -176,8 +176,8 @@ const ChartList: React.FunctionComponent<Props> = ({
         console.log(`connected to websocket: ${kind}`);
       },
       onmessage: (evt: MessageEvent) => {
-        let event = JSON.parse(evt.data);
-        let object = event?.Object;
+        const event = JSON.parse(evt.data);
+        const object = event?.Object;
 
         if (!object?.metadata?.kind) {
           return;
@@ -205,12 +205,12 @@ const ChartList: React.FunctionComponent<Props> = ({
   };
 
   const setupControllerWebsockets = (controllers: string[]) => {
-    controllers.map((kind) => setupControllerWebsocket(kind));
+    controllers.map((kind) => { setupControllerWebsocket(kind); });
   };
 
   const setupJobWebsocket = (websocketID: string) => {
     const kind = "job";
-    let { currentCluster, currentProject } = context;
+    const { currentCluster, currentProject } = context;
     const apiPath = `/api/projects/${currentProject.id}/clusters/${currentCluster.id}/${kind}/status`;
 
     const wsConfig = {
@@ -218,13 +218,13 @@ const ChartList: React.FunctionComponent<Props> = ({
         console.log(`connected to websocket: ${websocketID}`);
       },
       onmessage: (evt: MessageEvent) => {
-        let event = JSON.parse(evt.data);
+        const event = JSON.parse(evt.data);
 
         if (event.event_type === "DELETE") {
           return;
         }
 
-        let object = event.Object;
+        const object = event.Object;
 
         if (_.get(object.metadata, ["annotations", "helm.sh/hook"])) {
           return;
@@ -297,7 +297,7 @@ const ChartList: React.FunctionComponent<Props> = ({
     setupJobWebsocket(jobWebsocketID);
 
     return () => {
-      controllers.map((controller) => closeWebsocket(controller));
+      controllers.map((controller) => { closeWebsocket(controller); });
       closeWebsocket(jobWebsocketID);
     };
   }, [context.currentCluster]);

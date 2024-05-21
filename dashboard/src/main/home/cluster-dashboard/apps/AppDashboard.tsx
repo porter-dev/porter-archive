@@ -1,16 +1,16 @@
 import React, { useContext, useState, useEffect } from "react";
 import styled from "styled-components";
-import { RouteComponentProps, withRouter } from "react-router";
+import { type RouteComponentProps, withRouter } from "react-router";
 
 import web from "assets/web.png";
 
 import { Context } from "shared/Context";
 import { JobStatusType } from "shared/types";
-import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
+import { withAuth, type WithAuthProps } from "shared/auth/AuthorizationHoc";
 import {
   pushQueryParams,
   pushFiltered,
-  PorterUrl,
+  type PorterUrl,
 } from "shared/routing";
 
 import { NamespaceSelector } from "../NamespaceSelector";

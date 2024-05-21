@@ -72,7 +72,7 @@ const BranchSelector: React.FC<Props> = ({
       return <LoadingWrapper>Error loading branches</LoadingWrapper>;
     }
 
-    let results =
+    const results =
       searchFilter != null
         ? branches
           .filter((branch) => {
@@ -97,7 +97,7 @@ const BranchSelector: React.FC<Props> = ({
         <BranchName
           key={i}
           lastItem={i === branches.length - 1}
-          onClick={() => setBranch(branch)}
+          onClick={() => { setBranch(branch); }}
         >
           <img src={branch_icon} alt={"branch icon"} />
           {branch}

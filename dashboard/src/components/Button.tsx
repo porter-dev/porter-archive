@@ -1,7 +1,7 @@
 import React from "react";
 import styled from "styled-components";
 
-interface Props {
+type Props = {
   disabled?: boolean;
   children: React.ReactNode;
   onClick: () => void;

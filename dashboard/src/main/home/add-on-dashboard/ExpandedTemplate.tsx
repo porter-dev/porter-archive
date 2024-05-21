@@ -33,7 +33,7 @@ const ExpandedTemplate: React.FC<Props> = ({
   const [keywords, setKeywords] = useState<any[]>([]);
   const getTemplateInfo = async () => {
     setIsLoading(true);
-    let params = {
+    const params = {
       repo_url: capabilities?.default_addon_helm_repo_url,
     };
 
@@ -43,8 +43,8 @@ const ExpandedTemplate: React.FC<Props> = ({
       version: currentTemplate.currentVersion,
     })
       .then((res) => {
-        let { form, values, markdown, metadata } = res.data;
-        let keywords = metadata.keywords;
+        const { form, values, markdown, metadata } = res.data;
+        const keywords = metadata.keywords;
         setForm(form);
         setValues(values);
         setMarkdown(markdown);
@@ -89,7 +89,7 @@ const ExpandedTemplate: React.FC<Props> = ({
 
         </Container>
 
-        <Button onClick={() => proceed(form)}>
+        <Button onClick={() => { proceed(form); }}>
           <AddI className="material-icons">add</AddI>
           Deploy add-on
         </Button>

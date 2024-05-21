@@ -2,9 +2,9 @@ import React, { useMemo } from "react";
 import { DeviconsNameList } from "assets/devicons-name-list";
 import styled, { keyframes } from "styled-components";
 import { Draggable } from "react-beautiful-dnd";
-import { Buildpack } from "main/home/app-dashboard/types/buildpack";
+import { type Buildpack } from "main/home/app-dashboard/types/buildpack";
 
-interface Props {
+type Props = {
   buildpack: Buildpack;
   action: "add" | "remove";
   onClickFn: (buildpack: string) => void;
@@ -59,7 +59,7 @@ const BuildpackCard: React.FC<Props> = ({
             </EventInformation>
           </ContentContainer>
           <ActionContainer>
-            <ActionButton onClick={() => onClickFn(buildpack.buildpack)}>
+            <ActionButton onClick={() => { onClickFn(buildpack.buildpack); }}>
               <span className="material-icons">
                 {action === "remove" ? "delete" : "add"}
               </span>
@@ -77,7 +77,7 @@ const BuildpackCard: React.FC<Props> = ({
         </EventInformation>
       </ContentContainer>
       <ActionContainer>
-        <ActionButton onClick={() => onClickFn(buildpack.buildpack)}>
+        <ActionButton onClick={() => { onClickFn(buildpack.buildpack); }}>
           <span className="material-icons">
             {action === "remove" ? "delete" : "add"}
           </span>

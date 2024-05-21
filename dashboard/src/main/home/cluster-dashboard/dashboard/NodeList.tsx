@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
 
 import Table from "components/OldTable";
-import { Column } from "react-table";
+import { type Column } from "react-table";
 import styled from "styled-components";
 import api from "shared/api";
 import { Context } from "shared/Context";
@@ -15,7 +15,7 @@ const NodeList: React.FC = () => {
   const history = useHistory();
   const location = useLocation();
 
-  const columns = useMemo<Column<any>[]>(
+  const columns = useMemo<Array<Column<any>>>(
     () => [
       {
         Header: "Node Name",
@@ -59,7 +59,7 @@ const NodeList: React.FC = () => {
       `${Number(number).toFixed(2)}%`;
 
     const getMachineType = (labels: any) => {
-      return (labels && labels["node.kubernetes.io/instance-type"]) || "N/A";
+      return (labels?.["node.kubernetes.io/instance-type"]) || "N/A";
     };
 
     return nodeList
@@ -113,7 +113,7 @@ const NodeList: React.FC = () => {
       .catch(() => {
         console.log({ error: true });
       })
-      .finally(() => setLoading(false));
+      .finally(() => { setLoading(false); });
   }, [context, setNodeList]);
 
   const handleOnRowClick = (row: any) => {

@@ -1,6 +1,6 @@
 import { buildChartTheme, grayColors } from '@visx/xychart';
 
-let chart = buildChartTheme({
+const chart = buildChartTheme({
     backgroundColor: '#222',
     colors: [
         "#4B4F7C", // gray (1xx)

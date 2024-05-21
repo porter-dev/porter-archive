@@ -11,7 +11,7 @@ import github from "assets/github.png";
 import { connectSourceTracks } from "shared/anayltics";
 import DocsHelper from "components/DocsHelper";
 
-interface GithubAppAccessData {
+type GithubAppAccessData = {
   username?: string;
   accounts?: string[];
 }
@@ -90,7 +90,7 @@ const ConnectSource: React.FC<{
         To deploy applications from your repo, you need to connect a Github
         account.
       </Helper>
-      {!isLoading && (!accountData || !accountData?.accounts?.length) && (
+      {!isLoading && (!accountData?.accounts?.length) && (
         <>
           <ConnectToGithubButton
             href={`/api/integrations/github-app/install?redirect_uri=${encoded_redirect_uri}`}
@@ -104,7 +104,7 @@ const ConnectSource: React.FC<{
           </ConnectToGithubButton>
           <Helper>
             No thanks, I want to deploy from a
-            <A onClick={() => nextStep("docker")}>Docker registry</A>.
+            <A onClick={() => { nextStep("docker"); }}>Docker registry</A>.
           </Helper>
         </>
       )}
@@ -145,7 +145,7 @@ const ConnectSource: React.FC<{
           <NextStep
             text="Continue"
             disabled={false}
-            onClick={() => nextStep("github")}
+            onClick={() => { nextStep("github"); }}
             status={""}
             makeFlush={true}
             clearPosition={true}

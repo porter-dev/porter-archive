@@ -62,7 +62,7 @@ export default class EnvEditorModal extends Component<PropsType, StateType> {
             mode="text"
             value={this.state.envFile}
             theme="porter"
-            onChange={(e: string) => this.onChange(e)}
+            onChange={(e: string) => { this.onChange(e); }}
             name="codeEditor"
             editorProps={{ $blockScrolling: true }}
             height="100%"

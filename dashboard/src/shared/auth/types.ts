@@ -13,9 +13,9 @@ export type ScopeType =
 
 export type Verbs = "get" | "list" | "create" | "update" | "delete";
 
-export interface PolicyDocType {
+export type PolicyDocType = {
   scope: ScopeType;
-  verbs: Array<Verbs>;
+  verbs: Verbs[];
   resources?: string[];
   children?: Partial<Record<ScopeType, PolicyDocType>>;
 }
@@ -28,4 +28,4 @@ export enum ScopeTypeEnum {
   APPLICATION = "application",
 }
 
-export type HIERARCHY_TREE = { [key: string]: any };
+export type HIERARCHY_TREE = Record<string, any>;

@@ -59,7 +59,7 @@ export default class ResourceTab extends Component<PropsType, StateType> {
   };
 
   getStatusText = () => {
-    let { status } = this.props;
+    const { status } = this.props;
     if (status.available && status.total) {
       return `${status.available}/${status.total}`;
     } else if (status.label) {
@@ -68,7 +68,7 @@ export default class ResourceTab extends Component<PropsType, StateType> {
   };
 
   renderStatus = () => {
-    let { status } = this.props;
+    const { status } = this.props;
     if (status) {
       return (
         <Status>
@@ -87,7 +87,7 @@ export default class ResourceTab extends Component<PropsType, StateType> {
   };
 
   render() {
-    let {
+    const {
       label,
       name,
       children,
@@ -100,7 +100,7 @@ export default class ResourceTab extends Component<PropsType, StateType> {
     return (
       <StyledResourceTab
         isLast={isLast}
-        onClick={() => handleClick && handleClick()}
+        onClick={() => { handleClick && handleClick(); }}
         roundAllCorners={roundAllCorners}
       >
         <ResourceHeader

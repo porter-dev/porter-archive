@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 
 import PorterForm from "./PorterForm";
-import { InjectedProps, PorterFormData } from "./types";
+import { type InjectedProps, type PorterFormData } from "./types";
 import { PorterFormContextProvider } from "./PorterFormContextProvider";
 import _ from "lodash";
 
@@ -11,8 +11,8 @@ type PropsType = {
   isReadOnly?: boolean;
   onSubmit?: (values: any, cb?: () => void) => void;
   renderTabContents?: (currentTab: string, submitValues?: any) => any;
-  leftTabOptions?: { value: string; label: string }[];
-  rightTabOptions?: { value: string; label: string }[];
+  leftTabOptions?: Array<{ value: string; label: string }>;
+  rightTabOptions?: Array<{ value: string; label: string }>;
   saveButtonText?: string;
   isInModal?: boolean;
   color?: string;

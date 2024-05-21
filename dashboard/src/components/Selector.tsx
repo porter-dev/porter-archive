@@ -6,7 +6,7 @@ import Loading from "./Loading";
 export type SelectorPropsType<T> = {
   activeValue: T;
   refreshOptions?: () => void;
-  options: { value: T; label: string; icon?: any }[];
+  options: Array<{ value: T; label: string; icon?: any }>;
   addButton?: boolean;
   setActiveValue: (x: T) => void;
   width: string;
@@ -46,11 +46,9 @@ export default class Selector<T> extends Component<SelectorPropsType<T>, StateTy
 
   handleClickOutside = (event: any) => {
     if (
-      this.wrapperRef &&
-      this.wrapperRef.current &&
+      this.wrapperRef?.current &&
       !this.wrapperRef.current.contains(event.target) &&
-      this.parentRef &&
-      this.parentRef.current &&
+      this.parentRef?.current &&
       !this.parentRef.current.contains(event.target)
     ) {
       this.setState({ expanded: false });
@@ -63,7 +61,7 @@ export default class Selector<T> extends Component<SelectorPropsType<T>, StateTy
   };
 
   renderOptionList = () => {
-    let { options, activeValue } = this.props;
+    const { options, activeValue } = this.props;
     return options.map(
       (option: { value: string; label: string; icon?: any }, i: number) => {
         return (
@@ -71,7 +69,7 @@ export default class Selector<T> extends Component<SelectorPropsType<T>, StateTy
             key={i}
             height={this.props.height}
             selected={option.value === activeValue}
-            onClick={() => this.handleOptionClick(option)}
+            onClick={() => { this.handleOptionClick(option); }}
             lastItem={i === options.length - 1}
           >
             {option.icon && (
@@ -119,7 +117,7 @@ export default class Selector<T> extends Component<SelectorPropsType<T>, StateTy
                 : this.props.width
             }
             dropdownMaxHeight={this.props.dropdownMaxHeight}
-            onClick={() => this.setState({ expanded: false })}
+            onClick={() => { this.setState({ expanded: false }); }}
           >
             {this.renderDropdownLabel()}
             {this.renderOptionList()}
@@ -132,7 +130,7 @@ export default class Selector<T> extends Component<SelectorPropsType<T>, StateTy
   };
 
   getLabel = (value: string): any => {
-    let tgt = this.props.options.find(
+    const tgt = this.props.options.find(
       (element: { value: string; label: string }) => element.value === value
     );
     if (tgt) {
@@ -141,7 +139,7 @@ export default class Selector<T> extends Component<SelectorPropsType<T>, StateTy
   };
 
   renderIcon = () => {
-    var icon;
+    let icon;
     this.props.options.forEach((option: any) => {
       if (option.icon && option.value === this.props.activeValue) {
         icon = option.icon;
@@ -159,7 +157,7 @@ export default class Selector<T> extends Component<SelectorPropsType<T>, StateTy
   };
 
   render() {
-    let { activeValue, isLoading } = this.props;
+    const { activeValue, isLoading } = this.props;
 
     return (
       <StyledSelector width={this.props.width}>
@@ -177,8 +175,8 @@ export default class Selector<T> extends Component<SelectorPropsType<T>, StateTy
           expanded={this.state.expanded}
           width={this.props.width}
           height={this.props.height}
-          onMouseEnter={() => this.setState({ showTooltip: true })}
-          onMouseLeave={() => this.setState({ showTooltip: false })}
+          onMouseEnter={() => { this.setState({ showTooltip: true }); }}
+          onMouseLeave={() => { this.setState({ showTooltip: false }); }}
         >
           {isLoading ?
             <Loading />

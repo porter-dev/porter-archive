@@ -1,7 +1,7 @@
 import * as Sentry from "@sentry/react";
 import { isEmpty } from "lodash";
 
-type LogFunction = (error: Error, tags?: { [key: string]: string }) => void;
+type LogFunction = (error: Error, tags?: Record<string, string>) => void;
 type LogFunctions = {
   [key in Sentry.Severity]: LogFunction;
 };
@@ -39,7 +39,7 @@ function buildLogger(scope: string = "global") {
 
       return acc;
     },
-    {} as LogFunctions
+    {}
   );
 
   return logFunctions;

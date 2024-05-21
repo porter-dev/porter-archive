@@ -1,7 +1,7 @@
 import InputRow from "components/form-components/InputRow";
 import React from "react";
 import useFormField from "../hooks/useFormField";
-import { CronField } from "../types";
+import { type CronField } from "../types";
 import { hasSetValue } from "../utils";
 import { isValidCron } from "cron-validator";
 import CronParser from "cronstrue";

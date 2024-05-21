@@ -39,7 +39,7 @@ const GHABanner: React.FC<Props> = ({
             <Banner
               type="warning"
               suffix={
-                <RefreshButton onClick={() => window.location.reload()}>
+                <RefreshButton onClick={() => { window.location.reload(); }}>
                   <img src={refresh} /> Refresh
                 </RefreshButton>
               }
@@ -58,7 +58,7 @@ const GHABanner: React.FC<Props> = ({
             <Banner
               type="warning"
               suffix={
-                <RefreshButton onClick={() => window.location.reload()}>
+                <RefreshButton onClick={() => { window.location.reload(); }}>
                   <img src={refresh} /> Refresh
                 </RefreshButton>
               }
@@ -66,7 +66,7 @@ const GHABanner: React.FC<Props> = ({
               Your application will not be available until you add the Porter workflow to your branch.
               <Spacer inline width="5px" />
               <Link
-                onClick={() => setShowGHAModal(true)}
+                onClick={() => { setShowGHAModal(true); }}
                 target="_blank"
                 hasunderline
               >
@@ -78,7 +78,7 @@ const GHABanner: React.FC<Props> = ({
       </StyledGHABanner>
       {showGHAModal && (
         <GithubActionModal
-          closeModal={() => setShowGHAModal(false)}
+          closeModal={() => { setShowGHAModal(false); }}
           githubAppInstallationID={gitRepoId}
           githubRepoOwner={repoName.split("/")[0]}
           githubRepoName={repoName.split("/")[1]}

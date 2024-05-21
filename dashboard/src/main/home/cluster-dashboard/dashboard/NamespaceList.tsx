@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
 import styled from "styled-components";
 import { Context } from "shared/Context";
-import { ClusterType, ProjectType } from "shared/types";
+import { type ClusterType, type ProjectType } from "shared/types";
 import { pushFiltered } from "shared/routing";
 import { useHistory, useLocation } from "react-router";
 import useAuth from "shared/auth/useAuth";
@@ -15,7 +15,7 @@ const useWebsocket = (
   const wsRef = useRef<WebSocket | undefined>(undefined);
 
   useEffect(() => {
-    let protocol = window.location.protocol == "https:" ? "wss" : "ws";
+    const protocol = window.location.protocol == "https:" ? "wss" : "ws";
     wsRef.current = new WebSocket(
       `${protocol}://${window.location.host}/api/projects/${currentProject.id}/clusters/${currentCluster.id}/namespace/status`
     );
@@ -121,12 +121,12 @@ export const NamespaceList: React.FunctionComponent = () => {
         {isAuthorized("namespace", "", ["get", "create"]) && (
           <Button
             onClick={() =>
-              setCurrentModal(
+              { setCurrentModal(
                 "NamespaceModal",
                 namespaces.map((namespace) => ({
                   value: namespace.metadata.name,
                 }))
-              )
+              ); }
             }
           >
             <i className="material-icons">add</i> Add namespace
@@ -139,10 +139,10 @@ export const NamespaceList: React.FunctionComponent = () => {
             <StyledCard
               key={namespace?.metadata?.name}
               onClick={() =>
-                pushFiltered({ location, history }, `/applications`, [], {
+                { pushFiltered({ location, history }, `/applications`, [], {
                   cluster: currentCluster.name,
                   namespace: namespace.metadata.name,
-                })
+                }); }
               }
             >
               <ContentContainer>
@@ -159,7 +159,7 @@ export const NamespaceList: React.FunctionComponent = () => {
                     expandIcon="more_vert"
                     shrinkIcon="more_vert"
                   >
-                    <OptionsDropdown.Option onClick={() => onDelete(namespace)}>
+                    <OptionsDropdown.Option onClick={() => { onDelete(namespace); }}>
                       <i className="material-icons-outlined">delete</i>
                       <span>Delete</span>
                     </OptionsDropdown.Option>

@@ -1,4 +1,4 @@
-import React, { ChangeEvent, Component } from "react";
+import React, { type ChangeEvent, Component } from "react";
 import styled from "styled-components";
 import logo from "assets/logo.png";
 
@@ -34,7 +34,7 @@ export default class ResetPasswordInit extends Component<PropsType, StateType> {
   }
 
   renderEmailError = () => {
-    let { emailError } = this.state;
+    const { emailError } = this.state;
     if (emailError) {
       return (
         <ErrorHelper>
@@ -46,7 +46,7 @@ export default class ResetPasswordInit extends Component<PropsType, StateType> {
   };
 
   handleResetPasswordInit = (): void => {
-    let { email } = this.state;
+    const { email } = this.state;
 
     // Check for valid input
     if (!emailRegex.test(email)) {
@@ -57,7 +57,7 @@ export default class ResetPasswordInit extends Component<PropsType, StateType> {
         .createPasswordReset(
           "",
           {
-            email: email,
+            email,
           },
           {}
         )
@@ -69,7 +69,7 @@ export default class ResetPasswordInit extends Component<PropsType, StateType> {
   };
 
   render() {
-    let { email, emailError, submitted } = this.state;
+    const { email, emailError, submitted } = this.state;
 
     let formSection = (
       <div>
@@ -79,10 +79,10 @@ export default class ResetPasswordInit extends Component<PropsType, StateType> {
             placeholder="Email"
             value={email}
             onChange={(e: ChangeEvent<HTMLInputElement>) =>
-              this.setState({
+              { this.setState({
                 email: e.target.value,
                 emailError: false,
-              })
+              }); }
             }
             valid={!emailError}
           />

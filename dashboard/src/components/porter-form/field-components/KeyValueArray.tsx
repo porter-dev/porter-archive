@@ -1,11 +1,11 @@
 import React, { useContext, useEffect, useState } from "react";
 import {
-  GetFinalVariablesFunction,
-  GetMetadataFunction,
-  KeyValueArrayField,
-  KeyValueArrayFieldState,
-  PartialEnvGroup,
-  PopulatedEnvGroup,
+  type GetFinalVariablesFunction,
+  type GetMetadataFunction,
+  type KeyValueArrayField,
+  type KeyValueArrayFieldState,
+  type PartialEnvGroup,
+  type PopulatedEnvGroup,
 } from "../types";
 import sliders from "../../../assets/sliders.svg";
 import upload from "../../../assets/upload.svg";
@@ -23,9 +23,9 @@ import api from "shared/api";
 import { Context } from "shared/Context";
 import { dotenv_parse } from "shared/string_utils";
 
-interface Props extends KeyValueArrayField {
+type Props = {
   id: string;
-}
+} & KeyValueArrayField
 
 const KeyValueArray: React.FC<Props> = (props) => {
   const { state, setState, variables } = useFormField<KeyValueArrayFieldState>(
@@ -134,14 +134,14 @@ const KeyValueArray: React.FC<Props> = (props) => {
   };
 
   const readFile = (env: string) => {
-    let envObj = parseEnv(env, null);
+    const envObj = parseEnv(env, null);
     let push = true;
 
-    for (let key in envObj) {
-      for (var i = 0; i < state.values.length; i++) {
-        let existingKey = state.values[i]["key"];
+    for (const key in envObj) {
+      for (let i = 0; i < state.values.length; i++) {
+        const existingKey = state.values[i].key;
         if (key === existingKey) {
-          state.values[i]["value"] = envObj[key];
+          state.values[i].value = envObj[key];
           push = false;
         }
       }
@@ -161,20 +161,20 @@ const KeyValueArray: React.FC<Props> = (props) => {
       return (
         <Modal
           onRequestClose={() =>
-            setState(() => {
+            { setState(() => {
               return { showEditorModal: false };
-            })
+            }); }
           }
           width="60%"
           height="80%"
         >
           <EnvEditorModal
             closeModal={() =>
-              setState(() => {
+              { setState(() => {
                 return { showEditorModal: false };
-              })
+              }); }
             }
-            setEnvVariables={(envFile: string) => readFile(envFile)}
+            setEnvVariables={(envFile: string) => { readFile(envFile); }}
           />
         </Modal>
       );
@@ -182,9 +182,9 @@ const KeyValueArray: React.FC<Props> = (props) => {
   };
 
   const getProcessedValues = (
-    objectArray: { key: string; value: string }[]
+    objectArray: Array<{ key: string; value: string }>
   ): any => {
-    let obj = {} as any;
+    const obj = {} as any;
     objectArray?.forEach(({ key, value }) => {
       obj[key] = value;
     });
@@ -196,9 +196,9 @@ const KeyValueArray: React.FC<Props> = (props) => {
       return (
         <Modal
           onRequestClose={() =>
-            setState(() => {
+            { setState(() => {
               return { showEnvModal: false };
-            })
+            }); }
           }
           width="800px"
           height="542px"
@@ -211,11 +211,11 @@ const KeyValueArray: React.FC<Props> = (props) => {
             namespace={variables.namespace}
             clusterId={variables.clusterId}
             closeModal={() =>
-              setState(() => {
+              { setState(() => {
                 return {
                   showEnvModal: false,
                 };
-              })
+              }); }
             }
             setSyncedEnvGroups={(value) => {
               setState((prev) => {
@@ -227,10 +227,10 @@ const KeyValueArray: React.FC<Props> = (props) => {
             setValues={(values) => {
               setState((prev) => {
                 // Transform array to object similar on what we receive from setValues
-                const prevValues = prev.values.reduce((acc, currentValue) => {
+                const prevValues = prev.values.reduce<Record<string, string>>((acc, currentValue) => {
                   acc[currentValue.key] = currentValue.value;
                   return acc;
-                }, {} as Record<string, string>);
+                }, {});
 
                 // Deconstruct the two records/objects inside one to merge their values (this will override the old duped vars too)
                 // and convert the new object back to an array usable for the component
@@ -414,11 +414,11 @@ const KeyValueArray: React.FC<Props> = (props) => {
             {variables.namespace && props.envLoader && (
               <LoadButton
                 onClick={() =>
-                  setState((prev) => {
+                  { setState((prev) => {
                     return {
                       showEnvModal: !prev.showEnvModal,
                     };
-                  })
+                  }); }
                 }
               >
                 <img src={sliders} /> Load from Env Group
@@ -499,7 +499,7 @@ export const getFinalVariablesForKeyValueArray: GetFinalVariablesFunction = (
   };
 
   if (props.variable.includes("env")) {
-    let obj = {
+    const obj = {
       normal: {},
     } as any;
 
@@ -537,7 +537,7 @@ export const getFinalVariablesForKeyValueArray: GetFinalVariablesFunction = (
       [variable]: obj,
     };
   } else {
-    let obj = {} as any;
+    const obj = {} as any;
 
     state.values.forEach((entry: any, i: number) => {
       if (isNumber(entry.value)) {
@@ -552,12 +552,10 @@ export const getFinalVariablesForKeyValueArray: GetFinalVariablesFunction = (
   }
 };
 
-type KeyValueArrayMetadata = {
-  [variable: string]: {
-    added: { name: string }[];
-    deleted: { name: string }[];
-  };
-};
+type KeyValueArrayMetadata = Record<string, {
+    added: Array<{ name: string }>;
+    deleted: Array<{ name: string }>;
+  }>;
 
 export const getMetadata: GetMetadataFunction<KeyValueArrayMetadata> = (
   vars,
@@ -571,11 +569,11 @@ export const getMetadata: GetMetadataFunction<KeyValueArrayMetadata> = (
     };
   }
 
-  const originalSyncedEnvGroups: { name: string }[] =
+  const originalSyncedEnvGroups: Array<{ name: string }> =
     props.value[0]?.synced || [];
   const currSynced = state?.synced_env_groups || [];
 
-  let obj: KeyValueArrayMetadata[""] = {
+  const obj: KeyValueArrayMetadata[""] = {
     added: [],
     deleted: [],
   };
@@ -614,10 +612,10 @@ const ExpandableEnvGroup: React.FC<{
             </EventInformation>
           </ContentContainer>
           <ActionContainer>
-            <ActionButton onClick={() => onDelete()}>
+            <ActionButton onClick={() => { onDelete(); }}>
               <span className="material-icons">delete</span>
             </ActionButton>
-            <ActionButton onClick={() => setIsExpanded((prev) => !prev)}>
+            <ActionButton onClick={() => { setIsExpanded((prev) => !prev); }}>
               <i className="material-icons">
                 {isExpanded ? "arrow_drop_up" : "arrow_drop_down"}
               </i>

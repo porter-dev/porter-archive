@@ -60,7 +60,7 @@ const DeleteNamespaceModal = () => {
         <InputRow
           type="string"
           value={namespaceNameForDelition}
-          setValue={(x: string) => setNamespaceNameForDelition(x)}
+          setValue={(x: string) => { setNamespaceNameForDelition(x); }}
           placeholder={currentModalData?.metadata?.name}
           width="480px"
         />
@@ -72,7 +72,7 @@ const DeleteNamespaceModal = () => {
       <SaveButton
         text="Delete Namespace"
         color="#e62659"
-        onClick={() => deleteNamespace()}
+        onClick={() => { deleteNamespace(); }}
         status={status}
       />
     </>

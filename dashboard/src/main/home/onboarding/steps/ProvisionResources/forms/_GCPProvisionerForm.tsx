@@ -7,13 +7,13 @@ import SaveButton from "components/SaveButton";
 import { GCP_REGION_OPTIONS } from "main/home/onboarding/constants";
 import { OFState } from "main/home/onboarding/state";
 import {
-  GCPProvisionerConfig,
-  GCPRegistryConfig,
+  type GCPProvisionerConfig,
+  type GCPRegistryConfig,
 } from "main/home/onboarding/types";
 import React, { useEffect, useState } from "react";
 import api from "shared/api";
 import { readableDate } from "shared/string_utils";
-import { Infrastructure } from "shared/types";
+import { type Infrastructure } from "shared/types";
 import styled from "styled-components";
 import { useSnapshot } from "valtio";
 
@@ -55,7 +55,7 @@ export const CredentialsForm: React.FC<{
 
         integrations.sort((a, b) => b.id - a.id);
 
-        let lastUsed = integrations.find((i) => {
+        const lastUsed = integrations.find((i) => {
           return (
             i.id === snap.StateHandler?.provision_resources?.credentials?.id
           );
@@ -151,7 +151,7 @@ export const CredentialsForm: React.FC<{
 
         <Helper>Service account credentials for GCP permissions.</Helper>
         <UploadArea
-          setValue={(x: any) => setServiceAccountKey(x)}
+          setValue={(x: any) => { setServiceAccountKey(x); }}
           label="🔒 GCP Key Data (JSON)"
           placeholder="Choose a file or drag it here."
           width="100%"
@@ -164,7 +164,7 @@ export const CredentialsForm: React.FC<{
             <SaveButton
               text="Cancel"
               disabled={false}
-              onClick={() => setShowForm(false)}
+              onClick={() => { setShowForm(false); }}
               makeFlush={true}
               clearPosition={true}
               status=""
@@ -201,7 +201,7 @@ export const CredentialsForm: React.FC<{
       </PreviewRow>
       <Helper>
         Want to use a different account?{" "}
-        <A onClick={() => setShowForm(true)} href="#">
+        <A onClick={() => { setShowForm(true); }} href="#">
           Connect another account
         </A>
         .
@@ -212,7 +212,7 @@ export const CredentialsForm: React.FC<{
       <SaveButton
         text="Continue"
         disabled={false}
-        onClick={() => continueToNextStep(lastConnectedAccount?.id)}
+        onClick={() => { continueToNextStep(lastConnectedAccount?.id); }}
         makeFlush={true}
         clearPosition={true}
         status={buttonStatus}
@@ -241,7 +241,7 @@ export const SettingsForm: React.FC<{
     api
       .getInfra<Infrastructure[]>("<token>", {}, { project_id: project.id })
       .then(({ data }) => {
-        let sortFunc = (a: Infrastructure, b: Infrastructure) => {
+        const sortFunc = (a: Infrastructure, b: Infrastructure) => {
           return b.id < a.id ? -1 : b.id > a.id ? 1 : 0;
         };
 
@@ -298,7 +298,7 @@ export const SettingsForm: React.FC<{
   };
 
   const hasRegistryProvisioned = (
-    infras: { kind: string; status: string }[]
+    infras: Array<{ kind: string; status: string }>
   ) => {
     return !!infras.find(
       (i) =>
@@ -307,7 +307,7 @@ export const SettingsForm: React.FC<{
   };
 
   const hasClusterProvisioned = (
-    infras: { kind: string; status: string }[]
+    infras: Array<{ kind: string; status: string }>
   ) => {
     return !!infras.find(
       (i) => ["doks", "gks", "eks"].includes(i.kind) && i.status === "created"
@@ -384,7 +384,7 @@ export const SettingsForm: React.FC<{
         );
         return res?.data;
       } catch (error) {
-        return catchError(error);
+        catchError(error); 
       }
     } else {
       try {
@@ -401,7 +401,7 @@ export const SettingsForm: React.FC<{
         );
         return res?.data;
       } catch (error) {
-        return catchError(error);
+        catchError(error); 
       }
     }
   };
@@ -430,7 +430,7 @@ export const SettingsForm: React.FC<{
         );
         return res?.data;
       } catch (error) {
-        return catchError(error);
+        catchError(error); 
       }
     } else {
       try {
@@ -449,7 +449,7 @@ export const SettingsForm: React.FC<{
         );
         return res?.data;
       } catch (error) {
-        return catchError(error);
+        catchError(error); 
       }
     }
   };

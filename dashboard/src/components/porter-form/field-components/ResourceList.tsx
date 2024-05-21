@@ -1,5 +1,5 @@
 import React, { useEffect, useContext, useState } from "react";
-import { ResourceListField } from "../types";
+import { type ResourceListField } from "../types";
 import { Context } from "shared/Context";
 import { useWebsockets } from "shared/hooks/useWebsockets";
 import ExpandableResource from "../../ExpandableResource";
@@ -34,18 +34,18 @@ const ResourceList: React.FC<ResourceListField> = (props) => {
       return () => { };
     }
 
-    let { group, version, resource } = props.context.config;
+    const { group, version, resource } = props.context.config;
     let apiEndpoint = `/api/projects/${currentProject.id}/clusters/${currentCluster.id}/namespaces/${formState?.variables?.namespace}/releases/${formState?.variables?.currentChart?.name}/0/form_stream?`;
     apiEndpoint += `resource=${resource}&group=${group}&version=${version}`;
 
     const wsConfig = {
       onmessage(evt: MessageEvent) {
-        let { data, kind } = JSON.parse(evt.data);
+        const { data, kind } = JSON.parse(evt.data);
 
         // parse for name and label, which uniquely identify a resource
-        for (let [key] of Object.entries(data)) {
+        for (const [key] of Object.entries(data)) {
           // check the name and label in the value
-          let { name, label } = data[key][0];
+          const { name, label } = data[key][0];
 
           // attempt to find a corresponding name and label in the current array
           let foundMatch = false;
@@ -98,8 +98,7 @@ const ResourceList: React.FC<ResourceListField> = (props) => {
             <ExpandableResource
               key={i}
               button={
-                props?.settings?.options &&
-                props?.settings?.options["resource-button"]
+                props?.settings?.options?.["resource-button"]
               }
               resource={resource}
               isLast={i === resourceList.length - 1}

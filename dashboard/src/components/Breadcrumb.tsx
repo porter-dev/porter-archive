@@ -5,7 +5,7 @@ import styled from "styled-components";
 
 type Props = {
   currentStep: string;
-  steps: { value: string; label: string }[];
+  steps: Array<{ value: string; label: string }>;
   onClickStep?: (step: string) => void;
 };
 
@@ -17,7 +17,7 @@ const Breadcrumb: React.FC<Props> = ({ currentStep, steps, onClickStep }) => {
           <Fragment key={i}>
             <Crumb
               bold={currentStep === step.value}
-              onClick={() => onClickStep && onClickStep(step.value)}
+              onClick={() => { onClickStep && onClickStep(step.value); }}
             >
               {step.label}
             </Crumb>

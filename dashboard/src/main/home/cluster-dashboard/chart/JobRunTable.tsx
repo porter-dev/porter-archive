@@ -2,10 +2,10 @@ import DynamicLink from "components/DynamicLink";
 import Loading from "components/Loading";
 import Table from "components/OldTable";
 import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
-import { CellProps, Column, Row } from "react-table";
+import { type CellProps, type Column, Row } from "react-table";
 import api from "shared/api";
 import { Context } from "shared/Context";
-import { NewWebsocketOptions, useWebsockets } from "shared/hooks/useWebsockets";
+import { type NewWebsocketOptions, useWebsockets } from "shared/hooks/useWebsockets";
 import { useRouting } from "shared/routing";
 import { relativeDate, timeFrom } from "shared/string_utils";
 import styled from "styled-components";
@@ -97,7 +97,7 @@ const JobRunTable: React.FC<Props> = ({
     };
   }, []);
 
-  const columns = useMemo<Column<JobRun>[]>(
+  const columns = useMemo<Array<Column<JobRun>>>(
     () => [
       {
         Header: "Namespace / Name",
@@ -278,7 +278,7 @@ const JobRunTable: React.FC<Props> = ({
     return (
       <ErrorWrapper>
         Couldn't retrieve jobs, please try again.{" "}
-        <RetryButton onClick={() => getJobRuns()}>Retry</RetryButton>
+        <RetryButton onClick={() => { getJobRuns(); }}>Retry</RetryButton>
       </ErrorWrapper>
     );
   }
@@ -381,14 +381,14 @@ type JobRun = {
       "helm.sh/revision": string;
       "meta.helm.sh/release-name": string;
     };
-    ownerReferences: {
+    ownerReferences: Array<{
       apiVersion: string;
       kind: string;
       name: string;
       uid: string;
       controller: boolean;
       blockOwnerDeletion: boolean;
-    }[];
+    }>;
     managedFields: unknown[];
   };
   spec: {
@@ -414,11 +414,11 @@ type JobRun = {
         };
       };
       spec: {
-        containers: {
+        containers: Array<{
           name: string;
           image: string;
           command: string[];
-          env?: {
+          env?: Array<{
             [key: string]: unknown;
             name: string;
             value?: string;
@@ -426,7 +426,7 @@ type JobRun = {
               secretKeyRef?: { name: string; key: string };
               configMapKeyRef?: { name: string; key: string };
             };
-          }[];
+          }>;
           resources: {
             [key: string]: unknown;
             limits: { [key: string]: unknown; memory: string };
@@ -435,7 +435,7 @@ type JobRun = {
           terminationMessagePath: string;
           terminationMessagePolicy: string;
           imagePullPolicy: string;
-        }[];
+        }>;
 
         restartPolicy: string;
         terminationGracePeriodSeconds: number;
@@ -443,25 +443,25 @@ type JobRun = {
         shareProcessNamespace: boolean;
         securityContext: unknown;
         schedulerName: string;
-        tolerations: {
+        tolerations: Array<{
           [key: string]: unknown;
           key: string;
           operator: string;
           value: string;
           effect: string;
-        }[];
+        }>;
       };
     };
   };
   status: {
     [key: string]: unknown;
-    conditions: {
+    conditions: Array<{
       [key: string]: unknown;
       type: string;
       status: string;
       lastProbeTime: string;
       lastTransitionTime: string;
-    }[];
+    }>;
     startTime: string;
     completionTime: string | undefined | null;
     succeeded?: number;

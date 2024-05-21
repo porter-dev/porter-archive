@@ -5,13 +5,13 @@ import Text from "components/porter/Text";
 import Loading from "components/Loading";
 import Error from "components/porter/Error";
 import { Droppable, DragDropContext } from "react-beautiful-dnd";
-import { Buildpack } from "main/home/app-dashboard/types/buildpack";
+import { type Buildpack } from "main/home/app-dashboard/types/buildpack";
 import { useFieldArray, useFormContext } from "react-hook-form";
-import { PorterAppFormData } from "lib/porter-apps";
-import { BuildOptions } from "lib/porter-apps/build";
+import { type PorterAppFormData } from "lib/porter-apps";
+import { type BuildOptions } from "lib/porter-apps/build";
 import Container from "components/porter/Container";
 
-interface Props {
+type Props = {
   build: BuildOptions & {
     method: "pack";
   };

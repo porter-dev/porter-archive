@@ -1,6 +1,6 @@
 import ace from 'ace-builds/src-noconflict/ace';
 
-ace["define"](
+ace.define(
   "ace/theme/porter",
   ["require", "exports", "module", "ace/lib/dom"],
   (acequire, exports) => {
@@ -109,7 +109,7 @@ ace["define"](
     background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAACCAYAAACZgbYnAAAAEklEQVQImWNgYGBgYLBWV/8PAAK4AYnhiq+xAAAAAElFTkSuQmCC) right repeat-y;
     }`;
 
-    var dom = acequire("../lib/dom");
+    const dom = acequire("../lib/dom");
     dom.importCssString(exports.cssText, exports.cssClass);
   }
 );

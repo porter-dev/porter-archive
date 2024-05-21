@@ -2,9 +2,9 @@ import React, { useEffect } from "react";
 import InputRow from "../../form-components/InputRow";
 import useFormField from "../hooks/useFormField";
 import {
-  GetFinalVariablesFunction,
-  DictionaryField,
-  DictionaryFieldState,
+  type GetFinalVariablesFunction,
+  type DictionaryField,
+  type DictionaryFieldState,
 } from "../types";
 import DictionaryEditor from "components/porter/DictionaryEditor";
 import { hasSetValue } from "../utils";
@@ -28,7 +28,7 @@ const Dictionary: React.FC<DictionaryField> = (props) => {
 
   return (
     <DictionaryEditor
-      value={props?.value && props.value[0]}
+      value={props?.value?.[0]}
       onChange={(x: any) => {
         setVars((vars) => {
           return {

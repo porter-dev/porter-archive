@@ -1,5 +1,5 @@
 import React from "react";
-import { Link, LinkProps } from "react-router-dom";
+import { Link, type LinkProps } from "react-router-dom";
 
 const DynamicLink: React.FC<LinkProps> = ({ to, children, hasunderline, ...props }) => {
   // It is a simple element with nothing to link to

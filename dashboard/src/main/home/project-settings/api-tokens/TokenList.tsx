@@ -7,7 +7,7 @@ import { Context } from "shared/Context";
 import api from "shared/api";
 import { readableDate } from "shared/string_utils";
 import styled from "styled-components";
-import { APIToken, APITokenMeta } from "../APITokensSection";
+import { type APIToken, type APITokenMeta } from "../APITokensSection";
 
 type Props = {
   tokens: APITokenMeta[];
@@ -76,7 +76,7 @@ const TokenList: React.FunctionComponent<Props> = (props) => {
           {expandedTok.policy_name}.
         </Description>
         <RevokeAccessButtonWrapper>
-          <RevokeAccessButton onClick={() => revokeAPIToken(expandedTok.id)}>
+          <RevokeAccessButton onClick={() => { revokeAPIToken(expandedTok.id); }}>
             Revoke Token
           </RevokeAccessButton>
         </RevokeAccessButtonWrapper>

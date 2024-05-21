@@ -10,7 +10,7 @@ import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 
 import api from "shared/api";
-import { AppEventWebhook } from "shared/types";
+import { type AppEventWebhook } from "shared/types";
 import { url } from "inspector";
 
 type Webhook = {
@@ -52,9 +52,9 @@ const Webhooks: React.FC<Props> = ({
       "<token>",
       {},
       { 
-        projectId: projectId,
-        deploymentTargetId: deploymentTargetId,
-        appName: appName,
+        projectId,
+        deploymentTargetId,
+        appName,
        },
     )
     .then(({ data:  { app_event_webhooks } }) =>  {
@@ -90,9 +90,9 @@ const Webhooks: React.FC<Props> = ({
       })
       },
       { 
-        projectId: projectId,
-        deploymentTargetId: deploymentTargetId,
-        appName: appName,
+        projectId,
+        deploymentTargetId,
+        appName,
        },
     )
     .then(() => {

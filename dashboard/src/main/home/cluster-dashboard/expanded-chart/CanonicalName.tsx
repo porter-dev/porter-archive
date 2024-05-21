@@ -5,7 +5,7 @@ import SaveButton from "components/SaveButton";
 import api from "shared/api";
 import Color from "color";
 import { Context } from "shared/Context";
-import { ChartType } from "shared/types";
+import { type ChartType } from "shared/types";
 import { isAlphanumeric } from "shared/common";
 
 type Props = {
@@ -85,7 +85,7 @@ const CanonicalName = ({ onSave, release }: Props) => {
       <InputRow
         type="text"
         value={canonicalName}
-        setValue={(x: string) => setCanonicalName(x)}
+        setValue={(x: string) => { setCanonicalName(x); }}
         placeholder="ex: my-app"
         isRequired={true}
         width={"100%"}
@@ -101,7 +101,7 @@ const CanonicalName = ({ onSave, release }: Props) => {
           disabled={shouldDisableSave}
           statusPosition="right"
           text="Save changes"
-          onClick={() => handleSave()}
+          onClick={async () => { await handleSave(); }}
           status={buttonStatus}
         ></SaveButton>
       </Flex>

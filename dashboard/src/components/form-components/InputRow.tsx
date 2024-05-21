@@ -1,4 +1,4 @@
-import React, { ChangeEvent, Component } from "react";
+import React, { type ChangeEvent, Component } from "react";
 import Tooltip from "@material-ui/core/Tooltip";
 import styled from "styled-components";
 
@@ -36,7 +36,7 @@ export default class InputRow extends Component<PropsType, StateType> {
   };
 
   render() {
-    let { label, value, type, unit, placeholder, width, info } = this.props;
+    const { label, value, type, unit, placeholder, width, info } = this.props;
     return (
       <StyledInputRow className={this.props.className}>
         {(label || info) && (
@@ -69,7 +69,7 @@ export default class InputRow extends Component<PropsType, StateType> {
         <InputWrapper hasError={this.props.hasError} width={width}>
           <Input
             readOnly={this.state.readOnly}
-            onFocus={() => this.setState({ readOnly: false })}
+            onFocus={() => { this.setState({ readOnly: false }); }}
             disabled={this.props.disabled}
             placeholder={placeholder}
             width={width}

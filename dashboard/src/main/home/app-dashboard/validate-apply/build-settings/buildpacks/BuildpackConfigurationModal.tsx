@@ -6,10 +6,10 @@ import AddCustomBuildpackComponent from "./AddCustomBuildpack";
 import Button from "components/porter/Button";
 import Modal from "components/porter/Modal";
 import styled from "styled-components";
-import { Buildpack } from "main/home/app-dashboard/types/buildpack";
+import { type Buildpack } from "main/home/app-dashboard/types/buildpack";
 import {  useFieldArray, useFormContext } from "react-hook-form";
-import { PorterAppFormData } from "lib/porter-apps";
-import { BuildOptions } from "lib/porter-apps/build";
+import { type PorterAppFormData } from "lib/porter-apps";
+import { type BuildOptions } from "lib/porter-apps/build";
 
 type Props = {
   build: BuildOptions & {

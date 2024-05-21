@@ -82,12 +82,12 @@ const MultiSaveButton: React.FC<Props> = (props) => {
     if (isDropdownExpanded) {
       return (
         <>
-          <DropdownOverlay onClick={() => setIsDropdownExpanded(false)} />
+          <DropdownOverlay onClick={() => { setIsDropdownExpanded(false); }} />
           <OptionWrapper
             expandTo={props.expandTo || "right"}
             dropdownWidth="400px"
             dropdownMaxHeight="300px"
-            onClick={() => setIsDropdownExpanded(false)}
+            onClick={() => { setIsDropdownExpanded(false); }}
           >
             {renderOptionList()}
           </OptionWrapper>
@@ -102,7 +102,7 @@ const MultiSaveButton: React.FC<Props> = (props) => {
         <Option
           key={i}
           selected={option.text === originalArray[currOptionIndex]?.text}
-          onClick={() => setCurrOptionIndex(i)}
+          onClick={() => { setCurrOptionIndex(i); }}
           lastItem={i === originalArray.length - 1}
         >
           {option.text}
@@ -133,7 +133,7 @@ const MultiSaveButton: React.FC<Props> = (props) => {
         <DropdownButton
           disabled={props.disabled}
           color={props.color || "#5561C0"}
-          onClick={() => setIsDropdownExpanded(!isDropdownExpanded)}
+          onClick={() => { setIsDropdownExpanded(!isDropdownExpanded); }}
         >
           <i className="material-icons expand-icon">
             {isDropdownExpanded ? "expand_less" : "expand_more"}

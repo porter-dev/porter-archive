@@ -5,7 +5,7 @@ import styled from "styled-components";
 
 import Loading from "components/Loading";
 import { DISPLAY_TAGS_MAP, hardcodedIcons, hardcodedNames } from "shared/hardcodedNameDict";
-import { PorterTemplate } from "shared/types";
+import { type PorterTemplate } from "shared/types";
 import semver from "semver";
 
 import web from "assets/web.png";
@@ -43,7 +43,7 @@ const TemplateList: React.FC<Props> = ({
         {},
         {
           project_id: currentProject.id,
-          helm_repo_id: helm_repo_id,
+          helm_repo_id,
         }
       )
       .then(({ data }) => {
@@ -54,7 +54,7 @@ const TemplateList: React.FC<Props> = ({
           throw Error("Data is not an array");
         }
 
-        let sortedVersionData = data
+        const sortedVersionData = data
           .map((template: any) => {
             let versions = template.versions.reverse();
 

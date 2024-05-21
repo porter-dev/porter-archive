@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useContext } from "react";
 import styled from "styled-components";
-import { RouteComponentProps, withRouter } from "react-router";
+import { type RouteComponentProps, withRouter } from "react-router";
 
 import { OFState } from "main/home/onboarding/state";
 import api from "shared/api";
@@ -23,7 +23,7 @@ import {
   GKEPreflightValues,
   PreflightCheckRequest
 } from "@porter-dev/api-contracts";
-import { ClusterType } from "shared/types";
+import { type ClusterType } from "shared/types";
 import Button from "./porter/Button";
 import Error from "./porter/Error";
 import Spacer from "./porter/Spacer";
@@ -214,7 +214,7 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
         {
           < Heading >
             <ExpandHeader
-              onClick={() => setIsExpanded(!isExpanded)}
+              onClick={() => { setIsExpanded(!isExpanded); }}
               isExpanded={isExpanded}
             >
               <i className="material-icons">arrow_drop_down</i>
@@ -254,7 +254,7 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
                 type="string"
                 disabled={isReadOnly}
                 value={clusterNetworking.cidrRange}
-                setValue={(x: string) => setClusterNetworking(new GKENetwork({ ...clusterNetworking, cidrRange: x }))}
+                setValue={(x: string) => { setClusterNetworking(new GKENetwork({ ...clusterNetworking, cidrRange: x })); }}
                 label="VPC CIDR range"
                 placeholder="ex: 10.78.0.0/16"
               />
@@ -277,7 +277,7 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
                   type="string"
                   disabled={isReadOnly}
                   value={clusterNetworking.controlPlaneCidr}
-                  setValue={(x: string) => setClusterNetworking(new GKENetwork({ ...clusterNetworking, controlPlaneCidr: x }))}
+                  setValue={(x: string) => { setClusterNetworking(new GKENetwork({ ...clusterNetworking, controlPlaneCidr: x })); }}
                   label="Control Plane CIDR range"
                   placeholder="ex: 10.78.0.0/16"
                 />
@@ -286,7 +286,7 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
                   type="string"
                   disabled={isReadOnly}
                   value={clusterNetworking.podCidr}
-                  setValue={(x: string) => setClusterNetworking(new GKENetwork({ ...clusterNetworking, podCidr: x }))}
+                  setValue={(x: string) => { setClusterNetworking(new GKENetwork({ ...clusterNetworking, podCidr: x })); }}
                   label="Pod CIDR range"
                   placeholder="ex: 10.78.0.0/16"
                 />
@@ -295,7 +295,7 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
                   type="string"
                   disabled={isReadOnly}
                   value={clusterNetworking.serviceCidr}
-                  setValue={(x: string) => setClusterNetworking(new GKENetwork({ ...clusterNetworking, serviceCidr: x }))}
+                  setValue={(x: string) => { setClusterNetworking(new GKENetwork({ ...clusterNetworking, serviceCidr: x })); }}
                   label="Service CIDR range"
                   placeholder="ex: 10.78.0.0/16"
                 />
@@ -342,7 +342,7 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
         nodePoolType: GKENodePoolType.GKE_NODE_POOL_TYPE_SYSTEM
       }),
       new GKENodePool({
-        instanceType: instanceType,
+        instanceType,
         minInstances: 1, // TODO: make these customizable before merging
         maxInstances: 10, // TODO: make these customizable before merging
         nodePoolType: GKENodePoolType.GKE_NODE_POOL_TYPE_APPLICATION
@@ -369,9 +369,9 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
         kindValues: {
           case: "gkeKind",
           value: new GKE({
-            clusterName: clusterName,
+            clusterName,
             clusterVersion: clusterVersion || clusterVersionOptions[0].value,
-            region: region,
+            region,
             network: new GKENetwork({
               cidrRange: clusterNetworking.cidrRange,
               controlPlaneCidr: clusterNetworking.controlPlaneCidr,
@@ -416,7 +416,7 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
     const data = createClusterObj();
 
     if (props.clusterId) {
-      data["cluster"]["clusterId"] = props.clusterId;
+      data.cluster.clusterId = props.clusterId;
     }
 
     try {
@@ -554,7 +554,7 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
       // Check if any of the preflight checks has a message
       let hasMessage = false;
       let errors = "Preflight Checks Failed : ";
-      for (let check in preflightDataResp?.data?.Msg.preflight_checks) {
+      for (const check in preflightDataResp?.data?.Msg.preflight_checks) {
         if (preflightDataResp?.data?.Msg.preflight_checks[check]?.message) {
           hasMessage = true;
           errors = errors + check + ", "

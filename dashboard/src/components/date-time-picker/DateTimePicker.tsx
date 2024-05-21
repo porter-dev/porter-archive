@@ -21,7 +21,7 @@ const DateTimePicker: React.FC<Props> = ({ startDate, setStartDate }) => {
   maxTimeMinDay.setHours(23, 59, 0, 0);
 
   const availableDates = [];
-  let currentDate = new Date(minDate);
+  const currentDate = new Date(minDate);
   while (currentDate <= maxDate) {
     availableDates.push(new Date(currentDate));
     currentDate.setTime(currentDate.getTime() + 24 * 60 * 60 * 1000);

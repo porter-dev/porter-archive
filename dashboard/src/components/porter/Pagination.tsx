@@ -21,7 +21,7 @@ const Pagination: React.FC<Props> = ({
       <Text color="helper">Viewing page {page} out of {totalPages}</Text>
       <Container row>
         <Button 
-          onClick={() => setPage(page - 1)} 
+          onClick={() => { setPage(page - 1); }} 
           disabled={page === 1}
           height="20px"
           color="fg"
@@ -31,7 +31,7 @@ const Pagination: React.FC<Props> = ({
         </Button>
         <Spacer inline x={0.5} />
         <Button 
-          onClick={() => setPage(page + 1)}
+          onClick={() => { setPage(page + 1); }}
           disabled={page === totalPages}
           height="20px"
           color="fg"

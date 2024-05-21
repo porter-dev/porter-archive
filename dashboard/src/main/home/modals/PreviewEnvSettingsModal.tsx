@@ -10,8 +10,8 @@ import Heading from "components/form-components/Heading";
 import Helper from "components/form-components/Helper";
 import ConfirmOverlay from "../../../components/ConfirmOverlay";
 
-interface Environment {
-  id: Number;
+type Environment = {
+  id: number;
   project_id: number;
   cluster_id: number;
   git_installation_id: number;
@@ -86,7 +86,7 @@ const PreviewEnvSettingsModal = () => {
         message={`Are you sure you want to disable preview environments in 
           ${selectedEnvironment?.git_repo_owner}/${selectedEnvironment?.git_repo_name}?`}
         onYes={handleDelete}
-        onNo={() => setSelectedEnvironment(null)}
+        onNo={() => { setSelectedEnvironment(null); }}
       />
       <Heading>
         <GitIcon src={github} /> Github

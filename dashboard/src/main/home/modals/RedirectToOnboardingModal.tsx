@@ -19,7 +19,7 @@ const RedirectToOnboardingModal = () => {
       <ContinueButton
         as={Link}
         to="/onboarding"
-        onClick={() => setCurrentModal(null, null)}
+        onClick={() => { setCurrentModal(null, null); }}
       >
         <i className="material-icons">east</i>
         Continue Setup

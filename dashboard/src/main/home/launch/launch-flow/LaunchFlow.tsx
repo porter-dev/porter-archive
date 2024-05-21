@@ -2,7 +2,7 @@ import React, { useContext, useState } from "react";
 import styled from "styled-components";
 import _ from "lodash";
 import { generateSlug } from "random-word-slugs";
-import { RouteComponentProps, withRouter } from "react-router";
+import { type RouteComponentProps, withRouter } from "react-router";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
@@ -14,10 +14,10 @@ import SettingsPage from "./SettingsPage";
 import TitleSection from "components/TitleSection";
 
 import {
-  ActionConfigType,
-  ChartTypeWithExtendedConfig,
-  FullActionConfigType,
-  PorterTemplate,
+  type ActionConfigType,
+  type ChartTypeWithExtendedConfig,
+  type FullActionConfigType,
+  type PorterTemplate,
 } from "shared/types";
 
 type PropsType = RouteComponentProps & {
@@ -111,13 +111,13 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
   };
 
   const handleSubmitAddon = async (wildcard?: any) => {
-    let { currentCluster, currentProject, setCurrentError } = context;
+    const { currentCluster, currentProject, setCurrentError } = context;
     setSaveValuesStatus("loading");
 
     const name = templateName || generateRandomName();
 
-    let values: any = {};
-    for (let key in wildcard) {
+    const values: any = {};
+    for (const key in wildcard) {
       _.set(values, key, wildcard[key]);
     }
 
@@ -127,7 +127,7 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
         {
           template_name: props.currentTemplate.name,
           template_version: props.currentTemplate?.currentVersion || "latest",
-          values: values,
+          values,
           name,
         },
         {
@@ -143,11 +143,11 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
         window.analytics?.track("Deployed Add-on", {
           name: props.currentTemplate.name,
           namespace: selectedNamespace,
-          values: values,
+          values,
         });
       })
       .catch((err) => {
-        let parsedErr = err?.response?.data?.error;
+        const parsedErr = err?.response?.data?.error;
 
         err = parsedErr || err.message || JSON.stringify(err);
 
@@ -157,16 +157,16 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
         window.analytics?.track("Failed to Deploy Add-on", {
           name: props.currentTemplate.name,
           namespace: selectedNamespace,
-          values: values,
+          values,
           error: err,
         });
-        return;
+        
       });
 
     const synced = values?.container?.env?.synced || [];
 
-    const addApplicationToEnvGroupPromises = synced.map((envGroup: any) => {
-      return api.addApplicationToEnvGroup(
+    const addApplicationToEnvGroupPromises = synced.map(async (envGroup: any) => {
+      return await api.addApplicationToEnvGroup(
         "<token>",
         {
           name: envGroup?.name,
@@ -191,7 +191,7 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
     // props.setCurrentView('cluster-dashboard');
     setSaveValuesStatus("successful");
     // redirect to dashboard
-    let dst = props.currentTemplate.name === "job" ? "/jobs" : "/applications";
+    const dst = props.currentTemplate.name === "job" ? "/jobs" : "/applications";
     setTimeout(() => {
       pushFiltered(props, dst, ["project_id"], {
         cluster: currentCluster.name,
@@ -201,12 +201,12 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
   };
 
   const handleSubmit = async (rawValues: any) => {
-    let { currentCluster, currentProject, setCurrentError } = context;
+    const { currentCluster, currentProject, setCurrentError } = context;
     setSaveValuesStatus("loading");
 
     // Convert dotted keys to nested objects
-    let values: any = {};
-    for (let key in rawValues) {
+    const values: any = {};
+    for (const key in rawValues) {
       _.set(values, key, rawValues[key]);
     }
 
@@ -219,7 +219,7 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
     }
 
     if (url?.includes(":")) {
-      let splits = url.split(":");
+      const splits = url.split(":");
       url = splits[0];
       tag = splits[1];
     } else if (!tag) {
@@ -281,7 +281,7 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
       _.set(values, "paused", true);
     }
 
-    var external_domain: string;
+    let external_domain: string;
 
     const release_name = templateName || generateRandomName();
     // check if template is docker and create external domain if necessary
@@ -303,7 +303,7 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
               resolve(res?.data?.external_url);
             })
             .catch((err) => {
-              let parsedErr = err?.response?.data?.error;
+              const parsedErr = err?.response?.data?.error;
               err = parsedErr || err.message || JSON.stringify(err);
               setSaveValuesStatus(`Could not create subdomain: ${err}`);
 
@@ -331,7 +331,7 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
         "<token>",
         {
           image_url: url,
-          values: values,
+          values,
           template_name: props.currentTemplate.name.toLowerCase().trim(),
           template_version: props.currentTemplate?.currentVersion || "latest",
           name: release_name,
@@ -348,7 +348,7 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
       );
       // props.setCurrentView('cluster-dashboard');
     } catch (err) {
-      let parsedErr = err?.response?.data?.error;
+      const parsedErr = err?.response?.data?.error;
       err = parsedErr || err.message || JSON.stringify(err);
       setSaveValuesStatus(`Could not deploy template: ${err}`);
       setCurrentError(err);
@@ -358,7 +358,7 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
     setSaveValuesStatus("successful");
     // redirect to dashboard with namespace
     setTimeout(() => {
-      let dst =
+      const dst =
         props.currentTemplate.name === "job" ? "/jobs" : "/applications";
       pushFiltered(props, dst, ["project_id"], {
         cluster: currentCluster.name,
@@ -368,7 +368,7 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
   };
 
   const renderCurrentPage = () => {
-    let { form, currentTab } = props;
+    const { form, currentTab } = props;
     if (currentPage === "source" && form?.hasSource) {
       return (
         <SourcePage
@@ -425,14 +425,14 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
         setPage={setCurrentPage}
         form={form}
         valuesToOverride={valuesToOverride}
-        clearValuesToOverride={() => setValuesToOverride(null)}
+        clearValuesToOverride={() => { setValuesToOverride(null); }}
         fullActionConfig={fullActionConfig}
       />
     );
   };
 
   const renderIcon = () => {
-    let icon = props.currentTemplate?.icon;
+    const icon = props.currentTemplate?.icon;
     if (icon) {
       return <Icon src={icon} />;
     }
@@ -444,7 +444,7 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
     );
   };
 
-  let { currentTab } = props;
+  const { currentTab } = props;
   let currentTemplateName = props.currentTemplate.name;
   if (hardcodedNames[currentTemplateName]) {
     currentTemplateName = hardcodedNames[currentTemplateName];

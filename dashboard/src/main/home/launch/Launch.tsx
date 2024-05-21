@@ -3,7 +3,7 @@ import styled from "styled-components";
 
 import { Context } from "shared/Context";
 import api from "shared/api";
-import { ChartTypeWithExtendedConfig, PorterTemplate, ClusterType } from "shared/types";
+import { type ChartTypeWithExtendedConfig, type PorterTemplate, type ClusterType } from "shared/types";
 
 import TabSelector from "components/TabSelector";
 import ExpandedTemplate from "./expanded-template/ExpandedTemplate";
@@ -15,7 +15,7 @@ import ClusterProvisioningPlaceholder from "components/ClusterProvisioningPlaceh
 import DashboardHeader from "../cluster-dashboard/DashboardHeader";
 
 import semver from "semver";
-import { RouteComponentProps, withRouter } from "react-router";
+import { type RouteComponentProps, withRouter } from "react-router";
 import { getQueryParam, getQueryParams, pushFiltered } from "shared/routing";
 import TemplateList from "./TemplateList";
 import { capitalize } from "lodash";
@@ -143,9 +143,9 @@ class Templates extends Component<PropsType, StateType> {
         console.error(err);
       });
 
-    let default_addon_helm_repo_url = this.context?.capabilities
+    const default_addon_helm_repo_url = this.context?.capabilities
       ?.default_addon_helm_repo_url;
-    let default_app_helm_repo_url = this.context?.capabilities
+    const default_app_helm_repo_url = this.context?.capabilities
       ?.default_app_helm_repo_url;
     try {
       const res = await api.getTemplates(
@@ -186,7 +186,7 @@ class Templates extends Component<PropsType, StateType> {
           project_id: this.context.currentProject.id,
         }
       );
-      let sortedVersionData = res.data.map((template: any) => {
+      const sortedVersionData = res.data.map((template: any) => {
         let versions = template.versions.reverse();
 
         versions = template.versions.sort(semver.rcompare);
@@ -242,7 +242,7 @@ class Templates extends Component<PropsType, StateType> {
           clonedChart,
         },
         () => {
-          let preferredOrder = ["web", "worker", "job"];
+          const preferredOrder = ["web", "worker", "job"];
           this.state.applicationTemplates.sort((a, b) => {
             return (
               preferredOrder.indexOf(a.name) - preferredOrder.indexOf(b.name)
@@ -266,7 +266,7 @@ class Templates extends Component<PropsType, StateType> {
         }
       );
 
-      let tabOptions = this.state.tabOptions.concat(
+      const tabOptions = this.state.tabOptions.concat(
         ...res.data.map((val: any) => {
           return {
             value: `${val.id}`,
@@ -302,7 +302,7 @@ class Templates extends Component<PropsType, StateType> {
     return !requiredParams.some((rp) => !qp.has(rp));
   };
 
-  getClonedRelease = () => {
+  getClonedRelease = async () => {
     const queryParams = getQueryParams(this.props);
 
     if (!this.areCloneQueryParamsValid()) {
@@ -313,7 +313,7 @@ class Templates extends Component<PropsType, StateType> {
       return;
     }
 
-    return api.getChart<ChartTypeWithExtendedConfig>(
+    return await api.getChart<ChartTypeWithExtendedConfig>(
       "<token>",
       {},
       {
@@ -366,7 +366,7 @@ class Templates extends Component<PropsType, StateType> {
         helm_repo_id={helm_repo_id}
         templates={templates}
         setCurrentTemplate={(template) =>
-          this.setState({ currentTemplate: template })
+          { this.setState({ currentTemplate: template }); }
         }
       />
     );
@@ -376,8 +376,8 @@ class Templates extends Component<PropsType, StateType> {
     if (this.state.currentTemplate) {
       return (
         <ExpandedTemplate
-          setForm={(x: any) => this.setState({ form: x })}
-          showLaunchFlow={() => this.setState({ isOnLaunchFlow: true })}
+          setForm={(x: any) => { this.setState({ form: x }); }}
+          showLaunchFlow={() => { this.setState({ isOnLaunchFlow: true }); }}
           currentTab={this.state.currentTab}
           currentTemplate={this.state.currentTemplate}
           setCurrentTemplate={(currentTemplate: PorterTemplate) => {
@@ -412,10 +412,10 @@ class Templates extends Component<PropsType, StateType> {
             options={this.state.tabOptions}
             currentTab={this.state.currentTab}
             setCurrentTab={(value: string) =>
-              this.setState({
+              { this.setState({
                 currentTab: value,
                 currentTemplate: null,
-              })
+              }); }
             }
           />
           {this.renderTabContents()}
@@ -469,7 +469,7 @@ class Templates extends Component<PropsType, StateType> {
           form={this.state.form}
           currentTab={this.state.currentTab}
           currentTemplate={this.state.currentTemplate}
-          hideLaunchFlow={() => this.setState({ isOnLaunchFlow: false })}
+          hideLaunchFlow={() => { this.setState({ isOnLaunchFlow: false }); }}
         />
       );
     }

@@ -2,7 +2,7 @@ import { Tooltip } from "@material-ui/core";
 import React from "react";
 import styled from "styled-components";
 import useFormField from "../hooks/useFormField";
-import { StringInputFieldState, TextAreaField } from "../types";
+import { type StringInputFieldState, type TextAreaField } from "../types";
 import { hasSetValue } from "../utils";
 
 const TextAreaInput: React.FC<TextAreaField> = (props) => {

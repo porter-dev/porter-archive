@@ -1,18 +1,18 @@
 import React, { useMemo, useRef, useState } from "react";
 import { integrationList } from "shared/common";
 import styled from "styled-components";
-import { SupportedProviders } from "../types";
+import { type SupportedProviders } from "../types";
 import Selector from "components/Selector";
 
 export type ProviderSelectorProps = {
   selectProvider: (
     provider: SupportedProviders | (SupportedProviders | "external")
   ) => void;
-  options: {
+  options: Array<{
     value: string;
     icon: string;
     label: string;
-  }[];
+  }>;
   defaultOption?: string;
 };
 
@@ -24,17 +24,17 @@ export const registryOptions = [
   },
   {
     value: "aws",
-    icon: integrationList["ecr"]?.icon,
+    icon: integrationList.ecr?.icon,
     label: "Amazon Elastic Container Registry (ECR)",
   },
   {
     value: "gcp",
-    icon: integrationList["gcr"]?.icon,
+    icon: integrationList.gcr?.icon,
     label: "Google Cloud Registry (GCR)",
   },
   {
     value: "gar",
-    icon: integrationList["gcr"]?.icon,
+    icon: integrationList.gcr?.icon,
     label: "Google Artifact Registry (GAR)",
   },
   /*
@@ -49,12 +49,12 @@ export const registryOptions = [
 export const provisionerOptions = [
   {
     value: "aws",
-    icon: integrationList["aws"]?.icon,
+    icon: integrationList.aws?.icon,
     label: "Amazon Web Services (AWS)",
   },
   {
     value: "gcp",
-    icon: integrationList["gcp"]?.icon,
+    icon: integrationList.gcp?.icon,
     label: "Google Cloud Platform (GCP)",
   },
 
@@ -71,7 +71,7 @@ export const provisionerOptionsWithExternal = [
   ...provisionerOptions,
   {
     value: "external",
-    icon: integrationList["kubernetes"]?.icon,
+    icon: integrationList.kubernetes?.icon,
     label: "Link an existing cluster",
   },
 ];

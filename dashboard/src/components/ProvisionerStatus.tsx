@@ -3,13 +3,13 @@ import { integrationList } from "shared/common";
 import styled, { keyframes } from "styled-components";
 import { readableDate } from "shared/string_utils";
 import {
-  Infrastructure,
+  type Infrastructure,
   KindMap,
-  Operation,
-  OperationStatus,
-  OperationType,
-  TFResourceState,
-  TFState,
+  type Operation,
+  type OperationStatus,
+  type OperationType,
+  type TFResourceState,
+  type TFState,
 } from "shared/types";
 import api from "shared/api";
 import Placeholder from "./OldPlaceholder";
@@ -27,7 +27,7 @@ type Props = {
   set_max_width?: boolean;
 };
 
-const nameMap: { [key: string]: string } = {
+const nameMap: Record<string, string> = {
   eks: "Elastic Kubernetes Service (EKS)",
   ecr: "Elastic Container Registry (ECR)",
   doks: "DigitalOcean Kubernetes Service (DOKS)",
@@ -132,7 +132,7 @@ const V1InfraObject: React.FC<V1InfraObjectProps> = ({
   };
 
   const renderErrorSection = () => {
-    let errors: string[] = [];
+    const errors: string[] = [];
     if (infra.status == "destroyed" || infra.status == "deleted") {
       errors.push("This infrastructure was destroyed.");
     }
@@ -154,7 +154,7 @@ const V1InfraObject: React.FC<V1InfraObjectProps> = ({
 
   const renderExpandedContents = () => {
     if (isExpanded) {
-      let errors: string[] = [];
+      const errors: string[] = [];
 
       if (infra.status == "destroyed" || infra.status == "deleted") {
         errors.push("This infrastructure was destroyed.");
@@ -260,7 +260,7 @@ const V2InfraObject: React.FC<V2InfraObjectProps> = ({
         "<token>",
         {},
         {
-          project_id: project_id,
+          project_id,
           infra_id: infra.id,
         }
       )
@@ -281,12 +281,12 @@ const V2InfraObject: React.FC<V2InfraObjectProps> = ({
         "<token>",
         {},
         {
-          project_id: project_id,
+          project_id,
           infra_id: infra.id,
         }
       )
       .then(({ data }) => {
-        let infra = data as Infrastructure;
+        const infra = data as Infrastructure;
 
         if (completed && infra.latest_operation) {
           if (errored) {
@@ -428,7 +428,7 @@ export const OperationDetails: React.FunctionComponent<OperationDetailsProps> = 
   const { newWebsocket, openWebsocket, closeWebsocket } = useWebsockets();
 
   const parseOperationWebsocketEvent = (evt: MessageEvent) => {
-    let { status, resource_id, error } = JSON.parse(evt.data);
+    const { status, resource_id, error } = JSON.parse(evt.data);
 
     if (status == "OPERATION_COMPLETED") {
       // if the operation is completed, call the completed handler
@@ -436,7 +436,7 @@ export const OperationDetails: React.FunctionComponent<OperationDetailsProps> = 
     } else if (status && resource_id) {
       // if the status and resource_id are defined, add this to the infra state
       setInfraState((curr) => {
-        let currCopy: TFState = {
+        const currCopy: TFState = {
           last_updated: curr.last_updated,
           operation_id: curr.operation_id,
           status: curr.status,
@@ -449,8 +449,8 @@ export const OperationDetails: React.FunctionComponent<OperationDetailsProps> = 
         } else {
           currCopy.resources[resource_id] = {
             id: resource_id,
-            status: status,
-            error: error,
+            status,
+            error,
           };
         }
 
@@ -460,7 +460,7 @@ export const OperationDetails: React.FunctionComponent<OperationDetailsProps> = 
   };
 
   const setupOperationWebsocket = (websocketID: string) => {
-    let apiPath = `/api/projects/${currentProject.id}/infras/${infra.id}/operations/${infra.latest_operation.id}/state`;
+    const apiPath = `/api/projects/${currentProject.id}/infras/${infra.id}/operations/${infra.latest_operation.id}/state`;
 
     const wsConfig = {
       onopen: () => {

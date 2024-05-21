@@ -5,7 +5,7 @@ import close from "assets/close.png";
 import { isAlphanumeric } from "shared/common";
 import api from "shared/api";
 import { Context } from "shared/Context";
-import { InfraType } from "shared/types";
+import { type InfraType } from "shared/types";
 
 import InputRow from "components/form-components/InputRow";
 import CheckboxRow from "components/form-components/CheckboxRow";
@@ -78,7 +78,7 @@ const AzureFormSectionFC: React.FC<PropsType> = (props) => {
       // From the dashboard, only uncheck and disable if "creating" or "created"
       let filtered = selectedInfras;
       props.infras.forEach((infra: InfraType, i: number) => {
-        let { kind, status } = infra;
+        const { kind, status } = infra;
         if (status === "creating" || status === "created") {
           filtered = filtered.filter((item: any) => {
             return item.value !== kind;
@@ -94,7 +94,7 @@ const AzureFormSectionFC: React.FC<PropsType> = (props) => {
   }, [props.projectName]);
 
   const setClusterNameIfNotSet = () => {
-    let projectName = props.projectName || context.currentProject?.name;
+    const projectName = props.projectName || context.currentProject?.name;
 
     if (!clusterNameSet && !clusterName.includes(`${projectName}-cluster`)) {
       setClusterName(
@@ -108,7 +108,7 @@ const AzureFormSectionFC: React.FC<PropsType> = (props) => {
       return true;
     }
 
-    let { projectName } = props;
+    const { projectName } = props;
     if (projectName || projectName === "") {
       return (
         !isAlphanumeric(projectName) ||
@@ -134,14 +134,14 @@ const AzureFormSectionFC: React.FC<PropsType> = (props) => {
   return (
     <StyledAWSFormSection>
       <FormSection>
-        <CloseButton onClick={() => props.setSelectedProvisioner(null)}>
+        <CloseButton onClick={() => { props.setSelectedProvisioner(null); }}>
           <CloseButtonImg src={close} />
         </CloseButton>
         <Heading isAtTop={true}>Azure credentials</Heading>
         <InputRow
           type="text"
           value={applicationId}
-          setValue={(x: string) => setApplicationId(x)}
+          setValue={(x: string) => { setApplicationId(x); }}
           label="⚙️ Azure application (client) ID"
           placeholder="ex: 123456780-abcd-1234-abcd-12345678"
           width="100%"
@@ -150,7 +150,7 @@ const AzureFormSectionFC: React.FC<PropsType> = (props) => {
         <InputRow
           type="password"
           value={azureServicePrincipal}
-          setValue={(x: string) => setAzureServicePrincipal(x)}
+          setValue={(x: string) => { setAzureServicePrincipal(x); }}
           label="🔒 Azure service principal"
           placeholder="○ ○ ○ ○ ○ ○ ○ ○ ○"
           width="100%"
@@ -159,7 +159,7 @@ const AzureFormSectionFC: React.FC<PropsType> = (props) => {
         <InputRow
           type="text"
           value={tenantId}
-          setValue={(x: string) => setTenantId(x)}
+          setValue={(x: string) => { setTenantId(x); }}
           label="👤 Azure tenant ID"
           placeholder="ex: 123456780-abcd-1234-abcd-12345678"
           width="100%"
@@ -168,7 +168,7 @@ const AzureFormSectionFC: React.FC<PropsType> = (props) => {
         <InputRow
           type="text"
           value={subscriptionId}
-          setValue={(x: string) => setSubscriptionId(x)}
+          setValue={(x: string) => { setSubscriptionId(x); }}
           label="💳 Azure subscription ID"
           placeholder="ex: 123456780-abcd-1234-abcd-12345678"
           width="100%"

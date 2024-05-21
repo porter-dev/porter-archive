@@ -35,7 +35,7 @@ const GithubActionModal: React.FC<Props> = ({
         <Spacer y={0.5} />
         <Checkbox
           checked={deleteGithubWorkflow}
-          toggleChecked={() => setDeleteGithubWorkflow(!deleteGithubWorkflow)}
+          toggleChecked={() => { setDeleteGithubWorkflow(!deleteGithubWorkflow); }}
         >
           <Text color="helper">
             Upon deletion, open a PR to remove this application's associated CI
@@ -57,7 +57,7 @@ const GithubActionModal: React.FC<Props> = ({
       <Spacer y={0.5} />
       {renderDeleteGithubWorkflowText()}
       <Button
-        onClick={() => deleteApplication(deleteGithubWorkflow)}
+        onClick={() => { deleteApplication(deleteGithubWorkflow); }}
         color="#b91133"
         status={loading ? "loading" : ""}
         loadingText="Deleting..."

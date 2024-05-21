@@ -4,7 +4,7 @@ import api from "shared/api";
 
 import { Context } from "shared/Context";
 
-import { ChoiceType, ClusterType, FullActionConfigType } from "shared/types";
+import { type ChoiceType, type ClusterType, type FullActionConfigType } from "shared/types";
 
 import { isAlphanumeric } from "shared/common";
 
@@ -14,7 +14,7 @@ import Helper from "components/form-components/Helper";
 import PorterFormWrapper from "components/porter-form/PorterFormWrapper";
 import Selector from "components/Selector";
 import Loading from "components/Loading";
-import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
+import { withAuth, type WithAuthProps } from "shared/auth/AuthorizationHoc";
 import WorkflowPage from "./WorkflowPage";
 
 type PropsType = WithAuthProps & {
@@ -37,25 +37,25 @@ type PropsType = WithAuthProps & {
 type StateType = {
   tabOptions: ChoiceType[];
   currentTab: string;
-  clusterOptions: { label: string; value: string }[];
+  clusterOptions: Array<{ label: string; value: string }>;
   selectedCluster: string;
-  clusterMap: { [clusterId: string]: ClusterType };
-  namespaceOptions: { label: string; value: string }[];
+  clusterMap: Record<string, ClusterType>;
+  namespaceOptions: Array<{ label: string; value: string }>;
 };
 
 class SettingsPage extends Component<PropsType, StateType> {
   state = {
     tabOptions: [] as ChoiceType[],
     currentTab: "",
-    clusterOptions: [] as { label: string; value: string }[],
+    clusterOptions: [] as Array<{ label: string; value: string }>,
     selectedCluster: this.context.currentCluster.name,
-    clusterMap: {} as { [clusterId: string]: ClusterType },
-    namespaceOptions: [] as { label: string; value: string }[],
+    clusterMap: {} as Record<string, ClusterType>,
+    namespaceOptions: [] as Array<{ label: string; value: string }>,
   };
 
   componentDidMount() {
     // Retrieve tab options
-    let tabOptions = [] as ChoiceType[];
+    const tabOptions = [] as ChoiceType[];
     this.props.form?.tabs.map((tab: any, i: number) => {
       if (tab.context.type === "helm/values") {
         tabOptions.push({ value: tab.name, label: tab.label });
@@ -64,15 +64,15 @@ class SettingsPage extends Component<PropsType, StateType> {
 
     this.setState({
       tabOptions,
-      currentTab: tabOptions[0] && tabOptions[0]["value"],
+      currentTab: tabOptions[0] && tabOptions[0].value,
     });
 
     // TODO: query with selected filter once implemented
-    let { currentProject, currentCluster } = this.context;
+    const { currentProject, currentCluster } = this.context;
     api.getClusters("<token>", {}, { id: currentProject.id }).then((res) => {
       if (res.data) {
-        let clusterOptions: { label: string; value: string }[] = [];
-        let clusterMap: { [clusterId: string]: ClusterType } = {};
+        const clusterOptions: Array<{ label: string; value: string }> = [];
+        const clusterMap: Record<string, ClusterType> = {};
         res.data.forEach((cluster: ClusterType, i: number) => {
           clusterOptions.push({ label: cluster.vanity_name || cluster.name, value: cluster.name });
           clusterMap[cluster.name] = cluster;
@@ -87,7 +87,7 @@ class SettingsPage extends Component<PropsType, StateType> {
   }
 
   updateNamespaces = (id: number) => {
-    let { currentProject } = this.context;
+    const { currentProject } = this.context;
     api
       .getNamespaces(
         "<token>",
@@ -116,7 +116,7 @@ class SettingsPage extends Component<PropsType, StateType> {
   };
 
   renderSettingsRegion = () => {
-    let { saveValuesStatus, selectedNamespace, onSubmit } = this.props;
+    const { saveValuesStatus, selectedNamespace, onSubmit } = this.props;
 
     if (this.state.currentTab === "") {
       return (
@@ -126,7 +126,7 @@ class SettingsPage extends Component<PropsType, StateType> {
       );
     }
     if (this.state.tabOptions.length > 0) {
-      let {
+      const {
         form,
         valuesToOverride,
         clearValuesToOverride,
@@ -176,7 +176,7 @@ class SettingsPage extends Component<PropsType, StateType> {
           </Placeholder>
           <SaveButton
             text="Deploy"
-            onClick={() => onSubmit({})}
+            onClick={() => { onSubmit({}); }}
             status={saveValuesStatus}
             makeFlush={true}
           />
@@ -213,7 +213,7 @@ class SettingsPage extends Component<PropsType, StateType> {
   };
 
   renderHeaderSection = () => {
-    let {
+    const {
       hasSource,
       sourceType,
       templateName,
@@ -227,7 +227,7 @@ class SettingsPage extends Component<PropsType, StateType> {
 
     if (hasSource) {
       return (
-        <BackButton width="155px" onClick={() => setPage("source")}>
+        <BackButton width="155px" onClick={() => { setPage("source"); }}>
           <i className="material-icons">first_page</i>
           Source settings
         </BackButton>
@@ -238,10 +238,10 @@ class SettingsPage extends Component<PropsType, StateType> {
   };
 
   render() {
-    let { selectedCluster } = this.state;
-    let { currentProject } = this.context;
+    const { selectedCluster } = this.state;
+    const { currentProject } = this.context;
 
-    let { selectedNamespace, setSelectedNamespace } = this.props;
+    const { selectedNamespace, setSelectedNamespace } = this.props;
 
     return (
       <PaddingWrapper>

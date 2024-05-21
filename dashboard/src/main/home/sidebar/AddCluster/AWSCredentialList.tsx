@@ -97,7 +97,7 @@ const AWSCredentialsList: React.FunctionComponent<Props> = ({
           })}
           selectCredential={selectCredential}
           setTargetARN={setTargetARN}
-          shouldCreateCred={() => setShouldCreateCred(true)}
+          shouldCreateCred={() => { setShouldCreateCred(true); }}
           addNewText="Create new CloudFormation stack"
           gpuModal={gpuModal}
         />

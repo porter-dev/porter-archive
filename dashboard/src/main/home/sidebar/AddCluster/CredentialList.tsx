@@ -21,7 +21,7 @@ type GenericCredential = {
 
 const CredentialList: React.FunctionComponent<Props> = (props) => {
   const renderCreateSection = () => {
-    let inner = (
+    const inner = (
       <Flex>
         <i className="material-icons">account_circle</i>
         {props.addNewText}

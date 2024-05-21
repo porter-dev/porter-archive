@@ -1,7 +1,7 @@
 import React from "react";
 import styled from "styled-components";
 
-import { ActionConfigType } from "shared/types";
+import { type ActionConfigType } from "shared/types";
 
 import RepoList from "./RepoList";
 import BranchList from "./BranchList";
@@ -43,7 +43,7 @@ const ActionConfEditor: React.FC<Props> = (props) => {
       <ExpandedWrapperAlt>
         <RepoList
           actionConfig={actionConfig}
-          setActionConfig={(x: ActionConfigType) => setActionConfig(x)}
+          setActionConfig={(x: ActionConfigType) => { setActionConfig(x); }}
           readOnly={false}
         />
       </ExpandedWrapperAlt>
@@ -54,7 +54,7 @@ const ActionConfEditor: React.FC<Props> = (props) => {
         <ExpandedWrapperAlt>
           <BranchList
             actionConfig={actionConfig}
-            setBranch={(branch: string) => setBranch(branch)}
+            setBranch={(branch: string) => { setBranch(branch); }}
           />
         </ExpandedWrapperAlt>
         <Br />
@@ -89,10 +89,10 @@ const ActionConfEditor: React.FC<Props> = (props) => {
           procfilePath={props.procfilePath}
           folderPath={props.folderPath}
           setActionConfig={setActionConfig}
-          setDockerfilePath={(x: string) => props.setDockerfilePath(x)}
-          setProcfilePath={(x: string) => props.setProcfilePath(x)}
-          setProcfileProcess={(x: string) => props.setProcfileProcess(x)}
-          setFolderPath={(x: string) => props.setFolderPath(x)}
+          setDockerfilePath={(x: string) => { props.setDockerfilePath(x); }}
+          setProcfilePath={(x: string) => { props.setProcfilePath(x); }}
+          setProcfileProcess={(x: string) => { props.setProcfileProcess(x); }}
+          setFolderPath={(x: string) => { props.setFolderPath(x); }}
         />
         <Br />
         <BackButton

@@ -30,17 +30,17 @@ export default class GCRForm extends Component<PropsType, StateType> {
   };
 
   isDisabled = (): boolean => {
-    let { serviceAccountKey, credentialsName } = this.state;
+    const { serviceAccountKey, credentialsName } = this.state;
     if (serviceAccountKey === "" || credentialsName === "") {
       return true;
     }
     return false;
   };
 
-  catchError = (err: any) => console.log(err);
+  catchError = (err: any) => { console.log(err); };
 
   handleSubmit = () => {
-    let { currentProject } = this.context;
+    const { currentProject } = this.context;
 
     api
       .createGCPIntegration(
@@ -53,8 +53,8 @@ export default class GCRForm extends Component<PropsType, StateType> {
           project_id: currentProject.id,
         }
       )
-      .then((res) =>
-        api.connectGCRRegistry(
+      .then(async (res) =>
+        await api.connectGCRRegistry(
           "<token>",
           {
             name: this.state.credentialsName,
@@ -84,7 +84,7 @@ export default class GCRForm extends Component<PropsType, StateType> {
             type="text"
             value={this.state.credentialsName}
             setValue={(credentialsName: string) =>
-              this.setState({ credentialsName })
+              { this.setState({ credentialsName }); }
             }
             isRequired={true}
             label="🏷️ Registry name"
@@ -94,7 +94,7 @@ export default class GCRForm extends Component<PropsType, StateType> {
           <Heading>GCP settings</Heading>
           <Helper>Service account credentials for GCP permissions.</Helper>
           <UploadArea
-            setValue={(x: any) => this.setState({ serviceAccountKey: x })}
+            setValue={(x: any) => { this.setState({ serviceAccountKey: x }); }}
             label="🔒 GCP key data (JSON)"
             placeholder="Choose a file or drag it here."
             width="100%"
@@ -109,7 +109,7 @@ export default class GCRForm extends Component<PropsType, StateType> {
           <InputRow
             type="text"
             value={this.state.url}
-            setValue={(url: string) => this.setState({ url })}
+            setValue={(url: string) => { this.setState({ url }); }}
             label="🔗 GCR URL"
             placeholder="ex: gcr.io/skynet-dev-172969"
             width="100%"

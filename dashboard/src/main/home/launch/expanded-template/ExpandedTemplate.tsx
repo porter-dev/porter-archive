@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import styled from "styled-components";
 
-import { PorterTemplate } from "shared/types";
+import { type PorterTemplate } from "shared/types";
 import api from "shared/api";
 
 import TemplateInfo from "./TemplateInfo";
@@ -60,8 +60,8 @@ export default class ExpandedTemplate extends Component<PropsType, StateType> {
           }
         )
         .then((res) => {
-          let { form, values, markdown, metadata } = res.data;
-          let keywords = metadata.keywords;
+          const { form, values, markdown, metadata } = res.data;
+          const keywords = metadata.keywords;
           this.props.setForm(form);
           this.setState({
             values,
@@ -71,9 +71,9 @@ export default class ExpandedTemplate extends Component<PropsType, StateType> {
             error: false,
           });
         })
-        .catch((err) => this.setState({ loading: false, error: true }));
+        .catch((err) => { this.setState({ loading: false, error: true }); });
     } else {
-      let params =
+      const params =
         this.props.currentTab == "porter"
           ? { repo_url: this.context.capabilities?.default_app_helm_repo_url }
           : {
@@ -87,8 +87,8 @@ export default class ExpandedTemplate extends Component<PropsType, StateType> {
           version: this.props.currentTemplate.currentVersion,
         })
         .then((res) => {
-          let { form, values, markdown, metadata } = res.data;
-          let keywords = metadata.keywords;
+          const { form, values, markdown, metadata } = res.data;
+          const keywords = metadata.keywords;
           this.props.setForm(form);
           this.setState({
             values,
@@ -98,7 +98,7 @@ export default class ExpandedTemplate extends Component<PropsType, StateType> {
             error: false,
           });
         })
-        .catch((err) => this.setState({ loading: false, error: true }));
+        .catch((err) => { this.setState({ loading: false, error: true }); });
     }
   };
 
@@ -128,7 +128,7 @@ export default class ExpandedTemplate extends Component<PropsType, StateType> {
           currentTemplate={this.props.currentTemplate}
           setCurrentTemplate={this.props.setCurrentTemplate}
           setCurrentVersion={(version) => {
-            let template = {
+            const template = {
               ...this.props.currentTemplate,
               currentVersion: version,
             };

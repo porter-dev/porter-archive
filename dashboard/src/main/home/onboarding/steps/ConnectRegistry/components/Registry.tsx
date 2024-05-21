@@ -7,9 +7,7 @@ import { Context } from "shared/Context";
 import styled from "styled-components";
 import { useSnapshot } from "valtio";
 
-const serviceToProvider: {
-  [key: string]: string;
-} = {
+const serviceToProvider: Record<string, string> = {
   docr: "do",
   ecr: "aws",
   gcr: "gcp",
@@ -48,7 +46,7 @@ const Registry: React.FC<{ registry: any; onDelete: () => void }> = (props) => {
       setIsDeleting(false);
       setCurrentError(error);
       setHasError(true);
-      setTimeout(() => setHasError(false), 1000);
+      setTimeout(() => { setHasError(false); }, 1000);
     }
   };
 
@@ -75,7 +73,7 @@ const Registry: React.FC<{ registry: any; onDelete: () => void }> = (props) => {
             {!hasError && !isDeleting && (
               <I
                 className="material-icons"
-                onClick={() => deleteRegistry(registry?.id)}
+                onClick={async () => { await deleteRegistry(registry?.id); }}
               >
                 delete
               </I>

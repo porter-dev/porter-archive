@@ -8,8 +8,8 @@ import api from "shared/api";
 import CheckboxRow from "components/form-components/CheckboxRow";
 import Loading from "components/Loading";
 import CopyToClipboard from "components/CopyToClipboard";
-import { DetailedIngressError } from "shared/types";
-import { RouteComponentProps } from "react-router";
+import { type DetailedIngressError } from "shared/types";
+import { type RouteComponentProps } from "react-router";
 import {stringifiedDNSRecordType} from "utils/ip";
 
 type Props = RouteComponentProps & {
@@ -47,7 +47,7 @@ const ClusterSettings: React.FC<Props> = (props) => {
   );
   const [previewEnvsLoading, setPreviewEnvsLoading] = useState(false);
 
-  let rotateCredentials = () => {
+  const rotateCredentials = () => {
     api
       .overwriteAWSIntegration(
         "<token>",
@@ -69,7 +69,7 @@ const ClusterSettings: React.FC<Props> = (props) => {
       });
   };
 
-  let updateClusterName = () => {
+  const updateClusterName = () => {
     api
       .updateCluster(
         "<token>",
@@ -90,7 +90,7 @@ const ClusterSettings: React.FC<Props> = (props) => {
       });
   };
 
-  let updateAgentIntegrationEnabled = () => {
+  const updateAgentIntegrationEnabled = () => {
     setAgentLoading(true);
 
     api
@@ -113,7 +113,7 @@ const ClusterSettings: React.FC<Props> = (props) => {
       });
   };
 
-  let updatePreviewEnvironmentsEnabled = () => {
+  const updatePreviewEnvironmentsEnabled = () => {
     setPreviewEnvsLoading(true);
 
     api
@@ -185,7 +185,7 @@ const ClusterSettings: React.FC<Props> = (props) => {
           <InputRow
             type="text"
             value={accessKeyId}
-            setValue={(x: string) => setAccessKeyId(x)}
+            setValue={(x: string) => { setAccessKeyId(x); }}
             label="👤 AWS Access ID"
             placeholder="ex: AKIAIOSFODNN7EXAMPLE"
             width="100%"
@@ -194,7 +194,7 @@ const ClusterSettings: React.FC<Props> = (props) => {
           <InputRow
             type="password"
             value={secretKey}
-            setValue={(x: string) => setSecretKey(x)}
+            setValue={(x: string) => { setSecretKey(x); }}
             label="🔒 AWS Secret Key"
             placeholder="○ ○ ○ ○ ○ ○ ○ ○ ○"
             width="100%"
@@ -212,7 +212,7 @@ const ClusterSettings: React.FC<Props> = (props) => {
           <Helper>
             Rotate the credentials that Porter uses to connect to the cluster.
           </Helper>
-          <Button color="#616FEEcc" onClick={() => setStartRotateCreds(true)}>
+          <Button color="#616FEEcc" onClick={() => { setStartRotateCreds(true); }}>
             Rotate credentials
           </Button>
         </div>
@@ -220,13 +220,13 @@ const ClusterSettings: React.FC<Props> = (props) => {
     }
   }
 
-  let overrideAWSClusterNameSection =
+  const overrideAWSClusterNameSection =
     currentCluster?.aws_integration_id &&
       currentCluster?.aws_integration_id != 0 ? (
       <InputRow
         type="text"
         value={newAWSClusterID}
-        setValue={(x: string) => setNewAWSClusterID(x)}
+        setValue={(x: string) => { setNewAWSClusterID(x); }}
         label="AWS Cluster ID"
         placeholder="ex: my-awesome-cluster"
         width="100%"
@@ -240,7 +240,7 @@ const ClusterSettings: React.FC<Props> = (props) => {
       <InputRow
         type="text"
         value={newClusterName}
-        setValue={(x: string) => setNewClusterName(x)}
+        setValue={(x: string) => { setNewClusterName(x); }}
         label="Cluster Name"
         placeholder="ex: my-awesome-cluster"
         width="100%"
@@ -252,7 +252,7 @@ const ClusterSettings: React.FC<Props> = (props) => {
       </Button>
     </div>
   );
-  let configureUrl = (
+  const configureUrl = (
     ingressIp: string | undefined,
     ingressError: DetailedIngressError
   ) => {
@@ -293,7 +293,7 @@ const ClusterSettings: React.FC<Props> = (props) => {
       <Heading>Enable agent</Heading>
       <CheckboxRow
         label={"Allow the Porter agent to be installed on the cluster"}
-        toggle={() => setEnableAgent(!enableAgent)}
+        toggle={() => { setEnableAgent(!enableAgent); }}
         checked={enableAgent}
       />
       <Button color="#616FEEcc" onClick={updateAgentIntegrationEnabled}>
@@ -317,7 +317,7 @@ const ClusterSettings: React.FC<Props> = (props) => {
           <Heading>Enable preview environments</Heading>
           <CheckboxRow
             label={"Create preview environments on this cluster"}
-            toggle={() => setEnablePreviewEnvs(!enablePreviewEnvs)}
+            toggle={() => { setEnablePreviewEnvs(!enablePreviewEnvs); }}
             checked={enablePreviewEnvs}
           />
           <Button color="#616FEEcc" onClick={updatePreviewEnvironmentsEnabled}>
@@ -367,7 +367,7 @@ const ClusterSettings: React.FC<Props> = (props) => {
               : currentCluster.status == "UPDATING"
           }
           color="#b91133"
-          onClick={() => setCurrentModal("UpdateClusterModal")}
+          onClick={() => { setCurrentModal("UpdateClusterModal"); }}
         >
           Delete cluster
         </Button>

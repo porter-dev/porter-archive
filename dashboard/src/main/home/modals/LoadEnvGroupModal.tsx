@@ -8,11 +8,11 @@ import { Context } from "shared/Context";
 
 import Loading from "components/Loading";
 import SaveButton from "components/SaveButton";
-import { KeyValue } from "components/form-components/KeyValueArray";
+import { type KeyValue } from "components/form-components/KeyValueArray";
 import CheckboxRow from "components/form-components/CheckboxRow";
 import {
-  PartialEnvGroup,
-  PopulatedEnvGroup,
+  type PartialEnvGroup,
+  type PopulatedEnvGroup,
 } from "components/porter-form/types";
 import Helper from "components/form-components/Helper";
 import DocsHelper from "components/DocsHelper";
@@ -83,8 +83,8 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
       return;
     }
 
-    const populateEnvGroupsPromises = envGroups.map((envGroup) =>
-      api
+    const populateEnvGroupsPromises = envGroups.map(async (envGroup) =>
+      await api
         .getEnvGroup<PopulatedEnvGroup>(
           "<token>",
           {},
@@ -152,7 +152,7 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
               key={i}
               isSelected={this.state.selectedEnvGroup === envGroup}
               lastItem={i === this.state.envGroups.length - 1}
-              onClick={() => this.setState({ selectedEnvGroup: envGroup })}
+              onClick={() => { this.setState({ selectedEnvGroup: envGroup }); }}
             >
               <img src={sliders} />
               {envGroup.name}
@@ -276,9 +276,9 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
                   <CheckboxRow
                     checked={this.state.shouldSync}
                     toggle={() =>
-                      this.setState((prevState) => ({
+                      { this.setState((prevState) => ({
                         shouldSync: !prevState.shouldSync,
-                      }))
+                      })); }
                     }
                     label="Sync environment group"
                     disabled={this.state.selectedEnvGroup?.meta_version === 1}

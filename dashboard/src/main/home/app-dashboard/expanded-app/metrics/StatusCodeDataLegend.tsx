@@ -3,7 +3,7 @@ import styled from "styled-components";
 import chroma from "chroma-js";
 import { StatusCodeDataColors } from "./utils";
 
-interface StatusCodeDataLegendProps {}
+type StatusCodeDataLegendProps = {}
 
 const StatusCodeDataLegend = ({ }: StatusCodeDataLegendProps) => {
   const statusCodes = ["1xx", "2xx", "3xx", "4xx", "5xx"];

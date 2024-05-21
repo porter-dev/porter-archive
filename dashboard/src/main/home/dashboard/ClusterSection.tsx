@@ -20,7 +20,7 @@ const ClusterSection = (props: Props) => {
   if (currentStep === "cloud") {
     return (
       <>
-        <TitleSection handleNavBack={() => setCurrentStep("")}>
+        <TitleSection handleNavBack={() => { setCurrentStep(""); }}>
           <Title>
             <ClusterIcon>
               <svg
@@ -94,7 +94,7 @@ const ClusterSection = (props: Props) => {
   return (
     <>
       {(usage?.current.cluster > 1 || !currentCluster) && (
-        <Button onClick={() => setCurrentStep("cloud")}>
+        <Button onClick={() => { setCurrentStep("cloud"); }}>
           <i className="material-icons">add</i> Create a cluster
         </Button>
       )}

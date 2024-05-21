@@ -30,8 +30,7 @@ export default class Modal extends Component<PropsType, StateType> {
   handleClickOutside = (event: any) => {
     if (
       this.props.onRequestClose &&
-      this.wrapperRef &&
-      this.wrapperRef.current &&
+      this.wrapperRef?.current &&
       !this.wrapperRef.current.contains(event.target)
     ) {
       this.props.onRequestClose();
@@ -39,7 +38,7 @@ export default class Modal extends Component<PropsType, StateType> {
   };
 
   render() {
-    let { width, height } = this.props;
+    const { width, height } = this.props;
     return (
       <PortalModal>
         <Overlay>

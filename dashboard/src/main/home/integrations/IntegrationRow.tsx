@@ -1,9 +1,9 @@
 import styled from "styled-components";
-import React, { Component, MouseEvent, MouseEventHandler } from "react";
+import React, { Component, type MouseEvent, type MouseEventHandler } from "react";
 
 import ImageList from "components/image-selector/ImageList";
 import RepoList from "components/repo-selector/RepoList";
-import { ActionConfigType } from "shared/types";
+import { type ActionConfigType } from "shared/types";
 import { integrationList } from "shared/common";
 
 import CreateIntegrationForm from "./create-integration/CreateIntegrationForm";
@@ -46,16 +46,14 @@ export default class IntegrationRow extends Component<PropsType, StateType> {
 
   render = () => {
     const icon =
-      integrationList[this.props.integration] &&
-      integrationList[this.props.integration].icon;
+      integrationList[this.props.integration]?.icon;
     const subtitle =
-      integrationList[this.props.integration] &&
-      integrationList[this.props.integration].label;
+      integrationList[this.props.integration]?.label;
     return (
       <Integration disabled={false}>
         <MainRow onClick={this.props.toggleCollapse} disabled={false}>
           <Flex>
-            <Icon src={icon ? icon : "https://avatars2.githubusercontent.com/u/52505464?s=400&u=da920f994c67665c7ad6c606a5286557d4f8555f&v=4"} />
+            <Icon src={icon || "https://avatars2.githubusercontent.com/u/52505464?s=400&u=da920f994c67665c7ad6c606a5286557d4f8555f&v=4"} />
             <Description>
               <Label>{this.props.label}</Label>
               <Subtitle>{subtitle}</Subtitle>

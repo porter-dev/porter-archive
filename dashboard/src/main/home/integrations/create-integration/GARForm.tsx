@@ -115,7 +115,7 @@ const GARForm = (props: { closeForm: () => void }) => {
           type="text"
           value={credentialsName}
           setValue={(credentialsName: string) =>
-            setCredentialsName(credentialsName)
+            { setCredentialsName(credentialsName); }
           }
           isRequired={true}
           label="🏷️ Registry name"
@@ -125,7 +125,7 @@ const GARForm = (props: { closeForm: () => void }) => {
         <Heading>GCP settings</Heading>
         <Helper>Service account credentials for GCP permissions.</Helper>
         <UploadArea
-          setValue={(x: any) => setServiceAccountKey(x)}
+          setValue={(x: any) => { setServiceAccountKey(x); }}
           label="🔒 GCP key data (JSON)"
           placeholder="Choose a file or drag it here."
           width="100%"

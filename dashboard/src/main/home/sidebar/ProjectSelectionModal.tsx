@@ -1,16 +1,15 @@
-import { RouteComponentProps, withRouter } from "react-router";
+import { type RouteComponentProps, withRouter } from "react-router";
 import styled from "styled-components";
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useState , useMemo } from "react";
 
 import Modal from "components/porter/Modal";
 import Text from "components/porter/Text";
 import Spacer from "components/porter/Spacer";
 import { Context } from "shared/Context";
-import { DetailedClusterType, ProjectListType, ProjectType } from "shared/types";
+import { type DetailedClusterType, type ProjectListType, type ProjectType } from "shared/types";
 import { pushFiltered } from "shared/routing";
 import SearchBar from "components/porter/SearchBar";
 import _ from 'lodash';
-import { useMemo } from 'react';
 import api from "shared/api";
 import Button from "components/porter/Button";
 import Container from "components/porter/Container";
@@ -146,9 +145,9 @@ const ProjectSelectionModal: React.FC<Props> = ({
         <Spacer inline x={1} />
 
         {user.isPorterUser && <Button onClick={() =>
-          pushFiltered(props, "/new-project", ["project_id"], {
+          { pushFiltered(props, "/new-project", ["project_id"], {
             new_project: true,
-          })} height="30px" width="130px">
+          }); }} height="30px" width="130px">
           <I className="material-icons">add</I> New Project
         </Button>}
       </Container>

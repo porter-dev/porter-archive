@@ -22,7 +22,7 @@ import standard from "legacy/shared/themes/standard";
 import {
   type ClusterType,
   type ProjectListType,
-   ProjectType,
+  type ProjectType,
 } from "legacy/shared/types";
 import { createPortal } from "react-dom";
 import {

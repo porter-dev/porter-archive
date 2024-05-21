@@ -143,6 +143,9 @@ module.exports = () => {
       ],
     },
     resolve: {
+      alias: {
+        legacy: path.resolve(__dirname, "src/legacy/"),
+      },
       modules: [path.resolve(__dirname, "src"), "node_modules"],
       extensions: ["*", ".tsx", ".ts", ".js", ".jsx", ".json"],
     },

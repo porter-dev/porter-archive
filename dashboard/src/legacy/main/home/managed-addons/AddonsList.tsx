@@ -1,0 +1,195 @@
+import React, { useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import postgresql from "legacy/assets/postgresql.svg";
+import redis from "legacy/assets/redis.svg";
+import Button from "legacy/components/porter/Button";
+import Container from "legacy/components/porter/Container";
+import Modal from "legacy/components/porter/Modal";
+import Select from "legacy/components/porter/Select";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import { defaultClientAddon } from "legacy/lib/addons";
+import {
+  Controller,
+  useFieldArray,
+  useForm,
+  useFormContext,
+} from "react-hook-form";
+import styled from "styled-components";
+import { match } from "ts-pattern";
+import { z } from "zod";
+
+import { type AppTemplateFormData } from "../cluster-dashboard/preview-environments/v2/EnvTemplateContextProvider";
+import { AddonListRow } from "./AddonListRow";
+
+const addAddonFormValidator = z.object({
+  type: z.enum(["postgres", "redis"]),
+});
+type AddAddonFormValues = z.infer<typeof addAddonFormValidator>;
+
+export const AddonsList: React.FC = () => {
+  const [showAddAddonModal, setShowAddAddonModal] = useState(false);
+
+  const { control: appTemplateControl } = useFormContext<AppTemplateFormData>();
+
+  // add addon modal form
+  const { watch, control, reset, handleSubmit } = useForm<AddAddonFormValues>({
+    reValidateMode: "onChange",
+    resolver: zodResolver(addAddonFormValidator),
+    defaultValues: {
+      type: "postgres",
+    },
+  });
+
+  const addonType = watch("type");
+
+  const { append, update, remove, fields } = useFieldArray({
+    control: appTemplateControl,
+    name: "addons",
+  });
+
+  const onSubmit = handleSubmit((data) => {
+    const baseAddon = defaultClientAddon(data.type);
+    append(baseAddon);
+
+    reset();
+    setShowAddAddonModal(false);
+  });
+
+  return (
+    <>
+      <AddonsContainer>
+        {fields.map((addon, idx) => (
+          <AddonListRow
+            key={addon.id}
+            index={idx}
+            addon={addon}
+            update={update}
+            remove={remove}
+          />
+        ))}
+      </AddonsContainer>
+      <AddAddonButton
+        onClick={() => {
+          setShowAddAddonModal(true);
+        }}
+      >
+        <I className="material-icons add-icon">add</I>
+        Include add-on in preview environments
+      </AddAddonButton>
+      <Spacer y={0.5} />
+      {showAddAddonModal && (
+        <Modal
+          closeModal={() => {
+            setShowAddAddonModal(false);
+          }}
+          width="500px"
+        >
+          <Text size={16}>Include an addon in your preview environment</Text>
+          <Spacer y={1} />
+          <Text color="helper">Select a service type:</Text>
+          <Spacer y={0.5} />
+          <Container row>
+            <AddonIcon>
+              {match(addonType)
+                .with("postgres", () => <img src={postgresql} />)
+                .with("redis", () => <img src={redis} />)
+                .exhaustive()}
+            </AddonIcon>
+            <Controller
+              name="type"
+              control={control}
+              render={({ field: { onChange } }) => (
+                <Select
+                  value={addonType}
+                  width="100%"
+                  setValue={(value: string) => {
+                    onChange(value);
+                  }}
+                  options={[
+                    { label: "Postgres", value: "postgres" },
+                    { label: "Redis", value: "redis" },
+                  ]}
+                />
+              )}
+            />
+          </Container>
+          <Spacer y={1} />
+          <Button type="button" onClick={onSubmit}>
+            <I className="material-icons">add</I> Add
+          </Button>
+        </Modal>
+      )}
+    </>
+  );
+};
+
+const AddonsContainer = styled.div`
+  animation: fadeIn 0.3s 0s;
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+`;
+
+const AddonIcon = styled.div`
+  border: 1px solid #494b4f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 35px;
+  width: 35px;
+  min-width: 35px;
+  margin-right: 10px;
+  overflow: hidden;
+  border-radius: 5px;
+  > img {
+    height: 18px;
+    animation: floatIn 0.5s 0s;
+    @keyframes floatIn {
+      from {
+        opacity: 0;
+        transform: translateY(7px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0px);
+      }
+    }
+  }
+`;
+
+const AddAddonButton = styled.div`
+  color: #aaaabb;
+  background: ${({ theme }) => theme.fg};
+  border: 1px solid #494b4f;
+  :hover {
+    border: 1px solid #7a7b80;
+    color: white;
+  }
+  display: flex;
+  align-items: center;
+  border-radius: 5px;
+  height: 40px;
+  font-size: 13px;
+  width: 100%;
+  padding-left: 10px;
+  cursor: pointer;
+  .add-icon {
+    width: 30px;
+    font-size: 20px;
+  }
+`;
+
+const I = styled.i`
+  color: white;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  margin-right: 7px;
+  justify-content: center;
+`;

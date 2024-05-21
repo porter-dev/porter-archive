@@ -1,7 +1,0 @@
-{
-  "dependencies": {
-    "@vitejs/plugin-react": "^4.2.1",
-    "vite": "^5.2.11",
-    "vite-plugin-node-polyfills": "^0.22.0"
-  }
-}

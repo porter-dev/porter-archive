@@ -30,6 +30,7 @@
     "@visx/shape": "^3.3.0",
     "@visx/tooltip": "^3.3.0",
     "@visx/xychart": "^3.3.0",
+    "@vitejs/plugin-react": "^4.2.1",
     "ace-builds": "^1.16.0",
     "anser": "^2.0.1",
     "axios": "^0.21.2",
@@ -85,6 +86,8 @@
     "ts-pattern": "^5.0.5",
     "uuid": "^9.0.0",
     "valtio": "^1.2.4",
+    "vite": "^5.2.11",
+    "vite-plugin-node-polyfills": "^0.22.0",
     "zod": "^3.20.2"
   },
   "engines": {

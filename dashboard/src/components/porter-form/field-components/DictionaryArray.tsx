@@ -1,13 +1,15 @@
 import React from "react";
 import styled from "styled-components";
+
+import DictionaryEditor from "components/porter/DictionaryEditor";
+
+import useFormField from "../hooks/useFormField";
 import {
   type DictionaryArrayField,
   type DictionaryArrayFieldState,
   type GetFinalVariablesFunction,
 } from "../types";
-import useFormField from "../hooks/useFormField";
 import { hasSetValue } from "../utils";
-import DictionaryEditor from "components/porter/DictionaryEditor";
 
 // this is used to set validation for the below form component in case
 // input validation needs to get more complicated in the future
@@ -16,19 +18,15 @@ const validateArray = (arr: any[]) => {
 };
 
 const DictionaryArray: React.FC<DictionaryArrayField> = (props) => {
-  const {
-    state,
-    variables,
-    setVars,
-    setValidation,
-  } = useFormField<DictionaryArrayFieldState>(props.id, {
-    initVars: {
-      [props.variable]: hasSetValue(props) ? props.value[0] : [],
-    },
-    initValidation: {
-      validated: validateArray(hasSetValue(props) ? props.value[0] : []),
-    },
-  });
+  const { state, variables, setVars, setValidation } =
+    useFormField<DictionaryArrayFieldState>(props.id, {
+      initVars: {
+        [props.variable]: hasSetValue(props) ? props.value[0] : [],
+      },
+      initValidation: {
+        validated: validateArray(hasSetValue(props) ? props.value[0] : []),
+      },
+    });
 
   if (state == undefined) return <></>;
 
@@ -62,35 +60,36 @@ const DictionaryArray: React.FC<DictionaryArrayField> = (props) => {
   const renderInputList = (values: string[]) => {
     return (
       <>
-        {values.length > 0 && values.map((value: string, i: number) => {
-          return (
-            <InputWrapper>
-              <DictionaryEditor
-                key={i}
-                value={value}
-                onChange={(e: any) => {
-                  setVars((prev) => {
-                    const val = prev[props.variable]?.map(
-                      (t: string, j: number) => {
-                        return i == j ? e : t;
-                      }
-                    );
-                    setValidation((prev) => {
+        {values.length > 0 &&
+          values.map((value: string, i: number) => {
+            return (
+              <InputWrapper>
+                <DictionaryEditor
+                  key={i}
+                  value={value}
+                  onChange={(e: any) => {
+                    setVars((prev) => {
+                      const val = prev[props.variable]?.map(
+                        (t: string, j: number) => {
+                          return i == j ? e : t;
+                        }
+                      );
+                      setValidation((prev) => {
+                        return {
+                          ...prev,
+                          validated: validateArray(val),
+                        };
+                      });
                       return {
-                        ...prev,
-                        validated: validateArray(val),
+                        [props.variable]: val,
                       };
                     });
-                    return {
-                      [props.variable]: val,
-                    };
-                  });
-                }}
-              />
-              {renderDeleteButton(values, i)}
-            </InputWrapper>
-          );
-        })}
+                  }}
+                />
+                {renderDeleteButton(values, i)}
+              </InputWrapper>
+            );
+          })}
       </>
     );
   };

@@ -1,4 +1,21 @@
 import React, { createContext, useContext, useReducer } from "react";
+
+import { Context } from "../../shared/Context";
+import {
+  type ShowIf,
+  type ShowIfAnd,
+  type ShowIfIs,
+  type ShowIfNot,
+  type ShowIfOr,
+} from "../../shared/types";
+import { getFinalVariablesForArrayInput } from "./field-components/ArrayInput";
+import { getFinalVariablesForCheckbox } from "./field-components/Checkbox";
+import { getFinalVariablesForStringInput } from "./field-components/Input";
+import {
+  getFinalVariablesForKeyValueArray,
+  getMetadata as getMetadataForKeyValueArray,
+} from "./field-components/KeyValueArray";
+import { getFinalVariablesForSelect } from "./field-components/Select";
 import {
   type GetFinalVariablesFunction,
   type GetMetadataFunction,
@@ -8,22 +25,6 @@ import {
   type PorterFormValidationInfo,
   type PorterFormVariableList,
 } from "./types";
-import {
-  type ShowIf,
-  type ShowIfAnd,
-  type ShowIfIs,
-  type ShowIfNot,
-  type ShowIfOr,
-} from "../../shared/types";
-import { getFinalVariablesForStringInput } from "./field-components/Input";
-import {
-  getFinalVariablesForKeyValueArray,
-  getMetadata as getMetadataForKeyValueArray,
-} from "./field-components/KeyValueArray";
-import { Context } from "../../shared/Context";
-import { getFinalVariablesForArrayInput } from "./field-components/ArrayInput";
-import { getFinalVariablesForCheckbox } from "./field-components/Checkbox";
-import { getFinalVariablesForSelect } from "./field-components/Select";
 
 export type BaseProps = {
   rawFormData: PorterFormData;
@@ -32,7 +33,7 @@ export type BaseProps = {
   includeHiddenFields?: boolean;
   isReadOnly?: boolean;
   doDebug?: boolean;
-}
+};
 
 export type PropsWithMetadata = {
   onSubmit: (
@@ -40,12 +41,12 @@ export type PropsWithMetadata = {
     cb?: () => void
   ) => void;
   includeMetadata: true;
-} & BaseProps
+} & BaseProps;
 
 export type PropsWithoutMetadata = {
   onSubmit: (vars: PorterFormVariableList, cb?: () => void) => void;
   includeMetadata: false;
-} & BaseProps
+} & BaseProps;
 
 export type Props = PropsWithMetadata | PropsWithoutMetadata;
 
@@ -57,7 +58,7 @@ type ContextProps = {
   validationInfo: PorterFormValidationInfo;
   getSubmitValues: () => PorterFormVariableList;
   isReadOnly?: boolean;
-}
+};
 
 export const PorterFormContext = createContext<ContextProps | undefined>(
   undefined
@@ -148,14 +149,16 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
   // get variables initiated by variable field
   const getInitialVariables = (data: PorterFormData) => {
     const ret: Record<string, any> = {};
-    data?.tabs?.map((tab) =>
-      tab.sections?.map((section) =>
-        section.contents?.map((field) => {
-          if (field?.type == "variable") {
-            ret[field.variable] = field.settings?.default;
-          }
-        })
-      )
+    data?.tabs?.map(
+      (tab) =>
+        tab.sections?.map(
+          (section) =>
+            section.contents?.map((field) => {
+              if (field?.type == "variable") {
+                ret[field.variable] = field.settings?.default;
+              }
+            })
+        )
     );
 
     let scopedVars = {};
@@ -179,27 +182,29 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
 
   const getInitialValidation = (data: PorterFormData) => {
     const ret: Record<string, any> = {};
-    data?.tabs?.map((tab, i) =>
-      tab.sections?.map((section, j) =>
-        section.contents?.map((field, k) => {
-          if (
-            field?.type == "heading" ||
-            field?.type == "subtitle" ||
-            field?.type == "resource-list" ||
-            field?.type == "service-ip-list" ||
-            field?.type == "velero-create-backup"
-          )
-            return;
-          if (
-            field.required &&
-            (field.settings?.default || (field.value?.[0]))
-          ) {
-            ret[`${i}-${j}-${k}`] = {
-              validated: true,
-            };
-          }
-        })
-      )
+    data?.tabs?.map(
+      (tab, i) =>
+        tab.sections?.map(
+          (section, j) =>
+            section.contents?.map((field, k) => {
+              if (
+                field?.type == "heading" ||
+                field?.type == "subtitle" ||
+                field?.type == "resource-list" ||
+                field?.type == "service-ip-list" ||
+                field?.type == "velero-create-backup"
+              )
+                return;
+              if (
+                field.required &&
+                (field.settings?.default || field.value?.[0])
+              ) {
+                ret[`${i}-${j}-${k}`] = {
+                  validated: true,
+                };
+              }
+            })
+        )
     );
     return ret;
   };
@@ -388,28 +393,30 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
   ): [string[], Record<string, string[]>] => {
     const requiredIds: string[] = [];
     const mapping: Record<string, string[]> = {};
-    data?.tabs?.map((tab) =>
-      tab.sections?.map((section) =>
-        section.contents?.map((field) => {
-          if (
-            field?.type == "heading" ||
-            field?.type == "subtitle" ||
-            field?.type == "resource-list" ||
-            field?.type == "service-ip-list" ||
-            field?.type == "velero-create-backup"
-          )
-            return;
-          // fields that have defaults can't be required since we can always
-          // compute their value
-          if (field.required) {
-            requiredIds.push(field.id);
-          }
-          if (!mapping[field.variable]) {
-            mapping[field.variable] = [];
-          }
-          mapping[field.variable].push(field.id);
-        })
-      )
+    data?.tabs?.map(
+      (tab) =>
+        tab.sections?.map(
+          (section) =>
+            section.contents?.map((field) => {
+              if (
+                field?.type == "heading" ||
+                field?.type == "subtitle" ||
+                field?.type == "resource-list" ||
+                field?.type == "service-ip-list" ||
+                field?.type == "velero-create-backup"
+              )
+                return;
+              // fields that have defaults can't be required since we can always
+              // compute their value
+              if (field.required) {
+                requiredIds.push(field.id);
+              }
+              if (!mapping[field.variable]) {
+                mapping[field.variable] = [];
+              }
+              mapping[field.variable].push(field.id);
+            })
+        )
     );
     return [requiredIds, mapping];
   };
@@ -454,21 +461,23 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
       ? restructureToNewFields(props.rawFormData)
       : formData;
 
-    data?.tabs?.map((tab) =>
-      tab.sections?.map((section) =>
-        section.contents?.map((field) => {
-          if (finalFunctions[field?.type]) {
-            varList.push(
-              finalFunctions[field?.type](
-                state.variables,
-                field,
-                state.components[field.id]?.state,
-                context
-              )
-            );
-          }
-        })
-      )
+    data?.tabs?.map(
+      (tab) =>
+        tab.sections?.map(
+          (section) =>
+            section.contents?.map((field) => {
+              if (finalFunctions[field?.type]) {
+                varList.push(
+                  finalFunctions[field?.type](
+                    state.variables,
+                    field,
+                    state.components[field.id]?.state,
+                    context
+                  )
+                );
+              }
+            })
+        )
     );
 
     if (props.includeMetadata) {
@@ -476,21 +485,23 @@ export const PorterFormContextProvider: React.FC<Props> = (props) => {
         "key-value-array": getMetadataForKeyValueArray,
       };
       const metadataList: PorterFormVariableList[] = [];
-      data?.tabs?.map((tab) =>
-        tab.sections?.map((section) =>
-          section.contents?.map((field) => {
-            if (metadataFunctions[field?.type]) {
-              metadataList.push(
-                metadataFunctions[field?.type](
-                  state.variables,
-                  field,
-                  state.components[field.id]?.state,
-                  context
-                )
-              );
-            }
-          })
-        )
+      data?.tabs?.map(
+        (tab) =>
+          tab.sections?.map(
+            (section) =>
+              section.contents?.map((field) => {
+                if (metadataFunctions[field?.type]) {
+                  metadataList.push(
+                    metadataFunctions[field?.type](
+                      state.variables,
+                      field,
+                      state.components[field.id]?.state,
+                      context
+                    )
+                  );
+                }
+              })
+          )
       );
 
       if (props.doDebug)

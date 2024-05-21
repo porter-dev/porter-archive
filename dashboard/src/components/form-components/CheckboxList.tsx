@@ -26,7 +26,9 @@ const CheckboxList = ({ label, options, selected, setSelected }: PropsType) => {
         return (
           <CheckboxOption
             isLast={i === options.length - 1}
-            onClick={() => { onSelectOption(option); }}
+            onClick={() => {
+              onSelectOption(option);
+            }}
             key={i}
           >
             <Checkbox checked={selected.includes(option)}>

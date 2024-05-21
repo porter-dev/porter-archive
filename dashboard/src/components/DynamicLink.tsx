@@ -1,7 +1,12 @@
 import React from "react";
 import { Link, type LinkProps } from "react-router-dom";
 
-const DynamicLink: React.FC<LinkProps> = ({ to, children, hasunderline, ...props }) => {
+const DynamicLink: React.FC<LinkProps> = ({
+  to,
+  children,
+  hasunderline,
+  ...props
+}) => {
   // It is a simple element with nothing to link to
   if (!to) return <span {...props}>{children}</span>;
 

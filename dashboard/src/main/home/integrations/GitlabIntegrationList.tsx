@@ -1,15 +1,18 @@
 import React, { useContext, useRef, useState } from "react";
-import ConfirmOverlay from "../../../components/ConfirmOverlay";
 import styled from "styled-components";
-import { Context } from "../../../shared/Context";
-import api from "../../../shared/api";
-import { integrationList } from "shared/common";
+
 import DynamicLink from "components/DynamicLink";
+
+import { integrationList } from "shared/common";
+
+import ConfirmOverlay from "../../../components/ConfirmOverlay";
+import api from "../../../shared/api";
+import { Context } from "../../../shared/Context";
 
 type Props = {
   gitlabData: any[];
   updateIntegrationList: () => void;
-}
+};
 
 type StateType = {
   isDelete: boolean;
@@ -24,9 +27,8 @@ const GitlabIntegrationList: React.FC<Props> = (props) => {
     deleteID: 0,
   });
 
-  const { currentCluster, currentProject, setCurrentError } = useContext(
-    Context
-  );
+  const { currentCluster, currentProject, setCurrentError } =
+    useContext(Context);
 
   const handleDeleteIntegration = () => {
     api
@@ -57,13 +59,13 @@ const GitlabIntegrationList: React.FC<Props> = (props) => {
         show={currentState.isDelete}
         message={`Are you sure you want to delete the GitLab integration for instance ${currentState.deleteName}?`}
         onYes={handleDeleteIntegration}
-        onNo={() =>
-          { setCurrentState({
+        onNo={() => {
+          setCurrentState({
             isDelete: false,
             deleteName: "",
             deleteID: 0,
-          }); }
-        }
+          });
+        }}
       />
       <StyledIntegrationList>
         {props.gitlabData?.length > 0 ? (

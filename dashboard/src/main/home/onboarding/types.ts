@@ -136,7 +136,7 @@ export type Onboarding = {
   resource_provision_settings_region: string;
   resource_provision_settings_tier: string;
   resource_provision_settings_machine_type: string;
-}
+};
 
 export type CompressedOnboardingState = {
   current_step: string;
@@ -156,7 +156,7 @@ export type CompressedOnboardingState = {
   cluster_infra_id: number;
   cluster_infra_credential_id: number;
   cluster_infra_provider: number;
-}
+};
 
 export type OnboardingState = {
   current_step: string;
@@ -183,4 +183,4 @@ export type OnboardingState = {
   resource_provision_settings_region: string;
   resource_provision_settings_tier: string;
   resource_provision_settings_machine_type: string;
-}
+};

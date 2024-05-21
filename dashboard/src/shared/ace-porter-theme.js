@@ -1,4 +1,4 @@
-import ace from 'ace-builds/src-noconflict/ace';
+import ace from "ace-builds/src-noconflict/ace";
 
 ace.define(
   "ace/theme/porter",

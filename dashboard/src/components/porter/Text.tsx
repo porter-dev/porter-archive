@@ -58,15 +58,15 @@ const StyledText = styled.div<{
   truncate?: boolean;
 }>`
   line-height: 1.5;
-  font-weight: ${props => props.weight || 400};
-  color: ${props => props.color || props.theme.text.primary};
-  font-size: ${props => props.size || 13}px;
+  font-weight: ${(props) => props.weight || 400};
+  color: ${(props) => props.color || props.theme.text.primary};
+  font-size: ${(props) => props.size || 13}px;
   display: inline;
   align-items: center;
   user-select: text;
-  ${props => props.additionalStyles ? props.additionalStyles : ""}
+  ${(props) => (props.additionalStyles ? props.additionalStyles : "")}
 
-  ${props =>
+  ${(props) =>
     props.truncate
       ? `
         white-space: nowrap;

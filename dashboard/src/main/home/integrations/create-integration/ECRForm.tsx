@@ -1,13 +1,13 @@
 import React, { Component } from "react";
 import styled from "styled-components";
 
-import { Context } from "shared/Context";
-import api from "shared/api";
-
-import InputRow from "components/form-components/InputRow";
-import SaveButton from "components/SaveButton";
 import Heading from "components/form-components/Heading";
 import Helper from "components/form-components/Helper";
+import InputRow from "components/form-components/InputRow";
+import SaveButton from "components/SaveButton";
+
+import api from "shared/api";
+import { Context } from "shared/Context";
 
 type PropsType = {
   closeForm: () => void;
@@ -29,7 +29,8 @@ export default class ECRForm extends Component<PropsType, StateType> {
   };
 
   isDisabled = (): boolean => {
-    const { awsRegion, awsAccessId, awsSecretKey, credentialsName } = this.state;
+    const { awsRegion, awsAccessId, awsSecretKey, credentialsName } =
+      this.state;
     if (
       awsRegion === "" ||
       awsAccessId === "" ||
@@ -41,10 +42,13 @@ export default class ECRForm extends Component<PropsType, StateType> {
     return false;
   };
 
-  catchErr = (err: any) => { console.log(err); };
+  catchErr = (err: any) => {
+    console.log(err);
+  };
 
   handleSubmit = () => {
-    const { awsRegion, awsAccessId, awsSecretKey, credentialsName } = this.state;
+    const { awsRegion, awsAccessId, awsSecretKey, credentialsName } =
+      this.state;
     const { currentProject } = this.context;
 
     api
@@ -57,17 +61,20 @@ export default class ECRForm extends Component<PropsType, StateType> {
         },
         { id: currentProject.id }
       )
-      .then(async (res) =>
-        await api.connectECRRegistry(
-          "<token>",
-          {
-            name: credentialsName,
-            aws_integration_id: res.data.id,
-          },
-          { id: currentProject.id }
-        )
+      .then(
+        async (res) =>
+          await api.connectECRRegistry(
+            "<token>",
+            {
+              name: credentialsName,
+              aws_integration_id: res.data.id,
+            },
+            { id: currentProject.id }
+          )
       )
-      .then(() => { this.props.closeForm(); })
+      .then(() => {
+        this.props.closeForm();
+      })
       .catch(this.catchErr);
   };
 
@@ -82,7 +89,9 @@ export default class ECRForm extends Component<PropsType, StateType> {
           <InputRow
             type="text"
             value={this.state.credentialsName}
-            setValue={(x: string) => { this.setState({ credentialsName: x }); }}
+            setValue={(x: string) => {
+              this.setState({ credentialsName: x });
+            }}
             label="🏷️ Registry Name"
             placeholder="ex: paper-straw"
             width="100%"
@@ -92,7 +101,9 @@ export default class ECRForm extends Component<PropsType, StateType> {
           <InputRow
             type="text"
             value={this.state.awsRegion}
-            setValue={(x: string) => { this.setState({ awsRegion: x }); }}
+            setValue={(x: string) => {
+              this.setState({ awsRegion: x });
+            }}
             label="📍 AWS region"
             placeholder="ex: mars-north-12"
             width="100%"
@@ -100,7 +111,9 @@ export default class ECRForm extends Component<PropsType, StateType> {
           <InputRow
             type="text"
             value={this.state.awsAccessId}
-            setValue={(x: string) => { this.setState({ awsAccessId: x }); }}
+            setValue={(x: string) => {
+              this.setState({ awsAccessId: x });
+            }}
             label="👤 AWS access ID"
             placeholder="ex: AKIAIOSFODNN7EXAMPLE"
             width="100%"
@@ -108,7 +121,9 @@ export default class ECRForm extends Component<PropsType, StateType> {
           <InputRow
             type="password"
             value={this.state.awsSecretKey}
-            setValue={(x: string) => { this.setState({ awsSecretKey: x }); }}
+            setValue={(x: string) => {
+              this.setState({ awsSecretKey: x });
+            }}
             label="🔒 AWS secret key"
             placeholder="○ ○ ○ ○ ○ ○ ○ ○ ○"
             width="100%"

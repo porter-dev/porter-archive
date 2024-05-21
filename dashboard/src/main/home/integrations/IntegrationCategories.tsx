@@ -1,20 +1,22 @@
 import React, { useContext, useEffect, useState } from "react";
+import { withRouter, type RouteComponentProps } from "react-router";
 import styled from "styled-components";
 
-import { Context } from "shared/Context";
-import { integrationList } from "shared/common";
-import { type RouteComponentProps, withRouter } from "react-router";
-import IntegrationList from "./IntegrationList";
-import DopplerIntegrationList from "./DopplerIntegrationList";
-import api from "shared/api";
-import { pushFiltered } from "shared/routing";
-import Loading from "../../../components/Loading";
-import SlackIntegrationList from "./SlackIntegrationList";
-import TitleSection from "components/TitleSection";
-import GitlabIntegrationList from "./GitlabIntegrationList";
-import leftArrow from "assets/left-arrow.svg";
 import Spacer from "components/porter/Spacer";
+import TitleSection from "components/TitleSection";
+
+import api from "shared/api";
+import { integrationList } from "shared/common";
+import { Context } from "shared/Context";
+import { pushFiltered } from "shared/routing";
+import leftArrow from "assets/left-arrow.svg";
+
+import Loading from "../../../components/Loading";
+import DopplerIntegrationList from "./DopplerIntegrationList";
+import GitlabIntegrationList from "./GitlabIntegrationList";
 import InfisicalIntegrationList from "./infisical/InfisicalIntegrationList";
+import IntegrationList from "./IntegrationList";
+import SlackIntegrationList from "./SlackIntegrationList";
 
 type Props = RouteComponentProps & {
   category: string;
@@ -110,18 +112,17 @@ const IntegrationCategories: React.FC<Props> = (props) => {
   }, [props.category]);
 
   const { category: currentCategory } = props;
-  const icon =
-    integrationList[currentCategory]?.icon;
-  const label =
-    integrationList[currentCategory]?.label;
-  const buttonText =
-    integrationList[currentCategory]?.buttonText;
+  const icon = integrationList[currentCategory]?.icon;
+  const label = integrationList[currentCategory]?.label;
+  const buttonText = integrationList[currentCategory]?.buttonText;
 
   return (
     <>
       <BreadcrumbRow>
         <Breadcrumb
-          onClick={() => { pushFiltered(props, "/integrations", ["project_id"]); }}
+          onClick={() => {
+            pushFiltered(props, "/integrations", ["project_id"]);
+          }}
         >
           <ArrowIcon src={leftArrow} />
           <Wrap>Back</Wrap>
@@ -131,14 +132,18 @@ const IntegrationCategories: React.FC<Props> = (props) => {
         <TitleSection icon={icon} iconWidth="32px">
           {label}
         </TitleSection>
-        {props.category === "doppler" || props.category === "infisical" ? null : (
+        {props.category === "doppler" ||
+        props.category === "infisical" ? null : (
           <Button
             onClick={() => {
               if (props.category === "gitlab") {
                 pushFiltered(props, `/integrations/gitlab/create/gitlab`, [
                   "project_id",
                 ]);
-              } else if (props.category === "doppler" || props.category === "infisical") {
+              } else if (
+                props.category === "doppler" ||
+                props.category === "infisical"
+              ) {
                 // ret2
               } else if (props.category !== "slack") {
                 setCurrentModal("IntegrationsModal", {
@@ -148,8 +153,8 @@ const IntegrationCategories: React.FC<Props> = (props) => {
                       props,
                       `/integrations/${props.category}/create/${x}`,
                       ["project_id"]
-                    )
-                  }
+                    );
+                  },
                 });
               } else {
                 window.location.href = `/api/projects/${currentProject.id}/oauth/slack`;
@@ -167,15 +172,16 @@ const IntegrationCategories: React.FC<Props> = (props) => {
       ) : props.category === "gitlab" ? (
         <GitlabIntegrationList
           gitlabData={gitlabData}
-          updateIntegrationList={() =>
-            { getIntegrationsForCategory(props.category); }
-          }
+          updateIntegrationList={() => {
+            getIntegrationsForCategory(props.category);
+          }}
         />
       ) : props.category === "slack" ? (
         <SlackIntegrationList slackData={slackData} />
       ) : props.category === "doppler" ? (
         <DopplerIntegrationList />
-      ) : props.category === "infisical" && currentProject?.infisical_enabled ? (
+      ) : props.category === "infisical" &&
+        currentProject?.infisical_enabled ? (
         <InfisicalIntegrationList />
       ) : (
         <IntegrationList
@@ -183,9 +189,9 @@ const IntegrationCategories: React.FC<Props> = (props) => {
           integrations={currentOptions}
           titles={currentTitles}
           itemIdentifier={currentIntegrationData}
-          updateIntegrationList={() =>
-            { getIntegrationsForCategory(props.category); }
-          }
+          updateIntegrationList={() => {
+            getIntegrationsForCategory(props.category);
+          }}
         />
       )}
     </>

@@ -1,8 +1,10 @@
 import { useContext, useEffect } from "react";
 import { useLocation } from "react-router";
+import { proxy, useSnapshot } from "valtio";
+
 import { Context } from "shared/Context";
 import { useRouting } from "shared/routing";
-import { proxy, useSnapshot } from "valtio";
+
 import { type StepKey, type Steps } from "../types";
 
 type Step = {
@@ -219,7 +221,6 @@ export const StepHandler: StepHandlerType = proxy({
         );
       }
       StepHandler.actions.setNewCurrentStep(nextStepName);
-      
     },
     getStep: (nextStepName: string) => {
       const [stepName, substep] = nextStepName.split(".");
@@ -299,11 +300,11 @@ export const useSteps = (isParentLoading?: boolean) => {
       setHasFinishedOnboarding(true);
     }
     if (currentProject?.id) {
-      pushFiltered(`${snap.currentStep.url}?project_id=${currentProject.id}`, ["tab"]);
+      pushFiltered(`${snap.currentStep.url}?project_id=${currentProject.id}`, [
+        "tab",
+      ]);
     } else {
       pushFiltered(snap.currentStep.url, ["tab"]);
     }
-
   }, [location.pathname, snap.currentStep?.url, isParentLoading]);
 };
-

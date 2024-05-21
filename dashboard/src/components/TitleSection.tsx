@@ -10,7 +10,7 @@ type Props = {
   materialIconClass?: string;
   handleNavBack?: () => void;
   onClick?: any;
-}
+};
 
 const TitleSection: React.FC<Props> = ({
   children,

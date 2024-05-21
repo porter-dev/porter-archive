@@ -100,7 +100,9 @@ export default class ResourceTab extends Component<PropsType, StateType> {
     return (
       <StyledResourceTab
         isLast={isLast}
-        onClick={() => { handleClick && handleClick(); }}
+        onClick={() => {
+          handleClick && handleClick();
+        }}
         roundAllCorners={roundAllCorners}
       >
         <ResourceHeader
@@ -143,7 +145,7 @@ const StyledResourceTab = styled.div`
   width: 100%;
   margin-bottom: 2px;
   font-size: 13px;
-  background: ${props => props.theme.fg};
+  background: ${(props) => props.theme.fg};
   border-bottom-left-radius: ${(props: {
     isLast: boolean;
     roundAllCorners: boolean;

@@ -1,13 +1,16 @@
+import React, { useContext, useState } from "react";
+import styled from "styled-components";
+
 import Heading from "components/form-components/Heading";
 import InputRow from "components/form-components/InputRow";
 import SaveButton from "components/SaveButton";
-import React, { useContext, useState } from "react";
+
 import api from "shared/api";
 import { Context } from "shared/Context";
 import { useRouting } from "shared/routing";
-import styled from "styled-components";
 
-const URLRegex = /(http(s)?):\/\/[(www\.)?a-zA-Z0-9@:%._\+~#=\-]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/;
+const URLRegex =
+  /(http(s)?):\/\/[(www\.)?a-zA-Z0-9@:%._\+~#=\-]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/;
 
 type Props = {
   closeForm: () => void;
@@ -97,7 +100,9 @@ const GitlabForm: React.FC<Props> = () => {
             type="string"
             label="Instance URL"
             value={instanceUrl}
-            setValue={(val: string) => { setInstanceUrl(val); }}
+            setValue={(val: string) => {
+              setInstanceUrl(val);
+            }}
             isRequired
             width="100%"
             hasError={error?.input === "instance_url"}
@@ -106,7 +111,9 @@ const GitlabForm: React.FC<Props> = () => {
             type="string"
             label="Client Application ID"
             value={clientId}
-            setValue={(val: string) => { setClientId(val); }}
+            setValue={(val: string) => {
+              setClientId(val);
+            }}
             isRequired
             width="100%"
             hasError={error?.input === "client_id"}
@@ -115,7 +122,9 @@ const GitlabForm: React.FC<Props> = () => {
             type="string"
             label="Client Secret"
             value={clientSecret}
-            setValue={(val: string) => { setClientSecret(val); }}
+            setValue={(val: string) => {
+              setClientSecret(val);
+            }}
             isRequired
             width="100%"
             hasError={error?.input === "client_secret"}

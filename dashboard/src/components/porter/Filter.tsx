@@ -1,20 +1,22 @@
-import React, {  useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import styled from "styled-components";
-import Select from "./Select";
-import Spacer from "./Spacer";
+
+import {
+  type FilterName,
+  type GenericFilter,
+} from "main/home/app-dashboard/expanded-app/logs/types";
 
 import filter from "assets/filter.svg";
-import { type GenericFilter, type FilterName } from "main/home/app-dashboard/expanded-app/logs/types";
+
+import Select from "./Select";
+import Spacer from "./Spacer";
 
 type Props = {
   filters: GenericFilter[];
   selectedFilterValues: Partial<Record<FilterName, string>>;
 };
 
-const Filter: React.FC<Props> = ({
-  filters,
-  selectedFilterValues,
-}) => {
+const Filter: React.FC<Props> = ({ filters, selectedFilterValues }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const filterLabelString = useMemo(() => {
@@ -26,7 +28,7 @@ const Filter: React.FC<Props> = ({
     if (serviceName && serviceName !== "all") {
       filterString += serviceName;
     } else if (podName && podName !== "all") {
-      filterString += podName.replace(/-[^-]*$/, '');
+      filterString += podName.replace(/-[^-]*$/, "");
     }
     if (revision && revision !== "all") {
       if (filterString !== "") {
@@ -35,11 +37,15 @@ const Filter: React.FC<Props> = ({
       filterString += "v" + revision;
     }
     return filterString;
-},[JSON.stringify(selectedFilterValues)]);
+  }, [JSON.stringify(selectedFilterValues)]);
 
   return (
     <Relative>
-      <StyledFilter onClick={() => { setIsExpanded(!isExpanded); }}>
+      <StyledFilter
+        onClick={() => {
+          setIsExpanded(!isExpanded);
+        }}
+      >
         <img src={filter} />
         Filter
         {filterLabelString !== "" && (
@@ -50,7 +56,12 @@ const Filter: React.FC<Props> = ({
           </>
         )}
       </StyledFilter>
-      <CloseOverlay onClick={() => { setIsExpanded(false); }} isExpanded={isExpanded} />
+      <CloseOverlay
+        onClick={() => {
+          setIsExpanded(false);
+        }}
+        isExpanded={isExpanded}
+      />
       <Dropdown isExpanded={isExpanded}>
         {filters.map((filter: GenericFilter, i: number) => {
           return (
@@ -58,7 +69,11 @@ const Filter: React.FC<Props> = ({
               <FilterLabel>{filter.displayName}</FilterLabel>
               <Spacer y={0.5} />
               <Select
-                options={filter.default ? [filter.default, ...filter.options] : filter.options}
+                options={
+                  filter.default
+                    ? [filter.default, ...filter.options]
+                    : filter.options
+                }
                 setValue={filter.setValue}
                 value={selectedFilterValues[filter.name]}
               />
@@ -87,11 +102,10 @@ const CloseOverlay = styled.div<{ isExpanded: boolean }>`
   z-index: 998;
   width: 100vw;
   height: 100vh;
-  display: ${props => props.isExpanded ? "block" : "none"};
+  display: ${(props) => (props.isExpanded ? "block" : "none")};
 `;
 
-const FilterLabel = styled.div`
-`;
+const FilterLabel = styled.div``;
 
 const Dropdown = styled.div<{ isExpanded: boolean }>`
   position: absolute;
@@ -100,26 +114,25 @@ const Dropdown = styled.div<{ isExpanded: boolean }>`
   border-radius: 5px;
   font-size: 13px;
   background: #121212;
-  border: 1px solid #494B4F;
+  border: 1px solid #494b4f;
   padding: 10px;
   padding-bottom: 15px;
   z-index: 999;
-  display: ${props => props.isExpanded ? "block" : "none"};
+  display: ${(props) => (props.isExpanded ? "block" : "none")};
 `;
 
 const Relative = styled.div`
   position: relative;
 `;
 
-const StyledFilter = styled.div<{
-}>`
+const StyledFilter = styled.div<{}>`
   display: flex;
   align-items: center;
   color: #ffffff;
   font-size: 13px;
   height: 30px;
   border-radius: 5px;
-  background: ${props => props.theme.fg};
+  background: ${(props) => props.theme.fg};
   padding: 0px 10px;
   cursor: pointer;
 

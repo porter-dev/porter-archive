@@ -1,20 +1,20 @@
 import React, { Component } from "react";
 import styled from "styled-components";
+
+import close from "assets/close.png";
 import file from "assets/file.svg";
 import folder from "assets/folder.svg";
 import info from "assets/info.svg";
-import close from "assets/close.png";
 
 import api from "../../shared/api";
 import { Context } from "../../shared/Context";
 import { type ActionConfigType, type FileType } from "../../shared/types";
-
 import Loading from "../Loading";
 
 type AutoBuildpack = {
   name?: string;
   valid: boolean;
-}
+};
 
 type PropsType = {
   actionConfig: ActionConfigType | null;
@@ -60,7 +60,9 @@ export default class ContentsList extends Component<PropsType, StateType> {
   }
 
   setSubdirectory = (x: string) => {
-    this.setState({ currentDir: x }, () => { this.updateContents(); });
+    this.setState({ currentDir: x }, () => {
+      this.updateContents();
+    });
   };
 
   fetchContents = async () => {
@@ -248,7 +250,9 @@ export default class ContentsList extends Component<PropsType, StateType> {
             key={i}
             isSelected={item.path === this.state.currentDir}
             lastItem={i === contents.length - 1}
-            onClick={() => { this.setSubdirectory(item.path); }}
+            onClick={() => {
+              this.setSubdirectory(item.path);
+            }}
           >
             <img src={folder} />
             {fileName}
@@ -262,7 +266,9 @@ export default class ContentsList extends Component<PropsType, StateType> {
             key={i}
             lastItem={i === contents.length - 1}
             isADocker
-            onClick={() => { this.props.setDockerfilePath(item.path); }}
+            onClick={() => {
+              this.props.setDockerfilePath(item.path);
+            }}
           >
             <img src={file} />
             {fileName}
@@ -291,7 +297,12 @@ export default class ContentsList extends Component<PropsType, StateType> {
       }
 
       return (
-        <Item lastItem={false} onClick={() => { this.setSubdirectory(subdir); }}>
+        <Item
+          lastItem={false}
+          onClick={() => {
+            this.setSubdirectory(subdir);
+          }}
+        >
           <BackLabel>..</BackLabel>
         </Item>
       );
@@ -360,19 +371,19 @@ export default class ContentsList extends Component<PropsType, StateType> {
       return (
         <Overlay>
           <BgOverlay
-            onClick={() =>
-              { this.setState({ dockerfiles: [] }, () => {
+            onClick={() => {
+              this.setState({ dockerfiles: [] }, () => {
                 this.props.setFolderPath("");
                 this.props.setProcfilePath("");
-              }); }
-            }
+              });
+            }}
           />
           <CloseButton
-            onClick={() =>
-              { this.setState({ dockerfiles: [] }, () => {
+            onClick={() => {
+              this.setState({ dockerfiles: [] }, () => {
                 this.props.setProcfilePath("");
-              }); }
-            }
+              });
+            }}
           >
             <CloseButtonImg src={close} />
           </CloseButton>
@@ -408,8 +419,16 @@ export default class ContentsList extends Component<PropsType, StateType> {
     if (this.state.dockerfiles.length > 0 && !this.props.dockerfilePath) {
       return (
         <Overlay>
-          <BgOverlay onClick={() => { this.setState({ dockerfiles: [] }); }} />
-          <CloseButton onClick={() => { this.setState({ dockerfiles: [] }); }}>
+          <BgOverlay
+            onClick={() => {
+              this.setState({ dockerfiles: [] });
+            }}
+          />
+          <CloseButton
+            onClick={() => {
+              this.setState({ dockerfiles: [] });
+            }}
+          >
             <CloseButtonImg src={close} />
           </CloseButton>
           <Label>
@@ -421,11 +440,11 @@ export default class ContentsList extends Component<PropsType, StateType> {
               return (
                 <Row
                   key={i}
-                  onClick={() =>
-                    { this.props.setDockerfilePath(
+                  onClick={() => {
+                    this.props.setDockerfilePath(
                       `${this.state.currentDir || "."}/${dockerfile}`
-                    ); }
-                  }
+                    );
+                  }}
                   isLast={this.state.dockerfiles.length - 1 === i}
                 >
                   <Indicator selected={false}></Indicator>
@@ -457,11 +476,15 @@ export default class ContentsList extends Component<PropsType, StateType> {
     ) {
       return (
         <Overlay>
-          <BgOverlay onClick={() => { this.props.setDockerfilePath(""); }} />
+          <BgOverlay
+            onClick={() => {
+              this.props.setDockerfilePath("");
+            }}
+          />
           <CloseButton
-            onClick={() =>
-              { this.props.setFolderPath(this.state.currentDir || "./"); }
-            }
+            onClick={() => {
+              this.props.setFolderPath(this.state.currentDir || "./");
+            }}
           >
             <CloseButtonImg src={close} />
           </CloseButton>
@@ -479,9 +502,9 @@ export default class ContentsList extends Component<PropsType, StateType> {
               Yes
             </ConfirmButton>
             <ConfirmButton
-              onClick={() =>
-                { this.props.setFolderPath(this.state.currentDir || "./"); }
-              }
+              onClick={() => {
+                this.props.setFolderPath(this.state.currentDir || "./");
+              }}
             >
               No
             </ConfirmButton>
@@ -501,7 +524,8 @@ export default class ContentsList extends Component<PropsType, StateType> {
               <b>{this.state.autoBuildpack.name}</b> buildpack was{" "}
               <a
                 href="https://docs.porter.run/deploying-applications/deploying-from-github/selecting-application-and-build-method#customizing-buildpacks"
-                target="_blank" rel="noreferrer"
+                target="_blank"
+                rel="noreferrer"
               >
                 detected automatically
               </a>

@@ -1,16 +1,16 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
+import { withRouter, type RouteComponentProps } from "react-router";
 import styled from "styled-components";
 
-import { Context } from "shared/Context";
+import Loading from "components/Loading";
+import Placeholder from "components/Placeholder";
+
 import api from "shared/api";
+import { Context } from "shared/Context";
+import { getQueryParam, pushQueryParams } from "shared/routing";
 import { type ClusterType } from "shared/types";
 
 import EnvGroup from "./EnvGroup";
-import Loading from "components/Loading";
-import { getQueryParam, pushQueryParams } from "shared/routing";
-import { type RouteComponentProps, withRouter } from "react-router";
-
-import Placeholder from "components/Placeholder";
 
 type Props = RouteComponentProps & {
   currentCluster: ClusterType;
@@ -37,7 +37,7 @@ const EnvGroupList: React.FunctionComponent<Props> = (props) => {
   const updateEnvGroups = async () => {
     const { currentProject, currentCluster } = context;
     try {
-      let envGroups: any[] = []
+      let envGroups: any[] = [];
       if (currentProject?.simplified_view_enabled) {
         envGroups = await api
           .getAllEnvGroups(
@@ -85,7 +85,7 @@ const EnvGroupList: React.FunctionComponent<Props> = (props) => {
       }
       return sortedGroups;
     } catch (error) {
-      console.log(error)
+      console.log(error);
       setIsLoading(false);
       setHasError(true);
     }
@@ -140,12 +140,7 @@ const EnvGroupList: React.FunctionComponent<Props> = (props) => {
     }
 
     return envGroups.map((envGroup: any, i: number) => {
-      return (
-        <EnvGroup
-          key={i}
-          envGroup={envGroup}
-        />
-      );
+      return <EnvGroup key={i} envGroup={envGroup} />;
     });
   };
 

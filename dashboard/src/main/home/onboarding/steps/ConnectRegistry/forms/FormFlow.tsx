@@ -1,31 +1,33 @@
-import {
-  type ConnectedRegistryConfig,
-  StateHandler,
-} from "main/home/onboarding/state/StateHandler";
+import React, { useMemo } from "react";
+import styled from "styled-components";
+import { useSnapshot } from "valtio";
+
 import Breadcrumb from "components/Breadcrumb";
+import { OFState } from "main/home/onboarding/state";
+import {
+  StateHandler,
+  type ConnectedRegistryConfig,
+} from "main/home/onboarding/state/StateHandler";
+import { StepHandler } from "main/home/onboarding/state/StepHandler";
 import {
   type SkipRegistryConnection,
   type SupportedProviders,
 } from "main/home/onboarding/types";
-import React, { useMemo } from "react";
-import styled from "styled-components";
+
+import { connectRegistryTracks, trackRedirectToGuide } from "shared/anayltics";
+import { integrationList } from "shared/common";
+
 import {
   CredentialsForm as AWSCredentialsForm,
   SettingsForm as AWSSettingsForm,
   TestRegistryConnection as AWSTestRegistryConnection,
 } from "./_AWSRegistryForm";
-import { integrationList } from "shared/common";
-
 import {
-  CredentialsForm as GCPCredentialsForm,
   GARegistryConfig,
+  CredentialsForm as GCPCredentialsForm,
   SettingsForm as GCPSettingsForm,
   TestRegistryConnection as GCPTestRegistryConnection,
 } from "./_GCPRegistryForm";
-import { OFState } from "main/home/onboarding/state";
-import { useSnapshot } from "valtio";
-import { connectRegistryTracks, trackRedirectToGuide } from "shared/anayltics";
-import { StepHandler } from "main/home/onboarding/state/StepHandler";
 
 const Forms = {
   aws: {
@@ -49,26 +51,22 @@ const FormTitle = {
   aws: {
     label: "Amazon Elastic Container Registry (ECR)",
     icon: integrationList.ecr.icon,
-    doc:
-      "https://docs.porter.run/deploying-applications/deploying-from-docker-registry/linking-existing-registry#amazon-elastic-container-registry-ecr",
+    doc: "https://docs.porter.run/deploying-applications/deploying-from-docker-registry/linking-existing-registry#amazon-elastic-container-registry-ecr",
   },
   gcp: {
     label: "Google Container Registry (GCR)",
     icon: integrationList.gcr.icon,
-    doc:
-      "https://docs.porter.run/deploying-applications/deploying-from-docker-registry/linking-existing-registry#google-container-registry-gcr",
+    doc: "https://docs.porter.run/deploying-applications/deploying-from-docker-registry/linking-existing-registry#google-container-registry-gcr",
   },
   gar: {
     label: "Google Artifact Registry (GAR)",
     icon: integrationList.gcr.icon,
-    doc:
-      "https://docs.porter.run/deploying-applications/deploying-from-docker-registry/linking-existing-registry#google-artifact-registry-gar",
+    doc: "https://docs.porter.run/deploying-applications/deploying-from-docker-registry/linking-existing-registry#google-artifact-registry-gar",
   },
   do: {
     label: "DigitalOcean Container Registry (DOCR)",
     icon: integrationList.do.icon,
-    doc:
-      "https://docs.porter.run/deploying-applications/deploying-from-docker-registry/linking-existing-registry#digital-ocean-container-registry",
+    doc: "https://docs.porter.run/deploying-applications/deploying-from-docker-registry/linking-existing-registry#digital-ocean-container-registry",
   },
 };
 
@@ -121,7 +119,7 @@ const FormFlowWrapper: React.FC<Props> = ({ currentStep }) => {
       return null;
     }
 
-    return React.createElement(currentForm , {
+    return React.createElement(currentForm, {
       nextFormStep,
       project,
     });
@@ -132,7 +130,11 @@ const FormFlowWrapper: React.FC<Props> = ({ currentStep }) => {
       <Header>
         <FormHeader>
           {currentStep !== "test_connection" && (
-            <CloseButton onClick={() => { handleGoBack(); }}>
+            <CloseButton
+              onClick={() => {
+                handleGoBack();
+              }}
+            >
               <i className="material-icons">keyboard_backspace</i>
             </CloseButton>
           )}

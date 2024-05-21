@@ -88,7 +88,7 @@ const Select: React.FC<Props> = ({
 
 export default Select;
 
-const Div = styled.div<{ width?: string, noShrink?: boolean }>`
+const Div = styled.div<{ width?: string; noShrink?: boolean }>`
   width: ${({ width }) => width || ""};
   ${({ noShrink }) => (noShrink ? "flex-shrink: 0;" : "")}
 `;

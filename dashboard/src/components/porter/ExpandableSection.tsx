@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
-import Container from "./Container";
+
 import CopyToClipboard from "components/CopyToClipboard";
+
+import Container from "./Container";
 
 type Props = {
   isInitiallyExpanded?: boolean;
@@ -41,45 +43,48 @@ const ExpandableSection: React.FC<Props> = ({
       {noWrapper ? (
         <Container row spaced={spaced}>
           {Header}
-          {copy ?
-            (
-              <CopyWrapper>
-                <ExpandButton onClick={() => { setIsExpanded(!isExpanded); }}>
-                  {isExpanded ? collapseText : expandText}
-                </ExpandButton>
-                <CopyToClipboard
-                  as="i"
-                  text={copy}
-                  wrapperProps={{
-                    className: "material-icons",
-                  }}
-                >
-                  content_copy
-                </CopyToClipboard>
-              </CopyWrapper>
-            ) :
-            (
-              <ExpandButton onClick={() => { setIsExpanded(!isExpanded); }}>
+          {copy ? (
+            <CopyWrapper>
+              <ExpandButton
+                onClick={() => {
+                  setIsExpanded(!isExpanded);
+                }}
+              >
                 {isExpanded ? collapseText : expandText}
               </ExpandButton>
-            )
-          }
+              <CopyToClipboard
+                as="i"
+                text={copy}
+                wrapperProps={{
+                  className: "material-icons",
+                }}
+              >
+                content_copy
+              </CopyToClipboard>
+            </CopyWrapper>
+          ) : (
+            <ExpandButton
+              onClick={() => {
+                setIsExpanded(!isExpanded);
+              }}
+            >
+              {isExpanded ? collapseText : expandText}
+            </ExpandButton>
+          )}
         </Container>
       ) : (
         <HeaderRow
           isExpanded={isExpanded}
-          onClick={() => { setIsExpanded(!isExpanded); }}
+          onClick={() => {
+            setIsExpanded(!isExpanded);
+          }}
           color={color}
         >
           {!noWrapper && <i className="material-icons">arrow_drop_down</i>}
           {Header}
         </HeaderRow>
       )}
-      {
-        isExpanded && (
-          ExpandedSection
-        )
-      }
+      {isExpanded && ExpandedSection}
     </StyledExpandableSection>
   );
 };
@@ -109,16 +114,16 @@ const HeaderRow = styled.div<{
   padding-left: 10px;
   cursor: pointer;
   :hover {
-    background: ${props => props.isExpanded && "#ffffff18"};
+    background: ${(props) => props.isExpanded && "#ffffff18"};
   }
 
   > i {
     margin-right: 8px;
-    color: ${props => props.color || "#ffffff66"};
+    color: ${(props) => props.color || "#ffffff66"};
     font-size: 20px;
     cursor: pointer;
     border-radius: 20px;
-    transform: ${props => props.isExpanded ? "" : "rotate(-90deg)"};
+    transform: ${(props) => (props.isExpanded ? "" : "rotate(-90deg)")};
   }
 `;
 
@@ -128,16 +133,16 @@ const StyledExpandableSection = styled.div<{
   noWrapper?: boolean;
 }>`
   width: 100%;
-  height: ${props => (props.isExpanded || props.noWrapper) ? "" : "40px"};
+  height: ${(props) => (props.isExpanded || props.noWrapper ? "" : "40px")};
   max-height: 350px;
   overflow: hidden;
   border-radius: 5px;
-  background: ${props => !props.noWrapper && (props.background || "#181B20")};
-  border: ${props => !props.noWrapper && "1px solid #494b4f"};
+  background: ${(props) => !props.noWrapper && (props.background || "#181B20")};
+  border: ${(props) => !props.noWrapper && "1px solid #494b4f"};
   :hover {
-    border: ${props => !props.noWrapper && "1px solid #7a7b80"};
+    border: ${(props) => !props.noWrapper && "1px solid #7a7b80"};
   }
-  animation: ${props => props.isExpanded ? "expandRevisions 0.3s" : ""};
+  animation: ${(props) => (props.isExpanded ? "expandRevisions 0.3s" : "")};
   animation-timing-function: ease-out;
   @keyframes expandRevisions {
     from {

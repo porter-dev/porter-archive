@@ -1,11 +1,13 @@
+import React, { useContext, useState } from "react";
+import styled from "styled-components";
+import { useSnapshot } from "valtio";
+
 import Loading from "components/Loading";
 import { OFState } from "main/home/onboarding/state";
-import React, { useContext, useState } from "react";
+
 import api from "shared/api";
 import { integrationList } from "shared/common";
 import { Context } from "shared/Context";
-import styled from "styled-components";
-import { useSnapshot } from "valtio";
 
 const serviceToProvider: Record<string, string> = {
   docr: "do",
@@ -46,7 +48,9 @@ const Registry: React.FC<{ registry: any; onDelete: () => void }> = (props) => {
       setIsDeleting(false);
       setCurrentError(error);
       setHasError(true);
-      setTimeout(() => { setHasError(false); }, 1000);
+      setTimeout(() => {
+        setHasError(false);
+      }, 1000);
     }
   };
 
@@ -73,7 +77,9 @@ const Registry: React.FC<{ registry: any; onDelete: () => void }> = (props) => {
             {!hasError && !isDeleting && (
               <I
                 className="material-icons"
-                onClick={async () => { await deleteRegistry(registry?.id); }}
+                onClick={async () => {
+                  await deleteRegistry(registry?.id);
+                }}
               >
                 delete
               </I>

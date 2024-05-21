@@ -1,15 +1,14 @@
 import React, { Component } from "react";
-import styled from "styled-components";
-import rocket from "assets/rocket.png";
 import Markdown from "markdown-to-jsx";
+import styled from "styled-components";
 
-import { Context } from "shared/Context";
-
-import { type PorterTemplate } from "shared/types";
 import Helper from "components/form-components/Helper";
 import Selector from "components/Selector";
 
+import { Context } from "shared/Context";
 import { hardcodedNames } from "shared/hardcodedNameDict";
+import { type PorterTemplate } from "shared/types";
+import rocket from "assets/rocket.png";
 
 type PropsType = {
   currentTemplate: any;
@@ -145,7 +144,9 @@ export default class TemplateInfo extends Component<PropsType, StateType> {
           <Flex>
             <i
               className="material-icons"
-              onClick={() => { this.props.setCurrentTemplate(null); }}
+              onClick={() => {
+                this.props.setCurrentTemplate(null);
+              }}
             >
               keyboard_backspace
             </i>
@@ -157,9 +158,9 @@ export default class TemplateInfo extends Component<PropsType, StateType> {
           <StyledVersionSelector>
             <Selector
               activeValue={this.props.currentTemplate.currentVersion}
-              setActiveValue={(version) =>
-                { this.props.setCurrentVersion(version); }
-              }
+              setActiveValue={(version) => {
+                this.props.setCurrentVersion(version);
+              }}
               options={versionOptions}
               dropdownLabel="Version"
               width="150px"

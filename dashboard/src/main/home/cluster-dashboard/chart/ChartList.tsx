@@ -1,23 +1,24 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
-import styled from "styled-components";
+import CronParser from "cron-parser";
 import _ from "lodash";
+import styled from "styled-components";
 
-import { Context } from "shared/Context";
+import Loading from "components/Loading";
+import Placeholder from "components/Placeholder";
+
 import api from "shared/api";
+import { Context } from "shared/Context";
+import { useWebsockets } from "shared/hooks/useWebsockets";
+import { type PorterUrl } from "shared/routing";
 import {
+  JobStatusType,
+  StorageType,
   type ChartType,
   type ClusterType,
-  JobStatusType,
   type JobStatusWithTimeType,
-  StorageType,
 } from "shared/types";
-import { type PorterUrl } from "shared/routing";
 
 import Chart from "./Chart";
-import Loading from "components/Loading";
-import { useWebsockets } from "shared/hooks/useWebsockets";
-import CronParser from "cron-parser";
-import Placeholder from "components/Placeholder";
 
 type Props = {
   currentCluster: ClusterType;
@@ -35,7 +36,7 @@ type Props = {
 
 type JobStatusWithTimeAndVersion = {
   resource_version: number;
-} & JobStatusWithTimeType
+} & JobStatusWithTimeType;
 
 const ChartList: React.FunctionComponent<Props> = ({
   lastRunStatus,
@@ -48,12 +49,8 @@ const ChartList: React.FunctionComponent<Props> = ({
   appFilters,
   noPlaceholder,
 }) => {
-  const {
-    newWebsocket,
-    openWebsocket,
-    closeWebsocket,
-    closeAllWebsockets,
-  } = useWebsockets();
+  const { newWebsocket, openWebsocket, closeWebsocket, closeAllWebsockets } =
+    useWebsockets();
   const [charts, setCharts] = useState<ChartType[]>([]);
   const [controllers, setControllers] = useState<
     Record<string, Record<string, any>>
@@ -205,7 +202,9 @@ const ChartList: React.FunctionComponent<Props> = ({
   };
 
   const setupControllerWebsockets = (controllers: string[]) => {
-    controllers.map((kind) => { setupControllerWebsocket(kind); });
+    controllers.map((kind) => {
+      setupControllerWebsocket(kind);
+    });
   };
 
   const setupJobWebsocket = (websocketID: string) => {
@@ -297,7 +296,9 @@ const ChartList: React.FunctionComponent<Props> = ({
     setupJobWebsocket(jobWebsocketID);
 
     return () => {
-      controllers.map((controller) => { closeWebsocket(controller); });
+      controllers.map((controller) => {
+        closeWebsocket(controller);
+      });
       closeWebsocket(jobWebsocketID);
     };
   }, [context.currentCluster]);

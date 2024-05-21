@@ -1,7 +1,9 @@
-import Helper from "components/form-components/Helper";
 import React, { useContext } from "react";
-import { Context } from "shared/Context";
 import styled from "styled-components";
+
+import Helper from "components/form-components/Helper";
+
+import { Context } from "shared/Context";
 
 const ConnectToDatabaseInstructionsModal = () => {
   const { currentModalData } = useContext(Context);

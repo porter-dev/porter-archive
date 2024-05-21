@@ -1,22 +1,22 @@
 import React, { Component, useContext, useEffect, useState } from "react";
+import { useHistory, useLocation } from "react-router";
 import styled from "styled-components";
 
-import close from "assets/close.png";
-import { isAlphanumeric } from "shared/common";
-import api from "shared/api";
-import { Context } from "shared/Context";
-import { type InfraType } from "shared/types";
-import { pushFiltered } from "shared/routing";
-
-import UploadArea from "components/form-components/UploadArea";
-import SelectRow from "components/form-components/SelectRow";
-import CheckboxRow from "components/form-components/CheckboxRow";
-import InputRow from "components/form-components/InputRow";
-import Helper from "components/form-components/Helper";
-import Heading from "components/form-components/Heading";
-import SaveButton from "components/SaveButton";
 import CheckboxList from "components/form-components/CheckboxList";
-import { useHistory, useLocation } from "react-router";
+import CheckboxRow from "components/form-components/CheckboxRow";
+import Heading from "components/form-components/Heading";
+import Helper from "components/form-components/Helper";
+import InputRow from "components/form-components/InputRow";
+import SelectRow from "components/form-components/SelectRow";
+import UploadArea from "components/form-components/UploadArea";
+import SaveButton from "components/SaveButton";
+
+import api from "shared/api";
+import { isAlphanumeric } from "shared/common";
+import { Context } from "shared/Context";
+import { pushFiltered } from "shared/routing";
+import { type InfraType } from "shared/types";
+import close from "assets/close.png";
 
 type PropsType = {
   setSelectedProvisioner: (x: string | null) => void;
@@ -183,11 +183,11 @@ const GCPFormSectionFC: React.FC<PropsType> = (props) => {
         },
         { project_id: currentProject.id }
       )
-      .then((res) =>
-        { pushFiltered({ history, location }, "/dashboard", ["project_id"], {
+      .then((res) => {
+        pushFiltered({ history, location }, "/dashboard", ["project_id"], {
           tab: "provisioner",
-        }); }
-      )
+        });
+      })
       .catch(catchError);
   };
 
@@ -208,19 +208,21 @@ const GCPFormSectionFC: React.FC<PropsType> = (props) => {
 
           if (selectedInfras.length === 2) {
             // Case: project exists, provision GCR + GKE
-            provisionGCR(id).then(() => { provisionGKE(id); });
+            provisionGCR(id).then(() => {
+              provisionGKE(id);
+            });
           } else if (selectedInfras[0].value === "gcr") {
             // Case: project exists, only provision GCR
-            provisionGCR(id).then(() =>
-              { pushFiltered(
+            provisionGCR(id).then(() => {
+              pushFiltered(
                 { location, history },
                 "/dashboard",
                 ["project_id"],
                 {
                   tab: "provisioner",
                 }
-              ); }
-            );
+              );
+            });
           } else {
             // Case: project exists, only provision GKE
             provisionGKE(id);
@@ -290,12 +292,20 @@ const GCPFormSectionFC: React.FC<PropsType> = (props) => {
   return (
     <StyledGCPFormSection>
       <FormSection>
-        <CloseButton onClick={() => { props.setSelectedProvisioner(null); }}>
+        <CloseButton
+          onClick={() => {
+            props.setSelectedProvisioner(null);
+          }}
+        >
           <CloseButtonImg src={close} />
         </CloseButton>
         <Heading isAtTop={true}>
           GCP Credentials
-          <GuideButton onClick={() => { goToGuide(); }}>
+          <GuideButton
+            onClick={() => {
+              goToGuide();
+            }}
+          >
             <i className="material-icons-outlined">help</i>
             Guide
           </GuideButton>

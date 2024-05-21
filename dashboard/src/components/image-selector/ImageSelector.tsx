@@ -1,36 +1,36 @@
 import React, { Component } from "react";
 import styled from "styled-components";
-import info from "assets/info.svg";
-import edit from "assets/edit.svg";
 
 import { integrationList } from "shared/common";
 import { Context } from "shared/Context";
 import { type ImageType } from "shared/types";
+import edit from "assets/edit.svg";
+import info from "assets/info.svg";
 
 import Loading from "../Loading";
 import ImageList from "./ImageList";
 
 type PropsType =
   | {
-    forceExpanded?: boolean;
-    selectedImageUrl: string | null;
-    selectedTag: string | null;
-    setSelectedImageUrl: (x: string) => void;
-    setSelectedTag: (x: string) => void;
-    noTagSelection?: boolean;
-    disableImageSelect?: boolean;
-    readOnly?: boolean;
-  }
+      forceExpanded?: boolean;
+      selectedImageUrl: string | null;
+      selectedTag: string | null;
+      setSelectedImageUrl: (x: string) => void;
+      setSelectedTag: (x: string) => void;
+      noTagSelection?: boolean;
+      disableImageSelect?: boolean;
+      readOnly?: boolean;
+    }
   | {
-    forceExpanded?: boolean;
-    selectedImageUrl: string | null;
-    selectedTag: string | null;
-    setSelectedImageUrl?: (x: string) => void;
-    setSelectedTag?: (x: string) => void;
-    noTagSelection?: boolean;
-    disableImageSelect?: boolean;
-    readOnly: true;
-  };
+      forceExpanded?: boolean;
+      selectedImageUrl: string | null;
+      selectedTag: string | null;
+      setSelectedImageUrl?: (x: string) => void;
+      setSelectedTag?: (x: string) => void;
+      noTagSelection?: boolean;
+      disableImageSelect?: boolean;
+      readOnly: true;
+    };
 
 type StateType = {
   isExpanded: boolean;
@@ -65,8 +65,7 @@ export default class ImageSelector extends Component<PropsType, StateType> {
     }
 
     return images.map((image: ImageType, i: number) => {
-      let icon =
-        integrationList[image.kind]?.icon;
+      let icon = integrationList[image.kind]?.icon;
       if (!icon) {
         icon = integrationList.dockerhub.icon;
       }
@@ -93,8 +92,7 @@ export default class ImageSelector extends Component<PropsType, StateType> {
     let icon = info;
     if (clickedImage) {
       icon = clickedImage.kind;
-      icon =
-        integrationList[clickedImage.kind]?.icon;
+      icon = integrationList[clickedImage.kind]?.icon;
       if (!icon) {
         icon = integrationList.dockerhub.icon;
       }
@@ -149,9 +147,9 @@ export default class ImageSelector extends Component<PropsType, StateType> {
             noTagSelection={this.props.noTagSelection}
             setSelectedImageUrl={this.props.setSelectedImageUrl}
             setSelectedTag={this.props.setSelectedTag}
-            setClickedImage={(x: ImageType) =>
-              { this.setState({ clickedImage: x }); }
-            }
+            setClickedImage={(x: ImageType) => {
+              this.setState({ clickedImage: x });
+            }}
             readOnly
           />
         </>
@@ -182,9 +180,9 @@ export default class ImageSelector extends Component<PropsType, StateType> {
             noTagSelection={this.props.noTagSelection}
             setSelectedImageUrl={this.props.setSelectedImageUrl}
             setSelectedTag={this.props.setSelectedTag}
-            setClickedImage={(x: ImageType) =>
-              { this.setState({ clickedImage: x }); }
-            }
+            setClickedImage={(x: ImageType) => {
+              this.setState({ clickedImage: x });
+            }}
           />
         ) : null}
       </div>
@@ -244,7 +242,7 @@ const ImageItem = styled.div`
   user-select: text;
   cursor: text;
     ${(props: { lastItem: boolean; isSelected: boolean }) =>
-    props.lastItem ? "#00000000" : "#606166"};
+      props.lastItem ? "#00000000" : "#606166"};
   color: #ffffff;
   align-items: center;
   padding: 10px 0px;

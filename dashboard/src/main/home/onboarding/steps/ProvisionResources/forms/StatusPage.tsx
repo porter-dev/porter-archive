@@ -1,9 +1,11 @@
+import React, { useEffect, useRef, useState } from "react";
+import styled from "styled-components";
+
 import Loading from "components/Loading";
 import ProvisionerStatus from "components/ProvisionerStatus";
-import React, { useEffect, useRef, useState } from "react";
+
 import api from "shared/api";
 import { type Infrastructure } from "shared/types";
-import styled from "styled-components";
 
 type Props = {
   setInfraStatus: (status: {
@@ -71,7 +73,6 @@ export const StatusPage = ({
         new Date(latestSavedInfra.created_at).getTime()
       ) {
         infraMap.set(infra.kind, infra);
-        
       }
     });
 
@@ -194,7 +195,7 @@ const Placeholder = styled.div`
   color: #ffffff44;
   min-height: 400px;
   height: 50vh;
-  background: ${props => props.theme.fg};
+  background: ${(props) => props.theme.fg};
   border-radius: 8px;
   width: 100%;
   display: flex;

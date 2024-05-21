@@ -10,7 +10,7 @@ import { type ChartType, type ContextProps } from "../../shared/types";
 export type GenericField = {
   id: string;
   injectedProps: unknown;
-}
+};
 
 export type GenericInputField = {
   isReadOnly?: boolean;
@@ -20,22 +20,22 @@ export type GenericInputField = {
 
   // Read in value from Helm for existing revisions
   value?: [any] | [];
-} & GenericField
+} & GenericField;
 
 export type HeadingField = {
   type: "heading";
   label: string;
-} & GenericField
+} & GenericField;
 
 export type SubtitleField = {
   type: "subtitle";
   label: string;
-} & GenericField
+} & GenericField;
 
 export type ServiceIPListField = {
   type: "service-ip-list";
   value: any[];
-} & GenericField
+} & GenericField;
 
 export type ResourceListField = {
   type: "resource-list";
@@ -52,11 +52,11 @@ export type ResourceListField = {
       "resource-button": any;
     };
   };
-} & GenericField
+} & GenericField;
 
 export type VeleroBackupField = {
   type: "velero-create-backup";
-} & GenericField
+} & GenericField;
 
 export type InputField = {
   type: "input";
@@ -69,13 +69,13 @@ export type InputField = {
     omitUnitFromValue?: boolean;
     default: string | number;
   };
-} & GenericInputField
+} & GenericInputField;
 
 export type CheckboxField = {
   type: "checkbox";
   label?: string;
   settings?: {};
-} & GenericInputField
+} & GenericInputField;
 
 export type KeyValueArrayField = {
   type: "key-value-array";
@@ -92,46 +92,46 @@ export type KeyValueArrayField = {
   injectedProps: {
     availableSyncEnvGroups: PopulatedEnvGroup[];
   };
-} & GenericInputField
+} & GenericInputField;
 
 export type ArrayInputField = {
   type: "array-input";
   label?: string;
-} & GenericInputField
+} & GenericInputField;
 
 export type DictionaryField = {
   type: "dictionary";
   label?: string;
-} & GenericInputField
+} & GenericInputField;
 
 export type DictionaryArrayField = {
   type: "dictionary-array";
   label?: string;
-} & GenericInputField
+} & GenericInputField;
 
 export type SelectField = {
   type: "select";
   settings:
-  | {
-    type: "normal";
-    options: Array<{ value: string; label: string }>;
-  }
-  | {
-    type: "provider";
-  };
+    | {
+        type: "normal";
+        options: Array<{ value: string; label: string }>;
+      }
+    | {
+        type: "provider";
+      };
   width: string;
   label?: string;
   dropdownLabel?: string;
   dropdownWidth?: number;
   dropdownMaxHeight?: string;
-} & GenericInputField
+} & GenericInputField;
 
 export type VariableField = {
   type: "variable";
   settings?: {
     default: any;
   };
-} & GenericInputField
+} & GenericInputField;
 
 export type CronField = {
   type: "cron";
@@ -140,7 +140,7 @@ export type CronField = {
   settings: {
     default: string;
   };
-} & GenericInputField
+} & GenericInputField;
 
 export type TextAreaField = {
   type: "text-area";
@@ -154,7 +154,7 @@ export type TextAreaField = {
       minCount?: number;
     };
   };
-} & GenericInputField
+} & GenericInputField;
 
 export type UrlLinkField = {
   type: "url-link";
@@ -162,7 +162,7 @@ export type UrlLinkField = {
   injectedProps: {
     chart: ChartType;
   };
-} & GenericInputField
+} & GenericInputField;
 
 export type FormField =
   | HeadingField
@@ -184,15 +184,15 @@ export type FormField =
 
 export type ShowIfAnd = {
   and: ShowIf[];
-}
+};
 
 export type ShowIfOr = {
   or: ShowIf[];
-}
+};
 
 export type ShowIfNot = {
   not: ShowIf;
-}
+};
 
 export type ShowIf = string | ShowIfAnd | ShowIfOr | ShowIfNot;
 
@@ -200,7 +200,7 @@ export type Section = {
   name: string;
   show_if?: ShowIf;
   contents: FormField[];
-}
+};
 
 export type Tab = {
   name: string;
@@ -209,7 +209,7 @@ export type Tab = {
   settings?: {
     omitFromLaunch?: boolean;
   };
-}
+};
 
 export type PorterFormData = {
   name: string;
@@ -217,16 +217,16 @@ export type PorterFormData = {
   includeHiddenFields: boolean;
   isClusterScoped?: boolean;
   tabs: Tab[];
-}
+};
 
 export type PorterFormValidationInfo = {
   validated: boolean;
   error?: string;
-}
+};
 
 // internal field state interfaces
-export type StringInputFieldState = { }
-export type CheckboxFieldState = { }
+export type StringInputFieldState = {};
+export type CheckboxFieldState = {};
 
 export type PartialEnvGroup = {
   name: string;
@@ -261,11 +261,11 @@ export type KeyValueArrayFieldState = {
   showEnvModal: boolean;
   showEditorModal: boolean;
   synced_env_groups: PopulatedEnvGroup[];
-}
-export type ArrayInputFieldState = { }
-export type DictionaryFieldState = {}
-export type DictionaryArrayFieldState = { }
-export type SelectFieldState = { }
+};
+export type ArrayInputFieldState = {};
+export type DictionaryFieldState = {};
+export type DictionaryArrayFieldState = {};
+export type SelectFieldState = {};
 
 export type PorterFormFieldFieldState =
   | StringInputFieldState
@@ -280,17 +280,20 @@ export type PorterFormFieldFieldState =
 
 export type PorterFormFieldValidationState = {
   validated: boolean;
-}
+};
 
-export type PorterFormVariableList = Record<string, any>
+export type PorterFormVariableList = Record<string, any>;
 
 export type PorterFormState = {
-  components: Record<string, {
+  components: Record<
+    string,
+    {
       state: PorterFormFieldFieldState;
-    }>;
+    }
+  >;
   validation: Record<string, PorterFormFieldValidationState>;
   variables: PorterFormVariableList;
-}
+};
 
 export type PorterFormInitFieldAction = {
   type: "init-field";
@@ -298,7 +301,7 @@ export type PorterFormInitFieldAction = {
   initValue: PorterFormFieldFieldState;
   initValidation?: Partial<PorterFormFieldValidationState>;
   initVars?: PorterFormVariableList;
-}
+};
 
 export type PorterFormUpdateFieldAction = {
   type: "update-field";
@@ -306,7 +309,7 @@ export type PorterFormUpdateFieldAction = {
   updateFunc: (
     prev: PorterFormFieldFieldState
   ) => Partial<PorterFormFieldFieldState>;
-}
+};
 
 export type PorterFormUpdateValidationAction = {
   type: "update-validation";
@@ -314,12 +317,12 @@ export type PorterFormUpdateValidationAction = {
   updateFunc: (
     prev: PorterFormFieldValidationState
   ) => PorterFormFieldValidationState;
-}
+};
 
 export type PorterFormMutateVariablesAction = {
   type: "mutate-vars";
   mutateFunc: (prev: PorterFormVariableList) => PorterFormVariableList;
-}
+};
 
 export type PorterFormAction =
   | PorterFormInitFieldAction
@@ -341,8 +344,6 @@ export type GetMetadataFunction<T = unknown> = (
   context: Partial<ContextProps>
 ) => T;
 
-export type InjectedProps = Partial<
-  {
-    [K in FormField["type"]]: Extract<FormField, { type: K }>["injectedProps"];
-  }
->;
+export type InjectedProps = Partial<{
+  [K in FormField["type"]]: Extract<FormField, { type: K }>["injectedProps"];
+}>;

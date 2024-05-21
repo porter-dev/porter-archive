@@ -1,7 +1,8 @@
-import React, { useState, useContext } from "react";
+import React, { useContext, useState } from "react";
+import styled from "styled-components";
+
 import { Context } from "shared/Context";
 
-import styled from "styled-components";
 import Launch from "./Launch";
 
 type Props = {};

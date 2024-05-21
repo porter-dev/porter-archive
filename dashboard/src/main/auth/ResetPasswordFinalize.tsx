@@ -1,10 +1,11 @@
-import React, { type ChangeEvent, Component } from "react";
+import React, { Component, type ChangeEvent } from "react";
 import styled from "styled-components";
-import logo from "assets/logo.png";
+
+import Loading from "components/Loading";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
-import Loading from "components/Loading";
+import logo from "assets/logo.png";
 
 type PropsType = {};
 
@@ -55,7 +56,9 @@ export default class ResetPasswordInit extends Component<PropsType, StateType> {
       .then(() => {
         this.setState({ loading: false });
       })
-      .catch((err) => { this.setState({ loading: false, tokenError: true }); });
+      .catch((err) => {
+        this.setState({ loading: false, tokenError: true });
+      });
 
     document.addEventListener("keydown", this.handleKeyDown);
 
@@ -105,17 +108,14 @@ export default class ResetPasswordInit extends Component<PropsType, StateType> {
           window.location.href = "/login";
         }, 2000);
       })
-      .catch((err) => { this.setState({ tokenError: true }); });
+      .catch((err) => {
+        this.setState({ tokenError: true });
+      });
   };
 
   render() {
-    const {
-      password,
-      passwordError,
-      submitted,
-      loading,
-      tokenError,
-    } = this.state;
+    const { password, passwordError, submitted, loading, tokenError } =
+      this.state;
 
     let inputSection = (
       <div>
@@ -124,12 +124,12 @@ export default class ResetPasswordInit extends Component<PropsType, StateType> {
             type="password"
             placeholder="Password"
             value={password}
-            onChange={(e: ChangeEvent<HTMLInputElement>) =>
-              { this.setState({
+            onChange={(e: ChangeEvent<HTMLInputElement>) => {
+              this.setState({
                 password: e.target.value,
                 passwordError: false,
-              }); }
-            }
+              });
+            }}
             valid={!passwordError}
           />
           {this.renderPasswordError()}
@@ -203,7 +203,9 @@ const Footer = styled.div`
   color: #aaaabb;
   font-size: 13px;
   padding-right: 8px;
-  font: Work Sans, sans-serif;
+  font:
+    Work Sans,
+    sans-serif;
 `;
 
 const DarkMatter = styled.div`

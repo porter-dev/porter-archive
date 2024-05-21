@@ -1,31 +1,33 @@
+import React, { useMemo } from "react";
+import styled from "styled-components";
+import { useSnapshot } from "valtio";
+
+import Breadcrumb from "components/Breadcrumb";
+import { OFState } from "main/home/onboarding/state";
 import {
-  type ProvisionerConfig,
   StateHandler,
+  type ProvisionerConfig,
 } from "main/home/onboarding/state/StateHandler";
+import { StepHandler } from "main/home/onboarding/state/StepHandler";
 import {
   type SkipProvisionConfig,
   type SupportedProviders,
 } from "main/home/onboarding/types";
-import React, { useMemo } from "react";
-import styled from "styled-components";
-import Breadcrumb from "components/Breadcrumb";
-import { integrationList } from "shared/common";
-import {
-  CredentialsForm as AWSCredentialsForm,
-  SettingsForm as AWSSettingsForm,
-} from "./_AWSProvisionerForm";
 
-import {
-  CredentialsForm as GCPCredentialsForm,
-  SettingsForm as GCPSettingsForm,
-} from "./_GCPProvisionerForm";
-import { OFState } from "main/home/onboarding/state";
-import { useSnapshot } from "valtio";
 import {
   provisionResourcesTracks,
   trackRedirectToGuide,
 } from "shared/anayltics";
-import { StepHandler } from "main/home/onboarding/state/StepHandler";
+import { integrationList } from "shared/common";
+
+import {
+  CredentialsForm as AWSCredentialsForm,
+  SettingsForm as AWSSettingsForm,
+} from "./_AWSProvisionerForm";
+import {
+  CredentialsForm as GCPCredentialsForm,
+  SettingsForm as GCPSettingsForm,
+} from "./_GCPProvisionerForm";
 
 const Forms = {
   aws: {
@@ -112,7 +114,7 @@ const FormFlowWrapper: React.FC<Props> = ({ currentStep }) => {
         return null;
       }
 
-      return React.createElement(currentForm , {
+      return React.createElement(currentForm, {
         nextFormStep,
         project,
       });
@@ -123,7 +125,11 @@ const FormFlowWrapper: React.FC<Props> = ({ currentStep }) => {
     <FormWrapper>
       <Header>
         <FormHeader>
-          <CloseButton onClick={() => { handleGoBack(); }}>
+          <CloseButton
+            onClick={() => {
+              handleGoBack();
+            }}
+          >
             <i className="material-icons">keyboard_backspace</i>
           </CloseButton>
           {FormTitle[provider] && <img src={FormTitle[provider].icon} />}

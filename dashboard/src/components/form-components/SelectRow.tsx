@@ -72,10 +72,10 @@ const Label = styled.div<{ displayFlex?: boolean }>`
   color: #ffffff;
   font-size: 13px;
   margin-bottom: 10px;
-  margin-top: ${props => props.displayFlex ? "10px" : 0};
-  margin-right: ${props => props.displayFlex ? "10px" : 0};
+  margin-top: ${(props) => (props.displayFlex ? "10px" : 0)};
+  margin-right: ${(props) => (props.displayFlex ? "10px" : 0)};
 `;
 
 const StyledSelectRow = styled.div<{ displayFlex?: boolean }>`
-  display: ${props => props.displayFlex ? "flex" : "block"};
+  display: ${(props) => (props.displayFlex ? "flex" : "block")};
 `;

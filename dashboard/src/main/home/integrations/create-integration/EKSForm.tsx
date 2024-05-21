@@ -1,11 +1,11 @@
 import React, { Component } from "react";
 import styled from "styled-components";
 
+import Heading from "components/form-components/Heading";
+import Helper from "components/form-components/Helper";
 import InputRow from "components/form-components/InputRow";
 import TextArea from "components/form-components/TextArea";
 import SaveButton from "components/SaveButton";
-import Heading from "components/form-components/Heading";
-import Helper from "components/form-components/Helper";
 
 type PropsType = {
   closeForm: () => void;
@@ -61,7 +61,9 @@ export default class EKSForm extends Component<PropsType, StateType> {
           <InputRow
             type="text"
             value={this.state.clusterName}
-            setValue={(x: string) => { this.setState({ clusterName: x }); }}
+            setValue={(x: string) => {
+              this.setState({ clusterName: x });
+            }}
             label="🏷️ Cluster Name"
             placeholder="ex: briny-pagelet"
             width="100%"
@@ -69,14 +71,18 @@ export default class EKSForm extends Component<PropsType, StateType> {
           <InputRow
             type="text"
             value={this.state.clusterEndpoint}
-            setValue={(x: string) => { this.setState({ clusterEndpoint: x }); }}
+            setValue={(x: string) => {
+              this.setState({ clusterEndpoint: x });
+            }}
             label="🌐 Cluster Endpoint"
             placeholder="ex: 00.00.000.00"
             width="100%"
           />
           <TextArea
             value={this.state.clusterCA}
-            setValue={(x: string) => { this.setState({ clusterCA: x }); }}
+            setValue={(x: string) => {
+              this.setState({ clusterCA: x });
+            }}
             label="🔏 Cluster Certificate"
             placeholder="(Paste your certificate here)"
             width="100%"
@@ -87,7 +93,9 @@ export default class EKSForm extends Component<PropsType, StateType> {
           <InputRow
             type="text"
             value={this.state.awsAccessId}
-            setValue={(x: string) => { this.setState({ awsAccessId: x }); }}
+            setValue={(x: string) => {
+              this.setState({ awsAccessId: x });
+            }}
             label="👤 AWS Access ID"
             placeholder="ex: AKIAIOSFODNN7EXAMPLE"
             width="100%"
@@ -95,7 +103,9 @@ export default class EKSForm extends Component<PropsType, StateType> {
           <InputRow
             type="password"
             value={this.state.awsSecretKey}
-            setValue={(x: string) => { this.setState({ awsSecretKey: x }); }}
+            setValue={(x: string) => {
+              this.setState({ awsSecretKey: x });
+            }}
             label="🔒 AWS Secret Key"
             placeholder="○ ○ ○ ○ ○ ○ ○ ○ ○"
             width="100%"

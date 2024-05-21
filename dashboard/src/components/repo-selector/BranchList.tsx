@@ -1,11 +1,11 @@
 import React, { useContext, useEffect, useState } from "react";
 import styled from "styled-components";
+
 import branch_icon from "assets/branch.png";
 
 import api from "../../shared/api";
 import { Context } from "../../shared/Context";
 import { type ActionConfigType } from "../../shared/types";
-
 import Loading from "../Loading";
 import SearchBar from "../SearchBar";
 
@@ -125,7 +125,9 @@ const BranchList: React.FC<Props> = ({
         <BranchName
           key={i}
           lastItem={i === branches.length - 1}
-          onClick={() => { setBranch(branch); }}
+          onClick={() => {
+            setBranch(branch);
+          }}
         >
           <img src={branch_icon} alt={"branch icon"} />
           {branch}
@@ -148,19 +150,20 @@ const BranchList: React.FC<Props> = ({
         prompt={"Search branches..."}
       />
       <BranchListWrapper>
-        {actionConfig.git_branch && actionConfig.git_branch !== currentBranch && (
-          <WarningRow lastItem={false} disabled>
-            <i className="material-icons-round">warning</i>
-            <span>
-              You have unsaved changes. Please click save to commit your
-              changes.
-              <p>
-                Current Branch: <b>{actionConfig.git_branch}</b>. New branch:{" "}
-                <b>{currentBranch}</b>
-              </p>
-            </span>
-          </WarningRow>
-        )}
+        {actionConfig.git_branch &&
+          actionConfig.git_branch !== currentBranch && (
+            <WarningRow lastItem={false} disabled>
+              <i className="material-icons-round">warning</i>
+              <span>
+                You have unsaved changes. Please click save to commit your
+                changes.
+                <p>
+                  Current Branch: <b>{actionConfig.git_branch}</b>. New branch:{" "}
+                  <b>{currentBranch}</b>
+                </p>
+              </span>
+            </WarningRow>
+          )}
         <ExpandedWrapper>{renderBranchList()}</ExpandedWrapper>
       </BranchListWrapper>
     </>

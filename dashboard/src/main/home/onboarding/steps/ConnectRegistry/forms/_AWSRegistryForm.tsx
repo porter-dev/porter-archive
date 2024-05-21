@@ -1,18 +1,21 @@
-import InputRow from "components/form-components/InputRow";
-import SelectRow from "components/form-components/SelectRow";
-import Helper from "components/form-components/Helper";
-import SaveButton from "components/SaveButton";
-import { type AWSRegistryConfig } from "main/home/onboarding/types";
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
-import api from "shared/api";
 import { useSnapshot } from "valtio";
-import { OFState } from "../../../state/index";
-import IntegrationCategories from "main/home/integrations/IntegrationCategories";
-import { StateHandler } from "main/home/onboarding/state/StateHandler";
-import RegistryImageList from "main/home/onboarding/components/RegistryImageList";
+
+import Helper from "components/form-components/Helper";
+import InputRow from "components/form-components/InputRow";
+import SelectRow from "components/form-components/SelectRow";
 import Loading from "components/Loading";
+import SaveButton from "components/SaveButton";
+import IntegrationCategories from "main/home/integrations/IntegrationCategories";
+import RegistryImageList from "main/home/onboarding/components/RegistryImageList";
+import { StateHandler } from "main/home/onboarding/state/StateHandler";
+import { type AWSRegistryConfig } from "main/home/onboarding/types";
+
+import api from "shared/api";
 import { readableDate } from "shared/string_utils";
+
+import { OFState } from "../../../state/index";
 
 const regionOptions = [
   { value: "us-east-1", label: "US East (N. Virginia) us-east-1" },
@@ -181,7 +184,9 @@ export const CredentialsForm: React.FC<{
             <CancelButton
               text="Cancel"
               disabled={false}
-              onClick={() => { setShowForm(false); }}
+              onClick={() => {
+                setShowForm(false);
+              }}
               makeFlush={true}
               clearPosition={true}
               status=""
@@ -218,7 +223,12 @@ export const CredentialsForm: React.FC<{
       </PreviewRow>
       <Helper>
         Want to use a different account?{" "}
-        <A onClick={() => { setShowForm(true); }} href="#">
+        <A
+          onClick={() => {
+            setShowForm(true);
+          }}
+          href="#"
+        >
           Connect another account
         </A>
         .
@@ -227,7 +237,9 @@ export const CredentialsForm: React.FC<{
       <SaveButton
         text="Continue"
         disabled={false}
-        onClick={() => { continueToNextStep(lastConnectedAccount?.id); }}
+        onClick={() => {
+          continueToNextStep(lastConnectedAccount?.id);
+        }}
         makeFlush={true}
         clearPosition={true}
         status={buttonStatus}

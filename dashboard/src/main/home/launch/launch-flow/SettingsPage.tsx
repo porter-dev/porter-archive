@@ -1,20 +1,23 @@
 import React, { Component } from "react";
 import styled from "styled-components";
-import api from "shared/api";
 
-import { Context } from "shared/Context";
-
-import { type ChoiceType, type ClusterType, type FullActionConfigType } from "shared/types";
-
-import { isAlphanumeric } from "shared/common";
-
-import InputRow from "components/form-components/InputRow";
-import SaveButton from "components/SaveButton";
 import Helper from "components/form-components/Helper";
-import PorterFormWrapper from "components/porter-form/PorterFormWrapper";
-import Selector from "components/Selector";
+import InputRow from "components/form-components/InputRow";
 import Loading from "components/Loading";
+import PorterFormWrapper from "components/porter-form/PorterFormWrapper";
+import SaveButton from "components/SaveButton";
+import Selector from "components/Selector";
+
+import api from "shared/api";
 import { withAuth, type WithAuthProps } from "shared/auth/AuthorizationHoc";
+import { isAlphanumeric } from "shared/common";
+import { Context } from "shared/Context";
+import {
+  type ChoiceType,
+  type ClusterType,
+  type FullActionConfigType,
+} from "shared/types";
+
 import WorkflowPage from "./WorkflowPage";
 
 type PropsType = WithAuthProps & {
@@ -74,7 +77,10 @@ class SettingsPage extends Component<PropsType, StateType> {
         const clusterOptions: Array<{ label: string; value: string }> = [];
         const clusterMap: Record<string, ClusterType> = {};
         res.data.forEach((cluster: ClusterType, i: number) => {
-          clusterOptions.push({ label: cluster.vanity_name || cluster.name, value: cluster.name });
+          clusterOptions.push({
+            label: cluster.vanity_name || cluster.name,
+            value: cluster.name,
+          });
           clusterMap[cluster.name] = cluster;
         });
         if (res.data.length > 0) {
@@ -100,7 +106,10 @@ class SettingsPage extends Component<PropsType, StateType> {
       .then((res) => {
         if (res.data) {
           const availableNamespaces = res.data.filter((namespace: any) => {
-            return (namespace.status !== "Terminating" && !namespace.name.startsWith("pr-"));
+            return (
+              namespace.status !== "Terminating" &&
+              !namespace.name.startsWith("pr-")
+            );
           });
           const namespaceOptions = availableNamespaces.map(
             (x: { name: string }) => {
@@ -126,12 +135,8 @@ class SettingsPage extends Component<PropsType, StateType> {
       );
     }
     if (this.state.tabOptions.length > 0) {
-      const {
-        form,
-        valuesToOverride,
-        clearValuesToOverride,
-        onSubmit,
-      } = this.props;
+      const { form, valuesToOverride, clearValuesToOverride, onSubmit } =
+        this.props;
       return (
         <FadeWrapper>
           <Heading>Application settings</Heading>
@@ -176,7 +181,9 @@ class SettingsPage extends Component<PropsType, StateType> {
           </Placeholder>
           <SaveButton
             text="Deploy"
-            onClick={() => { onSubmit({}); }}
+            onClick={() => {
+              onSubmit({});
+            }}
             status={saveValuesStatus}
             makeFlush={true}
           />
@@ -213,13 +220,8 @@ class SettingsPage extends Component<PropsType, StateType> {
   };
 
   renderHeaderSection = () => {
-    const {
-      hasSource,
-      sourceType,
-      templateName,
-      setPage,
-      setTemplateName,
-    } = this.props;
+    const { hasSource, sourceType, templateName, setPage, setTemplateName } =
+      this.props;
 
     if (this.props.isCloning) {
       return null;
@@ -227,7 +229,12 @@ class SettingsPage extends Component<PropsType, StateType> {
 
     if (hasSource) {
       return (
-        <BackButton width="155px" onClick={() => { setPage("source"); }}>
+        <BackButton
+          width="155px"
+          onClick={() => {
+            setPage("source");
+          }}
+        >
           <i className="material-icons">first_page</i>
           Source settings
         </BackButton>
@@ -262,7 +269,9 @@ class SettingsPage extends Component<PropsType, StateType> {
                 <Selector
                   activeValue={selectedCluster}
                   setActiveValue={(cluster: string) => {
-                    this.context.setCurrentCluster(this.state.clusterMap[cluster]);
+                    this.context.setCurrentCluster(
+                      this.state.clusterMap[cluster]
+                    );
                     this.updateNamespaces(this.state.clusterMap[cluster].id);
                     this.setState({
                       selectedCluster: cluster,
@@ -346,7 +355,7 @@ const BackButton = styled.div`
   border-radius: 100px;
   width: ${(props: { width: string }) => props.width};
   color: white;
-  background: ${props => props.theme.fg};
+  background: ${(props) => props.theme.fg};
 
   :hover {
     background: #ffffff22;

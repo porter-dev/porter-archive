@@ -1,6 +1,6 @@
 import React, { Component } from "react";
-import styled from "styled-components";
 import ReactDOM from "react-dom";
+import styled from "styled-components";
 
 type PropsType = {
   onRequestClose?: () => void;
@@ -135,9 +135,9 @@ const StyledModal = styled.div<{
   height: string;
 }>`
   position: absolute;
-  width: ${props => props.width || "760px"};
+  width: ${(props) => props.width || "760px"};
   max-width: 80vw;
-  height: ${props => props.height || "425px"};
+  height: ${(props) => props.height || "425px"};
   max-height: calc(100vh - 30px);
   overflow: visible;
   padding: 25px;

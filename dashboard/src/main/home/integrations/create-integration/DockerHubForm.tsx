@@ -24,12 +24,8 @@ export default class DockerHubForm extends Component<PropsType, StateType> {
   };
 
   isDisabled = (): boolean => {
-    const {
-      registryURL,
-      dockerEmail,
-      dockerUsername,
-      dockerPassword,
-    } = this.state;
+    const { registryURL, dockerEmail, dockerUsername, dockerPassword } =
+      this.state;
     if (
       registryURL === "" ||
       dockerEmail === "" ||
@@ -52,7 +48,9 @@ export default class DockerHubForm extends Component<PropsType, StateType> {
           <InputRow
             type="text"
             value={this.state.registryURL}
-            setValue={(x: string) => { this.setState({ registryURL: x }); }}
+            setValue={(x: string) => {
+              this.setState({ registryURL: x });
+            }}
             label="📦 Registry URL"
             placeholder="ex: index.docker.io"
             width="100%"
@@ -60,7 +58,9 @@ export default class DockerHubForm extends Component<PropsType, StateType> {
           <InputRow
             type="text"
             value={this.state.dockerEmail}
-            setValue={(x: string) => { this.setState({ dockerEmail: x }); }}
+            setValue={(x: string) => {
+              this.setState({ dockerEmail: x });
+            }}
             label="✉️ Docker Email"
             placeholder="ex: captain@ahab.com"
             width="100%"
@@ -68,7 +68,9 @@ export default class DockerHubForm extends Component<PropsType, StateType> {
           <InputRow
             type="text"
             value={this.state.dockerUsername}
-            setValue={(x: string) => { this.setState({ dockerUsername: x }); }}
+            setValue={(x: string) => {
+              this.setState({ dockerUsername: x });
+            }}
             label="👤 Docker Username"
             placeholder="ex: whale_watcher_2000"
             width="100%"
@@ -76,7 +78,9 @@ export default class DockerHubForm extends Component<PropsType, StateType> {
           <InputRow
             type="password"
             value={this.state.dockerPassword}
-            setValue={(x: string) => { this.setState({ dockerPassword: x }); }}
+            setValue={(x: string) => {
+              this.setState({ dockerPassword: x });
+            }}
             label="🔒 Docker Password"
             placeholder="○ ○ ○ ○ ○ ○ ○ ○ ○"
             width="100%"

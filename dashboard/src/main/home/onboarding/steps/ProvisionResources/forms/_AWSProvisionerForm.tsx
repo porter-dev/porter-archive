@@ -1,17 +1,19 @@
+import React, { useEffect, useState } from "react";
 import styled from "styled-components";
+import { useSnapshot } from "valtio";
+
+import Helper from "components/form-components/Helper";
 import InputRow from "components/form-components/InputRow";
 import SelectRow from "components/form-components/SelectRow";
+import Loading from "components/Loading";
 import SaveButton from "components/SaveButton";
 import { OFState } from "main/home/onboarding/state";
 import {
   type AWSProvisionerConfig,
   type AWSRegistryConfig,
 } from "main/home/onboarding/types";
-import React, { useEffect, useState } from "react";
+
 import api from "shared/api";
-import { useSnapshot } from "valtio";
-import Loading from "components/Loading";
-import Helper from "components/form-components/Helper";
 import { readableDate } from "shared/string_utils";
 import { type Infrastructure } from "shared/types";
 
@@ -199,7 +201,9 @@ export const CredentialsForm: React.FC<{
             <CancelButton
               text="Cancel"
               disabled={false}
-              onClick={() => { setShowForm(false); }}
+              onClick={() => {
+                setShowForm(false);
+              }}
               makeFlush={true}
               clearPosition={true}
               status=""
@@ -236,7 +240,12 @@ export const CredentialsForm: React.FC<{
       </PreviewRow>
       <Helper>
         Want to use a different account?{" "}
-        <A onClick={() => { setShowForm(true); }} href="#">
+        <A
+          onClick={() => {
+            setShowForm(true);
+          }}
+          href="#"
+        >
           Connect another account
         </A>
         .
@@ -244,7 +253,9 @@ export const CredentialsForm: React.FC<{
       <SaveButton
         text="Continue"
         disabled={false}
-        onClick={() => { continueToNextStep(lastConnectedAccount?.id); }}
+        onClick={() => {
+          continueToNextStep(lastConnectedAccount?.id);
+        }}
         makeFlush={true}
         clearPosition={true}
         status={buttonStatus}
@@ -382,7 +393,7 @@ export const SettingsForm: React.FC<{
         );
         return res?.data;
       } catch (error) {
-        catchError(error); 
+        catchError(error);
       }
     } else {
       try {
@@ -427,7 +438,7 @@ export const SettingsForm: React.FC<{
         );
         return res?.data;
       } catch (error) {
-        catchError(error); 
+        catchError(error);
       }
     } else {
       try {

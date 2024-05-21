@@ -1,19 +1,19 @@
 import React, { Component, useContext, useEffect, useState } from "react";
 import styled from "styled-components";
 
-import close from "assets/close.png";
-import { isAlphanumeric } from "shared/common";
+import CheckboxList from "components/form-components/CheckboxList";
+import CheckboxRow from "components/form-components/CheckboxRow";
+import Heading from "components/form-components/Heading";
+import Helper from "components/form-components/Helper";
+import InputRow from "components/form-components/InputRow";
+import SelectRow from "components/form-components/SelectRow";
+import SaveButton from "components/SaveButton";
+
 import api from "shared/api";
+import { isAlphanumeric } from "shared/common";
 import { Context } from "shared/Context";
 import { type InfraType } from "shared/types";
-
-import InputRow from "components/form-components/InputRow";
-import CheckboxRow from "components/form-components/CheckboxRow";
-import SelectRow from "components/form-components/SelectRow";
-import Helper from "components/form-components/Helper";
-import Heading from "components/form-components/Heading";
-import SaveButton from "components/SaveButton";
-import CheckboxList from "components/form-components/CheckboxList";
+import close from "assets/close.png";
 
 type PropsType = {
   setSelectedProvisioner: (x: string | null) => void;
@@ -122,7 +122,6 @@ const DOFormSectionFC: React.FC<PropsType> = (props) => {
   const catchError = (err: any) => {
     console.log(err);
     props.handleError();
-    
   };
 
   const doRedirect = (projectId: number) => {
@@ -179,7 +178,11 @@ const DOFormSectionFC: React.FC<PropsType> = (props) => {
   return (
     <StyledAWSFormSection>
       <FormSection>
-        <CloseButton onClick={() => { props.setSelectedProvisioner(null); }}>
+        <CloseButton
+          onClick={() => {
+            props.setSelectedProvisioner(null);
+          }}
+        >
           <CloseButtonImg src={close} />
         </CloseButton>
         <Heading isAtTop={true}>DigitalOcean Settings</Heading>

@@ -1,10 +1,10 @@
-import React, { type ChangeEvent, Component } from "react";
+import React, { Component, type ChangeEvent } from "react";
 import styled from "styled-components";
-import logo from "assets/logo.png";
 
 import api from "shared/api";
-import { emailRegex } from "shared/regex";
 import { Context } from "shared/Context";
+import { emailRegex } from "shared/regex";
+import logo from "assets/logo.png";
 
 type PropsType = {};
 
@@ -78,12 +78,12 @@ export default class ResetPasswordInit extends Component<PropsType, StateType> {
             type="email"
             placeholder="Email"
             value={email}
-            onChange={(e: ChangeEvent<HTMLInputElement>) =>
-              { this.setState({
+            onChange={(e: ChangeEvent<HTMLInputElement>) => {
+              this.setState({
                 email: e.target.value,
                 emailError: false,
-              }); }
-            }
+              });
+            }}
             valid={!emailError}
           />
           {this.renderEmailError()}
@@ -145,7 +145,9 @@ const Footer = styled.div`
   color: #aaaabb;
   font-size: 13px;
   padding-right: 8px;
-  font: Work Sans, sans-serif;
+  font:
+    Work Sans,
+    sans-serif;
 `;
 
 const DarkMatter = styled.div`

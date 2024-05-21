@@ -1,24 +1,24 @@
 import React, { useContext, useState } from "react";
-import styled from "styled-components";
 import _ from "lodash";
 import { generateSlug } from "random-word-slugs";
-import { type RouteComponentProps, withRouter } from "react-router";
+import { withRouter, type RouteComponentProps } from "react-router";
+import styled from "styled-components";
+
+import TitleSection from "components/TitleSection";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
-import { pushFiltered } from "shared/routing";
-
 import { hardcodedNames } from "shared/hardcodedNameDict";
-import SourcePage from "./SourcePage";
-import SettingsPage from "./SettingsPage";
-import TitleSection from "components/TitleSection";
-
+import { pushFiltered } from "shared/routing";
 import {
   type ActionConfigType,
   type ChartTypeWithExtendedConfig,
   type FullActionConfigType,
   type PorterTemplate,
 } from "shared/types";
+
+import SettingsPage from "./SettingsPage";
+import SourcePage from "./SourcePage";
 
 type PropsType = RouteComponentProps & {
   currentTab?: string;
@@ -160,25 +160,26 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
           values,
           error: err,
         });
-        
       });
 
     const synced = values?.container?.env?.synced || [];
 
-    const addApplicationToEnvGroupPromises = synced.map(async (envGroup: any) => {
-      return await api.addApplicationToEnvGroup(
-        "<token>",
-        {
-          name: envGroup?.name,
-          app_name: name,
-        },
-        {
-          project_id: currentProject.id,
-          cluster_id: currentCluster.id,
-          namespace: selectedNamespace,
-        }
-      );
-    });
+    const addApplicationToEnvGroupPromises = synced.map(
+      async (envGroup: any) => {
+        return await api.addApplicationToEnvGroup(
+          "<token>",
+          {
+            name: envGroup?.name,
+            app_name: name,
+          },
+          {
+            project_id: currentProject.id,
+            cluster_id: currentCluster.id,
+            namespace: selectedNamespace,
+          }
+        );
+      }
+    );
 
     try {
       await Promise.all(addApplicationToEnvGroupPromises);
@@ -191,7 +192,8 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
     // props.setCurrentView('cluster-dashboard');
     setSaveValuesStatus("successful");
     // redirect to dashboard
-    const dst = props.currentTemplate.name === "job" ? "/jobs" : "/applications";
+    const dst =
+      props.currentTemplate.name === "job" ? "/jobs" : "/applications";
     setTimeout(() => {
       pushFiltered(props, dst, ["project_id"], {
         cluster: currentCluster.name,
@@ -285,7 +287,10 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
 
     const release_name = templateName || generateRandomName();
     // check if template is docker and create external domain if necessary
-    if (props.currentTemplate.name == "web" && context.capabilities?.default_app_helm_repo_url.includes("getporter.dev")) {
+    if (
+      props.currentTemplate.name == "web" &&
+      context.capabilities?.default_app_helm_repo_url.includes("getporter.dev")
+    ) {
       if (values?.ingress?.enabled && !values?.ingress?.custom_domain) {
         external_domain = await new Promise((resolve, reject) => {
           api
@@ -425,7 +430,9 @@ const LaunchFlow: React.FC<PropsType> = (props) => {
         setPage={setCurrentPage}
         form={form}
         valuesToOverride={valuesToOverride}
-        clearValuesToOverride={() => { setValuesToOverride(null); }}
+        clearValuesToOverride={() => {
+          setValuesToOverride(null);
+        }}
         fullActionConfig={fullActionConfig}
       />
     );

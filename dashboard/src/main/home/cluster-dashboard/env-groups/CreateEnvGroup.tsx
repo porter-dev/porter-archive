@@ -1,16 +1,17 @@
-import React, { useState, useEffect, useContext } from 'react';
-import styled from 'styled-components';
-import api from 'shared/api';
+import React, { useContext, useEffect, useState } from "react";
+import styled from "styled-components";
 
-import { Context } from 'shared/Context';
-import { type ClusterType } from 'shared/types';
+import Helper from "components/form-components/Helper";
+import InputRow from "components/form-components/InputRow";
+import SaveButton from "components/SaveButton";
+import Selector from "components/Selector";
 
-import InputRow from 'components/form-components/InputRow';
-import EnvGroupArray, { type KeyValueType } from './EnvGroupArray';
-import Selector from 'components/Selector';
-import Helper from 'components/form-components/Helper';
-import SaveButton from 'components/SaveButton';
-import { isAlphanumeric } from 'shared/common';
+import api from "shared/api";
+import { isAlphanumeric } from "shared/common";
+import { Context } from "shared/Context";
+import { type ClusterType } from "shared/types";
+
+import EnvGroupArray, { type KeyValueType } from "./EnvGroupArray";
 
 type PropsType = {
   goBack: () => void;
@@ -18,11 +19,11 @@ type PropsType = {
 };
 
 const CreateEnvGroup = ({ goBack, currentCluster }: PropsType) => {
-  const [envGroupName, setEnvGroupName] = useState('');
-  const [selectedNamespace, setSelectedNamespace] = useState('default');
+  const [envGroupName, setEnvGroupName] = useState("");
+  const [selectedNamespace, setSelectedNamespace] = useState("default");
   const [namespaceOptions, setNamespaceOptions] = useState<any[]>([]);
   const [envVariables, setEnvVariables] = useState<KeyValueType[]>([]);
-  const [submitStatus, setSubmitStatus] = useState('');
+  const [submitStatus, setSubmitStatus] = useState("");
 
   const context = useContext(Context);
 
@@ -33,20 +34,18 @@ const CreateEnvGroup = ({ goBack, currentCluster }: PropsType) => {
   const isDisabled = (): boolean => {
     const isEnvGroupNameInvalid =
       !isAlphanumeric(envGroupName) ||
-      envGroupName === '' ||
+      envGroupName === "" ||
       envGroupName.length > 60;
 
     const isAnyEnvVariableBlank = envVariables.some(
       (envVar) => !envVar.key.trim() || !envVar.value.trim()
     );
 
-
-
     return isEnvGroupNameInvalid || isAnyEnvVariableBlank;
   };
 
   const onSubmit = (): void => {
-    setSubmitStatus("loading")
+    setSubmitStatus("loading");
 
     const apiEnvVariables: Record<string, string> = {};
     const secretEnvVariables: Record<string, string> = {};
@@ -113,7 +112,9 @@ const CreateEnvGroup = ({ goBack, currentCluster }: PropsType) => {
         {
           id: context.currentProject.id,
           cluster_id: currentCluster.id,
-          namespace: context.currentProject.simplified_view_enabled ? "porter-env-group" : selectedNamespace,
+          namespace: context.currentProject.simplified_view_enabled
+            ? "porter-env-group"
+            : selectedNamespace,
         }
       )
       .then((res) => {
@@ -127,7 +128,7 @@ const CreateEnvGroup = ({ goBack, currentCluster }: PropsType) => {
   };
 
   const createEnv = () => {
-    setSubmitStatus("loading")
+    setSubmitStatus("loading");
 
     const apiEnvVariables: Record<string, string> = {};
     const secretEnvVariables: Record<string, string> = {};
@@ -216,7 +217,6 @@ const CreateEnvGroup = ({ goBack, currentCluster }: PropsType) => {
       .catch(console.log);
   };
 
-
   return (
     <>
       <StyledCreateEnvGroup>
@@ -234,8 +234,7 @@ const CreateEnvGroup = ({ goBack, currentCluster }: PropsType) => {
             <Warning
               makeFlush={true}
               highlight={
-                (!isAlphanumeric(envGroupName) ||
-                  envGroupName.length > 60) &&
+                (!isAlphanumeric(envGroupName) || envGroupName.length > 60) &&
                 envGroupName !== ""
               }
             >
@@ -246,33 +245,37 @@ const CreateEnvGroup = ({ goBack, currentCluster }: PropsType) => {
           <InputRow
             type="text"
             value={envGroupName}
-            setValue={(x: string) => { setEnvGroupName(x) }}
+            setValue={(x: string) => {
+              setEnvGroupName(x);
+            }}
             placeholder="ex: my-env-group"
             width="100%"
           />
-          {!context?.currentProject?.simplified_view_enabled && (<>
-            <Heading>Destination</Heading>
-            <Subtitle>
-              Specify the namespace you would like to create this environment
-              group in.
-            </Subtitle>
-            <DestinationSection>
-              <NamespaceLabel>
-                <i className="material-icons">view_list</i>Namespace
-              </NamespaceLabel>
-              <Selector
-                key={"namespace"}
-                activeValue={selectedNamespace}
-                setActiveValue={(namespace: string) => { setSelectedNamespace(namespace) }}
-                options={namespaceOptions}
-                width="250px"
-                dropdownWidth="335px"
-                closeOverlay={true}
-              />
-            </DestinationSection>
-          </>
-          )
-          }
+          {!context?.currentProject?.simplified_view_enabled && (
+            <>
+              <Heading>Destination</Heading>
+              <Subtitle>
+                Specify the namespace you would like to create this environment
+                group in.
+              </Subtitle>
+              <DestinationSection>
+                <NamespaceLabel>
+                  <i className="material-icons">view_list</i>Namespace
+                </NamespaceLabel>
+                <Selector
+                  key={"namespace"}
+                  activeValue={selectedNamespace}
+                  setActiveValue={(namespace: string) => {
+                    setSelectedNamespace(namespace);
+                  }}
+                  options={namespaceOptions}
+                  width="250px"
+                  dropdownWidth="335px"
+                  closeOverlay={true}
+                />
+              </DestinationSection>
+            </>
+          )}
           <Heading>Environment variables</Heading>
           <Helper>
             Set environment variables for your secrets and environment-specific
@@ -281,7 +284,9 @@ const CreateEnvGroup = ({ goBack, currentCluster }: PropsType) => {
           <EnvGroupArray
             namespace={selectedNamespace}
             values={envVariables}
-            setValues={(x: any) => { setEnvVariables(x); }}
+            setValues={(x: any) => {
+              setEnvVariables(x);
+            }}
             fileUpload={true}
             secretOption={true}
           />
@@ -291,20 +296,19 @@ const CreateEnvGroup = ({ goBack, currentCluster }: PropsType) => {
           text="Create env group"
           clearPosition={true}
           statusPosition="right"
-          onClick={context.currentProject.simplified_view_enabled ? createEnv : onSubmit}
-          status={
-            isDisabled()
-              ? "Missing required fields"
-              : submitStatus
+          onClick={
+            context.currentProject.simplified_view_enabled
+              ? createEnv
+              : onSubmit
           }
+          status={isDisabled() ? "Missing required fields" : submitStatus}
           makeFlush={true}
         />
       </StyledCreateEnvGroup>
       <Buffer />
     </>
   );
-
-}
+};
 
 export default CreateEnvGroup;
 
@@ -313,7 +317,7 @@ const Wrapper = styled.div`
   padding-bottom: 25px;
   border-radius: 5px;
   margin-top: -15px;
-  background: ${props => props.theme.fg};
+  background: ${(props) => props.theme.fg};
   border: 1px solid #494b4f;
   margin-bottom: 30px;
 `;

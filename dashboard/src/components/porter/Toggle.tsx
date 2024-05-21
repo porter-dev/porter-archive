@@ -46,14 +46,20 @@ const StyledToggle = styled.div`
   align-items: center;
 `;
 
-const Item = styled.div<{ active: boolean; activeColor?: string; inactiveColor?: string }>`
+const Item = styled.div<{
+  active: boolean;
+  activeColor?: string;
+  inactiveColor?: string;
+}>`
   display: flex;
   align-items: center;
   height: 100%;
   cursor: pointer;
   justify-content: center;
   padding: 10px;
-  opacity: ${(props) => props.active ? "1" : "0.4"};
+  opacity: ${(props) => (props.active ? "1" : "0.4")};
   background: ${(props) =>
-    props.active ? props.activeColor ?? "#ffffff11" : props.inactiveColor ?? "transparent"};
+    props.active
+      ? props.activeColor ?? "#ffffff11"
+      : props.inactiveColor ?? "transparent"};
 `;

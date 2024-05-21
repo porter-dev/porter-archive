@@ -19,7 +19,9 @@ export default class RadioSelector extends Component<PropsType, StateType> {
             return (
               <RadioRow
                 key={option.value}
-                onClick={() => { this.props.setSelected(option.value); }}
+                onClick={() => {
+                  this.props.setSelected(option.value);
+                }}
               >
                 <Indicator selected={selected}>
                   {selected && <Circle />}

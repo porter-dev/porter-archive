@@ -1,11 +1,13 @@
+import { setTimeout } from "timers";
 import React, { useContext, useEffect, useState } from "react";
 import styled from "styled-components";
-import close from "assets/close.png";
-import SaveButton from "components/SaveButton";
-import { Context } from "shared/Context";
+
 import RadioSelector from "components/RadioSelector";
+import SaveButton from "components/SaveButton";
+
 import api from "shared/api";
-import { setTimeout } from "timers";
+import { Context } from "shared/Context";
+import close from "assets/close.png";
 
 const EditCollaboratorModal = () => {
   const {
@@ -62,7 +64,9 @@ const EditCollaboratorModal = () => {
       );
       setStatus("successful");
       refetchCallerData().then(() => {
-        setTimeout(() => { setCurrentModal(null, null); }, 500);
+        setTimeout(() => {
+          setCurrentModal(null, null);
+        }, 500);
       });
     } catch (error) {
       setStatus("error");
@@ -79,7 +83,9 @@ const EditCollaboratorModal = () => {
       );
       setStatus("successful");
       refetchCallerData().then(() => {
-        setTimeout(() => { setCurrentModal(null, null); }, 500);
+        setTimeout(() => {
+          setCurrentModal(null, null);
+        }, 500);
       });
     } catch (error) {
       setStatus("error");
@@ -103,7 +109,9 @@ const EditCollaboratorModal = () => {
       <SaveButton
         text={`Update ${isInvite ? "invite" : "collaborator"}`}
         color="#616FEEcc"
-        onClick={() => { handleUpdate(); }}
+        onClick={() => {
+          handleUpdate();
+        }}
         status={status}
       />
     </>

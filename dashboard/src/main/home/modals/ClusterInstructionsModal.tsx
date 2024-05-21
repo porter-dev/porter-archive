@@ -1,9 +1,10 @@
 import React, { Component } from "react";
 import styled from "styled-components";
-import close from "assets/close.png";
+
 import TabSelector from "components/TabSelector";
 
 import { Context } from "shared/Context";
+import close from "assets/close.png";
 
 type PropsType = {};
 
@@ -66,7 +67,6 @@ export default class ClusterInstructionsModal extends Component<
           </Placeholder>
         );
       default:
-        
     }
   };
 
@@ -77,9 +77,9 @@ export default class ClusterInstructionsModal extends Component<
         <TabSelector
           options={tabOptions}
           currentTab={currentTab}
-          setCurrentTab={(value: string) =>
-            { this.setState({ currentTab: value }); }
-          }
+          setCurrentTab={(value: string) => {
+            this.setState({ currentTab: value });
+          }}
         />
 
         {this.renderPage()}
@@ -87,21 +87,21 @@ export default class ClusterInstructionsModal extends Component<
           <PageCount>{currentPage + 1}/2</PageCount>
           <i
             className="material-icons"
-            onClick={() =>
-              { currentPage > 0
+            onClick={() => {
+              currentPage > 0
                 ? this.setState({ currentPage: currentPage - 1 })
-                : null; }
-            }
+                : null;
+            }}
           >
             arrow_back
           </i>
           <i
             className="material-icons"
-            onClick={() =>
-              { currentPage < 1
+            onClick={() => {
+              currentPage < 1
                 ? this.setState({ currentPage: currentPage + 1 })
-                : null; }
-            }
+                : null;
+            }}
           >
             arrow_forward
           </i>

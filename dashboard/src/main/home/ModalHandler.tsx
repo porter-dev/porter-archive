@@ -1,23 +1,24 @@
 import React, { useContext, useEffect, useState } from "react";
+import { type AxiosError } from "axios";
+
+import api from "shared/api";
 import useAuth from "shared/auth/useAuth";
 import { Context } from "shared/Context";
-import Modal from "./modals/Modal";
+
+import AccountSettingsModal from "./modals/AccountSettingsModal";
 import ClusterInstructionsModal from "./modals/ClusterInstructionsModal";
-import IntegrationsInstructionsModal from "./modals/IntegrationsInstructionsModal";
-import IntegrationsModal from "./modals/IntegrationsModal";
-import PreviewEnvSettingsModal from "./modals/PreviewEnvSettingsModal";
-import UpdateClusterModal from "./modals/UpdateClusterModal";
-import NamespaceModal from "./modals/NamespaceModal";
+import ConnectToDatabaseInstructionsModal from "./modals/ConnectToDatabaseInstructionsModal";
 import DeleteNamespaceModal from "./modals/DeleteNamespaceModal";
 import EditInviteOrCollaboratorModal from "./modals/EditInviteOrCollaboratorModal";
-import AccountSettingsModal from "./modals/AccountSettingsModal";
+import IntegrationsInstructionsModal from "./modals/IntegrationsInstructionsModal";
+import IntegrationsModal from "./modals/IntegrationsModal";
+import Modal from "./modals/Modal";
+import NamespaceModal from "./modals/NamespaceModal";
+import PreviewEnvSettingsModal from "./modals/PreviewEnvSettingsModal";
 import RedirectToOnboardingModal from "./modals/RedirectToOnboardingModal";
-
-import UsageWarningModal from "./modals/UsageWarningModal";
-import api from "shared/api";
-import { type AxiosError } from "axios";
 import SkipOnboardingModal from "./modals/SkipProvisioningModal";
-import ConnectToDatabaseInstructionsModal from "./modals/ConnectToDatabaseInstructionsModal";
+import UpdateClusterModal from "./modals/UpdateClusterModal";
+import UsageWarningModal from "./modals/UsageWarningModal";
 
 const ModalHandler: React.FC<{
   setRefreshClusters: (x: boolean) => void;
@@ -85,10 +86,10 @@ const ModalHandler: React.FC<{
   }, [currentModal, currentProject]);
 
   const renderModal = () => {
-    if (modal && typeof modal !== 'string') {
+    if (modal && typeof modal !== "string") {
       return modal;
     }
-  }
+  };
 
   return (
     <>
@@ -101,7 +102,9 @@ const ModalHandler: React.FC<{
 
       {modal === "ClusterInstructionsModal" && (
         <Modal
-          onRequestClose={() => { setCurrentModal(null, null); }}
+          onRequestClose={() => {
+            setCurrentModal(null, null);
+          }}
           width="760px"
           height="650px"
           title="Connecting to an Existing Cluster"
@@ -114,19 +117,25 @@ const ModalHandler: React.FC<{
       {isAuth("cluster", "", ["get", "delete"]) &&
         modal === "UpdateClusterModal" && (
           <Modal
-            onRequestClose={() => { setCurrentModal(null, null); }}
+            onRequestClose={() => {
+              setCurrentModal(null, null);
+            }}
             width="600px"
             height="275px"
             title="Delete cluster"
           >
             <UpdateClusterModal
-              setRefreshClusters={(x: boolean) => { setRefreshClusters(x); }}
+              setRefreshClusters={(x: boolean) => {
+                setRefreshClusters(x);
+              }}
             />
           </Modal>
         )}
       {modal === "IntegrationsModal" && (
         <Modal
-          onRequestClose={() => { setCurrentModal(null, null); }}
+          onRequestClose={() => {
+            setCurrentModal(null, null);
+          }}
           width="760px"
           height="380px"
           title="Add a New Integration"
@@ -136,7 +145,9 @@ const ModalHandler: React.FC<{
       )}
       {modal === "IntegrationsInstructionsModal" && (
         <Modal
-          onRequestClose={() => { setCurrentModal(null, null); }}
+          onRequestClose={() => {
+            setCurrentModal(null, null);
+          }}
           width="760px"
           height="650px"
           title="Connecting to an Image Registry"
@@ -147,7 +158,9 @@ const ModalHandler: React.FC<{
       {isAuth("namespace", "", ["get", "create"]) &&
         modal === "NamespaceModal" && (
           <Modal
-            onRequestClose={() => { setCurrentModal(null, null); }}
+            onRequestClose={() => {
+              setCurrentModal(null, null);
+            }}
             width="600px"
             height="220px"
             title="Add namespace"
@@ -158,7 +171,9 @@ const ModalHandler: React.FC<{
       {isAuth("namespace", "", ["get", "delete"]) &&
         modal === "DeleteNamespaceModal" && (
           <Modal
-            onRequestClose={() => { setCurrentModal(null, null); }}
+            onRequestClose={() => {
+              setCurrentModal(null, null);
+            }}
             width="700px"
             height="280px"
             title="Delete Namespace"
@@ -169,7 +184,9 @@ const ModalHandler: React.FC<{
 
       {modal === "EditInviteOrCollaboratorModal" && (
         <Modal
-          onRequestClose={() => { setCurrentModal(null, null); }}
+          onRequestClose={() => {
+            setCurrentModal(null, null);
+          }}
           width="600px"
           height="250px"
         >
@@ -178,7 +195,9 @@ const ModalHandler: React.FC<{
       )}
       {modal === "AccountSettingsModal" && (
         <Modal
-          onRequestClose={() => { setCurrentModal(null, null); }}
+          onRequestClose={() => {
+            setCurrentModal(null, null);
+          }}
           width="760px"
           height="480px"
           title="Account Settings"
@@ -189,7 +208,9 @@ const ModalHandler: React.FC<{
 
       {modal === "PreviewEnvSettingsModal" && (
         <Modal
-          onRequestClose={() => { setCurrentModal(null, null); }}
+          onRequestClose={() => {
+            setCurrentModal(null, null);
+          }}
           width="760px"
           height="440px"
           title="Preview Environment Settings"
@@ -200,7 +221,9 @@ const ModalHandler: React.FC<{
 
       {modal === "UsageWarningModal" && (
         <Modal
-          onRequestClose={() => { setCurrentModal(null, null); }}
+          onRequestClose={() => {
+            setCurrentModal(null, null);
+          }}
           width="760px"
           height="530px"
           title="Usage Warning"
@@ -211,7 +234,9 @@ const ModalHandler: React.FC<{
 
       {modal === "SkipOnboardingModal" && (
         <Modal
-          onRequestClose={() => { setCurrentModal(null, null); }}
+          onRequestClose={() => {
+            setCurrentModal(null, null);
+          }}
           width="600px"
           height="240px"
           title="Would you like to skip project setup?"
@@ -221,7 +246,9 @@ const ModalHandler: React.FC<{
       )}
       {modal === "ConnectToDatabaseInstructionsModal" && (
         <Modal
-          onRequestClose={() => { setCurrentModal(null, null); }}
+          onRequestClose={() => {
+            setCurrentModal(null, null);
+          }}
           width="600px"
           height="350px"
           title="Connecting to the Database"

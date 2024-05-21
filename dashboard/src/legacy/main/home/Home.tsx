@@ -20,9 +20,9 @@ import {
 import midnight from "legacy/shared/themes/midnight";
 import standard from "legacy/shared/themes/standard";
 import {
+  ProjectType,
   type ClusterType,
   type ProjectListType,
-  type ProjectType,
 } from "legacy/shared/types";
 import { createPortal } from "react-dom";
 import {

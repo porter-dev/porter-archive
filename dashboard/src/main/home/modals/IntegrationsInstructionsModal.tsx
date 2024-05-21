@@ -1,9 +1,10 @@
 import React, { Component } from "react";
 import styled from "styled-components";
-import close from "assets/close.png";
+
 import TabSelector from "components/TabSelector";
 
 import { Context } from "shared/Context";
+import close from "assets/close.png";
 
 type PropsType = {};
 
@@ -40,7 +41,6 @@ export default class ClusterInstructionsModal extends Component<
           </Placeholder>
         );
       default:
-        
     }
   };
 
@@ -51,9 +51,9 @@ export default class ClusterInstructionsModal extends Component<
         <TabSelector
           options={tabOptions}
           currentTab={currentTab}
-          setCurrentTab={(value: string) =>
-            { this.setState({ currentTab: value }); }
-          }
+          setCurrentTab={(value: string) => {
+            this.setState({ currentTab: value });
+          }}
         />
 
         {this.renderPage()}

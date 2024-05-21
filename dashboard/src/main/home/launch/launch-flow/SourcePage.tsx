@@ -1,18 +1,18 @@
 import React, { Component } from "react";
+import { withRouter, type RouteComponentProps } from "react-router";
 import styled from "styled-components";
 
-import { Context } from "shared/Context";
-import { type RouteComponentProps, withRouter } from "react-router";
-import close from "assets/close.png";
-import { isAlphanumeric } from "shared/common";
-import { pushFiltered } from "shared/routing";
-
-import InputRow from "components/form-components/InputRow";
 import Helper from "components/form-components/Helper";
+import InputRow from "components/form-components/InputRow";
 import ImageSelector from "components/image-selector/ImageSelector";
 import ActionConfEditor from "components/repo-selector/ActionConfEditor";
 import SaveButton from "components/SaveButton";
+
+import { isAlphanumeric } from "shared/common";
+import { Context } from "shared/Context";
+import { pushFiltered } from "shared/routing";
 import { type ActionConfigType } from "shared/types";
+import close from "assets/close.png";
 
 type PropsType = RouteComponentProps & {
   templateName: string;
@@ -73,7 +73,11 @@ class SourcePage extends Component<PropsType, StateType> {
         <BlockList>
           {(capabilities.github || capabilities.gitlab) &&
             hasSource !== "registry-only" && (
-              <Block onClick={() => { setSourceType("repo"); }}>
+              <Block
+                onClick={() => {
+                  setSourceType("repo");
+                }}
+              >
                 <BlockIcon src="https://git-scm.com/images/logos/downloads/Git-Icon-1788C.png" />
                 <BlockTitle>Git repository</BlockTitle>
                 <BlockDescription>
@@ -82,7 +86,11 @@ class SourcePage extends Component<PropsType, StateType> {
               </Block>
             )}
           {hasSource !== "repo-only" && (
-            <Block onClick={() => { setSourceType("registry"); }}>
+            <Block
+              onClick={() => {
+                setSourceType("registry");
+              }}
+            >
               <BlockIcon src="https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/97_Docker_logo_logos-512.png" />
               <BlockTitle>Docker registry</BlockTitle>
               <BlockDescription>
@@ -112,11 +120,11 @@ class SourcePage extends Component<PropsType, StateType> {
             Specify the container image you would like to connect to this
             template.
             <Highlight
-              onClick={() =>
-                { pushFiltered(this.props, "/integrations/registry", [
+              onClick={() => {
+                pushFiltered(this.props, "/integrations/registry", [
                   "project_id",
-                ]); }
-              }
+                ]);
+              }}
             >
               Manage Docker registries
             </Highlight>
@@ -428,7 +436,7 @@ const Block = styled.div<{ disabled?: boolean }>`
   position: relative;
 
   border-radius: 5px;
-  background: ${props => props.theme.clickable.bg};
+  background: ${(props) => props.theme.clickable.bg};
   border: 1px solid #494b4f;
   :hover {
   }
@@ -494,6 +502,6 @@ const StyledSourceBox = styled.div`
   margin-top: 6px;
   margin-bottom: 25px;
   border-radius: 5px;
-  background: ${props => props.theme.fg};
+  background: ${(props) => props.theme.fg};
   border: 1px solid #494b4f;
 `;

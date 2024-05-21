@@ -1,10 +1,9 @@
 import React, { Component } from "react";
+import { withRouter, type RouteComponentProps } from "react-router";
 import styled from "styled-components";
-import { type RouteComponentProps, withRouter } from "react-router";
-
-import { pushFiltered } from "shared/routing";
 
 import { Context } from "shared/Context";
+import { pushFiltered } from "shared/routing";
 
 type PropsType = RouteComponentProps & {};
 
@@ -32,11 +31,11 @@ class NoClusterPlaceholder extends Component<PropsType, StateType> {
         <br />
         2.{" "}
         <A
-          onClick={() =>
-            { pushFiltered(this.props, "/dashboard", ["project_id"], {
+          onClick={() => {
+            pushFiltered(this.props, "/dashboard", ["project_id"], {
               tab: "create-cluster",
-            }); }
-          }
+            });
+          }}
         >
           Create a new cluster
         </A>{" "}

@@ -1,19 +1,17 @@
 import React, { useContext, useEffect, useState } from "react";
 import styled from "styled-components";
 
-import { Context } from "shared/Context";
-import api from "shared/api";
-
-import Modal from "main/home/modals/Modal";
-import Input from "components/porter/Input";
 import Button from "components/porter/Button";
+import Input from "components/porter/Input";
 import Spacer from "components/porter/Spacer";
+import Modal from "main/home/modals/Modal";
 
-type Props = {
-};
+import api from "shared/api";
+import { Context } from "shared/Context";
 
-const ClusterSettingsModal: React.FC<Props> = ({
-}) => {
+type Props = {};
+
+const ClusterSettingsModal: React.FC<Props> = ({}) => {
   const {
     setCurrentModal,
     currentCluster,
@@ -44,13 +42,15 @@ const ClusterSettingsModal: React.FC<Props> = ({
       setStatus("error");
       console.log(err);
     }
-  }
+  };
 
   return (
     <Modal
       width="600px"
       height="auto"
-      onRequestClose={() => { setCurrentModal(null, null); }}
+      onRequestClose={() => {
+        setCurrentModal(null, null);
+      }}
       title="Cluster name"
     >
       <Spacer height="15px" />

@@ -1,19 +1,19 @@
 import React, { Component, useContext, useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useParams, withRouter, type RouteComponentProps } from "react-router";
 import styled from "styled-components";
 
-import sliders from "assets/sliders.svg";
-
-import { Context } from "shared/Context";
-import { type ClusterType } from "shared/types";
-
-import ExpandedEnvGroup from "./ExpandedEnvGroup";
-import { type RouteComponentProps, useParams, withRouter } from "react-router";
-import { getQueryParam, pushQueryParams } from "shared/routing";
-import { withAuth, type WithAuthProps } from "shared/auth/AuthorizationHoc";
-import { useQuery } from "@tanstack/react-query";
-import api from "shared/api";
 import Loading from "components/Loading";
 import Placeholder from "components/Placeholder";
+
+import api from "shared/api";
+import { withAuth, type WithAuthProps } from "shared/auth/AuthorizationHoc";
+import { Context } from "shared/Context";
+import { getQueryParam, pushQueryParams } from "shared/routing";
+import { type ClusterType } from "shared/types";
+import sliders from "assets/sliders.svg";
+
+import ExpandedEnvGroup from "./ExpandedEnvGroup";
 
 type PropsType = RouteComponentProps &
   WithAuthProps & {
@@ -21,7 +21,11 @@ type PropsType = RouteComponentProps &
   };
 
 const EnvGroupDashboard = (props: PropsType) => {
-  const namespace = (currentProject?.simplified_view_enabled && currentProject?.capi_provisioner_enabled) ? "porter-env-group" : getQueryParam(props, "namespace");
+  const namespace =
+    currentProject?.simplified_view_enabled &&
+    currentProject?.capi_provisioner_enabled
+      ? "porter-env-group"
+      : getQueryParam(props, "namespace");
   const params = useParams<{ name: string }>();
   const { currentProject } = useContext(Context);
   const [expandedEnvGroup, setExpandedEnvGroup] = useState<any>();
@@ -54,18 +58,21 @@ const EnvGroupDashboard = (props: PropsType) => {
             }
           );
         } else {
-
           res = await api.listEnvGroups(
             "<token>",
             {},
             {
               id: currentProject.id,
-              namespace: currentProject?.simplified_view_enabled ? "porter-env-group" : namespace,
+              namespace: currentProject?.simplified_view_enabled
+                ? "porter-env-group"
+                : namespace,
               cluster_id: props.currentCluster.id,
             }
           );
         }
-        return currentProject?.simplified_view_enabled ? res.data?.environment_groups : res.data;
+        return currentProject?.simplified_view_enabled
+          ? res.data?.environment_groups
+          : res.data;
       } catch (err) {
         throw err;
       }
@@ -108,10 +115,17 @@ const EnvGroupDashboard = (props: PropsType) => {
       <ExpandedEnvGroup
         allEnvGroups={envGroups}
         isAuthorized={props.isAuthorized}
-        namespace={(currentProject?.simplified_view_enabled && currentProject?.capi_provisioner_enabled) ? "porter-env-group" : expandedEnvGroup?.namespace ?? namespace}
+        namespace={
+          currentProject?.simplified_view_enabled &&
+          currentProject?.capi_provisioner_enabled
+            ? "porter-env-group"
+            : expandedEnvGroup?.namespace ?? namespace
+        }
         currentCluster={props.currentCluster}
         envGroup={expandedEnvGroup}
-        closeExpanded={() => { props.history.push("/env-groups"); }}
+        closeExpanded={() => {
+          props.history.push("/env-groups");
+        }}
       />
     );
   };
@@ -180,7 +194,7 @@ const Button = styled.div`
     props.disabled ? "#aaaabbee" : "#616FEEcc"};
   :hover {
     background: ${(props: { disabled?: boolean }) =>
-    props.disabled ? "" : "#505edddd"};
+      props.disabled ? "" : "#505edddd"};
   }
 
   > i {

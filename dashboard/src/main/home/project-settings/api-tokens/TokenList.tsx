@@ -1,12 +1,14 @@
+import React, { useContext, useEffect, useState } from "react";
+import styled from "styled-components";
+
 import Description from "components/Description";
 import Loading from "components/Loading";
 import Placeholder from "components/OldPlaceholder";
-import React, { useContext, useEffect, useState } from "react";
-import { Context } from "shared/Context";
 
 import api from "shared/api";
+import { Context } from "shared/Context";
 import { readableDate } from "shared/string_utils";
-import styled from "styled-components";
+
 import { type APIToken, type APITokenMeta } from "../APITokensSection";
 
 type Props = {
@@ -76,7 +78,11 @@ const TokenList: React.FunctionComponent<Props> = (props) => {
           {expandedTok.policy_name}.
         </Description>
         <RevokeAccessButtonWrapper>
-          <RevokeAccessButton onClick={() => { revokeAPIToken(expandedTok.id); }}>
+          <RevokeAccessButton
+            onClick={() => {
+              revokeAPIToken(expandedTok.id);
+            }}
+          >
             Revoke Token
           </RevokeAccessButton>
         </RevokeAccessButtonWrapper>

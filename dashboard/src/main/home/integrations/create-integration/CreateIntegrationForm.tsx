@@ -1,14 +1,13 @@
 import React, { Component } from "react";
-
 import styled from "styled-components";
 
 import DockerHubForm from "./DockerHubForm";
-import GKEForm from "./GKEForm";
-import EKSForm from "./EKSForm";
-import GCRForm from "./GCRForm";
 import ECRForm from "./ECRForm";
-import GitlabForm from "./GitlabForm";
+import EKSForm from "./EKSForm";
 import GARForm from "./GARForm";
+import GCRForm from "./GCRForm";
+import GitlabForm from "./GitlabForm";
+import GKEForm from "./GKEForm";
 
 type PropsType = {
   integrationName: string;

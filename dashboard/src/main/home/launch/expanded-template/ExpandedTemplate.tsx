@@ -1,12 +1,13 @@
 import React, { Component } from "react";
 import styled from "styled-components";
 
-import { type PorterTemplate } from "shared/types";
+import Loading from "components/Loading";
+
 import api from "shared/api";
+import { Context } from "shared/Context";
+import { type PorterTemplate } from "shared/types";
 
 import TemplateInfo from "./TemplateInfo";
-import Loading from "components/Loading";
-import { Context } from "shared/Context";
 
 type PropsType = {
   currentTemplate: PorterTemplate;
@@ -71,7 +72,9 @@ export default class ExpandedTemplate extends Component<PropsType, StateType> {
             error: false,
           });
         })
-        .catch((err) => { this.setState({ loading: false, error: true }); });
+        .catch((err) => {
+          this.setState({ loading: false, error: true });
+        });
     } else {
       const params =
         this.props.currentTab == "porter"
@@ -98,7 +101,9 @@ export default class ExpandedTemplate extends Component<PropsType, StateType> {
             error: false,
           });
         })
-        .catch((err) => { this.setState({ loading: false, error: true }); });
+        .catch((err) => {
+          this.setState({ loading: false, error: true });
+        });
     }
   };
 

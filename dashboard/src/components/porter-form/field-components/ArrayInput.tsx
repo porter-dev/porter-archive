@@ -1,11 +1,12 @@
 import React from "react";
 import styled from "styled-components";
+
+import useFormField from "../hooks/useFormField";
 import {
   type ArrayInputField,
   type ArrayInputFieldState,
   type GetFinalVariablesFunction,
 } from "../types";
-import useFormField from "../hooks/useFormField";
 import { hasSetValue } from "../utils";
 
 // this is used to set validation for the below form component in case
@@ -15,19 +16,15 @@ const validateArray = (arr: any[]) => {
 };
 
 const ArrayInput: React.FC<ArrayInputField> = (props) => {
-  const {
-    state,
-    variables,
-    setVars,
-    setValidation,
-  } = useFormField<ArrayInputFieldState>(props.id, {
-    initVars: {
-      [props.variable]: hasSetValue(props) ? props.value[0] : [],
-    },
-    initValidation: {
-      validated: validateArray(hasSetValue(props) ? props.value[0] : []),
-    },
-  });
+  const { state, variables, setVars, setValidation } =
+    useFormField<ArrayInputFieldState>(props.id, {
+      initVars: {
+        [props.variable]: hasSetValue(props) ? props.value[0] : [],
+      },
+      initValidation: {
+        validated: validateArray(hasSetValue(props) ? props.value[0] : []),
+      },
+    });
 
   if (state == undefined) return <></>;
 

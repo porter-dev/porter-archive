@@ -1,30 +1,31 @@
 import React, { Component } from "react";
 import styled from "styled-components";
-import tag_icon from "assets/tag.png";
-import info from "assets/info.svg";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
+import info from "assets/info.svg";
+import tag_icon from "assets/tag.png";
 
 import Loading from "../Loading";
 
-const ecrRepoRegex = /(^[a-zA-Z0-9][a-zA-Z0-9-_]*)\.dkr\.ecr(\-fips)?\.([a-zA-Z0-9][a-zA-Z0-9-_]*)\.amazonaws\.com(\.cn)?/gim;
+const ecrRepoRegex =
+  /(^[a-zA-Z0-9][a-zA-Z0-9-_]*)\.dkr\.ecr(\-fips)?\.([a-zA-Z0-9][a-zA-Z0-9-_]*)\.amazonaws\.com(\.cn)?/gim;
 
 type PropsType =
   | {
-    setSelectedTag: (x: string) => void;
-    selectedTag: string;
-    selectedImageUrl: string;
-    registryId: number;
-    readOnly?: boolean;
-  }
+      setSelectedTag: (x: string) => void;
+      selectedTag: string;
+      selectedImageUrl: string;
+      registryId: number;
+      readOnly?: boolean;
+    }
   | {
-    setSelectedTag?: (x: string) => void;
-    selectedTag: string;
-    selectedImageUrl: string;
-    registryId: number;
-    readOnly: true;
-  };
+      setSelectedTag?: (x: string) => void;
+      selectedTag: string;
+      selectedImageUrl: string;
+      registryId: number;
+      readOnly: true;
+    };
 
 type StateType = {
   loading: boolean;
@@ -86,7 +87,11 @@ export default class TagList extends Component<PropsType, StateType> {
           const [latestImage] = tags.splice(latestImageIndex, 1);
           tags.unshift(latestImage);
         }
-        this.setState({ tags: tags.map((tag) => tag.tag), loading: false, error: false });
+        this.setState({
+          tags: tags.map((tag) => tag.tag),
+          loading: false,
+          error: false,
+        });
       })
       .catch((err) => {
         console.log(err);
@@ -124,7 +129,9 @@ export default class TagList extends Component<PropsType, StateType> {
           key={i}
           isSelected={tag === this.state.currentTag}
           lastItem={i === tags.length - 1}
-          onClick={() => { this.setTag(tag); }}
+          onClick={() => {
+            this.setTag(tag);
+          }}
         >
           <img src={tag_icon} />
           {tag}

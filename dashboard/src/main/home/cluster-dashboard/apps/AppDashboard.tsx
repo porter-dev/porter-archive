@@ -1,33 +1,30 @@
-import React, { useContext, useState, useEffect } from "react";
+import React, { useContext, useEffect, useState } from "react";
+import { withRouter, type RouteComponentProps } from "react-router";
 import styled from "styled-components";
-import { type RouteComponentProps, withRouter } from "react-router";
 
-import web from "assets/web.png";
-
-import { Context } from "shared/Context";
-import { JobStatusType } from "shared/types";
-import { withAuth, type WithAuthProps } from "shared/auth/AuthorizationHoc";
-import {
-  pushQueryParams,
-  pushFiltered,
-  type PorterUrl,
-} from "shared/routing";
-
-import { NamespaceSelector } from "../NamespaceSelector";
-import TagFilter from "../TagFilter";
-import DashboardHeader from "../DashboardHeader";
-import ChartList from "../chart/ChartList";
 import ClusterProvisioningPlaceholder from "components/ClusterProvisioningPlaceholder";
-import SortSelector from "../SortSelector";
 import Spacer from "components/porter/Spacer";
 
-type Props = RouteComponentProps & WithAuthProps & {
-  currentView: PorterUrl;
-  namespace?: string;
-  setNamespace?: (namespace: string) => void;
-  sortType: any;
-  setSortType: (sortType: any) => void;
-};
+import { withAuth, type WithAuthProps } from "shared/auth/AuthorizationHoc";
+import { Context } from "shared/Context";
+import { pushFiltered, pushQueryParams, type PorterUrl } from "shared/routing";
+import { JobStatusType } from "shared/types";
+import web from "assets/web.png";
+
+import ChartList from "../chart/ChartList";
+import DashboardHeader from "../DashboardHeader";
+import { NamespaceSelector } from "../NamespaceSelector";
+import SortSelector from "../SortSelector";
+import TagFilter from "../TagFilter";
+
+type Props = RouteComponentProps &
+  WithAuthProps & {
+    currentView: PorterUrl;
+    namespace?: string;
+    setNamespace?: (namespace: string) => void;
+    sortType: any;
+    setSortType: (sortType: any) => void;
+  };
 
 // TODO: Pull namespace (and sort) down out of DashboardRouter
 const AppDashboard: React.FC<Props> = ({
@@ -76,24 +73,18 @@ const AppDashboard: React.FC<Props> = ({
                 }}
                 namespace={namespace}
               />
-              <TagFilter
-                onSelect={setSelectedTag}
-              />
+              <TagFilter onSelect={setSelectedTag} />
             </FilterWrapper>
             <Flex>
-              {props.isAuthorized(
-                "namespace",
-                [],
-                ["get", "create"]
-              ) && (
-                  <Button
-                    onClick={() => {
-                      pushFiltered(props, "/launch", ["project_id"])
-                    }}
-                  >
-                    <i className="material-icons">add</i> Launch template
-                  </Button>
-                )}
+              {props.isAuthorized("namespace", [], ["get", "create"]) && (
+                <Button
+                  onClick={() => {
+                    pushFiltered(props, "/launch", ["project_id"]);
+                  }}
+                >
+                  <i className="material-icons">add</i> Launch template
+                </Button>
+              )}
             </Flex>
           </ControlRow>
           <ChartList
@@ -143,8 +134,7 @@ const Flex = styled.div`
   border-bottom: 30px solid transparent;
 `;
 
-const StyledAppDashboard = styled.div`
-`;
+const StyledAppDashboard = styled.div``;
 
 const ControlRow = styled.div`
   display: flex;
@@ -187,7 +177,7 @@ const Button = styled.div`
     props.disabled ? "#aaaabbee" : "#616FEEcc"};
   :hover {
     background: ${(props: { disabled?: boolean }) =>
-    props.disabled ? "" : "#505edddd"};
+      props.disabled ? "" : "#505edddd"};
   }
 
   > i {

@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
-import TabSelector from "components/TabSelector";
-import api from "shared/api";
+
 import SaveButton from "components/SaveButton";
-import { integrationList } from "shared/common";
+import TabSelector from "components/TabSelector";
+
 import { provisionResourcesTracks } from "shared/anayltics";
+import api from "shared/api";
+import { integrationList } from "shared/common";
 
 type Props = {
   nextStep: () => void;
@@ -107,7 +109,6 @@ const ConnectExternalCluster: React.FC<Props> = ({
           </Placeholder>
         );
       default:
-        
     }
   };
 
@@ -115,7 +116,11 @@ const ConnectExternalCluster: React.FC<Props> = ({
     <Wrapper>
       <StyledClusterInstructionsModal>
         <FormHeader>
-          <CloseButton onClick={() => { goBack(); }}>
+          <CloseButton
+            onClick={() => {
+              goBack();
+            }}
+          >
             <i className="material-icons">keyboard_backspace</i>
           </CloseButton>
           <img src={integrationList.kubernetes.icon} />
@@ -124,7 +129,9 @@ const ConnectExternalCluster: React.FC<Props> = ({
         <TabSelector
           options={tabOptions}
           currentTab={currentTab}
-          setCurrentTab={(value: string) => { setCurrentTab(value); }}
+          setCurrentTab={(value: string) => {
+            setCurrentTab(value);
+          }}
         />
 
         {renderPage()}
@@ -132,17 +139,17 @@ const ConnectExternalCluster: React.FC<Props> = ({
           <PageCount>{currentPage + 1}/3</PageCount>
           <i
             className="material-icons"
-            onClick={() =>
-              { currentPage > 0 ? setCurrentPage(currentPage - 1) : null; }
-            }
+            onClick={() => {
+              currentPage > 0 ? setCurrentPage(currentPage - 1) : null;
+            }}
           >
             arrow_back
           </i>
           <i
             className="material-icons"
-            onClick={() =>
-              { currentPage < 2 ? setCurrentPage(currentPage + 1) : null; }
-            }
+            onClick={() => {
+              currentPage < 2 ? setCurrentPage(currentPage + 1) : null;
+            }}
           >
             arrow_forward
           </i>
@@ -291,7 +298,9 @@ const ModalTitle = styled.div`
   margin: 0px 0px 13px;
   display: flex;
   flex: 1;
-  font-family: Work Sans, sans-serif;
+  font-family:
+    Work Sans,
+    sans-serif;
   font-size: 18px;
   color: #ffffff;
   user-select: none;

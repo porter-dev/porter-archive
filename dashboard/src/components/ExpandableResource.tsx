@@ -1,10 +1,12 @@
 import React, { Component, useContext, useEffect } from "react";
 import styled from "styled-components";
+
+import { baseApi } from "shared/baseApi";
 import { Context } from "shared/Context";
+import { readableDate } from "shared/string_utils";
+
 import ResourceTab from "./ResourceTab";
 import SaveButton from "./SaveButton";
-import { baseApi } from "shared/baseApi";
-import { readableDate } from "shared/string_utils";
 
 type Props = {
   resource: any;
@@ -49,7 +51,9 @@ const ExpandableResource: React.FC<Props> = (props) => {
       {}
     )
       .then((res) => {})
-      .catch((err) => { console.log(err); });
+      .catch((err) => {
+        console.log(err);
+      });
   };
 
   return (

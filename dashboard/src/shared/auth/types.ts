@@ -18,7 +18,7 @@ export type PolicyDocType = {
   verbs: Verbs[];
   resources?: string[];
   children?: Partial<Record<ScopeType, PolicyDocType>>;
-}
+};
 
 export enum ScopeTypeEnum {
   PROJECT = "project",

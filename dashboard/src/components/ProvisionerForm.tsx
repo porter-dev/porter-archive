@@ -1,18 +1,19 @@
-import React, { useEffect, useState, useContext } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import styled from "styled-components";
+
+import Heading from "components/form-components/Heading";
 
 import aws from "assets/aws.png";
 import azure from "assets/azure.png";
 import gcp from "assets/gcp.png";
 
-import Heading from "components/form-components/Heading";
-import Helper from "./form-components/Helper";
-import ProvisionerSettings from "./ProvisionerSettings";
-import Text from "./porter/Text";
-import Spacer from "./porter/Spacer";
-import Container from "./porter/Container";
 import AzureProvisionerSettings from "./AzureProvisionerSettings";
+import Helper from "./form-components/Helper";
 import GCPProvisionerSettings from "./GCPProvisionerSettings";
+import Container from "./porter/Container";
+import Spacer from "./porter/Spacer";
+import Text from "./porter/Text";
+import ProvisionerSettings from "./ProvisionerSettings";
 
 type Props = {
   goBack: () => void;

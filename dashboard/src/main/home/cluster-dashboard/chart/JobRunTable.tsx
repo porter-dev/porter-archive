@@ -1,14 +1,19 @@
+import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
+import { Row, type CellProps, type Column } from "react-table";
+import styled from "styled-components";
+
 import DynamicLink from "components/DynamicLink";
 import Loading from "components/Loading";
 import Table from "components/OldTable";
-import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
-import { type CellProps, type Column, Row } from "react-table";
+
 import api from "shared/api";
 import { Context } from "shared/Context";
-import { type NewWebsocketOptions, useWebsockets } from "shared/hooks/useWebsockets";
+import {
+  useWebsockets,
+  type NewWebsocketOptions,
+} from "shared/hooks/useWebsockets";
 import { useRouting } from "shared/routing";
 import { relativeDate, timeFrom } from "shared/string_utils";
-import styled from "styled-components";
 
 type Props = {
   lastRunStatus: "failed" | "succeeded" | "active" | "all";
@@ -278,7 +283,13 @@ const JobRunTable: React.FC<Props> = ({
     return (
       <ErrorWrapper>
         Couldn't retrieve jobs, please try again.{" "}
-        <RetryButton onClick={() => { getJobRuns(); }}>Retry</RetryButton>
+        <RetryButton
+          onClick={() => {
+            getJobRuns();
+          }}
+        >
+          Retry
+        </RetryButton>
       </ErrorWrapper>
     );
   }

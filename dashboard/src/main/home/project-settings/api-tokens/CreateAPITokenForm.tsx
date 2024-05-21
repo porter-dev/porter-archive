@@ -1,24 +1,25 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
+import { Column } from "react-table";
 import styled from "styled-components";
 
-import { InviteType } from "shared/types";
-import api from "shared/api";
-import { Context } from "shared/Context";
-import backArrow from "assets/back_arrow.png";
-
-import Loading from "components/Loading";
-import InputRow from "components/form-components/InputRow";
-import Helper from "components/form-components/Helper";
-import Heading from "components/form-components/Heading";
 import CopyToClipboard from "components/CopyToClipboard";
-import { Column } from "react-table";
+import Heading from "components/form-components/Heading";
+import Helper from "components/form-components/Helper";
+import InputRow from "components/form-components/InputRow";
+import SelectRow from "components/form-components/SelectRow";
+import Loading from "components/Loading";
 import Table from "components/OldTable";
 import RadioSelector from "components/RadioSelector";
-import SelectRow from "components/form-components/SelectRow";
 import SaveButton from "components/SaveButton";
+
+import api from "shared/api";
+import { type PolicyDocType, type Verbs } from "shared/auth/types";
+import { Context } from "shared/Context";
+import { InviteType } from "shared/types";
+import backArrow from "assets/back_arrow.png";
+
 import { type APIToken } from "../APITokensSection";
 import CustomPolicyForm from "./CustomPolicyForm";
-import { type PolicyDocType, type Verbs } from "shared/auth/types";
 
 type Props = {
   onCreate: () => void;
@@ -244,7 +245,9 @@ const CreateAPITokenForm: React.FunctionComponent<Props> = ({
           <CopyToClipboard
             as={CopyTokenButton}
             text={createdToken.token}
-            onSuccess={() => { setCopied(true); }}
+            onSuccess={() => {
+              setCopied(true);
+            }}
           >
             <i className="material-icons-outlined">
               {copied ? "check" : "content_copy"}
@@ -291,7 +294,9 @@ const CreateAPITokenForm: React.FunctionComponent<Props> = ({
       <InputRow
         value={apiTokenName}
         type="text"
-        setValue={(newName: string) => { setAPITokenName(newName); }}
+        setValue={(newName: string) => {
+          setAPITokenName(newName);
+        }}
         label="API Token Name"
         width="100%"
         placeholder="ex: api-token-admin"

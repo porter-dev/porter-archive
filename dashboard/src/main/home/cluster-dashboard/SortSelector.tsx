@@ -1,9 +1,9 @@
 import React, { Component } from "react";
 import styled from "styled-components";
 
-import { Context } from "shared/Context";
-
 import RadioFilter from "components/RadioFilter";
+
+import { Context } from "shared/Context";
 import sort from "assets/sort.svg";
 
 type PropsType = {
@@ -49,7 +49,9 @@ export default class SortSelector extends Component<PropsType, StateType> {
       <StyledSortSelector>
         <RadioFilter
           selected={this.props.sortType}
-          setSelected={(sortType: any) => { this.props.setSortType(sortType); }}
+          setSelected={(sortType: any) => {
+            this.props.setSortType(sortType);
+          }}
           options={this.getSortOptions()}
           name="Sort"
           icon={sort}

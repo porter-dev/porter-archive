@@ -1,6 +1,8 @@
 import React, { Component } from "react";
 import styled from "styled-components";
+
 import { Context } from "shared/Context";
+
 import Loading from "./Loading";
 
 export type SelectorPropsType<T> = {
@@ -24,7 +26,10 @@ export type SelectorPropsType<T> = {
 
 type StateType = {};
 
-export default class Selector<T> extends Component<SelectorPropsType<T>, StateType> {
+export default class Selector<T> extends Component<
+  SelectorPropsType<T>,
+  StateType
+> {
   state = {
     expanded: false,
     showTooltip: false,
@@ -69,7 +74,9 @@ export default class Selector<T> extends Component<SelectorPropsType<T>, StateTy
             key={i}
             height={this.props.height}
             selected={option.value === activeValue}
-            onClick={() => { this.handleOptionClick(option); }}
+            onClick={() => {
+              this.handleOptionClick(option);
+            }}
             lastItem={i === options.length - 1}
           >
             {option.icon && (
@@ -117,7 +124,9 @@ export default class Selector<T> extends Component<SelectorPropsType<T>, StateTy
                 : this.props.width
             }
             dropdownMaxHeight={this.props.dropdownMaxHeight}
-            onClick={() => { this.setState({ expanded: false }); }}
+            onClick={() => {
+              this.setState({ expanded: false });
+            }}
           >
             {this.renderDropdownLabel()}
             {this.renderOptionList()}
@@ -175,12 +184,16 @@ export default class Selector<T> extends Component<SelectorPropsType<T>, StateTy
           expanded={this.state.expanded}
           width={this.props.width}
           height={this.props.height}
-          onMouseEnter={() => { this.setState({ showTooltip: true }); }}
-          onMouseLeave={() => { this.setState({ showTooltip: false }); }}
+          onMouseEnter={() => {
+            this.setState({ showTooltip: true });
+          }}
+          onMouseLeave={() => {
+            this.setState({ showTooltip: false });
+          }}
         >
-          {isLoading ?
+          {isLoading ? (
             <Loading />
-            :
+          ) : (
             <>
               <Flex>
                 {this.renderIcon()}
@@ -194,7 +207,7 @@ export default class Selector<T> extends Component<SelectorPropsType<T>, StateTy
               </Flex>
               <i className="material-icons">arrow_drop_down</i>
             </>
-          }
+          )}
         </MainSelector>
         {!this.props.disableTooltip && this.state.showTooltip && (
           <Tooltip>
@@ -340,28 +353,31 @@ const MainSelector = styled.div<{
   width: string;
   height?: string;
 }>`
-  width: ${props => props.width};
-  height: ${props => props.height ? props.height : "35px"};
+  width: ${(props) => props.width};
+  height: ${(props) => (props.height ? props.height : "35px")};
   border: 1px solid #ffffff55;
   font-size: 13px;
   padding: 5px 10px;
   padding-left: 15px;
   border-radius: 3px;
   display: flex;
-  color: ${props => props.disabled ? "#ffffff44" : "#ffffff"};
+  color: ${(props) => (props.disabled ? "#ffffff44" : "#ffffff")};
   justify-content: space-between;
   align-items: center;
-  cursor: ${props => props.disabled ? "not-allowed" : "pointer"};
-  background: ${props => props.expanded ? "#ffffff33" : props.theme.fg};
+  cursor: ${(props) => (props.disabled ? "not-allowed" : "pointer")};
+  background: ${(props) => (props.expanded ? "#ffffff33" : props.theme.fg)};
   :hover {
-    background: ${props => props.expanded ? "#ffffff33" : (
-    props.disabled ? "#ffffff11" : "#ffffff22"
-  )};
+    background: ${(props) =>
+      props.expanded
+        ? "#ffffff33"
+        : props.disabled
+        ? "#ffffff11"
+        : "#ffffff22"};
   }
 
   > i {
     font-size: 20px;
-    transform: ${props => props.expanded ? "rotate(180deg)" : ""};
+    transform: ${(props) => (props.expanded ? "rotate(180deg)" : "")};
   }
 `;
 

@@ -1,11 +1,11 @@
 import React, { useContext, useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import styled from "styled-components";
 
 import Banner from "components/porter/Banner";
 
 import { Context } from "shared/Context";
 import { type Usage, type UsageData } from "shared/types";
-import { Link } from "react-router-dom";
 
 type UsageKeys = keyof Usage;
 
@@ -115,7 +115,9 @@ const UpgradeChartModal: React.FC<{}> = () => {
           pathname: "/project-settings",
           search: "?selected_tab=billing",
         }}
-        onClick={() => { setCurrentModal(null, null); }}
+        onClick={() => {
+          setCurrentModal(null, null);
+        }}
       >
         Take me to billing
       </Button>

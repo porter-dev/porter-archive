@@ -698,9 +698,13 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       const data = new PreflightCheckRequest({
         contract,
       });
-      const preflightDataResp = await api.legacyPreflightCheck("<token>", data, {
-        id: currentProject.id,
-      });
+      const preflightDataResp = await api.legacyPreflightCheck(
+        "<token>",
+        data,
+        {
+          id: currentProject.id,
+        }
+      );
       // Check if any of the preflight checks has a message
       let hasMessage = false;
       let errors = "Preflight Checks Failed : ";

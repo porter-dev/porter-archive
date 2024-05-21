@@ -92,9 +92,7 @@ const ProvisionerFlow: React.FC<Props> = ({}) => {
               Want to test Porter without linking your own cloud account?
             </Text>
             <Spacer y={0.5} />
-            <Text color={"helper"}>
-              Get started on the Porter Cloud.
-            </Text>
+            <Text color={"helper"}>Get started on the Porter Cloud.</Text>
             <Spacer y={1} />
             <Link to="https://cloud.porter.run">
               <Button alt height="35px">

@@ -1,28 +1,32 @@
 import React, { Component } from "react";
+import { capitalize } from "lodash";
+import { withRouter, type RouteComponentProps } from "react-router";
+import semver from "semver";
 import styled from "styled-components";
 
-import { Context } from "shared/Context";
-import api from "shared/api";
-import { type ChartTypeWithExtendedConfig, type PorterTemplate, type ClusterType } from "shared/types";
-
-import TabSelector from "components/TabSelector";
-import ExpandedTemplate from "./expanded-template/ExpandedTemplate";
-import Loading from "components/Loading";
-import LaunchFlow from "./launch-flow/LaunchFlow";
-import NoClusterPlaceholder from "../NoClusterPlaceholder";
-import TitleSection from "components/TitleSection";
 import ClusterProvisioningPlaceholder from "components/ClusterProvisioningPlaceholder";
-import DashboardHeader from "../cluster-dashboard/DashboardHeader";
-
-import semver from "semver";
-import { type RouteComponentProps, withRouter } from "react-router";
-import { getQueryParam, getQueryParams, pushFiltered } from "shared/routing";
-import TemplateList from "./TemplateList";
-import { capitalize } from "lodash";
-import Spacer from "components/porter/Spacer";
-import Fieldset from "components/porter/Fieldset";
-import Text from "components/porter/Text";
+import Loading from "components/Loading";
 import Container from "components/porter/Container";
+import Fieldset from "components/porter/Fieldset";
+import Spacer from "components/porter/Spacer";
+import Text from "components/porter/Text";
+import TabSelector from "components/TabSelector";
+import TitleSection from "components/TitleSection";
+
+import api from "shared/api";
+import { Context } from "shared/Context";
+import { getQueryParam, getQueryParams, pushFiltered } from "shared/routing";
+import {
+  type ChartTypeWithExtendedConfig,
+  type ClusterType,
+  type PorterTemplate,
+} from "shared/types";
+
+import DashboardHeader from "../cluster-dashboard/DashboardHeader";
+import NoClusterPlaceholder from "../NoClusterPlaceholder";
+import ExpandedTemplate from "./expanded-template/ExpandedTemplate";
+import LaunchFlow from "./launch-flow/LaunchFlow";
+import TemplateList from "./TemplateList";
 
 const initialTabOptions = [
   { label: "New application", value: "porter" },
@@ -118,11 +122,8 @@ class Templates extends Component<PropsType, StateType> {
     }
 
     // Block launch tab on initial provisioning
-    api.getClusters(
-      "<token>",
-      {},
-      { id: this.context.currentProject.id },
-    )
+    api
+      .getClusters("<token>", {}, { id: this.context.currentProject.id })
       .then(({ data }) => {
         let numUnavailable = 0;
         data.forEach((cluster: ClusterType) => {
@@ -143,10 +144,10 @@ class Templates extends Component<PropsType, StateType> {
         console.error(err);
       });
 
-    const default_addon_helm_repo_url = this.context?.capabilities
-      ?.default_addon_helm_repo_url;
-    const default_app_helm_repo_url = this.context?.capabilities
-      ?.default_app_helm_repo_url;
+    const default_addon_helm_repo_url =
+      this.context?.capabilities?.default_addon_helm_repo_url;
+    const default_app_helm_repo_url =
+      this.context?.capabilities?.default_app_helm_repo_url;
     try {
       const res = await api.getTemplates(
         "<token>",
@@ -365,9 +366,9 @@ class Templates extends Component<PropsType, StateType> {
       <TemplateList
         helm_repo_id={helm_repo_id}
         templates={templates}
-        setCurrentTemplate={(template) =>
-          { this.setState({ currentTemplate: template }); }
-        }
+        setCurrentTemplate={(template) => {
+          this.setState({ currentTemplate: template });
+        }}
       />
     );
   };
@@ -376,8 +377,12 @@ class Templates extends Component<PropsType, StateType> {
     if (this.state.currentTemplate) {
       return (
         <ExpandedTemplate
-          setForm={(x: any) => { this.setState({ form: x }); }}
-          showLaunchFlow={() => { this.setState({ isOnLaunchFlow: true }); }}
+          setForm={(x: any) => {
+            this.setState({ form: x });
+          }}
+          showLaunchFlow={() => {
+            this.setState({ isOnLaunchFlow: true });
+          }}
           currentTab={this.state.currentTab}
           currentTemplate={this.state.currentTemplate}
           setCurrentTemplate={(currentTemplate: PorterTemplate) => {
@@ -404,19 +409,19 @@ class Templates extends Component<PropsType, StateType> {
         <>
           <ClusterProvisioningPlaceholder />
         </>
-      )
+      );
     } else if (this.context.currentCluster) {
       return (
         <>
           <TabSelector
             options={this.state.tabOptions}
             currentTab={this.state.currentTab}
-            setCurrentTab={(value: string) =>
-              { this.setState({
+            setCurrentTab={(value: string) => {
+              this.setState({
                 currentTab: value,
                 currentTemplate: null,
-              }); }
-            }
+              });
+            }}
           />
           {this.renderTabContents()}
         </>
@@ -430,12 +435,17 @@ class Templates extends Component<PropsType, StateType> {
             <Text size={16}>No cluster detected</Text>
             <Spacer height="15px" />
             <Container row>
-              <Text color="helper">A cluster is required to deploy applications. You can automatically provision a cluster</Text>
-              <Link onClick={() => {
-                pushFiltered(this.props, "/dashboard", ["project_id"]);
-              }}>
+              <Text color="helper">
+                A cluster is required to deploy applications. You can
+                automatically provision a cluster
+              </Text>
+              <Link
+                onClick={() => {
+                  pushFiltered(this.props, "/dashboard", ["project_id"]);
+                }}
+              >
                 here
-                <i className="material-icons">arrow_forward</i> 
+                <i className="material-icons">arrow_forward</i>
               </Link>
             </Container>
             <Spacer height="10px" />
@@ -469,7 +479,9 @@ class Templates extends Component<PropsType, StateType> {
           form={this.state.form}
           currentTab={this.state.currentTab}
           currentTemplate={this.state.currentTemplate}
-          hideLaunchFlow={() => { this.setState({ isOnLaunchFlow: false }); }}
+          hideLaunchFlow={() => {
+            this.setState({ isOnLaunchFlow: false });
+          }}
         />
       );
     }

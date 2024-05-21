@@ -1,7 +1,8 @@
 import React from "react";
+import styled from "styled-components";
+
 import { type ServiceIPListField } from "../types";
 import ServiceRow from "./ServiceRow";
-import styled from "styled-components";
 
 const ServiceIPList: React.FC<ServiceIPListField> = (props) => {
   return (

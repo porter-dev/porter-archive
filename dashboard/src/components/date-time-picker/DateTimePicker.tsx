@@ -1,9 +1,9 @@
 import React, { useState } from "react";
-
 import DatePicker from "react-datepicker";
+import styled from "styled-components";
+
 import time from "assets/time.svg";
 
-import styled from "styled-components";
 import "./react-datepicker.css";
 
 type Props = {

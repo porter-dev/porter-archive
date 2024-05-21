@@ -1,19 +1,19 @@
 import React, { Component, useContext, useEffect, useState } from "react";
 import styled from "styled-components";
 
-import close from "assets/close.png";
-import { isAlphanumeric } from "shared/common";
+import CheckboxList from "components/form-components/CheckboxList";
+import CheckboxRow from "components/form-components/CheckboxRow";
+import Heading from "components/form-components/Heading";
+import Helper from "components/form-components/Helper";
+import InputRow from "components/form-components/InputRow";
+import SelectRow from "components/form-components/SelectRow";
+import SaveButton from "components/SaveButton";
+
 import api from "shared/api";
+import { isAlphanumeric } from "shared/common";
 import { Context } from "shared/Context";
 import { type InfraType } from "shared/types";
-
-import InputRow from "components/form-components/InputRow";
-import CheckboxRow from "components/form-components/CheckboxRow";
-import SelectRow from "components/form-components/SelectRow";
-import Helper from "components/form-components/Helper";
-import Heading from "components/form-components/Heading";
-import SaveButton from "components/SaveButton";
-import CheckboxList from "components/form-components/CheckboxList";
+import close from "assets/close.png";
 
 type PropsType = {
   setSelectedProvisioner: (x: string | null) => void;
@@ -134,14 +134,20 @@ const AzureFormSectionFC: React.FC<PropsType> = (props) => {
   return (
     <StyledAWSFormSection>
       <FormSection>
-        <CloseButton onClick={() => { props.setSelectedProvisioner(null); }}>
+        <CloseButton
+          onClick={() => {
+            props.setSelectedProvisioner(null);
+          }}
+        >
           <CloseButtonImg src={close} />
         </CloseButton>
         <Heading isAtTop={true}>Azure credentials</Heading>
         <InputRow
           type="text"
           value={applicationId}
-          setValue={(x: string) => { setApplicationId(x); }}
+          setValue={(x: string) => {
+            setApplicationId(x);
+          }}
           label="⚙️ Azure application (client) ID"
           placeholder="ex: 123456780-abcd-1234-abcd-12345678"
           width="100%"
@@ -150,7 +156,9 @@ const AzureFormSectionFC: React.FC<PropsType> = (props) => {
         <InputRow
           type="password"
           value={azureServicePrincipal}
-          setValue={(x: string) => { setAzureServicePrincipal(x); }}
+          setValue={(x: string) => {
+            setAzureServicePrincipal(x);
+          }}
           label="🔒 Azure service principal"
           placeholder="○ ○ ○ ○ ○ ○ ○ ○ ○"
           width="100%"
@@ -159,7 +167,9 @@ const AzureFormSectionFC: React.FC<PropsType> = (props) => {
         <InputRow
           type="text"
           value={tenantId}
-          setValue={(x: string) => { setTenantId(x); }}
+          setValue={(x: string) => {
+            setTenantId(x);
+          }}
           label="👤 Azure tenant ID"
           placeholder="ex: 123456780-abcd-1234-abcd-12345678"
           width="100%"
@@ -168,7 +178,9 @@ const AzureFormSectionFC: React.FC<PropsType> = (props) => {
         <InputRow
           type="text"
           value={subscriptionId}
-          setValue={(x: string) => { setSubscriptionId(x); }}
+          setValue={(x: string) => {
+            setSubscriptionId(x);
+          }}
           label="💳 Azure subscription ID"
           placeholder="ex: 123456780-abcd-1234-abcd-12345678"
           width="100%"

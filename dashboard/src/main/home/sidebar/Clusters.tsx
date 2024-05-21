@@ -1,19 +1,18 @@
 import React, { Component } from "react";
+import { withRouter, type RouteComponentProps } from "react-router";
 import styled from "styled-components";
 
 import api from "shared/api";
-import { pushFiltered } from "shared/routing";
 import { Context } from "shared/Context";
+import { pushFiltered } from "shared/routing";
 import { type ClusterType } from "shared/types";
+import job from "assets/job-bold.png";
+import settings from "assets/settings.svg";
+import sliders from "assets/sliders.svg";
+import web from "assets/web-bold.png";
+
 import { ClusterSection } from "./ClusterSection";
 import SidebarLink from "./SidebarLink";
-
-import settings from "assets/settings.svg";
-import job from "assets/job-bold.png";
-import web from "assets/web-bold.png";
-import sliders from "assets/sliders.svg";
-
-import { type RouteComponentProps, withRouter } from "react-router";
 
 type PropsType = RouteComponentProps & {
   setWelcome: (x: boolean) => void;
@@ -42,12 +41,8 @@ class Clusters extends Component<PropsType, StateType> {
     if (!this.context.currentProject) {
       return;
     }
-    const {
-      user,
-      currentProject,
-      setCurrentCluster,
-      currentCluster,
-    } = this.context;
+    const { user, currentProject, setCurrentCluster, currentCluster } =
+      this.context;
 
     // TODO: query with selected filter once implemented
     api
@@ -117,7 +112,9 @@ class Clusters extends Component<PropsType, StateType> {
           }
         }
       })
-      .catch((err) => { this.props.setWelcome(true); });
+      .catch((err) => {
+        this.props.setWelcome(true);
+      });
   };
 
   componentDidMount() {

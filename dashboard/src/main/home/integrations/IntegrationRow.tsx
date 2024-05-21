@@ -1,10 +1,15 @@
+import React, {
+  Component,
+  type MouseEvent,
+  type MouseEventHandler,
+} from "react";
 import styled from "styled-components";
-import React, { Component, type MouseEvent, type MouseEventHandler } from "react";
 
 import ImageList from "components/image-selector/ImageList";
 import RepoList from "components/repo-selector/RepoList";
-import { type ActionConfigType } from "shared/types";
+
 import { integrationList } from "shared/common";
+import { type ActionConfigType } from "shared/types";
 
 import CreateIntegrationForm from "./create-integration/CreateIntegrationForm";
 
@@ -45,15 +50,18 @@ export default class IntegrationRow extends Component<PropsType, StateType> {
   };
 
   render = () => {
-    const icon =
-      integrationList[this.props.integration]?.icon;
-    const subtitle =
-      integrationList[this.props.integration]?.label;
+    const icon = integrationList[this.props.integration]?.icon;
+    const subtitle = integrationList[this.props.integration]?.label;
     return (
       <Integration disabled={false}>
         <MainRow onClick={this.props.toggleCollapse} disabled={false}>
           <Flex>
-            <Icon src={icon || "https://avatars2.githubusercontent.com/u/52505464?s=400&u=da920f994c67665c7ad6c606a5286557d4f8555f&v=4"} />
+            <Icon
+              src={
+                icon ||
+                "https://avatars2.githubusercontent.com/u/52505464?s=400&u=da920f994c67665c7ad6c606a5286557d4f8555f&v=4"
+              }
+            />
             <Description>
               <Label>{this.props.label}</Label>
               <Subtitle>{subtitle}</Subtitle>
@@ -131,7 +139,7 @@ const Integration = styled.div`
     props.disabled ? "not-allowed" : "pointer"};
   margin-bottom: 15px;
   border-radius: 5px;
-  background: ${props => props.theme.clickable.bg};
+  background: ${(props) => props.theme.clickable.bg};
   border: 1px solid #494b4f;
   :hover {
     border: 1px solid #7a7b80;

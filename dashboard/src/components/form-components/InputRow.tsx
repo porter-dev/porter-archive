@@ -1,4 +1,4 @@
-import React, { type ChangeEvent, Component } from "react";
+import React, { Component, type ChangeEvent } from "react";
 import Tooltip from "@material-ui/core/Tooltip";
 import styled from "styled-components";
 
@@ -69,7 +69,9 @@ export default class InputRow extends Component<PropsType, StateType> {
         <InputWrapper hasError={this.props.hasError} width={width}>
           <Input
             readOnly={this.state.readOnly}
-            onFocus={() => { this.setState({ readOnly: false }); }}
+            onFocus={() => {
+              this.setState({ readOnly: false });
+            }}
             disabled={this.props.disabled}
             placeholder={placeholder}
             width={width}
@@ -120,7 +122,7 @@ const Input = styled.input<{ disabled: boolean; width: string }>`
   outline: none;
   border: none;
   font-size: 13px;
-  background: ${props => props.theme.fg};
+  background: ${(props) => props.theme.fg};
   cursor: ${(props) => (props.disabled ? "not-allowed" : "")};
   width: ${(props) => (props.width ? props.width : "100%")};
   color: ${(props) => (props.disabled ? "#ffffff44" : "white")};

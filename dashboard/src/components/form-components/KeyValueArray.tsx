@@ -1,13 +1,15 @@
 import React, { Component } from "react";
 import styled from "styled-components";
-import Modal from "../../main/home/modals/Modal";
-import LoadEnvGroupModal from "../../main/home/modals/LoadEnvGroupModal";
-import EnvEditorModal from "../../main/home/modals/EnvEditorModal";
-import { dotenv_parse } from "shared/string_utils";
 
+import { MultiLineInput } from "components/porter-form/field-components/KeyValueArray";
+
+import { dotenv_parse } from "shared/string_utils";
 import sliders from "assets/sliders.svg";
 import upload from "assets/upload.svg";
-import { MultiLineInput } from "components/porter-form/field-components/KeyValueArray";
+
+import EnvEditorModal from "../../main/home/modals/EnvEditorModal";
+import LoadEnvGroupModal from "../../main/home/modals/LoadEnvGroupModal";
+import Modal from "../../main/home/modals/Modal";
 
 export type KeyValue = {
   key: string;
@@ -179,7 +181,9 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
     if (this.state.showEnvModal) {
       return (
         <Modal
-          onRequestClose={() => { this.setState({ showEnvModal: false }); }}
+          onRequestClose={() => {
+            this.setState({ showEnvModal: false });
+          }}
           width="765px"
           height="542px"
         >
@@ -187,7 +191,9 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
             existingValues={this.props.values}
             namespace={this.props.externalValues?.namespace}
             clusterId={this.props.externalValues?.clusterId}
-            closeModal={() => { this.setState({ showEnvModal: false }); }}
+            closeModal={() => {
+              this.setState({ showEnvModal: false });
+            }}
             setValues={(values) => {
               const newValues = { ...this.props.values, ...values };
               this.props.setValues(newValues);
@@ -204,13 +210,19 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
     if (this.state.showEditorModal) {
       return (
         <Modal
-          onRequestClose={() => { this.setState({ showEditorModal: false }); }}
+          onRequestClose={() => {
+            this.setState({ showEditorModal: false });
+          }}
           width="60%"
           height="80%"
         >
           <EnvEditorModal
-            closeModal={() => { this.setState({ showEditorModal: false }); }}
-            setEnvVariables={(envFile: string) => { this.readFile(envFile); }}
+            closeModal={() => {
+              this.setState({ showEditorModal: false });
+            }}
+            setEnvVariables={(envFile: string) => {
+              this.readFile(envFile);
+            }}
           />
         </Modal>
       );
@@ -262,9 +274,9 @@ export default class KeyValueArray extends Component<PropsType, StateType> {
               <Spacer />
               {this.props.externalValues?.namespace && this.props.envLoader && (
                 <LoadButton
-                  onClick={() =>
-                    { this.setState({ showEnvModal: !this.state.showEnvModal }); }
-                  }
+                  onClick={() => {
+                    this.setState({ showEnvModal: !this.state.showEnvModal });
+                  }}
                 >
                   <img src={sliders} /> Load from Env Group
                 </LoadButton>

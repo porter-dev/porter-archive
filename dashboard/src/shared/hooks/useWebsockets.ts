@@ -5,11 +5,11 @@ export type NewWebsocketOptions = {
   onmessage?: (evt: MessageEvent) => void;
   onerror?: (err: ErrorEvent) => void;
   onclose?: (ev: CloseEvent) => void;
-}
+};
 
 type WebsocketConfig = {
   url: string;
-} & NewWebsocketOptions
+} & NewWebsocketOptions;
 
 type WebsocketConfigMap = Record<string, WebsocketConfig>;
 
@@ -45,7 +45,7 @@ export const useWebsockets = () => {
 
     const url = `${protocol}://${window.location.host}${apiEndpoint}`;
 
-    const mockFunction = () => { };
+    const mockFunction = () => {};
 
     const wsConfig: WebsocketConfig = {
       url,

@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 
 import { Context } from "shared/Context";
+
 import ClusterPlaceholder from "./ClusterPlaceholder";
 
 type PropsType = {};

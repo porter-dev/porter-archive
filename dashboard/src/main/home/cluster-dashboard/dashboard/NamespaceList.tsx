@@ -1,12 +1,13 @@
 import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
-import styled from "styled-components";
-import { Context } from "shared/Context";
-import { type ClusterType, type ProjectType } from "shared/types";
-import { pushFiltered } from "shared/routing";
 import { useHistory, useLocation } from "react-router";
-import useAuth from "shared/auth/useAuth";
+import styled from "styled-components";
 
 import OptionsDropdown from "components/OptionsDropdown";
+
+import useAuth from "shared/auth/useAuth";
+import { Context } from "shared/Context";
+import { pushFiltered } from "shared/routing";
+import { type ClusterType, type ProjectType } from "shared/types";
 
 const useWebsocket = (
   currentProject: ProjectType,
@@ -37,12 +38,8 @@ const useWebsocket = (
 };
 
 export const NamespaceList: React.FunctionComponent = () => {
-  const {
-    currentCluster,
-    currentProject,
-    setCurrentModal,
-    setCurrentError,
-  } = useContext(Context);
+  const { currentCluster, currentProject, setCurrentModal, setCurrentError } =
+    useContext(Context);
   const location = useLocation();
   const history = useHistory();
   const [namespaces, setNamespaces] = useState([]);
@@ -120,14 +117,14 @@ export const NamespaceList: React.FunctionComponent = () => {
       <ControlRow>
         {isAuthorized("namespace", "", ["get", "create"]) && (
           <Button
-            onClick={() =>
-              { setCurrentModal(
+            onClick={() => {
+              setCurrentModal(
                 "NamespaceModal",
                 namespaces.map((namespace) => ({
                   value: namespace.metadata.name,
                 }))
-              ); }
-            }
+              );
+            }}
           >
             <i className="material-icons">add</i> Add namespace
           </Button>
@@ -138,12 +135,12 @@ export const NamespaceList: React.FunctionComponent = () => {
           return (
             <StyledCard
               key={namespace?.metadata?.name}
-              onClick={() =>
-                { pushFiltered({ location, history }, `/applications`, [], {
+              onClick={() => {
+                pushFiltered({ location, history }, `/applications`, [], {
                   cluster: currentCluster.name,
                   namespace: namespace.metadata.name,
-                }); }
-              }
+                });
+              }}
             >
               <ContentContainer>
                 <Title>{namespace?.metadata?.name}</Title>
@@ -159,7 +156,11 @@ export const NamespaceList: React.FunctionComponent = () => {
                     expandIcon="more_vert"
                     shrinkIcon="more_vert"
                   >
-                    <OptionsDropdown.Option onClick={() => { onDelete(namespace); }}>
+                    <OptionsDropdown.Option
+                      onClick={() => {
+                        onDelete(namespace);
+                      }}
+                    >
                       <i className="material-icons-outlined">delete</i>
                       <span>Delete</span>
                     </OptionsDropdown.Option>
@@ -300,7 +301,7 @@ const StyledCard = styled.div`
     }
   }
   border-radius: 5px;
-  background: ${props => props.theme.fg};
+  background: ${(props) => props.theme.fg};
   border: 1px solid #494b4f;
   :hover {
     border: 1px solid #7a7b80;

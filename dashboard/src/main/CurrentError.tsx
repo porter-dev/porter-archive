@@ -1,8 +1,8 @@
 import React, { Component } from "react";
 import styled from "styled-components";
-import close from "assets/close.png";
 
 import { Context } from "shared/Context";
+import close from "assets/close.png";
 
 type PropsType = {
   currentError: any;
@@ -37,12 +37,22 @@ export default class CurrentError extends Component<PropsType, StateType> {
       currentError = String(currentError);
     }
 
-    if (currentError && currentError !== "" && currentError !== "{}" && currentError !== undefined && currentError.length > 3) {
+    if (
+      currentError &&
+      currentError !== "" &&
+      currentError !== "{}" &&
+      currentError !== undefined &&
+      currentError.length > 3
+    ) {
       if (!this.state.expanded) {
         return (
           <StyledCurrentError>
             <ErrorText>Error: {currentError}</ErrorText>
-            <ExpandButton onClick={() => { this.setState({ expanded: true }); }}>
+            <ExpandButton
+              onClick={() => {
+                this.setState({ expanded: true });
+              }}
+            >
               <i className="material-icons">launch</i>
             </ExpandButton>
             <CloseButton
@@ -65,7 +75,11 @@ export default class CurrentError extends Component<PropsType, StateType> {
           <ExpandedError>
             Porter encountered an error. Full error log:
             <CodeBlock>{currentError}</CodeBlock>
-            <ExpandButtonAlt onClick={() => { this.setState({ expanded: false }); }}>
+            <ExpandButtonAlt
+              onClick={() => {
+                this.setState({ expanded: false });
+              }}
+            >
               <i className="material-icons">remove</i>
             </ExpandButtonAlt>
             <CloseButtonAlt

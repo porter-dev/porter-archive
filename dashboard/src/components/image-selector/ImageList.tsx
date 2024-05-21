@@ -11,29 +11,29 @@ import TagList from "./TagList";
 
 type PropsType =
   | {
-    selectedImageUrl: string | null;
-    selectedTag: string | null;
-    clickedImage: ImageType | null;
-    registry?: any;
-    noTagSelection?: boolean;
-    setSelectedImageUrl: (x: string) => void;
-    setSelectedTag: (x: string) => void;
-    setClickedImage: (x: ImageType) => void;
-    disableImageSelect?: boolean;
-    readOnly?: boolean;
-  }
+      selectedImageUrl: string | null;
+      selectedTag: string | null;
+      clickedImage: ImageType | null;
+      registry?: any;
+      noTagSelection?: boolean;
+      setSelectedImageUrl: (x: string) => void;
+      setSelectedTag: (x: string) => void;
+      setClickedImage: (x: ImageType) => void;
+      disableImageSelect?: boolean;
+      readOnly?: boolean;
+    }
   | {
-    selectedImageUrl: string | null;
-    selectedTag: string | null;
-    clickedImage: ImageType | null;
-    registry?: any;
-    noTagSelection?: boolean;
-    setSelectedImageUrl?: (x: string) => void;
-    setSelectedTag?: (x: string) => void;
-    setClickedImage?: (x: ImageType) => void;
-    disableImageSelect?: boolean;
-    readOnly: true;
-  };
+      selectedImageUrl: string | null;
+      selectedTag: string | null;
+      clickedImage: ImageType | null;
+      registry?: any;
+      noTagSelection?: boolean;
+      setSelectedImageUrl?: (x: string) => void;
+      setSelectedTag?: (x: string) => void;
+      setClickedImage?: (x: ImageType) => void;
+      disableImageSelect?: boolean;
+      readOnly: true;
+    };
 
 type StateType = {
   loading: boolean;
@@ -165,12 +165,12 @@ export default class ImageList extends Component<PropsType, StateType> {
             error: false,
           });
         })
-        .catch((err) =>
-          { this.setState({
+        .catch((err) => {
+          this.setState({
             loading: false,
             error: true,
-          }); }
-        );
+          });
+        });
     }
   }
 
@@ -190,8 +190,7 @@ export default class ImageList extends Component<PropsType, StateType> {
     }
 
     return images.map((image: ImageType, i: number) => {
-      let icon =
-        integrationList[image.kind]?.icon;
+      let icon = integrationList[image.kind]?.icon;
       if (!icon) {
         icon = integrationList.dockerhub.icon;
       }
@@ -213,7 +212,8 @@ export default class ImageList extends Component<PropsType, StateType> {
   };
 
   renderBackButton = () => {
-    const { setSelectedImageUrl, clickedImage, disableImageSelect } = this.props;
+    const { setSelectedImageUrl, clickedImage, disableImageSelect } =
+      this.props;
     if (clickedImage && !disableImageSelect) {
       return (
         <BackButton

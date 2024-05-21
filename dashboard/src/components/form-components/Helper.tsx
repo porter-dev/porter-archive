@@ -2,7 +2,7 @@ import React from "react";
 import styled from "styled-components";
 
 export const Helper = styled.div<{ color?: string }>`
-  color: ${({ color }) => (color || "#aaaabb")};
+  color: ${({ color }) => color || "#aaaabb"};
   line-height: 1.6em;
   font-size: 13px;
   margin-bottom: 20px;

@@ -1,7 +1,8 @@
 import React, { useState } from "react";
-import Button from "./Button";
-import styled from "styled-components";
 import dayjs from "dayjs";
+import styled from "styled-components";
+
+import Button from "./Button";
 import SearchBar from "./porter/SearchBar";
 
 type Props = {
@@ -9,7 +10,7 @@ type Props = {
   setSearchText: (x: string) => void;
   setEnteredSearchText: (x: string) => void;
   setSelectedDate: () => void;
-}
+};
 
 const escapeExp = (str: string) => {
   // regex special character need to be escaped twice

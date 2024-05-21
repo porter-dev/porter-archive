@@ -1,13 +1,12 @@
 import React, { Component } from "react";
+import _ from "lodash";
+import { Link } from "react-router-dom";
 import styled from "styled-components";
-
-import sliders from "assets/sliders.svg";
-import doppler from "assets/doppler.png";
 
 import { Context } from "shared/Context";
 import { readableDate } from "shared/string_utils";
-import { Link } from "react-router-dom";
-import _ from "lodash";
+import doppler from "assets/doppler.png";
+import sliders from "assets/sliders.svg";
 
 export type EnvGroupData = {
   name: string;
@@ -35,7 +34,9 @@ export default class EnvGroup extends Component<PropsType, StateType> {
     const name = envGroup?.name;
     const timestamp = envGroup?.created_at;
     const namespace = envGroup?.namespace;
-    const version = this.context?.currentProject.simplified_view_enabled ? envGroup?.latest_version : envGroup?.version ;
+    const version = this.context?.currentProject.simplified_view_enabled
+      ? envGroup?.latest_version
+      : envGroup?.version;
 
     return (
       <Link to={`/env-groups/${name}${window.location.search}`} target="_self">
@@ -54,10 +55,16 @@ export default class EnvGroup extends Component<PropsType, StateType> {
               </LastDeployed>
             </InfoWrapper>
 
-            {!this.context?.currentProject.simplified_view_enabled && <TagWrapper>
-              Namespace
-              <NamespaceTag>{namespace.startsWith("porter-stack-") ? namespace.replace("porter-stack-", "") : namespace}</NamespaceTag>
-            </TagWrapper>}
+            {!this.context?.currentProject.simplified_view_enabled && (
+              <TagWrapper>
+                Namespace
+                <NamespaceTag>
+                  {namespace.startsWith("porter-stack-")
+                    ? namespace.replace("porter-stack-", "")
+                    : namespace}
+                </NamespaceTag>
+              </TagWrapper>
+            )}
           </BottomWrapper>
 
           <Version>v{version}</Version>
@@ -203,7 +210,7 @@ const StyledEnvGroup = styled.div`
   width: calc(100% + 2px);
   height: calc(100% + 2px);
   border-radius: 5px;
-  background: ${props => props.theme.clickable.bg};
+  background: ${(props) => props.theme.clickable.bg};
   border: 1px solid #494b4f;
   :hover {
     border: 1px solid #7a7b80;

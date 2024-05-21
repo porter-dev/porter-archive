@@ -1,12 +1,11 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 
-import folder from "assets/folder-outline.svg";
-
-import { Context } from "shared/Context";
-import api from "shared/api";
-
 import RadioFilter from "components/RadioFilter";
+
+import api from "shared/api";
+import { Context } from "shared/Context";
+import folder from "assets/folder-outline.svg";
 
 type Props = {
   setNamespace: (x: string) => void;
@@ -79,7 +78,10 @@ export const NamespaceSelector: React.FunctionComponent<Props> = ({
             setDefaultNamespace("default");
           }
           availableNamespaces.forEach((x: { name: string }, i: number) => {
-            if (currentProject?.capi_provisioner_enabled && x.name.startsWith("porter-stack-")) {
+            if (
+              currentProject?.capi_provisioner_enabled &&
+              x.name.startsWith("porter-stack-")
+            ) {
               namespaceOptions.push({
                 label: x.name.replace("porter-stack-", ""),
                 value: x.name,

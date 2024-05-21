@@ -1,8 +1,9 @@
-import { type SourceOptions } from "lib/porter-apps";
 import React from "react";
 import styled from "styled-components";
 
-type SourceType = SourceOptions['type']
+import { type SourceOptions } from "lib/porter-apps";
+
+type SourceType = SourceOptions["type"];
 
 type SourceSelectorProps = {
   selectedSourceType: SourceType | undefined;

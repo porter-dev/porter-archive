@@ -1,21 +1,21 @@
 import React, { Component, useContext, useEffect, useState } from "react";
+import { useHistory, useLocation } from "react-router";
 import styled from "styled-components";
 
-import close from "assets/close.png";
-import { isAlphanumeric } from "shared/common";
-import api from "shared/api";
-import { Context } from "shared/Context";
-import { type InfraType } from "shared/types";
-import { pushFiltered } from "shared/routing";
-
-import SelectRow from "components/form-components/SelectRow";
-import InputRow from "components/form-components/InputRow";
-import CheckboxRow from "components/form-components/CheckboxRow";
-import Helper from "components/form-components/Helper";
-import Heading from "components/form-components/Heading";
-import SaveButton from "components/SaveButton";
 import CheckboxList from "components/form-components/CheckboxList";
-import { useHistory, useLocation } from "react-router";
+import CheckboxRow from "components/form-components/CheckboxRow";
+import Heading from "components/form-components/Heading";
+import Helper from "components/form-components/Helper";
+import InputRow from "components/form-components/InputRow";
+import SelectRow from "components/form-components/SelectRow";
+import SaveButton from "components/SaveButton";
+
+import api from "shared/api";
+import { isAlphanumeric } from "shared/common";
+import { Context } from "shared/Context";
+import { pushFiltered } from "shared/routing";
+import { type InfraType } from "shared/types";
+import close from "assets/close.png";
 
 type PropsType = {
   setSelectedProvisioner: (x: string | null) => void;
@@ -266,7 +266,8 @@ const AWSFormSectionFC: React.FC<PropsType> = (props) => {
       .filter(filterNonAWSInfras)
       .map(async (infra) => {
         if (infra.value === "ecr") {
-          await provisionECR(awsIntegrationId?.id); return;
+          await provisionECR(awsIntegrationId?.id);
+          return;
         }
         await provisionEKS(awsIntegrationId?.id);
       });
@@ -330,12 +331,20 @@ const AWSFormSectionFC: React.FC<PropsType> = (props) => {
   return (
     <StyledAWSFormSection>
       <FormSection>
-        <CloseButton onClick={() => { props.setSelectedProvisioner(null); }}>
+        <CloseButton
+          onClick={() => {
+            props.setSelectedProvisioner(null);
+          }}
+        >
           <CloseButtonImg src={close} />
         </CloseButton>
         <Heading isAtTop={true}>
           AWS Credentials
-          <GuideButton onClick={() => { goToGuide(); }}>
+          <GuideButton
+            onClick={() => {
+              goToGuide();
+            }}
+          >
             <i className="material-icons-outlined">help</i>
             Guide
           </GuideButton>

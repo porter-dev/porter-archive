@@ -6,7 +6,7 @@ type Props = {
   children: React.ReactNode;
   onClick: () => void;
   className?: string;
-}
+};
 
 const Button: React.FC<Props> = ({
   children,

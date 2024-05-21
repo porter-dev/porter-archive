@@ -1,11 +1,13 @@
 import React, { Component, type MouseEvent } from "react";
 import styled from "styled-components";
 
-import { Context } from "shared/Context";
-import { integrationList } from "shared/common";
-import IntegrationRow from "./IntegrationRow";
 import ConfirmOverlay from "components/ConfirmOverlay";
+
 import api from "shared/api";
+import { integrationList } from "shared/common";
+import { Context } from "shared/Context";
+
+import IntegrationRow from "./IntegrationRow";
 
 type PropsType = {
   setCurrent?: (x: string) => void;
@@ -95,8 +97,9 @@ export default class IntegrationList extends Component<PropsType, StateType> {
     }
   };
 
-  handleParent = (event: any, integration: string) =>
-    { this.props.setCurrent && this.props.setCurrent(integration); };
+  handleParent = (event: any, integration: string) => {
+    this.props.setCurrent && this.props.setCurrent(integration);
+  };
 
   renderContents = () => {
     const { integrations, titles, setCurrent, isCategory } = this.props;
@@ -115,24 +118,26 @@ export default class IntegrationList extends Component<PropsType, StateType> {
             key={i}
             itemId={this.props.itemIdentifier[i]}
             label={label}
-            toggleCollapse={(e: MouseEvent) => { this.toggleDisplay(e, i); }}
-            triggerDelete={(e: MouseEvent) => { this.triggerDelete(e, i, item_id); }}
+            toggleCollapse={(e: MouseEvent) => {
+              this.toggleDisplay(e, i);
+            }}
+            triggerDelete={(e: MouseEvent) => {
+              this.triggerDelete(e, i, item_id);
+            }}
           />
         );
       });
     } else if (integrations && integrations.length > 0) {
       return integrations.map((integration: string, i: number) => {
-        const icon =
-          integrationList[integration]?.icon;
-        const label =
-          integrationList[integration]?.label;
+        const icon = integrationList[integration]?.icon;
+        const label = integrationList[integration]?.label;
         const disabled = integration === "kubernetes";
         return (
           <Integration
             key={i}
-            onClick={() =>
-              { disabled ? null : setCurrent && setCurrent(integration); }
-            }
+            onClick={() => {
+              disabled ? null : setCurrent && setCurrent(integration);
+            }}
             disabled={disabled}
           >
             <MainRow disabled={disabled}>
@@ -153,9 +158,9 @@ export default class IntegrationList extends Component<PropsType, StateType> {
 
   collapseAllButton = () => (
     <Button
-      onClick={() =>
-        { this.allCollapsed() ? this.expandAll() : this.collapseAll(); }
-      }
+      onClick={() => {
+        this.allCollapsed() ? this.expandAll() : this.collapseAll();
+      }}
     >
       {this.allCollapsed() ? (
         <>
@@ -180,7 +185,9 @@ export default class IntegrationList extends Component<PropsType, StateType> {
               : "Github integration"
           } with name ${this.state.deleteName}?`}
           onYes={this.handleDeleteIntegration}
-          onNo={() => { this.setState({ isDelete: false }); }}
+          onNo={() => {
+            this.setState({ isDelete: false });
+          }}
         />
         {this.renderContents()}
       </StyledIntegrationList>
@@ -231,7 +238,7 @@ const Integration = styled.div`
     props.disabled ? "not-allowed" : "pointer"};
   margin-bottom: 20px;
   border-radius: 5px;
-  background: ${props => props.theme.clickable.bg};
+  background: ${(props) => props.theme.clickable.bg};
   border: 1px solid #494b4f;
   :hover {
     border: 1px solid #7a7b80;

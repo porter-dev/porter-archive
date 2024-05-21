@@ -2,8 +2,8 @@ import React from "react";
 import styled from "styled-components";
 
 import RadioFilter from "components/RadioFilter";
-import { JobStatusType } from "shared/types";
 
+import { JobStatusType } from "shared/types";
 import last_run from "assets/last-run.svg";
 
 type PropsType = {

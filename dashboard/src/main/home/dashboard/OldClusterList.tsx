@@ -1,16 +1,16 @@
 import React, { Component } from "react";
+import { withRouter, type RouteComponentProps } from "react-router";
 import styled from "styled-components";
 
-import { Context } from "shared/Context";
-import api from "shared/api";
-import { type ClusterType, type DetailedClusterType } from "shared/types";
+import Heading from "components/form-components/Heading";
 import Helper from "components/form-components/Helper";
-import { pushFiltered } from "shared/routing";
 
-import { type RouteComponentProps, withRouter } from "react-router";
+import api from "shared/api";
+import { Context } from "shared/Context";
+import { pushFiltered } from "shared/routing";
+import { type ClusterType, type DetailedClusterType } from "shared/types";
 
 import Modal from "../modals/Modal";
-import Heading from "components/form-components/Heading";
 
 type PropsType = RouteComponentProps & {
   currentCluster: ClusterType;
@@ -155,7 +155,9 @@ class Templates extends Component<PropsType, StateType> {
       <>
         {clusterError && (
           <Modal
-            onRequestClose={() => { this.setState({ showErrorModal: undefined }); }}
+            onRequestClose={() => {
+              this.setState({ showErrorModal: undefined });
+            }}
             width="665px"
             height="min-content"
           >
@@ -241,7 +243,7 @@ const TemplateBlock = styled.div`
   color: #ffffff;
   position: relative;
   border-radius: 5px;
-  background: ${props => props.theme.clickable.bg};
+  background: ${(props) => props.theme.clickable.bg};
   border: 1px solid #494b4f;
   :hover {
     border: 1px solid #7a7b80;

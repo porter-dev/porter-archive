@@ -20,7 +20,7 @@ export default function Heading(props: {
 
 const StyledHeading = styled.div<{ isAtTop: boolean }>`
   color: white;
-  margin-top: ${props => props.isAtTop ? "" : "40px"};
+  margin-top: ${(props) => (props.isAtTop ? "" : "40px")};
   font-size: 16px;
   margin-bottom: 5px;
   display: flex;

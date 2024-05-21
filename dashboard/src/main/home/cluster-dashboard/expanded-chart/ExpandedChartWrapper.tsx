@@ -1,19 +1,21 @@
 import React, { Component } from "react";
+import { withRouter, type RouteComponentProps } from "react-router";
 import styled from "styled-components";
-import { Context } from "shared/Context";
-import { type RouteComponentProps, withRouter } from "react-router";
 
-import {
-  type ChartType,
-  type ChartTypeWithExtendedConfig,
-  StorageType,
-} from "shared/types";
-import api from "shared/api";
-import { pushFiltered } from "shared/routing";
-import ExpandedJobChart from "./ExpandedJobChart";
-import ExpandedChart from "./ExpandedChart";
 import Loading from "components/Loading";
 import PageNotFound from "components/PageNotFound";
+
+import api from "shared/api";
+import { Context } from "shared/Context";
+import { pushFiltered } from "shared/routing";
+import {
+  StorageType,
+  type ChartType,
+  type ChartTypeWithExtendedConfig,
+} from "shared/types";
+
+import ExpandedChart from "./ExpandedChart";
+import ExpandedJobChart from "./ExpandedJobChart";
 
 type PropsType = RouteComponentProps<{
   baseRoute: string;
@@ -73,7 +75,6 @@ class ExpandedChartWrapper extends Component<PropsType, StateType> {
               "project_id",
               "closeChartRedirectUrl",
             ]);
-            
           }
         })
         .catch((err) => {

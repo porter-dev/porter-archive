@@ -1,8 +1,10 @@
-import api from "shared/api";
 import { proxy } from "valtio";
+
+import api from "shared/api";
+
 import { type CompressedOnboardingState, type Onboarding } from "../types";
 import { StateHandler } from "./StateHandler";
-import { type Action, StepHandler } from "./StepHandler";
+import { StepHandler, type Action } from "./StepHandler";
 
 export const OFState = proxy({
   StateHandler,
@@ -44,10 +46,13 @@ export const OFState = proxy({
             },
             { project_id: OFState.StateHandler?.project?.id }
           )
-          .then((res) => { console.log(res); })
-          .catch((err) => { console.log(err); });
+          .then((res) => {
+            console.log(res);
+          })
+          .catch((err) => {
+            console.log(err);
+          });
       }
-
     },
     restoreState: (state: any) => {
       const prevState = decompressState(state);

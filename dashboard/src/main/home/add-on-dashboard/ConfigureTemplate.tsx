@@ -1,25 +1,26 @@
-import React, { useEffect, useState, useContext, useMemo } from "react";
-import styled from "styled-components";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import _ from "lodash";
+import { generateSlug } from "random-word-slugs";
+import { withRouter, type RouteComponentProps } from "react-router";
+import styled from "styled-components";
 
-import { hardcodedNames, hardcodedIcons } from "shared/hardcodedNameDict";
-import { Context } from "shared/Context";
+import Placeholder from "components/Placeholder";
+import PorterFormWrapper from "components/porter-form/PorterFormWrapper";
+import Back from "components/porter/Back";
+import Button from "components/porter/Button";
+import Error from "components/porter/Error";
+import Input from "components/porter/Input";
+import Link from "components/porter/Link";
+import Spacer from "components/porter/Spacer";
+import Text from "components/porter/Text";
+import VerticalSteps from "components/porter/VerticalSteps";
+
 import api from "shared/api";
+import { Context } from "shared/Context";
+import { hardcodedIcons, hardcodedNames } from "shared/hardcodedNameDict";
 import { pushFiltered } from "shared/routing";
 
-import Back from "components/porter/Back";
 import DashboardHeader from "../cluster-dashboard/DashboardHeader";
-import Link from "components/porter/Link";
-import Text from "components/porter/Text";
-import Spacer from "components/porter/Spacer";
-import Input from "components/porter/Input";
-import VerticalSteps from "components/porter/VerticalSteps";
-import PorterFormWrapper from "components/porter-form/PorterFormWrapper";
-import Placeholder from "components/Placeholder";
-import Button from "components/porter/Button";
-import { generateSlug } from "random-word-slugs";
-import { type RouteComponentProps, withRouter } from "react-router";
-import Error from "components/porter/Error";
 
 type Props = RouteComponentProps & {
   currentTemplate: any;
@@ -41,17 +42,18 @@ const ConfigureTemplate: React.FC<Props> = ({
 
   const waitForHelmRelease = () => {
     setTimeout(() => {
-      api.getChart(
-        "<token>",
-        {},
-        {
-          id: currentProject.id,
-          namespace: "default",
-          cluster_id: currentCluster.id,
-          name,
-          revision: 0,
-        }
-      )
+      api
+        .getChart(
+          "<token>",
+          {},
+          {
+            id: currentProject.id,
+            namespace: "default",
+            cluster_id: currentCluster.id,
+            name,
+            revision: 0,
+          }
+        )
         .then((res) => {
           if (res?.data?.version) {
             setButtonStatus("success");
@@ -70,7 +72,7 @@ const ConfigureTemplate: React.FC<Props> = ({
 
   const deployAddOn = async (wildcard?: any) => {
     setButtonStatus("loading");
-    
+
     const values: any = {};
     for (const key in wildcard) {
       _.set(values, key, wildcard[key]);
@@ -88,7 +90,9 @@ const ConfigureTemplate: React.FC<Props> = ({
           id: currentProject.id,
           cluster_id: currentCluster.id,
           namespace: "default",
-          repo_url: currentTemplate?.repo_url || capabilities.default_addon_helm_repo_url,
+          repo_url:
+            currentTemplate?.repo_url ||
+            capabilities.default_addon_helm_repo_url,
         }
       )
       .then((_) => {
@@ -109,7 +113,6 @@ const ConfigureTemplate: React.FC<Props> = ({
           values,
           error: err,
         });
-        
       });
   };
 
@@ -120,12 +123,10 @@ const ConfigureTemplate: React.FC<Props> = ({
     if (buttonStatus === "loading" || buttonStatus === "success") {
       return buttonStatus;
     } else {
-      return (
-        <Error message={buttonStatus} />
-      );
+      return <Error message={buttonStatus} />;
     }
   };
-  
+
   const renderAddOnSettings = () => {
     if (currentForm) {
       return (
@@ -157,16 +158,12 @@ const ConfigureTemplate: React.FC<Props> = ({
             </div>
           </Placeholder>
           <Spacer y={1.2} />
-          <Button
-            width="150px"
-            onClick={deployAddOn}
-            status={getStatus()}
-          >
+          <Button width="150px" onClick={deployAddOn} status={getStatus()}>
             Deploy application
           </Button>
         </>
       );
-    };
+    }
   };
 
   return (
@@ -176,11 +173,15 @@ const ConfigureTemplate: React.FC<Props> = ({
           <Back onClick={goBack} />
           <DashboardHeader
             prefix={
-              <Icon 
-                src={hardcodedIcons[currentTemplate.name] || currentTemplate.icon}
+              <Icon
+                src={
+                  hardcodedIcons[currentTemplate.name] || currentTemplate.icon
+                }
               />
             }
-            title={`Configure new "${hardcodedNames[currentTemplate.name] || currentTemplate.name}" instance`}
+            title={`Configure new "${
+              hardcodedNames[currentTemplate.name] || currentTemplate.name
+            }" instance`}
             capitalize={false}
             disableLineBreak
           />
@@ -212,12 +213,10 @@ const ConfigureTemplate: React.FC<Props> = ({
               <>
                 <Text size={16}>Add-on settings</Text>
                 <Spacer y={0.5} />
-                <Text color="helper">
-                Configure settings for this add-on.
-                </Text>
+                <Text color="helper">Configure settings for this add-on.</Text>
                 <Spacer height="20px" />
                 {renderAddOnSettings()}
-              </>
+              </>,
             ]}
           />
           <Spacer height="80px" />

@@ -1,7 +1,7 @@
-import { Steps } from "main/home/onboarding/types";
 import React, { Fragment, useState } from "react";
-
 import styled from "styled-components";
+
+import { Steps } from "main/home/onboarding/types";
 
 type Props = {
   currentStep: string;
@@ -17,7 +17,9 @@ const Breadcrumb: React.FC<Props> = ({ currentStep, steps, onClickStep }) => {
           <Fragment key={i}>
             <Crumb
               bold={currentStep === step.value}
-              onClick={() => { onClickStep && onClickStep(step.value); }}
+              onClick={() => {
+                onClickStep && onClickStep(step.value);
+              }}
             >
               {step.label}
             </Crumb>

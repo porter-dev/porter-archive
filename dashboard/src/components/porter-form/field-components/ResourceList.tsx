@@ -1,22 +1,21 @@
-import React, { useEffect, useContext, useState } from "react";
-import { type ResourceListField } from "../types";
+import React, { useContext, useEffect, useState } from "react";
+import styled from "styled-components";
+
+import { PorterFormContext } from "components/porter-form/PorterFormContextProvider";
+
 import { Context } from "shared/Context";
 import { useWebsockets } from "shared/hooks/useWebsockets";
+
 import ExpandableResource from "../../ExpandableResource";
-import { PorterFormContext } from "components/porter-form/PorterFormContextProvider";
-import styled from "styled-components";
+import { type ResourceListField } from "../types";
 
 const ResourceList: React.FC<ResourceListField> = (props) => {
   const { currentCluster, currentProject } = useContext(Context);
   const { formState } = useContext(PorterFormContext);
   const [resourceList, updateResourceList] = useState<any[]>(props.value);
 
-  const {
-    newWebsocket,
-    openWebsocket,
-    closeAllWebsockets,
-    closeWebsocket,
-  } = useWebsockets();
+  const { newWebsocket, openWebsocket, closeAllWebsockets, closeWebsocket } =
+    useWebsockets();
 
   const sortAndUpdateResources = (list: any[]) => {
     list.sort((a, b) => {
@@ -31,7 +30,7 @@ const ResourceList: React.FC<ResourceListField> = (props) => {
       !formState?.variables?.currentChart?.name ||
       !formState?.variables?.namespace
     ) {
-      return () => { };
+      return () => {};
     }
 
     const { group, version, resource } = props.context.config;
@@ -50,24 +49,25 @@ const ResourceList: React.FC<ResourceListField> = (props) => {
           // attempt to find a corresponding name and label in the current array
           let foundMatch = false;
 
-          Array.isArray(resourceList) && resourceList?.forEach((resource, index) => {
-            if (resource.name == name && resource.label == label) {
-              foundMatch = true;
+          Array.isArray(resourceList) &&
+            resourceList?.forEach((resource, index) => {
+              if (resource.name == name && resource.label == label) {
+                foundMatch = true;
 
-              switch (kind) {
-                case "update":
-                case "create":
-                  // replace this resource in the list
-                  resourceList[index] = data[key][0];
-                  break;
-                case "delete":
-                  // remove this resource from the list
-                  resourceList.splice(index, 1);
-                  break;
-                default:
+                switch (kind) {
+                  case "update":
+                  case "create":
+                    // replace this resource in the list
+                    resourceList[index] = data[key][0];
+                    break;
+                  case "delete":
+                    // remove this resource from the list
+                    resourceList.splice(index, 1);
+                    break;
+                  default:
+                }
               }
-            }
-          });
+            });
 
           if (!foundMatch && kind != "delete") {
             // add this resource to the list
@@ -92,21 +92,20 @@ const ResourceList: React.FC<ResourceListField> = (props) => {
 
   return (
     <ResourceListWrapper>
-      {Array.isArray(resourceList) && resourceList?.map((resource: any, i: number) => {
-        if (resource.data) {
-          return (
-            <ExpandableResource
-              key={i}
-              button={
-                props?.settings?.options?.["resource-button"]
-              }
-              resource={resource}
-              isLast={i === resourceList.length - 1}
-              roundAllCorners={true}
-            />
-          );
-        }
-      })}
+      {Array.isArray(resourceList) &&
+        resourceList?.map((resource: any, i: number) => {
+          if (resource.data) {
+            return (
+              <ExpandableResource
+                key={i}
+                button={props?.settings?.options?.["resource-button"]}
+                resource={resource}
+                isLast={i === resourceList.length - 1}
+                roundAllCorners={true}
+              />
+            );
+          }
+        })}
     </ResourceListWrapper>
   );
 };

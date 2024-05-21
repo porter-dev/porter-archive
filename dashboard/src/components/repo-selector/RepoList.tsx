@@ -1,17 +1,18 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
 import styled from "styled-components";
-import github from "assets/github-white.png";
+
+import DynamicLink from "components/DynamicLink";
+import Text from "components/porter/Text";
 
 import api from "shared/api";
-import { type ActionConfigType, type RepoType } from "shared/types";
 import { Context } from "shared/Context";
+import { useOutsideAlerter } from "shared/hooks/useOutsideAlerter";
+import { type ActionConfigType, type RepoType } from "shared/types";
+import github from "assets/github-white.png";
 
+import { search } from "../../shared/search";
 import Loading from "../Loading";
 import SearchBar from "../SearchBar";
-import DynamicLink from "components/DynamicLink";
-import { useOutsideAlerter } from "shared/hooks/useOutsideAlerter";
-import Text from "components/porter/Text";
-import { search } from "../../shared/search";
 
 type Props = {
   actionConfig: ActionConfigType | null;
@@ -23,15 +24,15 @@ type Props = {
 
 type Provider =
   | {
-    provider: "github";
-    name: string;
-    installation_id: number;
-  }
+      provider: "github";
+      name: string;
+      installation_id: number;
+    }
   | {
-    provider: "gitlab";
-    instance_url: string;
-    integration_id: number;
-  };
+      provider: "gitlab";
+      instance_url: string;
+      integration_id: number;
+    };
 
 // Sort provider by name if it's github or instance url if it's gitlab
 const sortProviders = (providers: Provider[]) => {
@@ -111,7 +112,7 @@ const RepoList: React.FC<Props> = ({
 
       const repos = res.data.map((repo) => ({ ...repo, GHRepoID: repoId }));
       return repos;
-    } catch (error) { }
+    } catch (error) {}
   };
 
   const loadGitlabRepos = async (integrationId: number) => {
@@ -129,7 +130,7 @@ const RepoList: React.FC<Props> = ({
         GitIntegrationId: integrationId,
       }));
       return repos;
-    } catch (error) { }
+    } catch (error) {}
   };
 
   const loadRepos = async (provider: any) => {
@@ -243,20 +244,20 @@ const RepoList: React.FC<Props> = ({
     const results =
       searchFilter != null
         ? repos
-          .filter((repo: RepoType) => {
-            return repo.FullName.toLowerCase().includes(
-              searchFilter.toLowerCase()
-            );
-          })
-          .sort((a: RepoType, b: RepoType) => {
-            const aIndex = a.FullName.toLowerCase().indexOf(
-              searchFilter.toLowerCase()
-            );
-            const bIndex = b.FullName.toLowerCase().indexOf(
-              searchFilter.toLowerCase()
-            );
-            return aIndex - bIndex;
-          })
+            .filter((repo: RepoType) => {
+              return repo.FullName.toLowerCase().includes(
+                searchFilter.toLowerCase()
+              );
+            })
+            .sort((a: RepoType, b: RepoType) => {
+              const aIndex = a.FullName.toLowerCase().indexOf(
+                searchFilter.toLowerCase()
+              );
+              const bIndex = b.FullName.toLowerCase().indexOf(
+                searchFilter.toLowerCase()
+              );
+              return aIndex - bIndex;
+            })
         : repos.slice(0, 10);
 
     if (results.length == 0) {
@@ -271,7 +272,9 @@ const RepoList: React.FC<Props> = ({
             key={i}
             isSelected={repo.FullName === selectedRepo}
             lastItem={i === repos.length - 1}
-            onClick={() => { setRepo(repo); }}
+            onClick={() => {
+              setRepo(repo);
+            }}
             readOnly={readOnly}
             disabled={shouldDisable}
           >
@@ -366,7 +369,7 @@ const ConnectToGithubButton = styled.a`
     props.disabled ? "#aaaabbee" : "#2E3338"};
   :hover {
     background: ${(props: { disabled?: boolean }) =>
-    props.disabled ? "" : "#353a3e"};
+      props.disabled ? "" : "#353a3e"};
   }
 
   > i {
@@ -417,7 +420,9 @@ const ProviderSelector = (props: {
         <ProviderSelectorStyles.Icon className={icon} />
 
         <ProviderSelectorStyles.Button
-          onClick={() => { setIsOpen((prev) => !prev); }}
+          onClick={() => {
+            setIsOpen((prev) => !prev);
+          }}
         >
           {currentValue?.name || currentValue?.instance_url}
         </ProviderSelectorStyles.Button>

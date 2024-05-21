@@ -1,8 +1,11 @@
 import React, { useMemo, useRef, useState } from "react";
-import { integrationList } from "shared/common";
 import styled from "styled-components";
-import { type SupportedProviders } from "../types";
+
 import Selector from "components/Selector";
+
+import { integrationList } from "shared/common";
+
+import { type SupportedProviders } from "../types";
 
 export type ProviderSelectorProps = {
   selectProvider: (

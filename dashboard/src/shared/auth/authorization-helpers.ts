@@ -1,4 +1,9 @@
-import { type HIERARCHY_TREE, type PolicyDocType, type ScopeType, type Verbs } from "./types";
+import {
+  type HIERARCHY_TREE,
+  type PolicyDocType,
+  type ScopeType,
+  type Verbs,
+} from "./types";
 
 export const ADMIN_POLICY_MOCK: PolicyDocType = {
   scope: "project",

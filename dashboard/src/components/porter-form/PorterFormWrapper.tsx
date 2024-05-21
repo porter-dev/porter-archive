@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
+import _ from "lodash";
 
 import PorterForm from "./PorterForm";
-import { type InjectedProps, type PorterFormData } from "./types";
 import { PorterFormContextProvider } from "./PorterFormContextProvider";
-import _ from "lodash";
+import { type InjectedProps, type PorterFormData } from "./types";
 
 type PropsType = {
   formData: any;

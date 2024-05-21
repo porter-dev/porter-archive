@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import yaml from "js-yaml";
 import loading from "legacy/assets/loading.gif";
@@ -8,7 +8,7 @@ import Text from "legacy/components/porter/Text";
 import YamlEditor from "legacy/components/YamlEditor";
 import api from "legacy/shared/api";
 import styled from "styled-components";
-import { match } from "ts-pattern/dist";
+import { match } from "ts-pattern";
 import { z } from "zod";
 
 type PropsType = {
@@ -69,7 +69,9 @@ const HelmLatestValues: React.FunctionComponent<PropsType> = ({
     <>
       <Checkbox
         checked={withDefaults}
-        toggleChecked={() => setWithDefaults(!withDefaults)}
+        toggleChecked={() => {
+          setWithDefaults(!withDefaults);
+        }}
       >
         <Text color="helper">Include default Helm values</Text>
       </Checkbox>

@@ -1490,6 +1490,28 @@ const getClusterStatus = baseApi<
   return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/status`;
 });
 
+const getNodeGroups = baseApi<
+  {},
+  {
+    project_id: number;
+    cluster_id: number;
+  }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/node-groups`;
+});
+
+const deleteNodeGroup = baseApi<
+  {
+    node_group_id: string;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+  }
+>("POST", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/delete-node-group`;
+});
+
 const getClusterNodes = baseApi<
   {},
   {
@@ -3833,6 +3855,8 @@ export default {
   getClusterNodes,
   getClusterNode,
   getClusterStatus,
+  getNodeGroups,
+  deleteNodeGroup,
   getConfigMap,
   getPRDeploymentList,
   getPRDeploymentByID,

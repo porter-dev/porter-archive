@@ -15,8 +15,13 @@ import {
   type ClientCluster,
   type ClientClusterContract,
   type ClientNode,
+  type ClientNodeGroup,
 } from "lib/clusters/types";
-import { useCluster, useClusterNodeList } from "lib/hooks/useCluster";
+import {
+  useCluster,
+  useClusterNodeGroups,
+  useClusterNodeList,
+} from "lib/hooks/useCluster";
 import { useClusterAnalytics } from "lib/hooks/useClusterAnalytics";
 
 import api from "shared/api";
@@ -26,11 +31,13 @@ import notFound from "assets/not-found.png";
 type ClusterContextType = {
   cluster: ClientCluster;
   nodes: ClientNode[];
+  userNodeGroups: ClientNodeGroup[];
   projectId: number;
   isClusterUpdating: boolean;
   updateClusterVanityName: (name: string) => void;
   updateCluster: (clientContract: ClientClusterContract) => Promise<void>;
   deleteCluster: () => Promise<void>;
+  deleteNodeGroup: (nodeGroupId: string) => Promise<void>;
 };
 
 const ClusterContext = createContext<ClusterContextType | null>(null);
@@ -64,6 +71,10 @@ const ClusterContextProvider: React.FC<ClusterContextProviderProps> = ({
   const { reportToAnalytics } = useClusterAnalytics();
 
   const { nodes } = useClusterNodeList({ clusterId, refetchInterval });
+  const { nodeGroups: userNodeGroups } = useClusterNodeGroups({
+    clusterId,
+    refetchInterval,
+  });
 
   const paramsExist =
     !!clusterId && !!currentProject && currentProject.id !== -1;
@@ -152,6 +163,26 @@ const ClusterContextProvider: React.FC<ClusterContextProviderProps> = ({
     return cluster?.contract?.condition === "" ?? false;
   }, [cluster?.contract?.condition]);
 
+  const deleteNodeGroup = useCallback(
+    async (nodeGroupId: string) => {
+      if (!paramsExist) {
+        return;
+      }
+
+      await api.deleteNodeGroup(
+        "<token",
+        {
+          node_group_id: nodeGroupId,
+        },
+        {
+          project_id: currentProject.id,
+          cluster_id: clusterId,
+        }
+      );
+    },
+    [paramsExist, clusterId, currentProject?.id]
+  );
+
   if (isLoading || !paramsExist) {
     return <Loading />;
   }
@@ -191,11 +222,13 @@ const ClusterContextProvider: React.FC<ClusterContextProviderProps> = ({
       value={{
         cluster,
         nodes,
+        userNodeGroups,
         projectId: currentProject.id,
         isClusterUpdating,
         updateClusterVanityName,
         updateCluster,
         deleteCluster,
+        deleteNodeGroup,
       }}
     >
       {children}

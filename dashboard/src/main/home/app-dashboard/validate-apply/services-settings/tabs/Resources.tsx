@@ -1,13 +1,15 @@
-import React, { useContext, useMemo } from "react";
+import React, { useContext, useEffect, useMemo } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 import { match } from "ts-pattern";
 
 import Checkbox from "components/porter/Checkbox";
 import { ControlledInput } from "components/porter/ControlledInput";
 import InputSlider from "components/porter/InputSlider";
+import Selector from "components/porter/Selector";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import { useClusterContext } from "main/home/infrastructure-dashboard/ClusterContextProvider";
+import { type ClientNodeGroup } from "lib/clusters/types";
 import { type PorterAppFormData } from "lib/porter-apps";
 import {
   getServiceResourceAllowances,
@@ -30,12 +32,15 @@ const Resources: React.FC<ResourcesProps> = ({
   service,
   lifecycleJobType,
 }) => {
-  const { control, register, watch } = useFormContext<PorterAppFormData>();
+  const { control, register, watch, setValue } =
+    useFormContext<PorterAppFormData>();
   const { currentProject } = useContext(Context);
-  const { nodes } = useClusterContext();
+  const { nodes, userNodeGroups } = useClusterContext();
   const { maxRamMegabytes, maxCpuCores } = useMemo(() => {
     return getServiceResourceAllowances(nodes, currentProject?.sandbox_enabled);
   }, [nodes]);
+
+  const computeResources = watch(`app.services.${index}.computeResources`);
 
   const autoscalingEnabled = watch(
     `app.services.${index}.config.autoscaling.enabled`,
@@ -59,8 +64,68 @@ const Resources: React.FC<ResourcesProps> = ({
       : defaultMessage;
   };
 
+  const nodeGroupsWithDeletedNodes = userNodeGroups.concat(
+    computeResources.map((cr) => {
+      return {
+        id: cr.id,
+        name: "[deleted]",
+        instance_type: "",
+        cpu_cores: 0,
+        ram_mb: 0,
+        gpu_cores: 0,
+      };
+    })
+  );
+
+  const computeResource =
+    (computeResources.length > 0 &&
+      nodeGroupsWithDeletedNodes.find(
+        (ng) => ng.id === computeResources[0].id
+      )) ||
+    null;
+
+  const cpuCoreLimit = computeResource
+    ? computeResource.cpu_cores * 0.75
+    : maxCpuCores;
+  const ramMbLimit = computeResource
+    ? computeResource.ram_mb * 0.75
+    : maxRamMegabytes;
+
+  useEffect(() => {
+    if (!computeResource && computeResources.length > 0) {
+      setValue(`app.services.${index}.computeResources`, []);
+    }
+  }, [computeResource]);
+
   return (
     <>
+      <Spacer y={1} />
+      <Selector<string>
+        activeValue={computeResource?.id || "default"}
+        width="300px"
+        options={nodeGroupsWithDeletedNodes
+          .map((ng: ClientNodeGroup) => {
+            return {
+              value: ng.id,
+              label: ng.name,
+              key: ng.id,
+            };
+          })
+          .concat([{ value: "default", label: "Default", key: "default" }])}
+        setActiveValue={(value: string) => {
+          if (value === "default") {
+            setValue(`app.services.${index}.computeResources`, []);
+            return;
+          }
+
+          setValue(`app.services.${index}.computeResources`, [
+            {
+              id: value,
+            },
+          ]);
+        }}
+        label={"Node Group"}
+      />
       <Spacer y={1} />
       <Controller
         name={
@@ -76,7 +141,7 @@ const Resources: React.FC<ResourcesProps> = ({
             label="CPUs: "
             unit="Cores"
             min={0.1}
-            max={maxCpuCores}
+            max={cpuCoreLimit}
             color={"#3f51b5"}
             value={value.value.toString()}
             setValue={(e) => {
@@ -111,7 +176,7 @@ const Resources: React.FC<ResourcesProps> = ({
             label="RAM: "
             unit="MB"
             min={10}
-            max={maxRamMegabytes}
+            max={ramMbLimit}
             color={"#3f51b5"}
             value={value.value.toString()}
             setValue={(e) => {

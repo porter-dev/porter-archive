@@ -332,6 +332,17 @@ export type ClientNode = {
   instanceType: ClientMachineType;
 };
 
+// Node Group
+export const nodeGroupValidator = z.object({
+  name: z.string(),
+  id: z.string(),
+  instance_type: z.string(),
+  ram_mb: z.number(),
+  cpu_cores: z.number(),
+  gpu_cores: z.number(),
+});
+export type ClientNodeGroup = z.infer<typeof nodeGroupValidator>;
+
 // Cluster
 export const clusterValidator = z.object({
   id: z.number(),
@@ -441,6 +452,7 @@ const nodeGroupTypeValidator = z.enum([
   "MONITORING",
   "APPLICATION",
   "CUSTOM",
+  "USER",
 ]);
 export type NodeGroupType = z.infer<typeof nodeGroupTypeValidator>;
 const eksNodeGroupValidator = z.object({
@@ -448,18 +460,27 @@ const eksNodeGroupValidator = z.object({
   minInstances: z.number(),
   maxInstances: z.number(),
   nodeGroupType: nodeGroupTypeValidator,
+  // name is required for USER node groups
+  nodeGroupName: z.string().optional(),
+  nodeGroupId: z.string().optional(),
 });
 const gkeNodeGroupValidator = z.object({
   instanceType: z.string(),
   minInstances: z.number(),
   maxInstances: z.number(),
   nodeGroupType: nodeGroupTypeValidator,
+  // name is only required for USER node groups
+  nodeGroupName: z.string().optional(),
+  nodeGroupId: z.string().optional(),
 });
 const aksNodeGroupValidator = z.object({
   instanceType: z.string(),
   minInstances: z.number(),
   maxInstances: z.number(),
   nodeGroupType: nodeGroupTypeValidator,
+  // name is only required for USER node groups
+  nodeGroupName: z.string().optional(),
+  nodeGroupId: z.string().optional(),
 });
 
 const cidrRangeValidator = z

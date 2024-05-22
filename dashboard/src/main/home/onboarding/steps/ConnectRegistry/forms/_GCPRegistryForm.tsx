@@ -1,3 +1,7 @@
+import React, { useEffect, useState } from "react";
+import styled from "styled-components";
+import { useSnapshot } from "valtio";
+
 import Helper from "components/form-components/Helper";
 import InputRow from "components/form-components/InputRow";
 import SelectRow from "components/form-components/SelectRow";
@@ -8,12 +12,10 @@ import RegistryImageList from "main/home/onboarding/components/RegistryImageList
 import { GCP_REGION_OPTIONS } from "main/home/onboarding/constants";
 import { OFState } from "main/home/onboarding/state";
 import { StateHandler } from "main/home/onboarding/state/StateHandler";
-import { GCPRegistryConfig } from "main/home/onboarding/types";
-import React, { useEffect, useState } from "react";
+import { type GCPRegistryConfig } from "main/home/onboarding/types";
+
 import api from "shared/api";
 import { readableDate } from "shared/string_utils";
-import styled from "styled-components";
-import { useSnapshot } from "valtio";
 
 export const CredentialsForm: React.FC<{
   nextFormStep: (data: Partial<GCPRegistryConfig>) => void;
@@ -31,13 +33,13 @@ export const CredentialsForm: React.FC<{
     api
       .getGCPIntegration("<token>", {}, { project_id: project.id })
       .then((res) => {
-        let integrations = res.data;
+        const integrations = res.data;
         if (!Array.isArray(integrations) || !integrations.length) {
           setShowForm(true);
           return;
         }
 
-        let lastUsed = integrations.find((i) => {
+        const lastUsed = integrations.find((i) => {
           return (
             i.id === snap.StateHandler?.connected_registry?.credentials?.id
           );
@@ -133,7 +135,9 @@ export const CredentialsForm: React.FC<{
 
         <Helper>Service account credentials for GCP permissions.</Helper>
         <UploadArea
-          setValue={(x: any) => setServiceAccountKey(x)}
+          setValue={(x: any) => {
+            setServiceAccountKey(x);
+          }}
           label="🔒 GCP Key Data (JSON)"
           placeholder="Choose a file or drag it here."
           width="100%"
@@ -146,7 +150,9 @@ export const CredentialsForm: React.FC<{
             <SaveButton
               text="Cancel"
               disabled={false}
-              onClick={() => setShowForm(false)}
+              onClick={() => {
+                setShowForm(false);
+              }}
               makeFlush={true}
               clearPosition={true}
               status=""
@@ -182,7 +188,12 @@ export const CredentialsForm: React.FC<{
       </PreviewRow>
       <Helper>
         Want to use a different account?{" "}
-        <A onClick={() => setShowForm(true)} href="#">
+        <A
+          onClick={() => {
+            setShowForm(true);
+          }}
+          href="#"
+        >
           Connect another account
         </A>
         .
@@ -193,7 +204,9 @@ export const CredentialsForm: React.FC<{
       <SaveButton
         text="Continue"
         disabled={false}
-        onClick={() => continueToNextStep(lastConnectedAccount?.id)}
+        onClick={() => {
+          continueToNextStep(lastConnectedAccount?.id);
+        }}
         makeFlush={true}
         clearPosition={true}
         status={buttonStatus}
@@ -273,7 +286,9 @@ export const SettingsForm: React.FC<{
       <InputRow
         type="text"
         value={registryName}
-        setValue={(name: string) => setRegistryName(name)}
+        setValue={(name: string) => {
+          setRegistryName(name);
+        }}
         isRequired={true}
         label="🏷️ Registry Name"
         placeholder="ex: paper-straw"
@@ -287,7 +302,9 @@ export const SettingsForm: React.FC<{
       <InputRow
         type="text"
         value={registryUrl}
-        setValue={(url: string) => setRegistryUrl(url)}
+        setValue={(url: string) => {
+          setRegistryUrl(url);
+        }}
         label="🔗 GCR URL"
         placeholder="ex: gcr.io/skynet-dev-172969"
         width="100%"
@@ -357,9 +374,9 @@ export const GARegistryConfig: React.FC<{
       const gcp_integration = await api
         .getGCPIntegration("<token>", {}, { project_id: project.id })
         .then((res) => {
-          let integrations = res.data;
+          const integrations = res.data;
 
-          let lastUsed = integrations.find((i: any) => {
+          const lastUsed = integrations.find((i: any) => {
             return (
               i.id === snap.StateHandler?.connected_registry?.credentials?.id
             );
@@ -432,7 +449,9 @@ export const GARegistryConfig: React.FC<{
       <InputRow
         type="text"
         value={registryName}
-        setValue={(name: string) => setRegistryName(name)}
+        setValue={(name: string) => {
+          setRegistryName(name);
+        }}
         isRequired={true}
         label="🏷️ Registry Name"
         placeholder="ex: paper-straw"

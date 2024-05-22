@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import styled from "styled-components";
+
 import { Context } from "shared/Context";
 import { hardcodedIcons } from "shared/hardcodedNameDict";
 
@@ -20,8 +21,8 @@ const getIcon = (type: string) => {
   if (hardcodedIcons[type]) {
     return hardcodedIcons[type];
   }
-  return hardcodedIcons["web"];
-}
+  return hardcodedIcons.web;
+};
 
 export default class ServiceRow extends Component<PropsType, StateType> {
   render() {
@@ -30,19 +31,22 @@ export default class ServiceRow extends Component<PropsType, StateType> {
     type = type || app;
     return (
       <>
-        {name &&
-          type &&
-          namespace !== "kube-system" && (
-            <StyledServiceRow>
-              <Flex>
-                <Icon src={getIcon(type)} />
-                <Name>{name}</Name> <Dash>-</Dash> <IP>{clusterIP}</IP>
-              </Flex>
-              <TagWrapper>
-                Namespace: <NamespaceTag>{namespace.startsWith("porter-stack-") ? namespace.replace("porter-stack-", "") : namespace}</NamespaceTag>
-              </TagWrapper>
-            </StyledServiceRow>
-          )}
+        {name && type && namespace !== "kube-system" && (
+          <StyledServiceRow>
+            <Flex>
+              <Icon src={getIcon(type)} />
+              <Name>{name}</Name> <Dash>-</Dash> <IP>{clusterIP}</IP>
+            </Flex>
+            <TagWrapper>
+              Namespace:{" "}
+              <NamespaceTag>
+                {namespace.startsWith("porter-stack-")
+                  ? namespace.replace("porter-stack-", "")
+                  : namespace}
+              </NamespaceTag>
+            </TagWrapper>
+          </StyledServiceRow>
+        )}
       </>
     );
   }

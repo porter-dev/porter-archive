@@ -1,109 +1,107 @@
-import React, { useState } from "react";
+import React from "react";
 import ParentSize from "@visx/responsive/lib/components/ParentSize";
 import styled from "styled-components";
 
+import Loading from "components/Loading";
+
 import AggregatedDataLegend from "../../../cluster-dashboard/expanded-chart/metrics/AggregatedDataLegend";
-import StatusCodeDataLegend from "./StatusCodeDataLegend";
 import AreaChart from "./AreaChart";
 import StackedAreaChart from "./StackedAreaChart";
-import Loading from "components/Loading";
-import { AggregatedMetric, Metric, NginxStatusMetric, isNginxMetric } from "./types";
+import StatusCodeDataLegend from "./StatusCodeDataLegend";
+import {
+  isNginxMetric,
+  type AggregatedMetric,
+  type Metric,
+  type NginxStatusMetric,
+} from "./types";
 
 type PropsType = {
-    metric: Metric;
-    selectedRange: string;
-    isLoading: boolean;
-    showAutoscalingLine: boolean;
+  metric: Metric;
+  selectedRange: string;
+  isLoading: boolean;
+  showAutoscalingLine: boolean;
 };
 
 const MetricsChart: React.FunctionComponent<PropsType> = ({
-    metric,
-    selectedRange,
-    isLoading,
-    showAutoscalingLine,
+  metric,
+  selectedRange,
+  isLoading,
+  showAutoscalingLine,
 }) => {
-    // TODO: fix the type-filtering here
-    const renderMetric = (metric: Metric) => {
-        if (isNginxMetric(metric)) {
-            return renderNginxMetric(metric);
-        }
-        return renderAggregatedMetric(metric as AggregatedMetric);
+  // TODO: fix the type-filtering here
+  const renderMetric = (metric: Metric) => {
+    if (isNginxMetric(metric)) {
+      return renderNginxMetric(metric);
     }
-    const renderAggregatedMetric = (metric: AggregatedMetric) => {
-        if (metric.data.length === 0) {
-            return (
-                <Message>
-                    No data available yet.
-                </Message>
-            )
-        }
-        return (
-            <>
-                <ParentSize>
-                    {({ width, height }) => (
-                        <AreaChart
-                            dataKey={metric.label}
-                            aggregatedData={metric.aggregatedData}
-                            isAggregated={true}
-                            data={metric.data}
-                            hpaData={metric.hpaData}
-                            hpaEnabled={showAutoscalingLine && metric.hpaData.length > 0}
-                            width={width}
-                            height={height - 10}
-                            resolution={selectedRange}
-                            margin={{ top: 40, right: -40, bottom: 0, left: 50 }}
-                        />
-                    )}
-                </ParentSize>
-                <RowWrapper>
-                    <AggregatedDataLegend data={metric.data} hideAvg={true} />
-                </RowWrapper>
-            </>
-        )
+    return renderAggregatedMetric(metric as AggregatedMetric);
+  };
+  const renderAggregatedMetric = (metric: AggregatedMetric) => {
+    if (metric.data.length === 0) {
+      return <Message>No data available yet.</Message>;
     }
+    return (
+      <>
+        <ParentSize>
+          {({ width, height }) => (
+            <AreaChart
+              dataKey={metric.label}
+              aggregatedData={metric.aggregatedData}
+              isAggregated={true}
+              data={metric.data}
+              hpaData={metric.hpaData}
+              hpaEnabled={showAutoscalingLine && metric.hpaData.length > 0}
+              width={width}
+              height={height - 10}
+              resolution={selectedRange}
+              margin={{ top: 40, right: -40, bottom: 0, left: 50 }}
+            />
+          )}
+        </ParentSize>
+        <RowWrapper>
+          <AggregatedDataLegend data={metric.data} hideAvg={true} />
+        </RowWrapper>
+      </>
+    );
+  };
 
-    const renderNginxMetric = (metric: NginxStatusMetric) => {
-        if (metric.areaData.length === 0) {
-            return (
-                <Message>
-                    No data available yet.
-                </Message>
-            );
-        }
-
-        return (
-            <>
-                <ParentSize>
-                    {({ width, height }) => (
-                        <StackedAreaChart
-                            dataKey={metric.label}
-                            data={metric.areaData}
-                            width={width}
-                            height={height - 10}
-                            resolution={selectedRange}
-                            margin={{ top: 40, right: -40, bottom: 0, left: 50 }}
-                        />
-                    )}
-                </ParentSize>
-                <RowWrapper>
-                    <StatusCodeDataLegend />
-                </RowWrapper>
-            </>
-        )
+  const renderNginxMetric = (metric: NginxStatusMetric) => {
+    if (metric.areaData.length === 0) {
+      return <Message>No data available yet.</Message>;
     }
 
     return (
-        <StyledMetricsChart>
-            <MetricsHeader>
-                <Flex>
-                    <MetricSelector>
-                        <MetricsLabel>{metric.label}</MetricsLabel>
-                    </MetricSelector>
-                </Flex>
-            </MetricsHeader>
-            {isLoading ? <Loading /> : renderMetric(metric)}
-        </StyledMetricsChart>
+      <>
+        <ParentSize>
+          {({ width, height }) => (
+            <StackedAreaChart
+              dataKey={metric.label}
+              data={metric.areaData}
+              width={width}
+              height={height - 10}
+              resolution={selectedRange}
+              margin={{ top: 40, right: -40, bottom: 0, left: 50 }}
+            />
+          )}
+        </ParentSize>
+        <RowWrapper>
+          <StatusCodeDataLegend />
+        </RowWrapper>
+      </>
     );
+  };
+
+  return (
+    <StyledMetricsChart>
+      <MetricsHeader>
+        <Flex>
+          <MetricSelector>
+            <MetricsLabel>{metric.label}</MetricsLabel>
+          </MetricSelector>
+        </Flex>
+      </MetricsHeader>
+      {isLoading ? <Loading /> : renderMetric(metric)}
+    </StyledMetricsChart>
+  );
 };
 
 export default MetricsChart;
@@ -167,7 +165,6 @@ const RowWrapper = styled.div`
   display: flex;
   justify-content: flex-end;
 `;
-
 
 const StyledMetricsChart = styled.div`
   width: 100%;

@@ -1,16 +1,18 @@
 import React, { useEffect, useState } from "react";
-import styled from "styled-components";
 import {
-  Column,
-  Row,
   useGlobalFilter,
   usePagination,
   useTable,
+  type Column,
+  type Row,
 } from "react-table";
+import styled from "styled-components";
+
 import Loading from "components/Loading";
-import Selector from "./Selector";
+
 import loading from "assets/loading.gif";
-import Button from "./porter/Button";
+
+import Selector from "./Selector";
 
 const GlobalFilter: React.FunctionComponent<any> = ({
   setGlobalFilter,
@@ -51,7 +53,7 @@ const GlobalFilter: React.FunctionComponent<any> = ({
 };
 
 export type TableProps = {
-  columns: Column<any>[];
+  columns: Array<Column<any>>;
   data: any[];
   onRowClick?: (row: Row) => void;
   isLoading: boolean;
@@ -158,7 +160,9 @@ const Table: React.FC<TableProps> = ({
               disableHover={disableHover}
               {...row.getRowProps()}
               enablePointer={!!onRowClick}
-              onClick={() => onRowClick && onRowClick(row)}
+              onClick={() => {
+                onRowClick && onRowClick(row);
+              }}
               selected={false}
             >
               {/* TODO: This is actually broken, not sure why but we need the width to be properly setted, this is a temporary solution */}
@@ -247,12 +251,16 @@ const Table: React.FC<TableProps> = ({
               {"<"}
             </PaginationAction>
             <PageCounter>
-              {currentPageIndex + 1} of {pageCount ? pageCount : pageCount + 1}
+              {currentPageIndex + 1} of {pageCount || pageCount + 1}
             </PageCounter>
-            <PaginationAction disabled={!canNextPage} onClick={() => {
-              nextPage();
-              setCurrentPageIndex(currentPageIndex + 1);
-            }} type={"button"}>
+            <PaginationAction
+              disabled={!canNextPage}
+              onClick={() => {
+                nextPage();
+                setCurrentPageIndex(currentPageIndex + 1);
+              }}
+              type={"button"}
+            >
               {">"}
             </PaginationAction>
           </PaginationActionsWrapper>
@@ -320,7 +328,7 @@ export const StyledTr = styled.tr`
   background: ${(props: StyledTrProps) => (props.selected ? "#ffffff11" : "")};
   :hover {
     background: ${(props: StyledTrProps) =>
-    props.disableHover ? "" : "#ffffff22"};
+      props.disableHover ? "" : "#ffffff22"};
   }
   cursor: ${(props: StyledTrProps) =>
     props.enablePointer ? "pointer" : "unset"};

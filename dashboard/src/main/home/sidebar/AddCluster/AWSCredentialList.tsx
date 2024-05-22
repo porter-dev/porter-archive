@@ -1,15 +1,15 @@
 import React, { useContext, useEffect, useState } from "react";
-import { Context } from "shared/Context";
-import api from "shared/api";
 import styled from "styled-components";
+
+import Description from "components/Description";
 import Loading from "components/Loading";
 import Placeholder from "components/OldPlaceholder";
-import AWSCredentialForm from "./AWSCredentialForm";
-import CredentialList from "./CredentialList";
-import Description from "components/Description";
-import ProvisionerForm from "components/ProvisionerForm";
-import CloudFormationForm from "components/CloudFormationForm";
 import ProvisionerFlow from "components/ProvisionerFlow";
+
+import api from "shared/api";
+import { Context } from "shared/Context";
+
+import CredentialList from "./CredentialList";
 
 type Props = {
   selectCredential: (aws_integration_id: number) => void;
@@ -58,7 +58,6 @@ const AWSCredentialsList: React.FunctionComponent<Props> = ({
         setHasError(true);
         setCurrentError(err.response?.data?.error);
         setIsLoading(false);
-
       });
   }, [currentProject]);
 
@@ -76,9 +75,7 @@ const AWSCredentialsList: React.FunctionComponent<Props> = ({
 
   const renderContents = () => {
     if (shouldCreateCred) {
-      return (
-        <ProvisionerFlow />
-      );
+      return <ProvisionerFlow />;
     }
 
     return (
@@ -97,7 +94,9 @@ const AWSCredentialsList: React.FunctionComponent<Props> = ({
           })}
           selectCredential={selectCredential}
           setTargetARN={setTargetARN}
-          shouldCreateCred={() => setShouldCreateCred(true)}
+          shouldCreateCred={() => {
+            setShouldCreateCred(true);
+          }}
           addNewText="Create new CloudFormation stack"
           gpuModal={gpuModal}
         />

@@ -2,7 +2,6 @@ import React from "react";
 import styled from "styled-components";
 
 import info from "assets/info.svg";
-import warning from "assets/warning.png";
 
 type Props = {
   type?: string;
@@ -10,9 +9,9 @@ type Props = {
   children: React.ReactNode;
   noMargin?: boolean;
   suffix?: React.ReactNode;
-}
+};
 
-const Banner: React.FC<Props> = ({ 
+const Banner: React.FC<Props> = ({
   type,
   icon,
   children,
@@ -23,7 +22,7 @@ const Banner: React.FC<Props> = ({
     if (icon === "none") {
       return null;
     }
-    
+
     if (icon) {
       return icon;
     }
@@ -40,12 +39,10 @@ const Banner: React.FC<Props> = ({
       noMargin={noMargin}
     >
       <>
-      {renderIcon()}
-      {children}
+        {renderIcon()}
+        {children}
       </>
-      {suffix && (
-        <Suffix>{suffix}</Suffix>
-      )}
+      {suffix && <Suffix>{suffix}</Suffix>}
     </StyledBanner>
   );
 };

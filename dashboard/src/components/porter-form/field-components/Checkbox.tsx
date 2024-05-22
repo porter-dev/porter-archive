@@ -1,15 +1,16 @@
 import React from "react";
-import {
-  CheckboxField,
-  CheckboxFieldState,
-  GetFinalVariablesFunction,
-} from "../types";
+
 import CheckboxRow from "../../form-components/CheckboxRow";
 import useFormField from "../hooks/useFormField";
+import {
+  type CheckboxField,
+  type CheckboxFieldState,
+  type GetFinalVariablesFunction,
+} from "../types";
 
-interface Props extends CheckboxField {
+type Props = {
   id: string;
-}
+} & CheckboxField;
 
 const Checkbox: React.FC<Props> = ({
   id,

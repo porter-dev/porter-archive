@@ -1,13 +1,13 @@
-import React, { Component } from "react";
+import React from "react";
 import styled from "styled-components";
 
-import Selector, { SelectorPropsType } from "../Selector";
+import Selector, { type SelectorPropsType } from "../Selector";
 
 type PropsType<T> = {
   label: string;
   value: T;
   setActiveValue: (x: T) => void;
-  options: { value: T; label: string }[];
+  options: Array<{ value: T; label: string }>;
   displayFlex?: boolean;
   dropdownLabel?: string;
   width?: string;
@@ -25,7 +25,7 @@ export default function SelectRow<T>(props: PropsType<T>) {
       <Wrapper>
         <Label displayFlex={props.displayFlex}>{props.label}</Label>
         {props.doc ? (
-          <a href={props.doc} target="_blank">
+          <a href={props.doc} target="_blank" rel="noreferrer">
             <i className="material-icons">help_outline</i>
           </a>
         ) : null}
@@ -72,10 +72,10 @@ const Label = styled.div<{ displayFlex?: boolean }>`
   color: #ffffff;
   font-size: 13px;
   margin-bottom: 10px;
-  margin-top: ${props => props.displayFlex ? "10px" : 0};
-  margin-right: ${props => props.displayFlex ? "10px" : 0};
+  margin-top: ${(props) => (props.displayFlex ? "10px" : 0)};
+  margin-right: ${(props) => (props.displayFlex ? "10px" : 0)};
 `;
 
 const StyledSelectRow = styled.div<{ displayFlex?: boolean }>`
-  display: ${props => props.displayFlex ? "flex" : "block"};
+  display: ${(props) => (props.displayFlex ? "flex" : "block")};
 `;

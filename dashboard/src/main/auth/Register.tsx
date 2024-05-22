@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from "react";
-import styled from "styled-components";
 import { useLocation } from "react-router-dom";
+import styled from "styled-components";
 
 import Heading from "components/form-components/Heading";
 import Button from "components/porter/Button";
@@ -75,9 +75,9 @@ const Register: React.FC<Props> = ({ authenticate }) => {
     { value: "Other", label: "Other" },
   ];
 
-  const { search } = useLocation()
-  const searchParams = new URLSearchParams(search)
-  const referralCodeFromUrl = searchParams.get("referral")
+  const { search } = useLocation();
+  const searchParams = new URLSearchParams(search);
+  const referralCodeFromUrl = searchParams.get("referral");
 
   useEffect(() => {
     if (referralCodeFromUrl) {

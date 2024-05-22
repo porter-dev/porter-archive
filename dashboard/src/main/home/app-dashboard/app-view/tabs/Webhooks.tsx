@@ -1,4 +1,4 @@
-import React, {useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 
 import Button from "components/porter/Button";
@@ -10,8 +10,7 @@ import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 
 import api from "shared/api";
-import { AppEventWebhook } from "shared/types";
-import { url } from "inspector";
+import { type AppEventWebhook } from "shared/types";
 
 type Webhook = {
   step: string;
@@ -39,69 +38,73 @@ type Props = {
   appName: string;
 };
 
-const Webhooks: React.FC<Props> = ({ 
+const Webhooks: React.FC<Props> = ({
   projectId,
-  deploymentTargetId, 
+  deploymentTargetId,
   appName,
 }) => {
   const [webhooks, setWebhooks] = useState<Webhook[]>([]);
   const [saveStatus, setSaveStatus] = useState<string>("");
 
   useEffect(() => {
-    api.appEventWebhooks(
-      "<token>",
-      {},
-      { 
-        projectId: projectId,
-        deploymentTargetId: deploymentTargetId,
-        appName: appName,
-       },
-    )
-    .then(({ data:  { app_event_webhooks } }) =>  {
-      console.log(app_event_webhooks);
-        setWebhooks(app_event_webhooks.map((item: AppEventWebhook) => {
-          return {
-            url: item.url, 
-            step: item.app_event_type,
-            status: item.app_event_status, 
-            secret: item.payload_encryption_key,
-            hasSecret: item.payload_encryption_key.length > 0,
-          };
-      }))
-    })
-    .catch((err) => {
-      console.error(err);
-    });
+    api
+      .appEventWebhooks(
+        "<token>",
+        {},
+        {
+          projectId,
+          deploymentTargetId,
+          appName,
+        }
+      )
+      .then(({ data: { app_event_webhooks } }) => {
+        console.log(app_event_webhooks);
+        setWebhooks(
+          app_event_webhooks.map((item: AppEventWebhook) => {
+            return {
+              url: item.url,
+              step: item.app_event_type,
+              status: item.app_event_status,
+              secret: item.payload_encryption_key,
+              hasSecret: item.payload_encryption_key.length > 0,
+            };
+          })
+        );
+      })
+      .catch((err) => {
+        console.error(err);
+      });
   }, []);
 
   // TODO: implement
   const saveWebhooks = (): void => {
     setSaveStatus("loading");
-    api.updateAppEventWebhooks(
-      "<token>",
-      {
-        app_event_webhooks: webhooks.map((item: Webhook) => {
-          return {
-            url: item.url, 
-            app_event_type: item.step,
-            app_event_status: item.status, 
-            payload_encryption_key: item.secret,
-          };
+    api
+      .updateAppEventWebhooks(
+        "<token>",
+        {
+          app_event_webhooks: webhooks.map((item: Webhook) => {
+            return {
+              url: item.url,
+              app_event_type: item.step,
+              app_event_status: item.status,
+              payload_encryption_key: item.secret,
+            };
+          }),
+        },
+        {
+          projectId,
+          deploymentTargetId,
+          appName,
+        }
+      )
+      .then(() => {
+        setSaveStatus("success");
       })
-      },
-      { 
-        projectId: projectId,
-        deploymentTargetId: deploymentTargetId,
-        appName: appName,
-       },
-    )
-    .then(() => {
-      setSaveStatus("success");
-    })
-    .catch((err) => {
-      console.error(err)
-      setSaveStatus("error");
-    })
+      .catch((err) => {
+        console.error(err);
+        setSaveStatus("error");
+      });
   };
 
   const addWebhook = (): void => {
@@ -116,7 +119,6 @@ const Webhooks: React.FC<Props> = ({
       },
     ]);
   };
-
 
   return (
     <StyledWebhooks>
@@ -208,7 +210,9 @@ const Webhooks: React.FC<Props> = ({
           <I className="material-icons">add</I> Add row
         </Button>
         <Spacer x={1} inline />
-        <Button onClick={saveWebhooks} status={saveStatus}>Save webhooks</Button>
+        <Button onClick={saveWebhooks} status={saveStatus}>
+          Save webhooks
+        </Button>
       </Container>
     </StyledWebhooks>
   );

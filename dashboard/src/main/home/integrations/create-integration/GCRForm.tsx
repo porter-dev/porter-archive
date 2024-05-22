@@ -1,14 +1,14 @@
 import React, { Component } from "react";
 import styled from "styled-components";
 
-import { Context } from "shared/Context";
-import api from "shared/api";
-
+import Heading from "components/form-components/Heading";
+import Helper from "components/form-components/Helper";
 import InputRow from "components/form-components/InputRow";
 import UploadArea from "components/form-components/UploadArea";
 import SaveButton from "components/SaveButton";
-import Heading from "components/form-components/Heading";
-import Helper from "components/form-components/Helper";
+
+import api from "shared/api";
+import { Context } from "shared/Context";
 
 type PropsType = {
   closeForm: () => void;
@@ -30,17 +30,19 @@ export default class GCRForm extends Component<PropsType, StateType> {
   };
 
   isDisabled = (): boolean => {
-    let { serviceAccountKey, credentialsName } = this.state;
+    const { serviceAccountKey, credentialsName } = this.state;
     if (serviceAccountKey === "" || credentialsName === "") {
       return true;
     }
     return false;
   };
 
-  catchError = (err: any) => console.log(err);
+  catchError = (err: any) => {
+    console.log(err);
+  };
 
   handleSubmit = () => {
-    let { currentProject } = this.context;
+    const { currentProject } = this.context;
 
     api
       .createGCPIntegration(
@@ -53,18 +55,19 @@ export default class GCRForm extends Component<PropsType, StateType> {
           project_id: currentProject.id,
         }
       )
-      .then((res) =>
-        api.connectGCRRegistry(
-          "<token>",
-          {
-            name: this.state.credentialsName,
-            gcp_integration_id: res.data.id,
-            url: this.state.url,
-          },
-          {
-            id: currentProject.id,
-          }
-        )
+      .then(
+        async (res) =>
+          await api.connectGCRRegistry(
+            "<token>",
+            {
+              name: this.state.credentialsName,
+              gcp_integration_id: res.data.id,
+              url: this.state.url,
+            },
+            {
+              id: currentProject.id,
+            }
+          )
       )
       .then((res) => {
         this.props.closeForm();
@@ -83,9 +86,9 @@ export default class GCRForm extends Component<PropsType, StateType> {
           <InputRow
             type="text"
             value={this.state.credentialsName}
-            setValue={(credentialsName: string) =>
-              this.setState({ credentialsName })
-            }
+            setValue={(credentialsName: string) => {
+              this.setState({ credentialsName });
+            }}
             isRequired={true}
             label="🏷️ Registry name"
             placeholder="ex: paper-straw"
@@ -94,7 +97,9 @@ export default class GCRForm extends Component<PropsType, StateType> {
           <Heading>GCP settings</Heading>
           <Helper>Service account credentials for GCP permissions.</Helper>
           <UploadArea
-            setValue={(x: any) => this.setState({ serviceAccountKey: x })}
+            setValue={(x: any) => {
+              this.setState({ serviceAccountKey: x });
+            }}
             label="🔒 GCP key data (JSON)"
             placeholder="Choose a file or drag it here."
             width="100%"
@@ -109,7 +114,9 @@ export default class GCRForm extends Component<PropsType, StateType> {
           <InputRow
             type="text"
             value={this.state.url}
-            setValue={(url: string) => this.setState({ url })}
+            setValue={(url: string) => {
+              this.setState({ url });
+            }}
             label="🔗 GCR URL"
             placeholder="ex: gcr.io/skynet-dev-172969"
             width="100%"

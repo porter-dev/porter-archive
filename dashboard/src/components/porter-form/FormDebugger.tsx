@@ -1,17 +1,20 @@
 import React, { Component } from "react";
-import styled from "styled-components";
+import yaml from "js-yaml";
 import AceEditor from "react-ace";
-import PorterFormWrapper from "./PorterFormWrapper";
+import styled from "styled-components";
+
 import CheckboxRow from "components/form-components/CheckboxRow";
 import InputRow from "components/form-components/InputRow";
-import yaml from "js-yaml";
+
+import PorterFormWrapper from "./PorterFormWrapper";
 
 import "shared/ace-porter-theme";
 import "ace-builds/src-noconflict/mode-text";
 
+import { type ChartType } from "shared/types";
+
 import Heading from "../form-components/Heading";
 import Helper from "../form-components/Helper";
-import { ChartType } from "shared/types";
 
 type PropsType = {
   goBack: () => void;
@@ -78,7 +81,9 @@ export default class FormDebugger extends Component<PropsType, StateType> {
             mode="yaml"
             value={this.state.rawYaml}
             theme="porter"
-            onChange={(e: string) => this.setState({ rawYaml: e })}
+            onChange={(e: string) => {
+              this.setState({ rawYaml: e });
+            }}
             name="codeEditor"
             editorProps={{ $blockScrolling: true }}
             height="450px"
@@ -98,30 +103,30 @@ export default class FormDebugger extends Component<PropsType, StateType> {
         <CheckboxRow
           label="Show form state debugger"
           checked={this.state.showStateDebugger}
-          toggle={() =>
-            this.setState({ showStateDebugger: !this.state.showStateDebugger })
-          }
+          toggle={() => {
+            this.setState({ showStateDebugger: !this.state.showStateDebugger });
+          }}
         />
         <CheckboxRow
           label="Read-only"
           checked={this.state.isReadOnly}
-          toggle={() =>
+          toggle={() => {
             this.setState({
               isReadOnly: !this.state.isReadOnly,
-            })
-          }
+            });
+          }}
         />
         <CheckboxRow
           label="Include non-form dummy tabs"
           checked={this.state.showBonusTabs}
-          toggle={() =>
-            this.setState({ showBonusTabs: !this.state.showBonusTabs })
-          }
+          toggle={() => {
+            this.setState({ showBonusTabs: !this.state.showBonusTabs });
+          }}
         />
         <CheckboxRow
           label="checkbox_a"
           checked={this.state.checkbox_a}
-          toggle={() =>
+          toggle={() => {
             this.setState({
               checkbox_a: !this.state.checkbox_a,
 
@@ -132,13 +137,13 @@ export default class FormDebugger extends Component<PropsType, StateType> {
                   value: !this.state.checkbox_a,
                 },
               },
-            })
-          }
+            });
+          }}
         />
         <InputRow
           type="string"
           value={this.state.input_a}
-          setValue={(x: string) =>
+          setValue={(x: string) => {
             this.setState({
               input_a: x,
 
@@ -149,8 +154,8 @@ export default class FormDebugger extends Component<PropsType, StateType> {
                   value: x,
                 },
               },
-            })
-          }
+            });
+          }}
           label={"input_a"}
           placeholder="ex: override text"
         />

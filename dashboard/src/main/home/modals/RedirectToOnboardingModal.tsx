@@ -1,12 +1,11 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext } from "react";
+import { Link } from "react-router-dom";
 import styled from "styled-components";
 
-import api from "../../../shared/api";
-import Loading from "../../../components/Loading";
-import Heading from "components/form-components/Heading";
 import Helper from "components/form-components/Helper";
-import { Link } from "react-router-dom";
+
 import { Context } from "shared/Context";
+
 
 const RedirectToOnboardingModal = () => {
   const { setCurrentModal } = useContext(Context);
@@ -19,7 +18,9 @@ const RedirectToOnboardingModal = () => {
       <ContinueButton
         as={Link}
         to="/onboarding"
-        onClick={() => setCurrentModal(null, null)}
+        onClick={() => {
+          setCurrentModal(null, null);
+        }}
       >
         <i className="material-icons">east</i>
         Continue Setup

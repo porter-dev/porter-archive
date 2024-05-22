@@ -1,34 +1,31 @@
-import React, { useEffect } from "react";
-import InputRow from "../../form-components/InputRow";
+import React from "react";
+
+import DictionaryEditor from "components/porter/DictionaryEditor";
+
 import useFormField from "../hooks/useFormField";
 import {
-  GetFinalVariablesFunction,
-  DictionaryField,
-  DictionaryFieldState,
+  type DictionaryField,
+  type DictionaryFieldState,
+  type GetFinalVariablesFunction,
 } from "../types";
-import DictionaryEditor from "components/porter/DictionaryEditor";
 import { hasSetValue } from "../utils";
 
 const Dictionary: React.FC<DictionaryField> = (props) => {
-  const {
-    state,
-    variables,
-    setVars,
-    setValidation,
-  } = useFormField<DictionaryFieldState>(props.id, {
-    initValidation: {
-      validated: hasSetValue(props),
-    },
-    initVars: {
-      [props.variable]: hasSetValue(props) ? props.value[0] : undefined,
-    },
-  });
+  const { state, variables, setVars, setValidation } =
+    useFormField<DictionaryFieldState>(props.id, {
+      initValidation: {
+        validated: hasSetValue(props),
+      },
+      initVars: {
+        [props.variable]: hasSetValue(props) ? props.value[0] : undefined,
+      },
+    });
 
   if (state == undefined) return <></>;
 
   return (
     <DictionaryEditor
-      value={props?.value && props.value[0]}
+      value={props?.value?.[0]}
       onChange={(x: any) => {
         setVars((vars) => {
           return {
@@ -53,8 +50,10 @@ export const getFinalVariablesForStringInput: GetFinalVariablesFunction = (
 ) => {
   const val =
     vars[props.variable] != undefined && vars[props.variable] != null
-      ? vars[props.variable] : hasSetValue(props)
-      ? props.value[0] : undefined;
+      ? vars[props.variable]
+      : hasSetValue(props)
+      ? props.value[0]
+      : undefined;
 
   return {
     [props.variable]:

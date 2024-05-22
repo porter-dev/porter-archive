@@ -1,7 +1,7 @@
 import * as Sentry from "@sentry/react";
 import { isEmpty } from "lodash";
 
-type LogFunction = (error: Error, tags?: { [key: string]: string }) => void;
+type LogFunction = (error: Error, tags?: Record<string, string>) => void;
 type LogFunctions = {
   [key in Sentry.Severity]: LogFunction;
 };
@@ -11,35 +11,30 @@ type LogFunctionBuilder = (
   severity: Sentry.Severity
 ) => LogFunction;
 
-const logFunctionBuilder: LogFunctionBuilder = (scope, severity) => (
-  error,
-  tags
-) => {
-  Sentry.withScope((sentryScope) => {
-    sentryScope.setTag("scope", scope);
-    sentryScope.setLevel(severity);
+const logFunctionBuilder: LogFunctionBuilder =
+  (scope, severity) => (error, tags) => {
+    Sentry.withScope((sentryScope) => {
+      sentryScope.setTag("scope", scope);
+      sentryScope.setLevel(severity);
 
-    if (!isEmpty(tags)) {
-      sentryScope.setTags(tags);
-    }
+      if (!isEmpty(tags)) {
+        sentryScope.setTags(tags);
+      }
 
-    Sentry.captureException(error);
-  });
-};
+      Sentry.captureException(error);
+    });
+  };
 
 function buildLogger(scope: string = "global") {
   const logFunctions = Object.values(Sentry.Severity).reduce<LogFunctions>(
     (acc, currentSeverity) => {
       if (typeof currentSeverity === "string") {
-        acc[currentSeverity] = logFunctionBuilder(
-          scope,
-          Sentry.Severity.Info
-        );
+        acc[currentSeverity] = logFunctionBuilder(scope, Sentry.Severity.Info);
       }
 
       return acc;
     },
-    {} as LogFunctions
+    {}
   );
 
   return logFunctions;

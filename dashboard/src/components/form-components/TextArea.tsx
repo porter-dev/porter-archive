@@ -18,7 +18,7 @@ export default class TextArea extends Component<PropsType, StateType> {
   };
 
   render() {
-    let { label, value, placeholder, width } = this.props;
+    const { label, value, placeholder, width } = this.props;
     return (
       <StyledTextArea>
         <Label>{label}</Label>

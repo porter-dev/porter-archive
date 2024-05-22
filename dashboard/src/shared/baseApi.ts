@@ -1,4 +1,8 @@
-import axios, { AxiosPromise, AxiosRequestConfig, Method } from "axios";
+import axios, {
+  type AxiosPromise,
+  type AxiosRequestConfig,
+  type Method,
+} from "axios";
 import qs from "qs";
 
 type EndpointParam<PathParamsType> =
@@ -52,7 +56,7 @@ const buildAxiosConfig: BuildAxiosConfigFunction = (
   if (method.toUpperCase() === "GET") {
     return {
       ...config,
-      params: params,
+      params,
       paramsSerializer: (params) =>
         qs.stringify(params, { arrayFormat: "repeat" }),
     };
@@ -68,17 +72,19 @@ const buildAxiosConfig: BuildAxiosConfigFunction = (
   return config;
 };
 
-const apiQueryBuilder = <ParamsType extends {}, PathParamsType = {}>(
-  method: Method = "GET",
-  endpoint: EndpointParam<PathParamsType>
-) => <ResponseType = any>(
-  token: string,
-  params: ParamsType,
-  pathParams: PathParamsType
-) =>
-  axios(
-    buildAxiosConfig(method, endpoint, token, params, pathParams)
-  ) as AxiosPromise<ResponseType>;
+const apiQueryBuilder =
+  <ParamsType extends {}, PathParamsType = {}>(
+    method: Method = "GET",
+    endpoint: EndpointParam<PathParamsType>
+  ) =>
+  async <ResponseType = any>(
+    token: string,
+    params: ParamsType,
+    pathParams: PathParamsType
+  ) =>
+    await (axios(
+      buildAxiosConfig(method, endpoint, token, params, pathParams)
+    ) as AxiosPromise<ResponseType>);
 
 export { apiQueryBuilder as baseApi };
 export default apiQueryBuilder;

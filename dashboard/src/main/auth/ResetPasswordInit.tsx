@@ -1,10 +1,10 @@
-import React, { ChangeEvent, Component } from "react";
+import React, { Component, type ChangeEvent } from "react";
 import styled from "styled-components";
-import logo from "assets/logo.png";
 
 import api from "shared/api";
-import { emailRegex } from "shared/regex";
 import { Context } from "shared/Context";
+import { emailRegex } from "shared/regex";
+import logo from "assets/logo.png";
 
 type PropsType = {};
 
@@ -34,7 +34,7 @@ export default class ResetPasswordInit extends Component<PropsType, StateType> {
   }
 
   renderEmailError = () => {
-    let { emailError } = this.state;
+    const { emailError } = this.state;
     if (emailError) {
       return (
         <ErrorHelper>
@@ -46,7 +46,7 @@ export default class ResetPasswordInit extends Component<PropsType, StateType> {
   };
 
   handleResetPasswordInit = (): void => {
-    let { email } = this.state;
+    const { email } = this.state;
 
     // Check for valid input
     if (!emailRegex.test(email)) {
@@ -57,7 +57,7 @@ export default class ResetPasswordInit extends Component<PropsType, StateType> {
         .createPasswordReset(
           "",
           {
-            email: email,
+            email,
           },
           {}
         )
@@ -69,7 +69,7 @@ export default class ResetPasswordInit extends Component<PropsType, StateType> {
   };
 
   render() {
-    let { email, emailError, submitted } = this.state;
+    const { email, emailError, submitted } = this.state;
 
     let formSection = (
       <div>
@@ -78,12 +78,12 @@ export default class ResetPasswordInit extends Component<PropsType, StateType> {
             type="email"
             placeholder="Email"
             value={email}
-            onChange={(e: ChangeEvent<HTMLInputElement>) =>
+            onChange={(e: ChangeEvent<HTMLInputElement>) => {
               this.setState({
                 email: e.target.value,
                 emailError: false,
-              })
-            }
+              });
+            }}
             valid={!emailError}
           />
           {this.renderEmailError()}
@@ -145,7 +145,9 @@ const Footer = styled.div`
   color: #aaaabb;
   font-size: 13px;
   padding-right: 8px;
-  font: Work Sans, sans-serif;
+  font:
+    Work Sans,
+    sans-serif;
 `;
 
 const DarkMatter = styled.div`

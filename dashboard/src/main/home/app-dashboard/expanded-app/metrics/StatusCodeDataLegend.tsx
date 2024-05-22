@@ -1,11 +1,12 @@
 import React from "react";
-import styled from "styled-components";
 import chroma from "chroma-js";
+import styled from "styled-components";
+
 import { StatusCodeDataColors } from "./utils";
 
-interface StatusCodeDataLegendProps {}
+type StatusCodeDataLegendProps = {};
 
-const StatusCodeDataLegend = ({ }: StatusCodeDataLegendProps) => {
+const StatusCodeDataLegend = ({}: StatusCodeDataLegendProps) => {
   const statusCodes = ["1xx", "2xx", "3xx", "4xx", "5xx"];
 
   return (

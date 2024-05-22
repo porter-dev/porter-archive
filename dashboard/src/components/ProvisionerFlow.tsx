@@ -1,10 +1,9 @@
-import React, { useContext, useMemo, useState } from "react";
+import React, { useContext, useState } from "react";
 import styled from "styled-components";
 
 import AzureCredentialForm from "components/AzureCredentialForm";
 import CloudFormationForm from "components/CloudFormationForm";
 import CredentialsForm from "components/CredentialsForm";
-import Helper from "components/form-components/Helper";
 import GCPCredentialsForm from "components/GCPCredentialsForm";
 import ProvisionerForm from "components/ProvisionerForm";
 
@@ -92,9 +91,7 @@ const ProvisionerFlow: React.FC<Props> = ({}) => {
               Want to test Porter without linking your own cloud account?
             </Text>
             <Spacer y={0.5} />
-            <Text color={"helper"}>
-              Get started on the Porter Cloud.
-            </Text>
+            <Text color={"helper"}>Get started on the Porter Cloud.</Text>
             <Spacer y={1} />
             <Link to="https://cloud.porter.run">
               <Button alt height="35px">

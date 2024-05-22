@@ -1,13 +1,22 @@
 {
   "compilerOptions": {
     "lib": ["ESNext"],
-    "baseUrl": "src",
+    "baseUrl": ".",
+    "paths": {
+      "assets/*": ["src/assets/*"],
+      "components/*": ["src/components/*"],
+      "legacy/*": ["src/legacy/*"],
+      "lib/*": ["src/lib/*"],
+      "main/*": ["src/main/*"],
+      "utils/*": ["src/utils/*"],
+      "shared/*": ["src/shared/*"]
+    },
     "outDir": "./build/",
     "sourceMap": true,
     "noImplicitAny": true,
-    "module": "es6",
-    "target": "es5",
-    "jsx": "react",
+    "module": "ESNext",
+    "target": "ESNext",
+    "jsx": "react-jsx",
     "allowJs": true,
     "allowSyntheticDefaultImports": true,
     "removeComments": true,

@@ -1,0 +1,84 @@
+import React, { useMemo, type Dispatch, type SetStateAction } from "react";
+import Button from "legacy/components/porter/Button";
+import Modal from "legacy/components/porter/Modal";
+import Spacer from "legacy/components/porter/Spacer";
+import Text from "legacy/components/porter/Text";
+import { type PorterAppFormData } from "legacy/lib/porter-apps";
+import { useFormContext } from "react-hook-form";
+import styled from "styled-components";
+
+import { useLatestRevision } from "./LatestRevisionContext";
+
+type Props = {
+  cancelRedeploy: () => void;
+  setOpen: Dispatch<SetStateAction<boolean>>;
+  finalizeDeploy: () => void;
+  buildIsDirty: boolean;
+};
+
+const ConfirmRedeployModal: React.FC<Props> = ({
+  cancelRedeploy,
+  setOpen,
+  finalizeDeploy,
+  buildIsDirty,
+}) => {
+  const { setValue } = useFormContext<PorterAppFormData>();
+  const { latestRevision, porterApp } = useLatestRevision();
+  const message = useMemo(() => {
+    if (buildIsDirty) {
+      return "A change to your application's build settings has been detected. Confirming this change will trigger a rerun of your application's CI pipeline.";
+    }
+    if (latestRevision.status === "BUILD_FAILED") {
+      return "Your application's build previously failed. Confirming this change will trigger a rerun of your application's CI pipeline.";
+    }
+    if (latestRevision.status === "PREDEPLOY_FAILED") {
+      return (
+        "Your application's predeploy previously failed. " +
+        (porterApp.git_branch
+          ? "Confirming this change will trigger a rerun of your application's CI pipeline."
+          : " Confirming this change will trigger a rerun of the predeploy job.")
+      );
+    }
+  }, [latestRevision, buildIsDirty]);
+
+  return (
+    <Modal
+      closeModal={() => {
+        setOpen(false);
+      }}
+    >
+      <Text size={16}>Confirm deploy</Text>
+      <Spacer y={0.5} />
+      <Text color="helper">{message}</Text>
+      <Spacer y={0.5} />
+
+      <ButtonContainer>
+        <Button
+          onClick={() => {
+            cancelRedeploy();
+            setOpen(false);
+          }}
+          color="#b91133"
+        >
+          Cancel
+        </Button>
+        <Button
+          onClick={() => {
+            setValue("redeployOnSave", true);
+            finalizeDeploy();
+          }}
+        >
+          Continue
+        </Button>
+      </ButtonContainer>
+    </Modal>
+  );
+};
+
+export default ConfirmRedeployModal;
+
+const ButtonContainer = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  column-gap: 0.5rem;
+`;

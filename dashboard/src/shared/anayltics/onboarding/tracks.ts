@@ -1,3 +1,10 @@
+import {
+  COMMON_TRACKS,
+  CONNECT_REGISTRY_TRACKS,
+  CONNECT_SOURCE_TRACKS,
+  PROJECT_CREATION_TRACKS,
+  PROVISION_RESOURCES_TRACKS,
+} from "./events";
 import type {
   TrackConnectRegistryClickedProps,
   TrackConnectRegistryIntentProps,
@@ -7,13 +14,6 @@ import type {
   TrackRedirectToGuideProps,
   TrackRegistryAddCredentialsProps,
 } from "./types";
-import {
-  COMMON_TRACKS,
-  CONNECT_REGISTRY_TRACKS,
-  CONNECT_SOURCE_TRACKS,
-  PROJECT_CREATION_TRACKS,
-  PROVISION_RESOURCES_TRACKS,
-} from "./events";
 
 export function trackCreateNewProject() {
   window.analytics?.track(PROJECT_CREATION_TRACKS.NEW_PROJECT_EVENT);

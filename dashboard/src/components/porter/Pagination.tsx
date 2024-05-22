@@ -1,9 +1,9 @@
 import React from "react";
-import styled from "styled-components";
-import Container from "./Container";
-import Text from "./Text";
+
 import Button from "./Button";
+import Container from "./Container";
 import Spacer from "./Spacer";
+import Text from "./Text";
 
 type Props = {
   page: number;
@@ -11,17 +11,17 @@ type Props = {
   totalPages: number;
 };
 
-const Pagination: React.FC<Props> = ({
-  page,
-  setPage,
-  totalPages,
-}) => {
+const Pagination: React.FC<Props> = ({ page, setPage, totalPages }) => {
   return (
     <Container row spaced>
-      <Text color="helper">Viewing page {page} out of {totalPages}</Text>
+      <Text color="helper">
+        Viewing page {page} out of {totalPages}
+      </Text>
       <Container row>
-        <Button 
-          onClick={() => setPage(page - 1)} 
+        <Button
+          onClick={() => {
+            setPage(page - 1);
+          }}
           disabled={page === 1}
           height="20px"
           color="fg"
@@ -30,8 +30,10 @@ const Pagination: React.FC<Props> = ({
           Previous
         </Button>
         <Spacer inline x={0.5} />
-        <Button 
-          onClick={() => setPage(page + 1)}
+        <Button
+          onClick={() => {
+            setPage(page + 1);
+          }}
           disabled={page === totalPages}
           height="20px"
           color="fg"

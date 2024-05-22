@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import styled from "styled-components";
 
 type Props = {
@@ -9,18 +9,12 @@ type Props = {
   inline?: boolean;
 };
 
-const Spacer: React.FC<Props> = ({
-  height,
-  width,
-  y,
-  x,
-  inline,
-}) => {
+const Spacer: React.FC<Props> = ({ height, width, y, x, inline }) => {
   const getCalcHeight = () => {
     if (y) {
       return 25 * y + "px";
     }
-    return null
+    return null;
   };
 
   const getCalcWidth = () => {
@@ -29,7 +23,7 @@ const Spacer: React.FC<Props> = ({
     }
     return "15px";
   };
-  
+
   return (
     <StyledSpacer
       height={height || getCalcHeight()}
@@ -41,12 +35,12 @@ const Spacer: React.FC<Props> = ({
 
 export default Spacer;
 
-const StyledSpacer = styled.div<{ 
+const StyledSpacer = styled.div<{
   height: string;
   width: string;
   inline: boolean;
 }>`
-  display: ${props => props.inline ? "inline-block" : "block"};
-  height: ${props => props.height || "100%"};
-  width: ${props => props.height ? "100%" : props.width};
+  display: ${(props) => (props.inline ? "inline-block" : "block")};
+  height: ${(props) => props.height || "100%"};
+  width: ${(props) => (props.height ? "100%" : props.width)};
 `;

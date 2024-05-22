@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/google/uuid"
 	"github.com/porter-dev/porter/api/types"
 )
 
@@ -49,10 +50,10 @@ func (c *Client) ListDeploymentTargets(
 func (c *Client) DeleteDeploymentTarget(
 	ctx context.Context,
 	projectId uint,
-	deploymentTargetName string,
+	deploymentTargetID uuid.UUID,
 ) error {
 	return c.deleteRequest(
-		fmt.Sprintf("/projects/%d/targets/%s", projectId, deploymentTargetName),
+		fmt.Sprintf("/projects/%d/targets/%s", projectId, deploymentTargetID.String()),
 		nil,
 		nil,
 	)

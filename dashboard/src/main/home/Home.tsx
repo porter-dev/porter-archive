@@ -1,6 +1,8 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
+import NoClusterPlaceHolder from "legacy/components/NoClusterPlaceHolder";
+import DashboardRouter from "legacy/main/home/cluster-dashboard/DashboardRouter";
 import { createPortal } from "react-dom";
 import {
   Route,
@@ -12,6 +14,7 @@ import { Redirect } from "react-router-dom";
 import styled, { ThemeProvider } from "styled-components";
 
 import ConfirmOverlay from "components/ConfirmOverlay";
+import Loading from "components/Loading";
 import Button from "components/porter/Button";
 import Link from "components/porter/Link";
 import Modal from "components/porter/Modal";
@@ -524,6 +527,29 @@ const Home: React.FC<Props> = (props) => {
               <Route path="/datastores">
                 <DatabaseDashboard />
               </Route>
+              <Route
+                path={["/applications"]}
+                render={() => {
+                  if (currentCluster?.id === -1) {
+                    return <Loading />;
+                  } else if (!currentCluster?.name) {
+                    return (
+                      <DashboardWrapper>
+                        <NoClusterPlaceHolder></NoClusterPlaceHolder>
+                      </DashboardWrapper>
+                    );
+                  }
+                  return (
+                    <DashboardWrapper>
+                      <DashboardRouter
+                        currentCluster={currentCluster}
+                        setSidebar={setForceSidebar}
+                        currentView={props.currentRoute}
+                      />
+                    </DashboardWrapper>
+                  );
+                }}
+              />
 
               <Route path="/compliance">
                 <ComplianceDashboard />

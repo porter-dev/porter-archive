@@ -197,7 +197,7 @@ const Settings: React.FC = () => {
             <Text color="helper">
               If enabled, Porter will mount a shared storage drive in your
               cluster, accessible by all services of this app. This drive is
-              accessible at /data/efs/{porterApp.name}
+              accessible at /data/{porterApp.name}
             </Text>
             <Spacer y={0.5} />
             <Controller

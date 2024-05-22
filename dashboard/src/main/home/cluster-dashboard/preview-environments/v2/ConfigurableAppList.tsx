@@ -10,6 +10,7 @@ import Image from "components/porter/Image";
 import SearchBar from "components/porter/SearchBar";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
+import { useDeploymentTargetList } from "lib/hooks/useDeploymentTarget";
 import { useAppInstances } from "lib/hooks/useLatestAppRevisions";
 import { useTemplateEnvs } from "lib/hooks/useTemplateEnvs";
 
@@ -29,23 +30,28 @@ export const ConfigurableAppList: React.FC = () => {
     projectId: currentProject?.id ?? 0,
     clusterId: currentCluster?.id ?? 0,
   });
+  const { deploymentTargetList } = useDeploymentTargetList({ preview: false });
 
   const { environments, status } = useTemplateEnvs();
 
-  const envsWithExistingAppInstance = useMemo(() => {
-    return environments
-      .map((env) => {
-        const existingAppInstance = appInstances.find(
-          (inst) => inst.name === env.name
-        );
+  const filteredEnvs = useMemo(() => {
+    const activeAppInstances = appInstances.filter((ai) =>
+      deploymentTargetList.some((dt) => dt.id === ai.deployment_target.id)
+    );
 
-        return {
-          ...env,
-          existingAppInstance,
-        };
-      })
-      .filter((ev) => ev.name.includes(searchValue));
-  }, [environments, appInstances, searchValue]);
+    const withBaseAppInstance = environments.map((env) => {
+      const existingAppInstance = activeAppInstances.find(
+        (ai) => ai.name === env.name
+      );
+
+      return {
+        ...env,
+        existingAppInstance,
+      };
+    });
+
+    return withBaseAppInstance;
+  }, [environments, deploymentTargetList, searchValue]);
 
   if (status === "loading") {
     return <Loading offset="-150px" />;
@@ -101,7 +107,7 @@ export const ConfigurableAppList: React.FC = () => {
       </Container>
       <Spacer y={1} />
       <List>
-        {envsWithExistingAppInstance.map((ev) => (
+        {filteredEnvs.map((ev) => (
           <ConfigurableAppRow
             key={ev.name}
             setEditingApp={() => {

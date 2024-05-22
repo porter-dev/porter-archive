@@ -1,21 +1,25 @@
 import React, { useContext, useEffect, useState } from "react";
+import { type Session } from "@ory/client";
 import { Redirect, Route, Switch } from "react-router-dom";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
 
 import Loading from "../../components/Loading";
-import Login from "../../main/auth/Login";
+import LoginWrapper from "../../main/auth/LoginWrapper";
 import Register from "../../main/auth/Register";
 import ResetPasswordFinalize from "../../main/auth/ResetPasswordFinalize";
 import ResetPasswordInit from "../../main/auth/ResetPasswordInit";
 import SetInfo from "../../main/auth/SetInfo";
 import VerifyEmail from "../../main/auth/VerifyEmail";
 import CurrentError from "../../main/CurrentError";
+import { ory } from "./ory";
 
 type AuthnState = {
   userId: number;
+  authenticate: () => Promise<void>;
   handleLogOut: () => void;
+  session: Session | null;
 };
 
 export const AuthnContext = React.createContext<AuthnState | null>(null);
@@ -39,35 +43,45 @@ const AuthnProvider = ({
   const [isEmailVerified, setIsEmailVerified] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [userId, setUserId] = useState(-1);
+  const [logoutUrl, setLogoutUrl] = useState<string>("");
   const [hasInfo, setHasInfo] = useState(false);
+  const [session, setSession] = useState<Session | null>(null);
   const [local, setLocal] = useState(false);
 
   const authenticate = async (): Promise<void> => {
-    api
-      .checkAuth("", {}, {})
-      .then((res) => {
-        if (res?.data) {
-          setUser?.(res.data.id, res.data.email);
-          setIsLoggedIn(true);
-          setIsEmailVerified(res.data.email_verified);
-          setHasInfo(res.data.company_name && true);
-          setIsLoading(false);
-          setUserId(res.data.id);
-        } else {
-          setIsLoggedIn(false);
-          setIsEmailVerified(false);
-          setHasInfo(false);
-          setIsLoading(false);
-          setUserId(-1);
-        }
-      })
-      .catch(() => {
+    try {
+      const { data: authData } = await api.checkAuth("", {}, {});
+      if (authData) {
+        setUser?.(authData.id, authData.email);
+        setIsLoggedIn(true);
+        setIsEmailVerified(authData.email_verified);
+        setHasInfo(authData.company_name && true);
+        setIsLoading(false);
+        setUserId(authData.id);
+      } else {
         setIsLoggedIn(false);
         setIsEmailVerified(false);
         setHasInfo(false);
         setIsLoading(false);
         setUserId(-1);
-      });
+      }
+    } catch {
+      setIsLoggedIn(false);
+      setIsEmailVerified(false);
+      setHasInfo(false);
+      setIsLoading(false);
+      setUserId(-1);
+    }
+
+    try {
+      const { data: orySession } = await ory.toSession();
+      const { data: logOutData } = await ory.createBrowserLogoutFlow();
+      setLogoutUrl(logOutData.logout_url);
+      setSession(orySession);
+    } catch {
+      setSession(null);
+      setLogoutUrl("");
+    }
   };
 
   const handleLogOut = (): void => {
@@ -84,6 +98,8 @@ const AuthnProvider = ({
       .catch((err) => {
         setCurrentError?.(err.response?.data.errors[0]);
       });
+
+    window.location.replace(logoutUrl);
   };
 
   useEffect(() => {
@@ -110,7 +126,7 @@ const AuthnProvider = ({
           <Route
             path="/login"
             render={() => {
-              return <Login authenticate={authenticate} />;
+              return <LoginWrapper authenticate={authenticate} />;
             }}
           />
           <Route
@@ -186,7 +202,9 @@ const AuthnProvider = ({
     <AuthnContext.Provider
       value={{
         userId,
+        authenticate,
         handleLogOut,
+        session,
       }}
     >
       {children}

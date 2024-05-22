@@ -73,14 +73,17 @@ STRIPE_SECRET_KEY=
 # STRIPE_PUBLISHABLE_KEY is used in the frontend to create Stripe Web Elements
 STRIPE_PUBLISHABLE_KEY=
 
-# METRONOME_API_KEY is used to create customers in Metronome. If empty all functionality will be disabled.
-METRONOME_API_KEY=
+# LAGO_API_KEY is used to create customers in Lago. If empty all functionality will be disabled.
+LAGO_API_KEY=
 
-# PORTER_CLOUD_PLAN_ID is the id of the starter plan in Metronome. Only used if METRONOME_API_KEY is set
-PORTER_CLOUD_PLAN_ID=
+# PORTER_CLOUD_PLAN_ID is the id of the starter plan in Lago. Only used if LAGO_API_KEY is set
+PORTER_CLOUD_PLAN_CODE=
 
-# PORTER_STANDARD_PLAN_ID is the id of the standard plan in Metronome. Only used if METRONOME_API_KEY is set
-PORTER_STANDARD_PLAN_ID=
+# PORTER_STANDARD_PLAN_CODE is the id of the standard plan in Lago. Only used if LAGO_API_KEY is set
+PORTER_STANDARD_PLAN_CODE=
+
+# PORTER_TRIAL_CODE is the id of the trial plan in Lago. Only used if LAGO_API_KEY is set
+PORTER_TRIAL_CODE=
 
 # UPSTASH_ENABLED is used to enable the Upstash integration
 UPSTASH_ENABLED=false

@@ -1,43 +1,45 @@
 import React, { useContext } from "react";
-import {
-  ArrayInputField,
-  CheckboxField,
-  CronField,
-  FormField,
-  InjectedProps,
-  InputField,
-  KeyValueArrayField,
-  ResourceListField,
-  Section,
-  SelectField,
-  ServiceIPListField,
-  TextAreaField,
-  UrlLinkField,
-  DictionaryField,
-  DictionaryArrayField,
-} from "./types";
-import TabRegion, { TabOption } from "../TabRegion";
+import styled from "styled-components";
+
+import Button from "components/porter/Button";
+
 import Heading from "../form-components/Heading";
 import Helper from "../form-components/Helper";
-import Input from "./field-components/Input";
-import { PorterFormContext } from "./PorterFormContextProvider";
-import Checkbox from "./field-components/Checkbox";
-import KeyValueArray from "./field-components/KeyValueArray";
-import styled from "styled-components";
 import SaveButton from "../SaveButton";
+import TabRegion, { type TabOption } from "../TabRegion";
 import ArrayInput from "./field-components/ArrayInput";
+import Checkbox from "./field-components/Checkbox";
+import CronInput from "./field-components/CronInput";
+import Dictionary from "./field-components/Dictionary";
+import DictionaryArray from "./field-components/DictionaryArray";
+import Input from "./field-components/Input";
+import KeyValueArray from "./field-components/KeyValueArray";
+import ResourceList from "./field-components/ResourceList";
 import Select from "./field-components/Select";
 import ServiceIPList from "./field-components/ServiceIPList";
-import ResourceList from "./field-components/ResourceList";
-import VeleroForm from "./field-components/VeleroForm";
-import CronInput from "./field-components/CronInput";
 import TextAreaInput from "./field-components/TextAreaInput";
 import UrlLink from "./field-components/UrlLink";
-import Button from "components/porter/Button";
-import DictionaryArray from "./field-components/DictionaryArray";
-import Dictionary from "./field-components/Dictionary";
+import VeleroForm from "./field-components/VeleroForm";
+import { PorterFormContext } from "./PorterFormContextProvider";
+import {
+  type ArrayInputField,
+  type CheckboxField,
+  type CronField,
+  type DictionaryArrayField,
+  type DictionaryField,
+  type FormField,
+  type InjectedProps,
+  type InputField,
+  type KeyValueArrayField,
+  type ResourceListField,
+  type Section,
+  type SelectField,
+  type ServiceIPListField,
+  type TextAreaField,
+  type UrlLinkField,
+} from "./types";
 
-interface Props {
+type Props = {
   leftTabOptions?: TabOption[];
   rightTabOptions?: TabOption[];
   renderTabContents?: (
@@ -61,20 +63,19 @@ interface Props {
   injectedProps?: InjectedProps;
 
   absoluteSave: boolean;
-}
+};
 
 const PorterForm: React.FC<Props> = (props) => {
-  const {
-    formData,
-    isReadOnly,
-    validationInfo,
-    onSubmit,
-    formState,
-  } = useContext(PorterFormContext);
+  const { formData, isReadOnly, validationInfo, onSubmit, formState } =
+    useContext(PorterFormContext);
 
   const { currentTab, setCurrentTab } = props;
 
-  const renderSectionField = (field: FormField, num?: number, i?: number): JSX.Element => {
+  const renderSectionField = (
+    field: FormField,
+    num?: number,
+    i?: number
+  ): JSX.Element => {
     const injected = props.injectedProps?.[field.type];
 
     const bundledProps = {
@@ -87,7 +88,17 @@ const PorterForm: React.FC<Props> = (props) => {
       case "heading":
         // Remove top margin from heading if it's the first form element in the tab
         // TODO: Handle Job form and form variables more gracefully
-        return <Heading isAtTop={num + i < 1 || (formData.name === "Job" && num + i === 1) || (formData.name === "Worker" && num + i === 1)}>{field.label}</Heading>;
+        return (
+          <Heading
+            isAtTop={
+              num + i < 1 ||
+              (formData.name === "Job" && num + i === 1) ||
+              (formData.name === "Worker" && num + i === 1)
+            }
+          >
+            {field.label}
+          </Heading>
+        );
       case "subtitle":
         return <Helper>{field.label}</Helper>;
       case "input":
@@ -135,7 +146,7 @@ const PorterForm: React.FC<Props> = (props) => {
   };
 
   const getTabOptions = (): TabOption[] => {
-    let options = (props.leftTabOptions || [])
+    const options = (props.leftTabOptions || [])
       .concat(
         formData?.tabs?.map((tab) => {
           if (props.isLaunch && tab?.settings?.omitFromLaunch) {
@@ -233,7 +244,7 @@ const PorterForm: React.FC<Props> = (props) => {
         {renderTab()}
       </TabRegion>
       <br />
-      {(showSaveButton() && props.buttonStatus === undefined) && (
+      {showSaveButton() && props.buttonStatus === undefined && (
         <SaveButton
           text={props.saveButtonText || "Deploy application"}
           onClick={submit}
@@ -248,7 +259,7 @@ const PorterForm: React.FC<Props> = (props) => {
         />
       )}
       {/* TODO: change button when deploying */}
-      {(props.buttonStatus !== undefined) && (
+      {props.buttonStatus !== undefined && (
         <Button
           onClick={submit}
           status={props.buttonStatus}
@@ -288,6 +299,6 @@ const StyledPorterForm = styled.div<{ showSave?: boolean }>`
   margin-bottom: 5px;
   font-size: 13px;
   border-radius: 5px;
-  background: ${props => props.theme.fg};
+  background: ${(props) => props.theme.fg};
   border: 1px solid #494b4f;
 `;

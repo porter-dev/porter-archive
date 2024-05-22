@@ -49,7 +49,12 @@ const SelectableAppList: React.FC<AppListProps> = ({ appListItems }) => {
               </Container>
               <Spacer height="15px" />
               <Container row>
-                <AppSource source={ali.app.source} />
+                <AppSource
+                  source={{
+                    from: "porter_apps",
+                    details: ali.app.source,
+                  }}
+                />
                 <Spacer inline x={1} />
               </Container>
             </>

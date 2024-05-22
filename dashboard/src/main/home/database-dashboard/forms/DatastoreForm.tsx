@@ -378,7 +378,7 @@ const DatastoreForm: React.FC = () => {
                             database_name: watchDbName,
                           }
                     }
-                    engine={template.engine}
+                    template={template}
                   />
                 </>
               )}

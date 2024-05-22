@@ -36,6 +36,8 @@ const datastoreTypeValidator = z.enum([
   "ELASTICACHE",
   "MANAGED_REDIS",
   "MANAGED_POSTGRES",
+  "NEON",
+  "UPSTASH",
 ]);
 const datastoreEngineValidator = z.enum([
   "UNKNOWN",
@@ -109,6 +111,14 @@ export const DATASTORE_TYPE_MANAGED_REDIS: DatastoreType = {
   name: "MANAGED_REDIS" as const,
   displayName: "Managed Redis",
 };
+export const DATASTORE_TYPE_NEON: DatastoreType = {
+  name: "NEON" as const,
+  displayName: "Neon",
+};
+export const DATASTORE_TYPE_UPSTASH: DatastoreType = {
+  name: "UPSTASH" as const,
+  displayName: "Upstash",
+};
 
 export type DatastoreState = {
   state: z.infer<typeof datastoreValidator>["status"];
@@ -159,6 +169,19 @@ export const DATASTORE_STATE_DELETED: DatastoreState = {
   displayName: "Wrapping up",
 };
 
+export type DatastoreTab = {
+  name: string;
+  displayName: string;
+  component: React.FC;
+  isOnlyForPorterOperators?: boolean;
+};
+
+export const DEFAULT_DATASTORE_TAB = {
+  name: "configuration",
+  displayName: "Configuration",
+  component: () => null,
+};
+
 export type DatastoreTemplate = {
   highLevelType: DatastoreEngine; // this was created so that rds aurora postgres and rds postgres can be grouped together
   type: DatastoreType;
@@ -170,9 +193,9 @@ export type DatastoreTemplate = {
   disabled: boolean;
   instanceTiers: ResourceOption[];
   supportedEngineVersions: EngineVersion[];
-  formTitle: string;
   creationStateProgression: DatastoreState[];
   deletionStateProgression: DatastoreState[];
+  tabs: DatastoreTab[]; // this what is rendered on the dashboard after the datastore is deployed
 };
 
 const instanceTierValidator = z.enum([
@@ -312,6 +335,14 @@ const managedRedisConfigValidator = z.object({
     .default(1),
 });
 
+const neonValidator = z.object({
+  type: z.literal("neon"),
+});
+
+const upstashValidator = z.object({
+  type: z.literal("upstash"),
+});
+
 export const dbFormValidator = z.object({
   name: z
     .string()
@@ -332,6 +363,8 @@ export const dbFormValidator = z.object({
     elasticacheRedisConfigValidator,
     managedRedisConfigValidator,
     managedPostgresConfigValidator,
+    neonValidator,
+    upstashValidator,
   ]),
   clusterId: z.number(),
 });

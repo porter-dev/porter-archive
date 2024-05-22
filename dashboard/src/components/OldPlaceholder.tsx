@@ -1,11 +1,11 @@
 import React from "react";
 import styled from "styled-components";
 
-interface Props {
+type Props = {
   height?: string;
   minHeight?: string;
   children: React.ReactNode;
-}
+};
 
 const OldPlaceholder: React.FC<Props> = ({ height, minHeight, children }) => {
   return (
@@ -30,6 +30,6 @@ const StyledPlaceholder = styled.div<{
   font-size: 13px;
   color: #ffffff44;
   border-radius: 5px;
-  background: ${props => props.theme.fg};
-  border: 1px solid ${props => props.theme.border};
+  background: ${(props) => props.theme.fg};
+  border: 1px solid ${(props) => props.theme.border};
 `;

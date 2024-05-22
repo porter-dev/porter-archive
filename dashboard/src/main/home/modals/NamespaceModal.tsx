@@ -1,12 +1,11 @@
 import React, { Component } from "react";
 import styled from "styled-components";
-import close from "assets/close.png";
+
+import InputRow from "components/form-components/InputRow";
+import SaveButton from "components/SaveButton";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
-
-import SaveButton from "components/SaveButton";
-import InputRow from "components/form-components/InputRow";
 
 type PropsType = {};
 
@@ -90,9 +89,9 @@ export default class NamespaceModal extends Component<PropsType, StateType> {
           <InputRow
             type="string"
             value={this.state.namespaceName}
-            setValue={(x: string) =>
-              this.setState({ namespaceName: x, status: null })
-            }
+            setValue={(x: string) => {
+              this.setState({ namespaceName: x, status: null });
+            }}
             placeholder="ex: porter-workers"
             width="480px"
           />
@@ -101,7 +100,9 @@ export default class NamespaceModal extends Component<PropsType, StateType> {
         <SaveButton
           text="Create Namespace"
           color="#616FEEcc"
-          onClick={() => this.createNamespace()}
+          onClick={() => {
+            this.createNamespace();
+          }}
           status={this.state.status}
         />
       </>

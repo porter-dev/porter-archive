@@ -12,6 +12,6 @@ const theme = {
   text: {
     primary: "#DFDFE1",
   },
-}
+};
 
 export default theme;

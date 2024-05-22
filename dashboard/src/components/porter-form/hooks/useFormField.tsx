@@ -1,15 +1,16 @@
 import { useContext, useEffect } from "react";
+
 import { PorterFormContext } from "../PorterFormContextProvider";
 import {
-  PorterFormFieldFieldState,
-  PorterFormFieldValidationState,
-  PorterFormVariableList,
+  type PorterFormFieldFieldState,
+  type PorterFormFieldValidationState,
+  type PorterFormVariableList,
 } from "../types";
 
-interface FormFieldData<T> {
+type FormFieldData<T> = {
   state: T;
   variables: PorterFormVariableList;
-  validation: { [key: string]: PorterFormFieldValidationState };
+  validation: Record<string, PorterFormFieldValidationState>;
   setState: (setFunc: (prev: T) => Partial<T>) => void;
   setVars: (
     setFunc: (vars: PorterFormVariableList) => PorterFormVariableList
@@ -19,13 +20,13 @@ interface FormFieldData<T> {
       state: PorterFormFieldValidationState
     ) => PorterFormFieldValidationState
   ) => void;
-}
+};
 
-interface Options<T> {
+type Options<T> = {
   initState?: T | (() => T);
   initValidation?: Partial<PorterFormFieldValidationState>;
   initVars?: PorterFormVariableList;
-}
+};
 
 const useFormField = <T extends PorterFormFieldFieldState>(
   fieldId: string,

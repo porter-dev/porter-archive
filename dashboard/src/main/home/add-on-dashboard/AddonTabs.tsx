@@ -9,10 +9,6 @@ import Banner from "components/porter/Banner";
 import Spacer from "components/porter/Spacer";
 import TabSelector from "components/TabSelector";
 import { type ClientAddon } from "lib/addons";
-import {
-  DEFAULT_ADDON_TAB,
-  SUPPORTED_ADDON_TEMPLATES,
-} from "lib/addons/template";
 
 import { Context } from "shared/Context";
 
@@ -37,38 +33,24 @@ const AddonTabs: React.FC<Props> = ({ tabParam }) => {
     reset(addon);
   }, [addon]);
 
-  const addonTemplate = useMemo(() => {
-    return SUPPORTED_ADDON_TEMPLATES.find(
-      (template) => template.type === addon.config.type
-    );
-  }, [addon]);
-
   const tabs = useMemo(() => {
-    if (addonTemplate) {
-      return addonTemplate.tabs
-        .filter(
-          (t) =>
-            !t.isOnlyForPorterOperators ||
-            (t.isOnlyForPorterOperators && user.isPorterUser)
-        )
-        .map((tab) => ({
-          label: tab.displayName,
-          value: tab.name,
-        }));
-    }
-    return [
-      {
-        label: DEFAULT_ADDON_TAB.displayName,
-        value: DEFAULT_ADDON_TAB.name,
-      },
-    ];
-  }, [addonTemplate]);
+    return addon.template.tabs
+      .filter(
+        (t) =>
+          !t.isOnlyForPorterOperators ||
+          (t.isOnlyForPorterOperators && user.isPorterUser)
+      )
+      .map((tab) => ({
+        label: tab.displayName,
+        value: tab.name,
+      }));
+  }, [addon.template]);
 
   const currentTab = useMemo(() => {
     if (tabParam && tabs.some((tab) => tab.value === tabParam)) {
       return tabParam;
     }
-    return tabs[0].value;
+    return tabs.length ? tabs[0].value : "";
   }, [tabParam, tabs]);
 
   return (
@@ -96,7 +78,7 @@ const AddonTabs: React.FC<Props> = ({ tabParam }) => {
         }}
       />
       <Spacer y={1} />
-      {addonTemplate?.tabs
+      {addon.template.tabs
         .filter(
           (t) =>
             !t.isOnlyForPorterOperators ||

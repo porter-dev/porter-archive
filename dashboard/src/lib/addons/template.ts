@@ -4,8 +4,11 @@ import DatadogForm from "main/home/add-on-dashboard/datadog/DatadogForm";
 import MetabaseForm from "main/home/add-on-dashboard/metabase/MetabaseForm";
 import MezmoForm from "main/home/add-on-dashboard/mezmo/MezmoForm";
 import NewRelicForm from "main/home/add-on-dashboard/newrelic/NewRelicForm";
+import QuivrForm from "main/home/add-on-dashboard/quivr/QuivrForm";
 import TailscaleForm from "main/home/add-on-dashboard/tailscale/TailscaleForm";
 import TailscaleOverview from "main/home/add-on-dashboard/tailscale/TailscaleOverview";
+
+import quivr from "assets/quivr.png";
 
 import { type ClientAddon, type ClientAddonType } from ".";
 
@@ -279,11 +282,52 @@ export const ADDON_TEMPLATE_TAILSCALE: AddonTemplate<"tailscale"> = {
   },
 };
 
+export const ADDON_TEMPLATE_QUIVR: AddonTemplate<"quivr"> = {
+  type: "quivr",
+  displayName: "Quivr",
+  description: "Your second brain, empowered by generative AI",
+  icon: quivr,
+  tags: ["Analytics"],
+  tabs: [
+    {
+      name: "configuration",
+      displayName: "Configuration",
+      component: QuivrForm,
+    },
+    {
+      name: "logs",
+      displayName: "Logs",
+      component: Logs,
+      isOnlyForPorterOperators: true,
+    },
+    {
+      name: "settings",
+      displayName: "Settings",
+      component: Settings,
+    },
+  ],
+  defaultValues: {
+    type: "quivr",
+    exposedToExternalTraffic: true,
+    porterDomain: "",
+    customDomain: "",
+    openAiApiKey: "",
+    supabaseUrl: "",
+    supabaseServiceKey: "",
+    pgDatabaseUrl: "",
+    jwtSecretKey: "",
+    quivrDomain: "https://chat.quivr.com",
+    anthropicApiKey: "",
+    cohereApiKey: "",
+  },
+};
+
 export const SUPPORTED_ADDON_TEMPLATES: Array<AddonTemplate<ClientAddonType>> =
   [
     ADDON_TEMPLATE_DATADOG,
     ADDON_TEMPLATE_MEZMO,
     ADDON_TEMPLATE_METABASE,
-    ADDON_TEMPLATE_NEWRELIC,
+    // ADDON_TEMPLATE_NEWRELIC,
     ADDON_TEMPLATE_TAILSCALE,
+    ADDON_TEMPLATE_QUIVR,
   ];

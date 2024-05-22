@@ -21,7 +21,13 @@ type DatastoreHook = {
 };
 type CreateDatastoreInput = {
   name: string;
-  type: "RDS" | "ELASTICACHE" | "MANAGED-POSTGRES" | "MANAGED-REDIS";
+  type:
+    | "RDS"
+    | "ELASTICACHE"
+    | "MANAGED-POSTGRES"
+    | "MANAGED-REDIS"
+    | "NEON"
+    | "UPSTASH";
   engine: "POSTGRES" | "AURORA-POSTGRES" | "REDIS";
   values: object;
 };
@@ -133,6 +139,32 @@ const clientDbToCreateInput = (values: DbFormData): CreateDatastoreInput => {
           engine: "REDIS",
         };
       }
+    )
+    .with(
+      { config: { type: "neon" } },
+      (values): CreateDatastoreInput => ({
+        name: values.name,
+        values: {
+          config: {
+            name: values.name,
+          },
+        },
+        type: "NEON",
+        engine: "POSTGRES",
+      })
+    )
+    .with(
+      { config: { type: "upstash" } },
+      (values): CreateDatastoreInput => ({
+        name: values.name,
+        values: {
+          config: {
+            name: values.name,
+          },
+        },
+        type: "UPSTASH",
+        engine: "REDIS",
+      })
     )
     .exhaustive();
 };

@@ -6,7 +6,6 @@ import Tooltip from "components/porter/Tooltip";
 import api from "shared/api";
 import { integrationList } from "shared/common";
 import { Context } from "shared/Context";
-import close from "assets/close.png";
 
 type PropsType = {};
 

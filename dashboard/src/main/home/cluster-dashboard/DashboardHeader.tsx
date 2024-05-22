@@ -1,12 +1,12 @@
 import React, { Component } from "react";
 import styled from "styled-components";
 
-import { Context } from "shared/Context";
-
-import TitleSection from "components/TitleSection";
+import Container from "components/porter/Container";
 import Spacer from "components/porter/Spacer";
 import Tooltip from "components/porter/Tooltip";
-import Container from "components/porter/Container";
+import TitleSection from "components/TitleSection";
+
+import { Context } from "shared/Context";
 
 type PropsType = {
   image?: any;

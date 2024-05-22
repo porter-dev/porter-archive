@@ -1,25 +1,13 @@
-import React, { useContext, useEffect, useMemo, useState } from "react";
+import React from "react";
 import styled from "styled-components";
 
-import { InviteType } from "shared/types";
-import api from "shared/api";
-import { Context } from "shared/Context";
-import backArrow from "assets/back_arrow.png";
-
-import Loading from "components/Loading";
-import InputRow from "components/form-components/InputRow";
-import Helper from "components/form-components/Helper";
-import Heading from "components/form-components/Heading";
-import CopyToClipboard from "components/CopyToClipboard";
-import { Column } from "react-table";
-import Table from "components/OldTable";
-import RadioSelector from "components/RadioSelector";
-import SelectRow from "components/form-components/SelectRow";
-import SaveButton from "components/SaveButton";
-import { APIToken } from "../APITokensSection";
 import CheckboxList from "components/form-components/CheckboxList";
-import { PolicyDocType } from "shared/auth/types";
-import { ScopeOption } from "./CreateAPITokenForm";
+import Heading from "components/form-components/Heading";
+import Helper from "components/form-components/Helper";
+import InputRow from "components/form-components/InputRow";
+
+
+import { type ScopeOption } from "./CreateAPITokenForm";
 
 type Props = {
   selectedClusterFields: ScopeOption[];
@@ -94,7 +82,9 @@ const CustomPolicyForm: React.FunctionComponent<Props> = ({
       <InputRow
         value={policyName}
         type="text"
-        setValue={(newName: string) => setPolicyName(newName)}
+        setValue={(newName: string) => {
+          setPolicyName(newName);
+        }}
         label="Role Name"
         width="100%"
         placeholder="ex: custom-developer-role"

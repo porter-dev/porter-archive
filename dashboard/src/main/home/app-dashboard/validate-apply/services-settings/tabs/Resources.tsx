@@ -135,7 +135,7 @@ const Resources: React.FC<ResourcesProps> = ({
         <>
           <Spacer y={1} />
           <Text>
-            Sleep Service
+            Sleep service
             <a
               href="https://docs.porter.run/configure/basic-configuration#sleep-mode"
               target="_blank"
@@ -151,6 +151,7 @@ const Resources: React.FC<ResourcesProps> = ({
             render={({ field: { value, onChange } }) => (
               <Checkbox
                 checked={Boolean(value?.value)}
+                disabled={currentProject?.freeze_enabled}
                 toggleChecked={() => {
                   onChange({
                     ...value,
@@ -158,7 +159,11 @@ const Resources: React.FC<ResourcesProps> = ({
                   });
                 }}
               >
-                <Text color="helper">Pause all instances.</Text>
+                <Text color="helper">
+                  {currentProject?.freeze_enabled
+                    ? "Contact support@porter.run to re-enable your project and unsleep services."
+                    : "Pause all instances."}
+                </Text>
               </Checkbox>
             )}
           />

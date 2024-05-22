@@ -1,9 +1,7 @@
 import { differenceInSeconds, intervalToDuration } from "date-fns";
-import { z } from "zod";
 
 import { type JobRun } from "lib/hooks/useJobs";
 
-import api from "shared/api";
 import { timeFrom } from "shared/string_utils";
 
 export const ranFor = (start: string, end?: string | number) => {

@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
-import Helper from "components/form-components/Helper";
-import api from "shared/api";
 import styled from "styled-components";
+
+import Helper from "components/form-components/Helper";
+
+import api from "shared/api";
 import { integrationList } from "shared/common";
 
 const RegistryImageList: React.FC<{
@@ -32,16 +34,14 @@ const RegistryImageList: React.FC<{
         setImageList(res.data);
       })
       .catch(console.error);
-    return () => { };
+    return () => {};
   }, []);
 
   const getIcon = () => {
     if (registryType) {
-      return (
-        integrationList[registryType] && integrationList[registryType].icon
-      );
+      return integrationList[registryType]?.icon;
     } else {
-      return integrationList["dockerhub"].icon;
+      return integrationList.dockerhub.icon;
     }
   };
 
@@ -91,7 +91,7 @@ const ImageRow = styled.div<{ isLast?: boolean }>`
   font-size: 13px;
   padding: 12px;
   user-select: text;
-  
+
   > img {
     width: 20px;
     filter: grayscale(100%);

@@ -20,7 +20,7 @@ import {
   useCustomerPlan,
   usePorterCredits,
   useReferralDetails,
-} from "lib/hooks/useMetronome";
+} from "lib/hooks/useLago";
 import {
   checkIfProjectHasPayment,
   usePaymentMethods,

@@ -9,7 +9,6 @@ import {
   EnumKubernetesKind,
   NodePoolType,
 } from "@porter-dev/api-contracts";
-import { Label } from "@tanstack/react-query-devtools/build/lib/Explorer";
 import { withRouter, type RouteComponentProps } from "react-router";
 import styled from "styled-components";
 

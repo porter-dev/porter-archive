@@ -231,7 +231,7 @@ const Settings: React.FC = () => {
         Configure custom webhooks to trigger on different deployment events.
       </Text>
       <Spacer y={1} />
-      <Webhooks 
+      <Webhooks
         projectId={projectId}
         appName={porterApp.name}
         deploymentTargetId={currentDeploymentTarget.id}

@@ -1,29 +1,30 @@
-import React, { useState, useContext, useEffect } from "react";
+import React, { useContext, useEffect, useState } from "react";
+import { withRouter, type RouteComponentProps } from "react-router";
 import styled from "styled-components";
-import { type RouteComponentProps, withRouter } from "react-router";
 
-import gradient from "assets/gradient.png";
-
-import { Context } from "shared/Context";
-import { type InfraType } from "shared/types";
-import api from "shared/api";
-import { pushFiltered, pushQueryParams } from "shared/routing";
-import { withAuth, type WithAuthProps } from "shared/auth/AuthorizationHoc";
-
-import ProvisionerSettings from "../provisioner/ProvisionerSettings";
-import ClusterPlaceholderContainer from "./ClusterPlaceholderContainer";
-import TabRegion from "components/TabRegion";
 import FormDebugger from "components/porter-form/FormDebugger";
-import TitleSection from "components/TitleSection";
-import ClusterSection from "./ClusterSection";
-import { StatusPage } from "../onboarding/steps/ProvisionResources/forms/StatusPage";
 import Banner from "components/porter/Banner";
 import Spacer from "components/porter/Spacer";
+import TabRegion from "components/TabRegion";
+import TitleSection from "components/TitleSection";
 
-type Props = RouteComponentProps & WithAuthProps & {
-  projectId: number | null;
-  setRefreshClusters: (x: boolean) => void;
-};
+import api from "shared/api";
+import { withAuth, type WithAuthProps } from "shared/auth/AuthorizationHoc";
+import { Context } from "shared/Context";
+import { pushFiltered, pushQueryParams } from "shared/routing";
+import { type InfraType } from "shared/types";
+import gradient from "assets/gradient.png";
+
+import { StatusPage } from "../onboarding/steps/ProvisionResources/forms/StatusPage";
+import ProvisionerSettings from "../provisioner/ProvisionerSettings";
+import ClusterPlaceholderContainer from "./ClusterPlaceholderContainer";
+import ClusterSection from "./ClusterSection";
+
+type Props = RouteComponentProps &
+  WithAuthProps & {
+    projectId: number | null;
+    setRefreshClusters: (x: boolean) => void;
+  };
 
 const Dashboard: React.FC<Props> = ({
   projectId,
@@ -35,10 +36,12 @@ const Dashboard: React.FC<Props> = ({
   const [pressingCtrl, setPressingCtrl] = useState(false);
   const [pressingK, setPressingK] = useState(false);
   const [showFormDebugger, setShowFormDebugger] = useState(false);
-  const [tabOptions, setTabOptions] = useState([{
-    label: "Connected clusters",
-    value: "overview"
-  }]);
+  const [tabOptions, setTabOptions] = useState([
+    {
+      label: "Connected clusters",
+      value: "overview",
+    },
+  ]);
 
   const handleKeyDown = (e: KeyboardEvent): void => {
     if (e.key === "k") {
@@ -83,15 +86,22 @@ const Dashboard: React.FC<Props> = ({
             project_id: currentProject.id,
           }
         )
-        .then((res) => { setInfras(res.data); })
+        .then((res) => {
+          setInfras(res.data);
+        })
         .catch(console.log);
     }
   }, [currentProject]);
- 
-  const currentTab = () => new URLSearchParams(props.location.search).get("tab") || "overview";
+
+  const currentTab = () =>
+    new URLSearchParams(props.location.search).get("tab") || "overview";
 
   useEffect(() => {
-    if (user?.isPorterUser && usage && usage?.current?.clusters < usage?.limit?.clusters) {
+    if (
+      user?.isPorterUser &&
+      usage &&
+      usage?.current?.clusters < usage?.limit?.clusters
+    ) {
       tabOptions.push({ label: "Create a cluster", value: "create-cluster" });
     }
 
@@ -138,7 +148,9 @@ const Dashboard: React.FC<Props> = ({
         <DashboardWrapper>
           {showFormDebugger ? (
             <FormDebugger
-              goBack={() => { setShowFormDebugger(false); }}
+              goBack={() => {
+                setShowFormDebugger(false);
+              }}
             />
           ) : (
             <>
@@ -153,15 +165,15 @@ const Dashboard: React.FC<Props> = ({
                 {currentProject?.roles?.filter((obj: any) => {
                   return obj.user_id === user.userId;
                 })[0].kind === "admin" || (
-                    <i
-                      className="material-icons"
-                      onClick={() => {
-                        pushFiltered(props, "/project-settings", ["project_id"]);
-                      }}
-                    >
-                      more_vert
-                    </i>
-                  )}
+                  <i
+                    className="material-icons"
+                    onClick={() => {
+                      pushFiltered(props, "/project-settings", ["project_id"]);
+                    }}
+                  >
+                    more_vert
+                  </i>
+                )}
               </TitleSection>
               <Spacer height="15px" />
               <InfoSection>
@@ -171,25 +183,22 @@ const Dashboard: React.FC<Props> = ({
                   </InfoLabel>
                 </TopRow>
                 <Description>
-                  Project overview for {currentProject && currentProject.name}
-                  .
+                  Project overview for {currentProject && currentProject.name}.
                 </Description>
               </InfoSection>
-              {
-                currentProject?.capi_provisioner_enabled ? (
-                  <ClusterSection />
-                ) : (
-                  <TabRegion
-                    currentTab={currentTab()}
-                    setCurrentTab={(x: string) => {
-                      pushQueryParams(props, { tab: x });
-                    }}
-                    options={tabOptions}
-                  >
-                    {renderTabContents()}
-                  </TabRegion>
-                )
-              }
+              {currentProject?.capi_provisioner_enabled ? (
+                <ClusterSection />
+              ) : (
+                <TabRegion
+                  currentTab={currentTab()}
+                  setCurrentTab={(x: string) => {
+                    pushQueryParams(props, { tab: x });
+                  }}
+                  options={tabOptions}
+                >
+                  {renderTabContents()}
+                </TabRegion>
+              )}
             </>
           )}
         </DashboardWrapper>

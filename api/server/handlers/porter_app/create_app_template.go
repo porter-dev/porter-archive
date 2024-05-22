@@ -56,6 +56,7 @@ type CreateAppTemplateRequest struct {
 	Secrets                map[string]string        `json:"secrets"`
 	BaseDeploymentTargetID string                   `json:"base_deployment_target_id"`
 	Addons                 []Base64AddonWithEnvVars `json:"addons"`
+	GitOverrides           GitSource                `json:"git_overrides"`
 }
 
 // CreateAppTemplateResponse is the response object for the /app-template POST endpoint
@@ -173,21 +174,48 @@ func (c *CreateAppTemplateHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	err = porter_app.CreateAppWebhook(ctx, porter_app.CreateAppWebhookInput{
-		PorterAppName:           appName,
-		ProjectID:               project.ID,
-		ClusterID:               cluster.ID,
-		GithubAppSecret:         c.Config().ServerConf.GithubAppSecret,
-		GithubAppID:             c.Config().ServerConf.GithubAppID,
-		GithubWebhookSecret:     c.Config().ServerConf.GithubIncomingWebhookSecret,
-		ServerURL:               c.Config().ServerConf.ServerURL,
-		PorterAppRepository:     c.Repo().PorterApp(),
-		GithubWebhookRepository: c.Repo().GithubWebhook(),
-	})
+	porterApp, err := c.Repo().PorterApp().ReadPorterAppByName(cluster.ID, appName)
 	if err != nil {
-		err := telemetry.Error(ctx, span, err, "unable to set repo webhook")
+		err = telemetry.Error(ctx, span, err, "could not read porter app by name")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
+	}
+	if porterApp.ID == 0 {
+		err = telemetry.Error(ctx, span, nil, "porter app not found")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusNotFound))
+		return
+	}
+
+	gitSource := GitSource{
+		GitBranch:   porterApp.GitBranch,
+		GitRepoName: porterApp.RepoName,
+		GitRepoID:   porterApp.GitRepoID,
+	}
+	if request.GitOverrides.GitRepoName != "" {
+		gitSource = request.GitOverrides
+	}
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "git-repo-name", Value: gitSource.GitRepoName})
+
+	if gitSource.GitRepoName != "" {
+		err = porter_app.CreateAppWebhook(ctx, porter_app.CreateAppWebhookInput{
+			ProjectID:   project.ID,
+			ClusterID:   cluster.ID,
+			PorterAppID: porterApp.ID,
+			GitSource: porter_app.GitSource{
+				GitRepoName: gitSource.GitRepoName,
+				GitRepoID:   gitSource.GitRepoID,
+			},
+			GithubAppSecret:         c.Config().ServerConf.GithubAppSecret,
+			GithubAppID:             c.Config().ServerConf.GithubAppID,
+			GithubWebhookSecret:     c.Config().ServerConf.GithubIncomingWebhookSecret,
+			ServerURL:               c.Config().ServerConf.ServerURL,
+			GithubWebhookRepository: c.Repo().GithubWebhook(),
+		})
+		if err != nil {
+			err := telemetry.Error(ctx, span, err, "unable to set repo webhook")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
 	}
 
 	res := &CreateAppTemplateResponse{}

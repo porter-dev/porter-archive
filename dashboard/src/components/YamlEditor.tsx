@@ -1,9 +1,9 @@
 import React, { Component } from "react";
-import styled from "styled-components";
 import AceEditor from "react-ace";
+import styled from "styled-components";
 
 import "shared/ace-porter-theme";
-import 'ace-builds/src-noconflict/ext-searchbox';
+import "ace-builds/src-noconflict/ext-searchbox";
 import "ace-builds/src-noconflict/mode-yaml";
 
 type PropsType = {

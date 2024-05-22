@@ -398,34 +398,6 @@ func getPorterAppRoutes(
 		Router:   r,
 	})
 
-	// GET /api/projects/{project_id}/clusters/{cluster_id}/events/id -> porter_app.NewGetPorterAppEventHandler
-	getPorterAppEventEndpoint := factory.NewAPIEndpoint(
-		&types.APIRequestMetadata{
-			Verb:   types.APIVerbCreate,
-			Method: types.HTTPVerbGet,
-			Path: &types.Path{
-				Parent:       basePath,
-				RelativePath: fmt.Sprintf("/events/{%s}", types.URLParamPorterAppEventID),
-			},
-			Scopes: []types.PermissionScope{
-				types.UserScope,
-				types.ProjectScope,
-				types.ClusterScope,
-			},
-		},
-	)
-
-	getPorterAppEventHandler := porter_app.NewGetPorterAppEventHandler(
-		config,
-		factory.GetResultWriter(),
-	)
-
-	routes = append(routes, &router.Route{
-		Endpoint: getPorterAppEventEndpoint,
-		Handler:  getPorterAppEventHandler,
-		Router:   r,
-	})
-
 	// POST /api/projects/{project_id}/clusters/{cluster_id}/applications/analytics -> porter_app.NewPorterAppAnalyticsHandler
 	porterAppAnalyticsEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
@@ -1589,6 +1561,35 @@ func getPorterAppRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/apps/templates -> porter_app.NewListEnvironmentTemplatesHandler
+	listEnvironmentTemplatesEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbList,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/templates", relPathV2),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	listEnvironmentTemplatesHandler := porter_app.NewListEnvironmentTemplatesHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: listEnvironmentTemplatesEndpoint,
+		Handler:  listEnvironmentTemplatesHandler,
+		Router:   r,
+	})
+
 	// GET /api/projects/{project_id}/clusters/{cluster_id}/apps/{porter_app_name}/templates -> porter_app.NewGetAppTemplateHandler
 	getAppTemplateEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
@@ -1731,6 +1732,34 @@ func getPorterAppRoutes(
 	routes = append(routes, &router.Route{
 		Endpoint: appJobRunStatusEndpoint,
 		Handler:  appJobRunStatusHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/apps/{porter_app_name}/events/id -> porter_app.NewGetPorterAppEventHandler
+	getPorterAppEventEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/{%s}/events/{%s}", relPathV2, types.URLParamPorterAppName, types.URLParamPorterAppEventID),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	getPorterAppEventHandler := porter_app.NewGetPorterAppEventHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: getPorterAppEventEndpoint,
+		Handler:  getPorterAppEventHandler,
 		Router:   r,
 	})
 

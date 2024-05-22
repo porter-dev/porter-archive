@@ -53,7 +53,7 @@ func NewClientWithConfig(ctx context.Context, input NewClientInput) (Client, err
 	client := Client{
 		BaseURL: input.BaseURL,
 		HTTPClient: &http.Client{
-			Timeout: time.Minute,
+			Timeout: 60 * time.Minute,
 		},
 	}
 	if cfToken := os.Getenv("PORTER_CF_ACCESS_TOKEN"); cfToken != "" {

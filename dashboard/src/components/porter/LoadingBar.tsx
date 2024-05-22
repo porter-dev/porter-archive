@@ -8,12 +8,7 @@ type Props = {
   color?: string;
 };
 
-const LoadingBar: React.FC<Props> = ({
-  percent,
-  completed,
-  total,
-  color,
-}) => {
+const LoadingBar: React.FC<Props> = ({ percent, completed, total, color }) => {
   const getColor = () => {
     switch (color) {
       case "failed":
@@ -27,7 +22,7 @@ const LoadingBar: React.FC<Props> = ({
     <StyledLoadingBar>
       <LoadingFill
         color={getColor()}
-        percent={(percent || ((100.0 * completed) / total)) + "%"}
+        percent={(percent || (100.0 * completed) / total) + "%"}
       />
     </StyledLoadingBar>
   );
@@ -56,8 +51,8 @@ const LoadingFill = styled.div<{
   percent: string;
   color?: string;
 }>`
-  width: ${props => props.percent};
-  background: ${props =>
+  width: ${(props) => props.percent};
+  background: ${(props) =>
     props.color || "linear-gradient(to right, #8ce1ff, #616FEE)"};
   height: 100%;
   background-size: 250% 100%;

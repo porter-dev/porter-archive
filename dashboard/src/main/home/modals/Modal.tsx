@@ -1,6 +1,6 @@
 import React, { Component } from "react";
-import styled from "styled-components";
 import ReactDOM from "react-dom";
+import styled from "styled-components";
 
 type PropsType = {
   onRequestClose?: () => void;
@@ -30,8 +30,7 @@ export default class Modal extends Component<PropsType, StateType> {
   handleClickOutside = (event: any) => {
     if (
       this.props.onRequestClose &&
-      this.wrapperRef &&
-      this.wrapperRef.current &&
+      this.wrapperRef?.current &&
       !this.wrapperRef.current.contains(event.target)
     ) {
       this.props.onRequestClose();
@@ -39,7 +38,7 @@ export default class Modal extends Component<PropsType, StateType> {
   };
 
   render() {
-    let { width, height } = this.props;
+    const { width, height } = this.props;
     return (
       <PortalModal>
         <Overlay>
@@ -136,9 +135,9 @@ const StyledModal = styled.div<{
   height: string;
 }>`
   position: absolute;
-  width: ${props => props.width || "760px"};
+  width: ${(props) => props.width || "760px"};
   max-width: 80vw;
-  height: ${props => props.height || "425px"};
+  height: ${(props) => props.height || "425px"};
   max-height: calc(100vh - 30px);
   overflow: visible;
   padding: 25px;

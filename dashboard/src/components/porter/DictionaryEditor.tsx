@@ -1,22 +1,22 @@
-import { ok } from "assert";
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
-import Container from "./Container";
-import Text from "./Text";
+
 import Spacer from "./Spacer";
+import Text from "./Text";
 
 type Props = {
   value: any;
   onChange: any;
 };
 
-const DictionaryEditor: React.FC<Props> = ({
-  value,
-  onChange,
-}) => {
+const DictionaryEditor: React.FC<Props> = ({ value, onChange }) => {
   const [rawEditor, setRawEditor] = useState<boolean>(true);
-  const [savedValue, setSavedValue] = useState<any>(JSON.stringify(value, null, 2));
-  const [rawValue, setRawValue] = useState<string>(JSON.stringify(value, null, 2));
+  const [savedValue, setSavedValue] = useState<any>(
+    JSON.stringify(value, null, 2)
+  );
+  const [rawValue, setRawValue] = useState<string>(
+    JSON.stringify(value, null, 2)
+  );
   const [changesNotSaved, setChangesNotSaved] = useState<boolean>(false);
   const [isValidJSON, setIsValidJSON] = useState<boolean>(true);
 
@@ -39,9 +39,7 @@ const DictionaryEditor: React.FC<Props> = ({
         <Div>
           <TextArea
             color={
-              !isValidJSON ? "#ff385d" : (
-                changesNotSaved ? "#f5cb42" : "#494b4f"
-              )
+              !isValidJSON ? "#ff385d" : changesNotSaved ? "#f5cb42" : "#494b4f"
             }
             value={rawValue}
             onChange={(e) => {
@@ -50,21 +48,25 @@ const DictionaryEditor: React.FC<Props> = ({
           />
           {changesNotSaved && (
             <Flex>
-              <SaveButton onClick={() => {
-                try {
-                  const parsedValue = JSON.parse(rawValue);
-                  setIsValidJSON(true);
-                  onChange(parsedValue);
-                  setChangesNotSaved(false);
-                } catch (e) {
-                  setIsValidJSON(false);
-                }
-              }}>
+              <SaveButton
+                onClick={() => {
+                  try {
+                    const parsedValue = JSON.parse(rawValue);
+                    setIsValidJSON(true);
+                    onChange(parsedValue);
+                    setChangesNotSaved(false);
+                  } catch (e) {
+                    setIsValidJSON(false);
+                  }
+                }}
+              >
                 Update
               </SaveButton>
               <Spacer width="10px" inline />
               {isValidJSON ? (
-                <Text color="#f5cb42">Existing changes have not been saved.</Text>
+                <Text color="#f5cb42">
+                  Existing changes have not been saved.
+                </Text>
               ) : (
                 <Text color="#ff385d">Object is not valid.</Text>
               )}
@@ -74,7 +76,7 @@ const DictionaryEditor: React.FC<Props> = ({
       ) : (
         <>
           {Object.keys(value).map((key: string, i: number) => {
-            return <Block>{key}</Block>
+            return <Block>{key}</Block>;
           })}
         </>
       )}
@@ -98,7 +100,7 @@ const Div = styled.div`
   max-width: calc(100% - 30px);
   width: 400px;
   background: #ffffff11;
-  border: 1px solid ${props => props.color || "#494b4f"};
+  border: 1px solid ${(props) => props.color || "#494b4f"};
   border-radius: 5px;
 `;
 
@@ -106,7 +108,7 @@ const SaveButton = styled.div`
   width: 60px;
   border-radius: 3px;
   height: 25px;
-  background: #616FEEcc;
+  background: #616feecc;
   cursor: pointer;
   display: flex;
   align-items: center;

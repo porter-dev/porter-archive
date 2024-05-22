@@ -22,7 +22,6 @@ const SettingsTab: React.FC = () => {
     useState(false);
 
   const { datastore } = useDatastoreContext();
-  const { deleteDatastore } = useDatastore();
 
   return (
     <div>
@@ -46,12 +45,8 @@ const SettingsTab: React.FC = () => {
       </StyledTemplateComponent>
       {showDeleteDatastoreModal && (
         <DeleteDatastoreModal
-          datastoreName={datastore.name}
           onClose={() => {
             setShowDeleteDatastoreModal(false);
-          }}
-          onSubmit={async () => {
-            await deleteDatastore(datastore.name);
           }}
         />
       )}
@@ -62,16 +57,15 @@ const SettingsTab: React.FC = () => {
 export default SettingsTab;
 
 type DeleteDatastoreModalProps = {
-  datastoreName: string;
-  onSubmit: () => Promise<void>;
   onClose: () => void;
 };
 
-const DeleteDatastoreModal: React.FC<DeleteDatastoreModalProps> = ({
-  datastoreName,
-  onSubmit,
+export const DeleteDatastoreModal: React.FC<DeleteDatastoreModalProps> = ({
   onClose,
 }) => {
+  const { datastore } = useDatastoreContext();
+  const { deleteDatastore } = useDatastore();
+
   const [inputtedDatastoreName, setInputtedDatastoreName] =
     useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -80,7 +74,7 @@ const DeleteDatastoreModal: React.FC<DeleteDatastoreModalProps> = ({
   const confirmDeletion = async (): Promise<void> => {
     setIsSubmitting(true);
     try {
-      await onSubmit();
+      await deleteDatastore(datastore.name);
       onClose();
     } catch (err) {
       setDeleteDatastoreError(
@@ -114,33 +108,36 @@ const DeleteDatastoreModal: React.FC<DeleteDatastoreModalProps> = ({
 
   return (
     <Modal closeModal={onClose}>
-      <Text size={16}>Delete {datastoreName}?</Text>
+      <Text size={16}>Delete {datastore.name}?</Text>
       <Spacer y={1} />
-
-      <Text size={14} color="red">
-        Attention:
-      </Text>
-      <Spacer y={0.1} />
-      <Text>
-        Destruction of resources sometimes results in dangling resources. To
-        ensure that everything has been properly destroyed, please visit your
-        cloud provider&apos;s console.
-      </Text>
-      <Spacer y={0.5} />
-      <Link
-        target="_blank"
-        hasunderline
-        to="https://docs.porter.run/other/deleting-dangling-resources"
-      >
-        Deletion instructions
-      </Link>
-      <Spacer y={1} />
+      {datastore.cloud_provider_credential_identifier !== "" && (
+        <>
+          <Text size={14} color="red">
+            Attention:
+          </Text>
+          <Spacer y={0.1} />
+          <Text>
+            Destruction of resources sometimes results in dangling resources. To
+            ensure that everything has been properly destroyed, please visit
+            your cloud provider&apos;s console.
+          </Text>
+          <Spacer y={0.5} />
+          <Link
+            target="_blank"
+            hasunderline
+            to="https://docs.porter.run/other/deleting-dangling-resources"
+          >
+            Deletion instructions
+          </Link>
+          <Spacer y={1} />
+        </>
+      )}
       <Text color="helper">
         To confirm, enter the datastore name below. This action is irreversible.
       </Text>
       <Spacer y={0.5} />
       <Input
-        placeholder={datastoreName}
+        placeholder={datastore.name}
         value={inputtedDatastoreName}
         setValue={setInputtedDatastoreName}
         width="100%"
@@ -149,13 +146,13 @@ const DeleteDatastoreModal: React.FC<DeleteDatastoreModalProps> = ({
       <Spacer y={1} />
       <Button
         color="#b91133"
-        onClick={async () => {
-          await confirmDeletion();
+        onClick={() => {
+          void confirmDeletion();
         }}
         status={deleteButtonProps.status}
         disabled={
           deleteButtonProps.isDisabled ||
-          inputtedDatastoreName !== datastoreName
+          inputtedDatastoreName !== datastore.name
         }
         loadingText={"Deleting..."}
       >

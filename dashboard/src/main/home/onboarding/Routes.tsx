@@ -1,7 +1,9 @@
 import React, { useContext } from "react";
 import { Route, Switch } from "react-router";
+
 import { Context } from "shared/Context";
 import PorterErrorBoundary from "shared/error_handling/PorterErrorBoundary";
+
 import { OFState } from "./state";
 import ConnectRegistry from "./steps/ConnectRegistry/ConnectRegistry";
 import ConnectSource from "./steps/ConnectSource";
@@ -20,7 +22,9 @@ export const Routes = () => {
         <Switch>
           <Route path={`/onboarding/source/${currentProject}`}>
             <ConnectSource
-              onSuccess={(data) => OFState.actions.nextStep("continue", data)}
+              onSuccess={(data) => {
+                OFState.actions.nextStep("continue", data);
+              }}
             />
           </Route>
           <Route path={["/onboarding/registry/:step?"]}>

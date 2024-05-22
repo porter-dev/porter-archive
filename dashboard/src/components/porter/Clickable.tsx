@@ -1,7 +1,6 @@
 import React from "react";
 import styled from "styled-components";
 
-import Container from "./Container";
 
 type Props = {
   children: React.ReactNode;

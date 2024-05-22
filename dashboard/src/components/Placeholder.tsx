@@ -1,16 +1,16 @@
 import React from "react";
 import styled from "styled-components";
 
-interface Props {
+type Props = {
   height?: string;
   minHeight?: string;
   children: React.ReactNode;
   title?: string;
-}
+};
 
-const Placeholder: React.FC<Props> = ({ 
-  height, 
-  minHeight, 
+const Placeholder: React.FC<Props> = ({
+  height,
+  minHeight,
   children,
   title,
 }) => {
@@ -55,12 +55,12 @@ const StyledPlaceholder = styled.div<{
   min-height: ${(props) => props.minHeight || ""};
   display: flex;
   align-items: center;
-  color: #8D949E;
+  color: #8d949e;
   padding: 50px;
   justify-content: center;
   font-size: 13px;
   border-radius: 5px;
-  background: ${props => props.theme.fg};
+  background: ${(props) => props.theme.fg};
   border: 1px solid #494b4f;
   padding-bottom: 60px;
 

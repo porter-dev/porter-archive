@@ -34,6 +34,7 @@ import { useIntercom } from "lib/hooks/useIntercom";
 import { usePorterYaml } from "lib/hooks/usePorterYaml";
 import { checkIfProjectHasPayment } from "lib/hooks/useStripe";
 import {
+  APP_CREATE_FORM_DEFAULTS,
   porterAppFormValidator,
   type PorterAppFormData,
   type SourceOptions,
@@ -139,35 +140,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
   const porterAppFormMethods = useForm<PorterAppFormData>({
     resolver: zodResolver(porterAppFormValidator),
     reValidateMode: "onSubmit",
-    defaultValues: {
-      app: {
-        name: {
-          value: "",
-          readOnly: false,
-        },
-        build: {
-          method: "pack",
-          context: "./",
-          builder: "",
-          buildpacks: [],
-        },
-        env: [],
-        efsStorage: {
-          enabled: false,
-        },
-      },
-      source: {
-        git_repo_name: "",
-        git_branch: "",
-        porter_yaml_path: "",
-      },
-      deletions: {
-        serviceNames: [],
-        envGroupNames: [],
-        predeploy: [],
-        initialDeploy: [],
-      },
-    },
+    defaultValues: APP_CREATE_FORM_DEFAULTS,
   });
   const {
     register,
@@ -437,7 +410,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
       let stringifiedJson = "unable to stringify errors";
       try {
         stringifiedJson = JSON.stringify(errors);
-      } catch (e) { }
+      } catch (e) {}
       void updateAppStep({
         step: "stack-launch-failure",
         errorMessage: `Form validation error (visible to user): ${errorMessage}. Stringified JSON errors (invisible to user): ${stringifiedJson}`,
@@ -546,8 +519,8 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                     <Text
                       color={
                         isNameHighlight &&
-                          porterAppFormMethods.getValues("app.name.value")
-                            .length > 0
+                        porterAppFormMethods.getValues("app.name.value")
+                          .length > 0
                           ? "#FFCC00"
                           : "helper"
                       }
@@ -682,8 +655,9 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                             }
                           >
                             {detectedServices.count > 0
-                              ? `Detected ${detectedServices.count} service${detectedServices.count > 1 ? "s" : ""
-                              } from porter.yaml.`
+                              ? `Detected ${detectedServices.count} service${
+                                  detectedServices.count > 1 ? "s" : ""
+                                } from porter.yaml.`
                               : `Could not detect any services from porter.yaml. Make sure it exists in the root of your repo.`}
                           </Text>
                         </AppearingDiv>
@@ -778,16 +752,18 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
           }}
         />
       )}
-      {currentProject?.sandbox_enabled && currentProject?.billing_enabled && !hasPaymentEnabled && (
-        <BillingModal
-          back={() => {
-            history.push("/apps");
-          }}
-          onCreate={async () => {
-            history.push("/apps/new/app");
-          }}
-        />
-      )}
+      {currentProject?.sandbox_enabled &&
+        currentProject?.billing_enabled &&
+        !hasPaymentEnabled && (
+          <BillingModal
+            back={() => {
+              history.push("/apps");
+            }}
+            onCreate={async () => {
+              history.push("/apps/new/app");
+            }}
+          />
+        )}
     </CenterWrapper>
   );
 };

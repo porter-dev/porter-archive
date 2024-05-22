@@ -1,16 +1,18 @@
 import React, { useMemo } from "react";
-import { DeviconsNameList } from "assets/devicons-name-list";
-import styled, { keyframes } from "styled-components";
 import { Draggable } from "react-beautiful-dnd";
-import { Buildpack } from "main/home/app-dashboard/types/buildpack";
+import styled, { keyframes } from "styled-components";
 
-interface Props {
+import { type Buildpack } from "main/home/app-dashboard/types/buildpack";
+
+import { DeviconsNameList } from "assets/devicons-name-list";
+
+type Props = {
   buildpack: Buildpack;
   action: "add" | "remove";
   onClickFn: (buildpack: string) => void;
   index: number;
   draggable: boolean;
-}
+};
 
 const BuildpackCard: React.FC<Props> = ({
   buildpack,
@@ -35,7 +37,7 @@ const BuildpackCard: React.FC<Props> = ({
     if (!devicon) {
       return "";
     }
-    return `devicon-${devicon.name}-plain colored`
+    return `devicon-${devicon.name}-plain colored`;
   }, [buildpack.name]);
 
   const renderedBuildpackName = useMemo(() => {
@@ -43,7 +45,11 @@ const BuildpackCard: React.FC<Props> = ({
   }, [buildpack.name]);
 
   return draggable ? (
-    <Draggable draggableId={renderedBuildpackName} index={index} key={renderedBuildpackName}>
+    <Draggable
+      draggableId={renderedBuildpackName}
+      index={index}
+      key={renderedBuildpackName}
+    >
       {(provided) => (
         <StyledCard
           marginBottom="5px"
@@ -59,7 +65,11 @@ const BuildpackCard: React.FC<Props> = ({
             </EventInformation>
           </ContentContainer>
           <ActionContainer>
-            <ActionButton onClick={() => onClickFn(buildpack.buildpack)}>
+            <ActionButton
+              onClick={() => {
+                onClickFn(buildpack.buildpack);
+              }}
+            >
               <span className="material-icons">
                 {action === "remove" ? "delete" : "add"}
               </span>
@@ -77,7 +87,11 @@ const BuildpackCard: React.FC<Props> = ({
         </EventInformation>
       </ContentContainer>
       <ActionContainer>
-        <ActionButton onClick={() => onClickFn(buildpack.buildpack)}>
+        <ActionButton
+          onClick={() => {
+            onClickFn(buildpack.buildpack);
+          }}
+        >
           <span className="material-icons">
             {action === "remove" ? "delete" : "add"}
           </span>
@@ -123,7 +137,7 @@ const ContentContainer = styled.div`
 const Icon = styled.span`
   font-size: 20px;
   margin-left: 10px;
-  margin-right: 20px
+  margin-right: 20px;
 `;
 
 const EventInformation = styled.div`

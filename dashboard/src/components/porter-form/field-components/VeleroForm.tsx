@@ -36,7 +36,9 @@ export default class VeleroForm extends Component<PropsType, StateType> {
           type="text"
           width="300px"
           value={this.state.name}
-          setValue={(x: string) => this.setState({ name: x })}
+          setValue={(x: string) => {
+            this.setState({ name: x });
+          }}
           label="Name"
         />
         <MultiSelect />

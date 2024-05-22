@@ -1,6 +1,8 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
+import NoClusterPlaceHolder from "legacy/components/NoClusterPlaceHolder";
+import DashboardRouter from "legacy/main/home/cluster-dashboard/DashboardRouter";
 import { createPortal } from "react-dom";
 import {
   Route,
@@ -8,17 +10,17 @@ import {
   withRouter,
   type RouteComponentProps,
 } from "react-router";
+import { Redirect } from "react-router-dom";
 import styled, { ThemeProvider } from "styled-components";
 
 import ConfirmOverlay from "components/ConfirmOverlay";
 import Loading from "components/Loading";
-import NoClusterPlaceHolder from "components/NoClusterPlaceHolder";
 import Button from "components/porter/Button";
 import Link from "components/porter/Link";
 import Modal from "components/porter/Modal";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
-import { useCustomerPlan } from "lib/hooks/useMetronome";
+import { useCustomerPlan } from "lib/hooks/useLago";
 import { checkIfProjectHasPayment } from "lib/hooks/useStripe";
 
 import api from "shared/api";
@@ -35,18 +37,17 @@ import {
   type ProjectType,
 } from "shared/types";
 
+import LegacyHome from "../../legacy/main/home/Home";
+import { useAuthn } from "../../shared/auth/AuthnContext";
+import OryLogin from "../auth/OryLogin";
 import AddonDashboard from "./add-on-dashboard/AddOnDashboard";
 import AddonTemplates from "./add-on-dashboard/AddonTemplates";
 import AddonView from "./add-on-dashboard/AddonView";
 import LegacyAddOnDashboard from "./add-on-dashboard/legacy_AddOnDashboard";
 import LegacyNewAddOnFlow from "./add-on-dashboard/legacy_NewAddOnFlow";
 import AppView from "./app-dashboard/app-view/AppView";
-import AppDashboard from "./app-dashboard/AppDashboard";
 import Apps from "./app-dashboard/apps/Apps";
 import CreateApp from "./app-dashboard/create-app/CreateApp";
-import ExpandedApp from "./app-dashboard/expanded-app/ExpandedApp";
-import NewAppFlow from "./app-dashboard/new-app-flow/NewAppFlow";
-import DashboardRouter from "./cluster-dashboard/DashboardRouter";
 import PreviewEnvs from "./cluster-dashboard/preview-environments/v2/PreviewEnvs";
 import SetupApp from "./cluster-dashboard/preview-environments/v2/setup-app/SetupApp";
 import ComplianceDashboard from "./compliance-dashboard/ComplianceDashboard";
@@ -118,6 +119,8 @@ const Home: React.FC<Props> = (props) => {
     setUsage,
     setShouldRefreshClusters,
   } = useContext(Context);
+
+  const { authenticate } = useAuthn();
 
   const [showBillingModal, setShowBillingModal] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
@@ -391,20 +394,23 @@ const Home: React.FC<Props> = (props) => {
   const showCardBanner = !hasPaymentEnabled;
   const trialExpired = plan && isTrialExpired(plan.trial_info.ending_before);
 
+  if (!currentProject?.simplified_view_enabled) {
+    return <LegacyHome {...props} />;
+  }
+
   return (
-    <ThemeProvider
-      theme={currentProject?.simplified_view_enabled ? midnight : standard}
-    >
+    <ThemeProvider theme={midnight}>
       <DeploymentTargetProvider>
         <StyledHome
           padTop={
-            !currentProject?.sandbox_enabled &&
-            showCardBanner &&
-            currentProject?.billing_enabled &&
-            currentProject?.metronome_enabled &&
-            !trialExpired &&
-            plan &&
-            true
+            (!currentProject?.sandbox_enabled &&
+              showCardBanner &&
+              currentProject?.billing_enabled &&
+              currentProject?.metronome_enabled &&
+              !trialExpired &&
+              plan &&
+              true) ||
+            currentProject?.freeze_enabled
           }
         >
           {!currentProject?.sandbox_enabled &&
@@ -431,6 +437,25 @@ const Home: React.FC<Props> = (props) => {
                 )}
               </>
             )}
+          {currentProject?.freeze_enabled && (
+            <GlobalBanner>
+              <i className="material-icons-round">warning</i>
+              This project has been disabled due to recurring issues with the
+              connected payment method. Please contact support@porter.run to
+              reenable this project.
+            </GlobalBanner>
+          )}
+          {showBillingModal && (
+            <BillingModal
+              back={() => {
+                setShowBillingModal(false);
+              }}
+              onCreate={async () => {
+                setShowBillingModal(false);
+                window.location.reload();
+              }}
+            />
+          )}
           <ModalHandler setRefreshClusters={setForceRefreshClusters} />
           {currentOverlay &&
             createPortal(
@@ -502,6 +527,29 @@ const Home: React.FC<Props> = (props) => {
               <Route path="/datastores">
                 <DatabaseDashboard />
               </Route>
+              <Route
+                path={["/applications"]}
+                render={() => {
+                  if (currentCluster?.id === -1) {
+                    return <Loading />;
+                  } else if (!currentCluster?.name) {
+                    return (
+                      <DashboardWrapper>
+                        <NoClusterPlaceHolder></NoClusterPlaceHolder>
+                      </DashboardWrapper>
+                    );
+                  }
+                  return (
+                    <DashboardWrapper>
+                      <DashboardRouter
+                        currentCluster={currentCluster}
+                        setSidebar={setForceSidebar}
+                        currentView={props.currentRoute}
+                      />
+                    </DashboardWrapper>
+                  );
+                }}
+              />
 
               <Route path="/compliance">
                 <ComplianceDashboard />
@@ -509,7 +557,6 @@ const Home: React.FC<Props> = (props) => {
 
               <Route path="/addons/new">
                 {currentProject?.capi_provisioner_enabled &&
-                currentProject?.simplified_view_enabled &&
                 currentProject?.beta_features_enabled ? (
                   <AddonTemplates />
                 ) : (
@@ -524,7 +571,6 @@ const Home: React.FC<Props> = (props) => {
               </Route>
               <Route path="/addons">
                 {currentProject?.capi_provisioner_enabled &&
-                currentProject?.simplified_view_enabled &&
                 currentProject?.beta_features_enabled ? (
                   <AddonDashboard />
                 ) : (
@@ -535,6 +581,16 @@ const Home: React.FC<Props> = (props) => {
                 path="/new-project"
                 render={() => {
                   return <NewProjectFC />;
+                }}
+              ></Route>
+              <Route
+                path="/ory"
+                render={() => {
+                  if (user.isPorterUser) {
+                    return <OryLogin authenticate={authenticate} />;
+                  } else {
+                    return <Redirect to="/dashboard" />;
+                  }
                 }}
               ></Route>
               <Route
@@ -569,39 +625,6 @@ const Home: React.FC<Props> = (props) => {
                 }}
               />
               <Route
-                path={[
-                  "/cluster-dashboard",
-                  "/applications",
-                  "/jobs",
-                  "/env-groups",
-                  "/datastores",
-                  "/stacks",
-                  ...(!currentProject?.simplified_view_enabled
-                    ? ["/preview-environments"]
-                    : []),
-                ]}
-                render={() => {
-                  if (currentCluster?.id === -1) {
-                    return <Loading />;
-                  } else if (!currentCluster?.name) {
-                    return (
-                      <DashboardWrapper>
-                        <NoClusterPlaceHolder></NoClusterPlaceHolder>
-                      </DashboardWrapper>
-                    );
-                  }
-                  return (
-                    <DashboardWrapper>
-                      <DashboardRouter
-                        currentCluster={currentCluster}
-                        setSidebar={setForceSidebar}
-                        currentView={props.currentRoute}
-                      />
-                    </DashboardWrapper>
-                  );
-                }}
-              />
-              <Route
                 path={"/integrations"}
                 render={() => <GuardedIntegrations />}
               />
@@ -610,28 +633,21 @@ const Home: React.FC<Props> = (props) => {
                 path={"/project-settings"}
                 render={() => <GuardedProjectSettings />}
               />
-              {currentProject?.simplified_view_enabled && (
-                <>
-                  <Route exact path="/preview-environments/configure">
-                    <SetupApp />
-                  </Route>
-                  <Route
-                    exact
-                    path={`/preview-environments/apps/:appName/:tab`}
-                  >
-                    <AppView preview />
-                  </Route>
-                  <Route exact path="/preview-environments/apps/:appName">
-                    <AppView preview />
-                  </Route>
-                  <Route exact path={`/preview-environments/apps`}>
-                    <Apps />
-                  </Route>
-                  <Route exact path={`/preview-environments`}>
-                    <PreviewEnvs />
-                  </Route>
-                </>
-              )}
+              <Route exact path="/preview-environments/configure">
+                <SetupApp />
+              </Route>
+              <Route exact path={`/preview-environments/apps/:appName/:tab`}>
+                <AppView preview />
+              </Route>
+              <Route exact path="/preview-environments/apps/:appName">
+                <AppView preview />
+              </Route>
+              <Route exact path={`/preview-environments/apps`}>
+                <Apps />
+              </Route>
+              <Route exact path={`/preview-environments`}>
+                <PreviewEnvs />
+              </Route>
               <Route path={"*"} render={() => <LaunchWrapper />} />
             </Switch>
           </ViewWrapper>
@@ -681,6 +697,7 @@ export default withRouter(withAuth(Home));
 const GlobalBanner = styled.div`
   width: 100vw;
   z-index: 999;
+  padding: 20px;
   position: fixed;
   top: 0;
   color: #fefefe;

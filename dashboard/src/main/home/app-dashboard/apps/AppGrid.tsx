@@ -134,7 +134,12 @@ const AppGrid: React.FC<AppGridProps> = ({
                   </Container>
                   {/** TODO: make the status icon dynamic */}
                   {/* <StatusIcon src={healthy} /> */}
-                  <AppSource source={source} />
+                  <AppSource
+                    source={{
+                      from: "porter_apps",
+                      details: source,
+                    }}
+                  />
                   {currentProject?.managed_deployment_targets_enabled &&
                     !currentDeploymentTarget?.is_preview && (
                       <Container row>
@@ -188,7 +193,12 @@ const AppGrid: React.FC<AppGridProps> = ({
                   </Container>
                   <Spacer height="15px" />
                   <Container row>
-                    <AppSource source={source} />
+                    <AppSource
+                      source={{
+                        from: "porter_apps",
+                        details: source,
+                      }}
+                    />
                     <Spacer inline x={1} />
                     <SmallIcon opacity="0.4" src={time} />
                     <Text size={13} color="#ffffff44">

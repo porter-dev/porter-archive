@@ -1,5 +1,6 @@
-import DynamicLink from "components/DynamicLink";
 import styled from "styled-components";
+
+import DynamicLink from "components/DynamicLink";
 
 const StatusBase = styled.div`
   margin-top: 1px;

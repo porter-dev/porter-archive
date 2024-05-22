@@ -10,7 +10,7 @@ export default function Heading(props: {
     <StyledHeading isAtTop={props.isAtTop}>
       {props.children}
       {props.docs && (
-        <a href={props.docs} target="_blank">
+        <a href={props.docs} target="_blank" rel="noreferrer">
           <i className="material-icons">help_outline</i>
         </a>
       )}
@@ -20,7 +20,7 @@ export default function Heading(props: {
 
 const StyledHeading = styled.div<{ isAtTop: boolean }>`
   color: white;
-  margin-top: ${props => props.isAtTop ? "" : "40px"};
+  margin-top: ${(props) => (props.isAtTop ? "" : "40px")};
   font-size: 16px;
   margin-bottom: 5px;
   display: flex;

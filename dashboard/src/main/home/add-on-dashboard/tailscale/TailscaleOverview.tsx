@@ -45,7 +45,7 @@ const TailscaleOverview: React.FC = () => {
 
       const parsed = await z
         .object({
-          services: z.array(tailscaleServiceValidator),
+          services: z.array(tailscaleServiceValidator).optional().default([]),
         })
         .parseAsync(res.data);
 

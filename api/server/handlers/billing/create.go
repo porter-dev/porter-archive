@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
@@ -136,7 +135,7 @@ func (c *CreateBillingHandler) grantRewardIfReferral(ctx context.Context, referr
 		return telemetry.Error(ctx, span, err, "failed to get referral count by referrer id")
 	}
 
-	maxReferralRewards := c.Config().BillingManager.MetronomeClient.MaxReferralRewards
+	maxReferralRewards := c.Config().BillingManager.LagoClient.MaxReferralRewards
 	if referralCount >= maxReferralRewards {
 		return nil
 	}
@@ -147,13 +146,9 @@ func (c *CreateBillingHandler) grantRewardIfReferral(ctx context.Context, referr
 	}
 
 	if referral != nil && referral.Status != models.ReferralStatusCompleted {
-		// Metronome requires an expiration to be passed in, so we set it to 5 years which in
-		// practice will mean the credits will most likely run out before expiring
-		expiresAt := time.Now().AddDate(5, 0, 0).Format(time.RFC3339)
-		reason := "Referral reward"
-		rewardAmount := c.Config().BillingManager.MetronomeClient.DefaultRewardAmountCents
-		paidAmount := c.Config().BillingManager.MetronomeClient.DefaultPaidAmountCents
-		err := c.Config().BillingManager.MetronomeClient.CreateCreditsGrant(ctx, referrerProject.UsageID, reason, rewardAmount, paidAmount, expiresAt)
+		name := "Referral reward"
+		rewardAmount := c.Config().BillingManager.LagoClient.DefaultRewardAmountCents
+		err := c.Config().BillingManager.LagoClient.CreateCreditsGrant(ctx, referrerProject.ID, name, rewardAmount, referrerProject.EnableSandbox)
 		if err != nil {
 			return telemetry.Error(ctx, span, err, "failed to grand credits reward")
 		}

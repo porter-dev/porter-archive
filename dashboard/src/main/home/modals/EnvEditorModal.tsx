@@ -1,17 +1,16 @@
 import React, { Component } from "react";
-import styled from "styled-components";
-import close from "assets/close.png";
 import AceEditor from "react-ace";
+import styled from "styled-components";
+
 
 import "shared/ace-porter-theme";
 import "ace-builds/src-noconflict/mode-text";
 
-import { Context } from "shared/Context";
-
-import SaveButton from "components/SaveButton";
-import Text from "components/porter/Text";
-import Spacer from "components/porter/Spacer";
 import Button from "components/porter/Button";
+import Spacer from "components/porter/Spacer";
+import Text from "components/porter/Text";
+
+import { Context } from "shared/Context";
 
 type PropsType = {
   closeModal: () => void;
@@ -62,7 +61,9 @@ export default class EnvEditorModal extends Component<PropsType, StateType> {
             mode="text"
             value={this.state.envFile}
             theme="porter"
-            onChange={(e: string) => this.onChange(e)}
+            onChange={(e: string) => {
+              this.onChange(e);
+            }}
             name="codeEditor"
             editorProps={{ $blockScrolling: true }}
             height="100%"

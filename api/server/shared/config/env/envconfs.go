@@ -69,11 +69,15 @@ type ServerConf struct {
 	SendgridDeleteProjectTemplateID    string `env:"SENDGRID_DELETE_PROJECT_TEMPLATE_ID"`
 	SendgridSenderEmail                string `env:"SENDGRID_SENDER_EMAIL"`
 
-	StripeSecretKey      string `env:"STRIPE_SECRET_KEY"`
-	StripePublishableKey string `env:"STRIPE_PUBLISHABLE_KEY"`
-	MetronomeAPIKey      string `env:"METRONOME_API_KEY"`
-	PorterCloudPlanID    string `env:"PORTER_CLOUD_PLAN_ID"`
-	PorterStandardPlanID string `env:"PORTER_STANDARD_PLAN_ID"`
+	StripeSecretKey        string `env:"STRIPE_SECRET_KEY"`
+	StripePublishableKey   string `env:"STRIPE_PUBLISHABLE_KEY"`
+	LagoAPIKey             string `env:"LAGO_API_KEY"`
+	PorterCloudPlanCode    string `env:"PORTER_CLOUD_PLAN_CODE"`
+	PorterStandardPlanCode string `env:"PORTER_STANDARD_PLAN_CODE"`
+	PorterTrialCode        string `env:"PORTER_TRIAL_CODE"`
+
+	// The URL of the webhook to verify ingesting events works
+	IngestStatusWebhookUrl string `env:"INGEST_STATUS_WEBHOOK_URL"`
 
 	// This endpoint will be passed to the porter-agent so that
 	// the billing manager can query Prometheus.
@@ -173,6 +177,8 @@ type ServerConf struct {
 	OryEnabled bool   `env:"ORY_ENABLED,default=false"`
 	OryUrl     string `env:"ORY_URL,default=http://localhost:4000"`
 	OryApiKey  string `env:"ORY_API_KEY"`
+	// OryActionKey is the key used to authenticate api requests from Ory Actions to the Porter API
+	OryActionKey string `env:"ORY_ACTION_KEY"`
 }
 
 // DBConf is the database configuration: if generated from environment variables,

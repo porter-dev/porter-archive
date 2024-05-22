@@ -1,11 +1,9 @@
-import React, { useEffect, useState } from "react";
-import styled from "styled-components";
+import React, { useState } from "react";
 import AnimateHeight from "react-animate-height";
-import Button from "./Button";
-import Spacer from "./Spacer";
-import Container from "./Container";
+import styled from "styled-components";
 
 import check from "assets/check.png";
+
 
 type Props = {
   steps: React.ReactNode[];
@@ -26,26 +24,24 @@ const VerticalSteps: React.FC<Props> = ({
       {steps.map((step, i) => {
         return (
           <Relative key={i}>
-            {i === steps.length - 1 && (
-              <LineCover />
-            )}
+            {i === steps.length - 1 && <LineCover />}
             {onlyShowCurrentStep && i < currentStep ? (
               <Check src={check} />
             ) : (
               <Dot isActive={i <= currentStep}>
-                <Number>{i+1}</Number>
+                <Number>{i + 1}</Number>
               </Dot>
             )}
             <StepWrapper
-              height={onlyShowCurrentStep ? (i === currentStep ? "auto" : 30) : "auto"}
+              height={
+                onlyShowCurrentStep ? (i === currentStep ? "auto" : 30) : "auto"
+              }
               isLast={i === steps.length - 1}
               key={i}
             >
               <OpacityWrapper isActive={i <= currentStep}>
                 {step}
-                {i > currentStep && (
-                  <ReadOnlyOverlay />
-                )}
+                {i > currentStep && <ReadOnlyOverlay />}
               </OpacityWrapper>
             </StepWrapper>
           </Relative>
@@ -114,7 +110,7 @@ const Dot = styled.div<{
 }>`
   width: 31px;
   height: 31px;
-  background: ${props => props.isActive ? "#3D48C3" : "#121212"};
+  background: ${(props) => (props.isActive ? "#3D48C3" : "#121212")};
   border-radius: 50%;
   position: absolute;
   left: -11px;
@@ -129,7 +125,7 @@ const Dot = styled.div<{
 const OpacityWrapper = styled.div<{
   isActive: boolean;
 }>`
-  opacity: ${props => props.isActive ? 1 : 0.5};
+  opacity: ${(props) => (props.isActive ? 1 : 0.5)};
 `;
 
 const StepWrapper = styled(AnimateHeight)<{
@@ -137,11 +133,10 @@ const StepWrapper = styled(AnimateHeight)<{
 }>`
   padding-left: 30px;
   position: relative;
-  margin-bottom: ${props => props.isLast ? "" : "35px"};
+  margin-bottom: ${(props) => (props.isLast ? "" : "35px")};
 `;
 
-const StyledVerticalSteps = styled.div<{
-}>`
+const StyledVerticalSteps = styled.div<{}>`
   position: relative;
   margin-left: 8px;
 `;

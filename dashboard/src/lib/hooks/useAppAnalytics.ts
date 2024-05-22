@@ -1,6 +1,7 @@
 import { useContext } from "react";
-import { Context } from "shared/Context";
+
 import api from "shared/api";
+import { Context } from "shared/Context";
 
 type AppStep =
   | "stack-launch-start"
@@ -44,7 +45,7 @@ export const useAppAnalytics = () => {
           project_id: currentProject.id,
         }
       );
-    } catch (err) { }
+    } catch (err) {}
   };
 
   return {

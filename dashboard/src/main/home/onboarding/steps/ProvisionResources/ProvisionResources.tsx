@@ -1,28 +1,30 @@
-import Helper from "components/form-components/Helper";
-import SaveButton from "components/SaveButton";
-import TitleSection from "components/TitleSection";
 import React, { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router";
 import styled from "styled-components";
+import { useSnapshot } from "valtio";
+
+import Description from "components/Description";
+import DocsHelper from "components/DocsHelper";
+import Helper from "components/form-components/Helper";
+import Loading from "components/Loading";
+import MultiSaveButton from "components/MultiSaveButton";
+import Placeholder from "components/OldPlaceholder";
+import SaveButton from "components/SaveButton";
+import TitleSection from "components/TitleSection";
+
+import { provisionResourcesTracks } from "shared/anayltics";
+import api from "shared/api";
+import buildLogger from "shared/error_handling/logger";
+import backArrow from "assets/back_arrow.png";
+
 import ProviderSelector, {
   provisionerOptions,
   provisionerOptionsWithExternal,
 } from "../../components/ProviderSelector";
-
-import FormFlowWrapper from "./forms/FormFlow";
-import ConnectExternalCluster from "./forms/_ConnectExternalCluster";
-import backArrow from "assets/back_arrow.png";
-import { StatusPage } from "./forms/StatusPage";
-import { useSnapshot } from "valtio";
 import { OFState } from "../../state";
-import { provisionResourcesTracks } from "shared/anayltics";
-import DocsHelper from "components/DocsHelper";
-import Description from "components/Description";
-import api from "shared/api";
-import Placeholder from "components/OldPlaceholder";
-import Loading from "components/Loading";
-import MultiSaveButton from "components/MultiSaveButton";
-import buildLogger from "shared/error_handling/logger";
+import ConnectExternalCluster from "./forms/_ConnectExternalCluster";
+import FormFlowWrapper from "./forms/FormFlow";
+import { StatusPage } from "./forms/StatusPage";
 
 const ProvisionResourcesLogger = buildLogger("onboarding.provision_resources");
 
@@ -141,7 +143,9 @@ const ProvisionResources: React.FC<{}> = () => {
           <SaveButton
             text="Continue"
             disabled={false}
-            onClick={() => handleContinue()}
+            onClick={() => {
+              handleContinue();
+            }}
             makeFlush={true}
             clearPosition={true}
             statusPosition="right"

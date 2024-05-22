@@ -33,7 +33,7 @@ type HealthStatus = {
 type DailyHealthStatus = {
   status_percentages: Record<string, number>;
   health_statuses: HealthStatus[];
-}
+};
 
 type ServiceStatusHistory = {
   system_service: SystemService;
@@ -54,22 +54,28 @@ const initialState: StatusData = {
   service_health_histories_grouped: {},
 };
 
-const groupServicesByNamespace = (serviceStatusHistories: ServiceStatusHistory[]): GroupedServices => {
-  return serviceStatusHistories.reduce<GroupedServices>((acc, serviceStatusHistory) => {
-    const { namespace } = serviceStatusHistory.system_service;
-    if (!acc[namespace]) {
-      acc[namespace] = [];
-    }
-    acc[namespace].push({
-      system_service: {
-        name: serviceStatusHistory.system_service.name,
-        namespace: serviceStatusHistory.system_service.namespace,
-        involved_object_type: serviceStatusHistory.system_service.involved_object_type,
-      },
-      daily_health_history: serviceStatusHistory.daily_health_history,
-    });
-    return acc;
-  }, {});
+const groupServicesByNamespace = (
+  serviceStatusHistories: ServiceStatusHistory[]
+): GroupedServices => {
+  return serviceStatusHistories.reduce<GroupedServices>(
+    (acc, serviceStatusHistory) => {
+      const { namespace } = serviceStatusHistory.system_service;
+      if (!acc[namespace]) {
+        acc[namespace] = [];
+      }
+      acc[namespace].push({
+        system_service: {
+          name: serviceStatusHistory.system_service.name,
+          namespace: serviceStatusHistory.system_service.namespace,
+          involved_object_type:
+            serviceStatusHistory.system_service.involved_object_type,
+        },
+        daily_health_history: serviceStatusHistory.daily_health_history,
+      });
+      return acc;
+    },
+    {}
+  );
 };
 
 const SystemStatus: React.FC<Props> = () => {
@@ -120,8 +126,7 @@ const SystemStatus: React.FC<Props> = () => {
             </Container>
           }
         >
-          {
-            statusData?.cluster_health_histories &&
+          {statusData?.cluster_health_histories &&
             Object.keys(statusData?.cluster_health_histories).map((key) => {
               return (
                 <React.Fragment key={key}>
@@ -129,8 +134,11 @@ const SystemStatus: React.FC<Props> = () => {
                   <Spacer y={0.25} />
                   <StatusBars>
                     {Array.from({ length: 90 }).map((_, i) => {
-                      const status =
-                        statusData?.cluster_health_histories[key][89 - i] ? "failure" : "healthy";
+                      const status = statusData?.cluster_health_histories[key][
+                        89 - i
+                      ]
+                        ? "failure"
+                        : "healthy";
                       return (
                         <Bar
                           key={i}
@@ -169,29 +177,39 @@ const SystemStatus: React.FC<Props> = () => {
                   </Container>
                 }
               >
-                {statusData.service_health_histories_grouped[key].map((serviceStatusHistory: ServiceStatusHistory) => {
-                  return (
-                    <React.Fragment key={serviceStatusHistory.system_service.name}>
-                      <Text color="helper">{serviceStatusHistory.system_service.name}</Text>
-                      <Spacer y={0.25} />
-                      <StatusBars>
-                        {Array.from({ length: 90 }).map((_, i) => {
-                          const status =
-                            (serviceStatusHistory.daily_health_history?.[89 - i] === undefined) ? "healthy" : "failure";
-                          return (
-                            <Bar
-                              key={i}
-                              isFirst={i === 0}
-                              isLast={i === 89}
-                              status={status}
-                            />
-                          );
-                        })}
-                      </StatusBars>
-                      <Spacer y={0.25} />
-                    </React.Fragment>
-                  );
-                })}
+                {statusData.service_health_histories_grouped[key].map(
+                  (serviceStatusHistory: ServiceStatusHistory) => {
+                    return (
+                      <React.Fragment
+                        key={serviceStatusHistory.system_service.name}
+                      >
+                        <Text color="helper">
+                          {serviceStatusHistory.system_service.name}
+                        </Text>
+                        <Spacer y={0.25} />
+                        <StatusBars>
+                          {Array.from({ length: 90 }).map((_, i) => {
+                            const status =
+                              serviceStatusHistory.daily_health_history?.[
+                                89 - i
+                              ] === undefined
+                                ? "healthy"
+                                : "failure";
+                            return (
+                              <Bar
+                                key={i}
+                                isFirst={i === 0}
+                                isLast={i === 89}
+                                status={status}
+                              />
+                            );
+                          })}
+                        </StatusBars>
+                        <Spacer y={0.25} />
+                      </React.Fragment>
+                    );
+                  }
+                )}
                 <Spacer y={0.25} />
                 <Container row spaced>
                   <Text color="helper">90 days ago</Text>

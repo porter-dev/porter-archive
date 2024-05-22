@@ -358,10 +358,10 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 	}
 
 	var (
-		stripeClient     billing.StripeClient
-		stripeEnabled    bool
-		metronomeClient  billing.MetronomeClient
-		metronomeEnabled bool
+		stripeClient  billing.StripeClient
+		stripeEnabled bool
+		lagoClient    billing.LagoClient
+		lagoEnabled   bool
 	)
 	if sc.StripeSecretKey != "" {
 		stripeClient = billing.NewStripeClient(InstanceEnvConf.ServerConf.StripeSecretKey, InstanceEnvConf.ServerConf.StripePublishableKey)
@@ -371,23 +371,23 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 		res.Logger.Info().Msg("STRIPE_SECRET_KEY not set, all Stripe functionality will be disabled")
 	}
 
-	if sc.MetronomeAPIKey != "" && sc.PorterCloudPlanID != "" && sc.PorterStandardPlanID != "" {
-		metronomeClient, err = billing.NewMetronomeClient(InstanceEnvConf.ServerConf.MetronomeAPIKey, InstanceEnvConf.ServerConf.PorterCloudPlanID, InstanceEnvConf.ServerConf.PorterStandardPlanID)
+	if sc.LagoAPIKey != "" && sc.PorterCloudPlanCode != "" && sc.PorterStandardPlanCode != "" && sc.PorterTrialCode != "" {
+		lagoClient, err = billing.NewLagoClient(InstanceEnvConf.ServerConf.LagoAPIKey, InstanceEnvConf.ServerConf.PorterCloudPlanCode, InstanceEnvConf.ServerConf.PorterStandardPlanCode, InstanceEnvConf.ServerConf.PorterTrialCode)
 		if err != nil {
-			return nil, fmt.Errorf("unable to create metronome client: %w", err)
+			return nil, fmt.Errorf("unable to create Lago client: %w", err)
 		}
-		metronomeEnabled = true
-		res.Logger.Info().Msg("Metronome configuration loaded")
+		lagoEnabled = true
+		res.Logger.Info().Msg("Lago configuration loaded")
 	} else {
-		res.Logger.Info().Msg("METRONOME_API_KEY, PORTER_CLOUD_PLAN_ID, or PORTER_STANDARD_PLAN_ID not set, all Metronome functionality will be disabled")
+		res.Logger.Info().Msg("LAGO_API_KEY, PORTER_CLOUD_PLAN_CODE, PORTER_STANDARD_PLAN_CODE and PORTER_TRIAL_CODE must be set, all Lago functionality will be disabled")
 	}
 
 	res.Logger.Info().Msg("Creating billing manager")
 	res.BillingManager = billing.Manager{
-		StripeClient:          stripeClient,
-		StripeConfigLoaded:    stripeEnabled,
-		MetronomeClient:       metronomeClient,
-		MetronomeConfigLoaded: metronomeEnabled,
+		StripeClient:       stripeClient,
+		StripeConfigLoaded: stripeEnabled,
+		LagoClient:         lagoClient,
+		LagoConfigLoaded:   lagoEnabled,
 	}
 	res.Logger.Info().Msg("Created billing manager")
 
@@ -402,6 +402,7 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 		res.OryApiKeyContextWrapper = func(ctx context.Context) context.Context {
 			return context.WithValue(ctx, ory.ContextAccessToken, InstanceEnvConf.ServerConf.OryApiKey)
 		}
+		res.OryActionKey = InstanceEnvConf.ServerConf.OryActionKey
 		res.Logger.Info().Msg("Created Ory client")
 	}
 

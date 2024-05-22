@@ -1,5 +1,4 @@
-import React, { createContext, useCallback, useContext } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import React, { createContext, useContext } from "react";
 import styled from "styled-components";
 
 import Loading from "components/Loading";
@@ -26,7 +25,6 @@ type AddonContextType = {
   projectId: number;
   deploymentTarget: DeploymentTarget;
   status: ClientAddonStatus;
-  deleteAddon: () => Promise<void>;
 };
 
 const AddonContext = createContext<AddonContextType | null>(null);
@@ -53,7 +51,7 @@ export const AddonContextProvider: React.FC<AddonContextProviderProps> = ({
   const { currentProject } = useContext(Context);
   const { defaultDeploymentTarget, isDefaultDeploymentTargetLoading } =
     useDefaultDeploymentTarget();
-  const { getAddon, deleteAddon } = useAddon();
+  const { getAddon } = useAddon();
   const {
     addon,
     isLoading: isAddonLoading,
@@ -64,7 +62,6 @@ export const AddonContextProvider: React.FC<AddonContextProviderProps> = ({
     addonName,
     refreshIntervalSeconds: 5,
   });
-  const queryClient = useQueryClient();
 
   const status = useAddonStatus({
     projectId: currentProject?.id,
@@ -77,20 +74,6 @@ export const AddonContextProvider: React.FC<AddonContextProviderProps> = ({
     !!defaultDeploymentTarget &&
     !!currentProject &&
     currentProject.id !== -1;
-
-  const deleteContextAddon = useCallback(async () => {
-    if (!paramsExist || !addon) {
-      return;
-    }
-
-    await deleteAddon({
-      projectId: currentProject.id,
-      deploymentTargetId: defaultDeploymentTarget.id,
-      addon,
-    });
-
-    await queryClient.invalidateQueries(["listAddons"]);
-  }, [paramsExist]);
 
   if (isDefaultDeploymentTargetLoading || isAddonLoading || !paramsExist) {
     return <Loading />;
@@ -118,7 +101,6 @@ export const AddonContextProvider: React.FC<AddonContextProviderProps> = ({
         projectId: currentProject.id,
         deploymentTarget: defaultDeploymentTarget,
         status,
-        deleteAddon: deleteContextAddon,
       }}
     >
       {children}

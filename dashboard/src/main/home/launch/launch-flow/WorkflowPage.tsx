@@ -1,11 +1,12 @@
 import React, { useContext, useEffect, useState } from "react";
-import { FullActionConfigType } from "../../../../shared/types";
+import styled from "styled-components";
+
+import Helper from "../../../../components/form-components/Helper";
+import Loading from "../../../../components/Loading";
+import YamlEditor from "../../../../components/YamlEditor";
 import api from "../../../../shared/api";
 import { Context } from "../../../../shared/Context";
-import styled from "styled-components";
-import YamlEditor from "../../../../components/YamlEditor";
-import Loading from "../../../../components/Loading";
-import Helper from "../../../../components/form-components/Helper";
+import { type FullActionConfigType } from "../../../../shared/types";
 
 type PropsType = {
   name: string;
@@ -46,8 +47,12 @@ const WorkflowPage: React.FC<PropsType> = (props) => {
           setIsLoading(false);
         }
       })
-      .catch((err) => setHasError(true))
-      .finally(() => setIsLoading(false));
+      .catch((err) => {
+        setHasError(true);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
     return () => {
       isSubscribed = false;
     };
@@ -77,7 +82,11 @@ const WorkflowPage: React.FC<PropsType> = (props) => {
         To auto-deploy each time you push changes, Porter will write GitHub
         Secrets and this GitHub Actions workflow to your repository.
       </Helper>
-      <ExpandableButton onClick={() => setIsExpanded((prev) => !prev)}>
+      <ExpandableButton
+        onClick={() => {
+          setIsExpanded((prev) => !prev);
+        }}
+      >
         Show Porter workflow{" "}
         <i className="material-icons-outlined">
           {isExpanded ? "keyboard_arrow_up" : "keyboard_arrow_down"}
@@ -92,6 +101,7 @@ const WorkflowPage: React.FC<PropsType> = (props) => {
           <a
             href="https://docs.porter.run/deploying-applications/deploying-from-github/customizing-github-workflow"
             target="_blank"
+            rel="noreferrer"
           >
             CI/CD with GitHub Actions
           </a>
@@ -101,6 +111,7 @@ const WorkflowPage: React.FC<PropsType> = (props) => {
           <a
             href="https://github.com/porter-dev/porter-update-action"
             target="_blank"
+            rel="noreferrer"
           >
             porter-dev/porter-update-action
           </a>

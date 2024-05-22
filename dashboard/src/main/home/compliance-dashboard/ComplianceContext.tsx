@@ -123,8 +123,8 @@ export const ProjectComplianceProvider: React.FC<
         return;
       }
 
-      const cidrAllowList = import.meta.env.PORTER_CIDRS
-        ? import.meta.env.PORTER_CIDRS.split(",")
+      const cidrAllowList = import.meta.env.VITE_PORTER_CIDRS
+        ? import.meta.env.VITE_PORTER_CIDRS.split(",")
         : [];
 
       const updatedKindValues = match(latestContractProto.cluster.kindValues)

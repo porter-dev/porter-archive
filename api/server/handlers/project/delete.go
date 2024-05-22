@@ -59,8 +59,7 @@ func (p *ProjectDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 
 					_, err = p.Config().ClusterControlPlaneClient.DeletePorterCloudCluster(ctx, req)
 					if err != nil {
-						e := "error deleting cluster"
-						err = telemetry.Error(ctx, span, err, e)
+						err = telemetry.Error(ctx, span, err, "error deleting cluster")
 						p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 						return
 					}

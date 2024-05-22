@@ -22,7 +22,7 @@ runs:
       shell: bash
       run: |
         touch dashboard/.env
-        echo '${{ inputs.env_vars }}' > dashboard/.env
+        echo '${{ inputs.env_vars }}' > dashboard/.env.production
     - name: Run NPM Build
       shell: bash
       run: |

@@ -18,6 +18,9 @@ export default defineConfig(({ mode }) => ({
   build: {
     outDir: "build",
   },
+  ...(mode === "development" && {
+    envDir: "../zarf/helm",
+  }),
   server: {
     port: 8081,
     proxy: {

@@ -20,7 +20,7 @@ API_SERVER=http://localhost:8080
 
 TRUST_ARN=arn:aws:iam::MY_AWS_DEV_ACCOUNT_ID:role/CAPIManagement
 
-# PORTER_CIDRS are a comma-separated list of CIDRs mapping to Porter infra. Used for restricting access to a customer's control plane endpoint
+# VITE_PORTER_CIDRS are a comma-separated list of CIDRs mapping to Porter infra. Used for restricting access to a customer's control plane endpoint
 # below example is for the office IP
-PORTER_CIDRS="135.84.167.61/32"
+VITE_PORTER_CIDRS="135.84.167.61/32"
 

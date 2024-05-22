@@ -12,7 +12,7 @@ runs:
     - name: Setup Node
       uses: actions/setup-node@v3
       with:
-        node-version: 16
+        node-version: 20
     - name: Install NPM Dependencies
       shell: bash
       run: |
@@ -22,7 +22,7 @@ runs:
       shell: bash
       run: |
         touch dashboard/.env
-        echo '${{ inputs.env_vars }}' > dashboard/.env
+        echo '${{ inputs.env_vars }}' > dashboard/.env.production
     - name: Run NPM Build
       shell: bash
       run: |

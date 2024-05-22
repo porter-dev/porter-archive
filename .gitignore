@@ -1,5 +1,6 @@
 .DS_Store
 .env
+.env.local
 docker/.env
 docker/github_app_private_key.pem
 app

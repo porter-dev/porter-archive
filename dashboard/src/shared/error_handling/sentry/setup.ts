@@ -1,8 +1,8 @@
 import * as Sentry from "@sentry/react";
 import { Integrations } from "@sentry/tracing";
 
-const SENTRY_DSN = process.env.SENTRY_DSN;
-const SENTRY_ENV = process.env.SENTRY_ENV || "development";
+const SENTRY_DSN = import.meta.env.SENTRY_DSN;
+const SENTRY_ENV = import.meta.env.SENTRY_ENV || "development";
 
 export const SetupSentry = () => {
   if (!SENTRY_DSN) {

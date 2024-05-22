@@ -1,48 +1,39 @@
-import React, { useEffect, useState, useContext } from "react";
-import styled from "styled-components";
-import { RouteComponentProps, withRouter } from "react-router";
-
-import { OFState } from "main/home/onboarding/state";
-import api from "shared/api";
-import { Context } from "shared/Context";
-import { pushFiltered } from "shared/routing";
-
-import SelectRow from "components/form-components/SelectRow";
-import Heading from "components/form-components/Heading";
-import Helper from "components/form-components/Helper";
-import InputRow from "./form-components/InputRow";
+import React, { useContext, useEffect, useState } from "react";
 import {
-  Contract,
-  EnumKubernetesKind,
-  EnumCloudProvider,
   Cluster,
+  Contract,
+  EnumCloudProvider,
+  EnumKubernetesKind,
   GKE,
   GKENetwork,
   GKENodePool,
   GKENodePoolType,
   GKEPreflightValues,
-  PreflightCheckRequest
+  PreflightCheckRequest,
 } from "@porter-dev/api-contracts";
-import { ClusterType } from "shared/types";
+import { withRouter, type RouteComponentProps } from "react-router";
+import styled from "styled-components";
+
+import Heading from "components/form-components/Heading";
+import SelectRow from "components/form-components/SelectRow";
+import Loading from "components/Loading";
+import { OFState } from "main/home/onboarding/state";
+import { useIntercom } from "lib/hooks/useIntercom";
+
+import api from "shared/api";
+import { Context } from "shared/Context";
+import { pushFiltered } from "shared/routing";
+import { type ClusterType } from "shared/types";
+
+import InputRow from "./form-components/InputRow";
 import Button from "./porter/Button";
 import Error from "./porter/Error";
-import Spacer from "./porter/Spacer";
-import Step from "./porter/Step";
-import Link from "./porter/Link";
-import Text from "./porter/Text";
-import healthy from "assets/status-healthy.png";
-import failure from "assets/failure.svg";
-import Loading from "components/Loading";
-import Placeholder from "./Placeholder";
-import Fieldset from "./porter/Fieldset";
-import ExpandableSection from "./porter/ExpandableSection";
-import PreflightChecks from "./PreflightChecks";
-import VerticalSteps from "./porter/VerticalSteps";
-import { useIntercom } from "lib/hooks/useIntercom";
-import { log } from "console";
 import InputSlider from "./porter/InputSlider";
 import Select from "./porter/Select";
-
+import Spacer from "./porter/Spacer";
+import Text from "./porter/Text";
+import VerticalSteps from "./porter/VerticalSteps";
+import PreflightChecks from "./PreflightChecks";
 
 const locationOptions = [
   { value: "us-east1", label: "us-east1 (South Carolina, USA)" },
@@ -73,6 +64,10 @@ const instanceTypes = [
   { value: "e2-standard-8", label: "e2-standard-8" },
   { value: "e2-standard-16", label: "e2-standard-16" },
   { value: "e2-standard-32", label: "e2-standard-32" },
+  { value: "e2-highmem-2", label: "e2-highmem-2" },
+  { value: "e2-highmem-4", label: "e2-highmem-4" },
+  { value: "e2-highmem-8", label: "e2-highmem-8" },
+  { value: "e2-highmem-16", label: "e2-highmem-16" },
   { value: "c3-standard-4", label: "c3-standard-4" },
   { value: "c3-standard-8", label: "c3-standard-8" },
   { value: "c3-standard-22", label: "c3-standard-22" },
@@ -88,7 +83,7 @@ const instanceTypes = [
 ];
 
 const gpuMachineTypeOptions = [
-  { value: "n1-standard-1", label: "n1-standard-1" }, // start of GPU nodes. 
+  { value: "n1-standard-1", label: "n1-standard-1" }, // start of GPU nodes.
   { value: "n1-standard-2", label: "n1-standard-2" },
   { value: "n1-standard-4", label: "n1-standard-4" },
   { value: "n1-standard-8", label: "n1-standard-8" },
@@ -104,7 +99,6 @@ const gpuMachineTypeOptions = [
   { value: "n1-highcpu-32", label: "n1-highcpu-32" },
 ];
 
-
 const clusterVersionOptions = [{ value: "1.27", label: "v1.27" }];
 
 type Props = RouteComponentProps & {
@@ -115,8 +109,8 @@ type Props = RouteComponentProps & {
   gpuModal?: boolean;
 };
 
-const VALID_CIDR_RANGE_PATTERN = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\/(8|9|1\d|2[0-8])$/;
-
+const VALID_CIDR_RANGE_PATTERN =
+  /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\/(8|9|1\d|2[0-8])$/;
 
 const GCPProvisionerSettings: React.FC<Props> = (props) => {
   const {
@@ -132,18 +126,22 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
   const [region, setRegion] = useState(locationOptions[0].value);
   const [minInstances, setMinInstances] = useState(1);
   const [maxInstances, setMaxInstances] = useState(10);
-  const [clusterNetworking, setClusterNetworking] = useState(defaultClusterNetworking);
-  const [clusterVersion, setClusterVersion] = useState(clusterVersionOptions[0].value);
+  const [clusterNetworking, setClusterNetworking] = useState(
+    defaultClusterNetworking
+  );
+  const [clusterVersion, setClusterVersion] = useState(
+    clusterVersionOptions[0].value
+  );
   const [instanceType, setInstanceType] = useState(instanceTypes[0].value);
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [errorDetails, setErrorDetails] = useState<string>("");
   const [isClicked, setIsClicked] = useState(false);
-  const [preflightData, setPreflightData] = useState(null)
-  const [preflightFailed, setPreflightFailed] = useState<boolean>(true)
+  const [preflightData, setPreflightData] = useState(null);
+  const [preflightFailed, setPreflightFailed] = useState<boolean>(true);
   const [isLoading, setIsLoading] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
-  const [preflightError, setPreflightError] = useState<string>("")
+  const [preflightError, setPreflightError] = useState<string>("");
   const [gpuMinInstances, setGpuMinInstances] = useState(1);
   const [gpuMaxInstances, setGpuMaxInstances] = useState(5);
   const [gpuInstanceType, setGpuInstanceType] = useState("n1-standard-1");
@@ -152,9 +150,13 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
 
   const markStepStarted = async (step: string, region?: string) => {
     try {
-      await api.updateOnboardingStep("<token>", { step, provider: "gcp", region }, {
-        project_id: currentProject.id,
-      });
+      await api.updateOnboardingStep(
+        "<token>",
+        { step, provider: "gcp", region },
+        {
+          project_id: currentProject.id,
+        }
+      );
     } catch (err) {
       console.log(err);
     }
@@ -162,14 +164,18 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
 
   const getStatus = () => {
     if (isLoading) {
-      return <Loading />
+      return <Loading />;
     }
     if (isReadOnly && props.provisionerError == "") {
       return "Provisioning is still in progress...";
     } else if (errorMessage !== "") {
       return (
         <Error
-          message={errorDetails !== "" ? errorMessage + " (" + errorDetails + ")" : errorMessage}
+          message={
+            errorDetails !== ""
+              ? errorMessage + " (" + errorDetails + ")"
+              : errorMessage
+          }
           ctaText={
             errorMessage !== DEFAULT_ERROR_MESSAGE
               ? "Troubleshooting steps"
@@ -184,12 +190,12 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
 
   const isDisabled = () => {
     return (
-      (!clusterName && true)
-      || (isReadOnly && props.provisionerError === "")
-      || currentCluster?.status === "UPDATING"
-      || isClicked
-      || (!currentProject?.enable_reprovision && props.clusterId)
-    )
+      (!clusterName && true) ||
+      (isReadOnly && props.provisionerError === "") ||
+      currentCluster?.status === "UPDATING" ||
+      isClicked ||
+      (!currentProject?.enable_reprovision && props.clusterId)
+    );
   };
 
   const validateInputs = (): string => {
@@ -199,85 +205,108 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
     if (!region) {
       return "GCP region is required";
     }
-    if (!clusterNetworking.cidrRange || !clusterNetworking.controlPlaneCidr || !clusterNetworking.podCidr || !clusterNetworking.serviceCidr) {
+    if (
+      !clusterNetworking.cidrRange ||
+      !clusterNetworking.controlPlaneCidr ||
+      !clusterNetworking.podCidr ||
+      !clusterNetworking.serviceCidr
+    ) {
       return "CIDR ranges are required";
     }
-    if (!VALID_CIDR_RANGE_PATTERN.test(clusterNetworking.cidrRange) || !VALID_CIDR_RANGE_PATTERN.test(clusterNetworking.controlPlaneCidr) || !VALID_CIDR_RANGE_PATTERN.test(clusterNetworking.podCidr) || !VALID_CIDR_RANGE_PATTERN.test(clusterNetworking.serviceCidr)) {
+    if (
+      !VALID_CIDR_RANGE_PATTERN.test(clusterNetworking.cidrRange) ||
+      !VALID_CIDR_RANGE_PATTERN.test(clusterNetworking.controlPlaneCidr) ||
+      !VALID_CIDR_RANGE_PATTERN.test(clusterNetworking.podCidr) ||
+      !VALID_CIDR_RANGE_PATTERN.test(clusterNetworking.serviceCidr)
+    ) {
       return "CIDR ranges must be in the format of [0-255].[0-255].0.0/16";
     }
 
     return "";
-  }
+  };
   const renderAdvancedSettings = () => {
     return (
       <>
         {
-          < Heading >
+          <Heading>
             <ExpandHeader
-              onClick={() => setIsExpanded(!isExpanded)}
+              onClick={() => {
+                setIsExpanded(!isExpanded);
+              }}
               isExpanded={isExpanded}
             >
               <i className="material-icons">arrow_drop_down</i>
               Advanced settings
             </ExpandHeader>
-          </Heading >
+          </Heading>
         }
-        {
-          isExpanded && (
-            <>
-              <SelectRow
-                options={clusterVersionOptions}
-                width="350px"
-                disabled={isReadOnly}
-                value={clusterVersion}
-                scrollBuffer={true}
-                dropdownMaxHeight="240px"
-                setActiveValue={setClusterVersion}
-                label="Cluster version"
-              />
-              <Spacer y={0.25} />
+        {isExpanded && (
+          <>
+            <SelectRow
+              options={clusterVersionOptions}
+              width="350px"
+              disabled={isReadOnly}
+              value={clusterVersion}
+              scrollBuffer={true}
+              dropdownMaxHeight="240px"
+              setActiveValue={setClusterVersion}
+              label="Cluster version"
+            />
+            <Spacer y={0.25} />
 
-              <SelectRow
-                options={instanceTypes}
-                width="350px"
-                disabled={isReadOnly}
-                value={instanceType}
-                scrollBuffer={true}
-                dropdownMaxHeight="240px"
-                setActiveValue={setInstanceType}
-                label="Instance Type"
-              />
-              <Spacer y={0.25} />
+            <SelectRow
+              options={instanceTypes}
+              width="350px"
+              disabled={isReadOnly}
+              value={instanceType}
+              scrollBuffer={true}
+              dropdownMaxHeight="240px"
+              setActiveValue={setInstanceType}
+              label="Instance Type"
+            />
+            <Spacer y={0.25} />
 
-              <InputRow
-                width="350px"
-                type="string"
-                disabled={isReadOnly}
-                value={clusterNetworking.cidrRange}
-                setValue={(x: string) => setClusterNetworking(new GKENetwork({ ...clusterNetworking, cidrRange: x }))}
-                label="VPC CIDR range"
-                placeholder="ex: 10.78.0.0/16"
-              />
-              {
-                <Heading>
-                  <ExpandHeader
-                    onClick={() => {
-                      setAdvancedCidrs(!expandAdvancedCidrs);
-                    }}
-                    isExpanded={expandAdvancedCidrs}
-                  >
-                    <i className="material-icons">arrow_drop_down</i>
-                    Advanced CIDR settings
-                  </ExpandHeader>
-                </Heading>
-              }
-              {expandAdvancedCidrs && <>
+            <InputRow
+              width="350px"
+              type="string"
+              disabled={isReadOnly}
+              value={clusterNetworking.cidrRange}
+              setValue={(x: string) => {
+                setClusterNetworking(
+                  new GKENetwork({ ...clusterNetworking, cidrRange: x })
+                );
+              }}
+              label="VPC CIDR range"
+              placeholder="ex: 10.78.0.0/16"
+            />
+            {
+              <Heading>
+                <ExpandHeader
+                  onClick={() => {
+                    setAdvancedCidrs(!expandAdvancedCidrs);
+                  }}
+                  isExpanded={expandAdvancedCidrs}
+                >
+                  <i className="material-icons">arrow_drop_down</i>
+                  Advanced CIDR settings
+                </ExpandHeader>
+              </Heading>
+            }
+            {expandAdvancedCidrs && (
+              <>
                 <InputRow
                   width="350px"
                   type="string"
                   disabled={isReadOnly}
                   value={clusterNetworking.controlPlaneCidr}
-                  setValue={(x: string) => setClusterNetworking(new GKENetwork({ ...clusterNetworking, controlPlaneCidr: x }))}
+                  setValue={(x: string) => {
+                    setClusterNetworking(
+                      new GKENetwork({
+                        ...clusterNetworking,
+                        controlPlaneCidr: x,
+                      })
+                    );
+                  }}
                   label="Control Plane CIDR range"
                   placeholder="ex: 10.78.0.0/16"
                 />
@@ -286,7 +315,11 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
                   type="string"
                   disabled={isReadOnly}
                   value={clusterNetworking.podCidr}
-                  setValue={(x: string) => setClusterNetworking(new GKENetwork({ ...clusterNetworking, podCidr: x }))}
+                  setValue={(x: string) => {
+                    setClusterNetworking(
+                      new GKENetwork({ ...clusterNetworking, podCidr: x })
+                    );
+                  }}
                   label="Pod CIDR range"
                   placeholder="ex: 10.78.0.0/16"
                 />
@@ -295,37 +328,44 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
                   type="string"
                   disabled={isReadOnly}
                   value={clusterNetworking.serviceCidr}
-                  setValue={(x: string) => setClusterNetworking(new GKENetwork({ ...clusterNetworking, serviceCidr: x }))}
+                  setValue={(x: string) => {
+                    setClusterNetworking(
+                      new GKENetwork({ ...clusterNetworking, serviceCidr: x })
+                    );
+                  }}
                   label="Service CIDR range"
                   placeholder="ex: 10.78.0.0/16"
                 />
                 <Spacer y={0.25} />
-                <Text color="helper">The following ranges will be used: {clusterNetworking.cidrRange}, {clusterNetworking.controlPlaneCidr}, {clusterNetworking.serviceCidr}, {clusterNetworking.podCidr}</Text>
+                <Text color="helper">
+                  The following ranges will be used:{" "}
+                  {clusterNetworking.cidrRange},{" "}
+                  {clusterNetworking.controlPlaneCidr},{" "}
+                  {clusterNetworking.serviceCidr}, {clusterNetworking.podCidr}
+                </Text>
               </>
-              }
-            </>
-          )
-        }
+            )}
+          </>
+        )}
       </>
     );
   };
 
   const statusPreflight = (): string => {
-
-
     if (!clusterNetworking.cidrRange) {
       return "VPC CIDR range is required";
     }
-    if (!VALID_CIDR_RANGE_PATTERN.test(clusterNetworking.cidrRange)
-      || !VALID_CIDR_RANGE_PATTERN.test(clusterNetworking.controlPlaneCidr)
-      || !VALID_CIDR_RANGE_PATTERN.test(clusterNetworking.podCidr)
-      || !VALID_CIDR_RANGE_PATTERN.test(clusterNetworking.serviceCidr)
+    if (
+      !VALID_CIDR_RANGE_PATTERN.test(clusterNetworking.cidrRange) ||
+      !VALID_CIDR_RANGE_PATTERN.test(clusterNetworking.controlPlaneCidr) ||
+      !VALID_CIDR_RANGE_PATTERN.test(clusterNetworking.podCidr) ||
+      !VALID_CIDR_RANGE_PATTERN.test(clusterNetworking.serviceCidr)
     ) {
       return "VPC CIDR range must be in the format of [0-255].[0-255].0.0/16";
     }
 
     return "";
-  }
+  };
 
   const createClusterObj = (): Contract => {
     const nodePools = [
@@ -333,32 +373,33 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
         instanceType: "custom-2-4096",
         minInstances: 1,
         maxInstances: 1,
-        nodePoolType: GKENodePoolType.GKE_NODE_POOL_TYPE_MONITORING
+        nodePoolType: GKENodePoolType.GKE_NODE_POOL_TYPE_MONITORING,
       }),
       new GKENodePool({
         instanceType: "custom-2-4096",
         minInstances: 1,
         maxInstances: 2,
-        nodePoolType: GKENodePoolType.GKE_NODE_POOL_TYPE_SYSTEM
+        nodePoolType: GKENodePoolType.GKE_NODE_POOL_TYPE_SYSTEM,
       }),
       new GKENodePool({
-        instanceType: instanceType,
+        instanceType,
         minInstances: 1, // TODO: make these customizable before merging
         maxInstances: 10, // TODO: make these customizable before merging
-        nodePoolType: GKENodePoolType.GKE_NODE_POOL_TYPE_APPLICATION
+        nodePoolType: GKENodePoolType.GKE_NODE_POOL_TYPE_APPLICATION,
       }),
     ];
 
     // Conditionally add the last EKSNodeGroup if gpuModal is enabled
     if (props.gpuModal) {
-      nodePools.push(new GKENodePool({
-        instanceType: gpuInstanceType,
-        minInstances: gpuMinInstances || 0,
-        maxInstances: gpuMaxInstances || 5,
-        nodePoolType: GKENodePoolType.GKE_NODE_POOL_TYPE_CUSTOM,
-      }));
+      nodePools.push(
+        new GKENodePool({
+          instanceType: gpuInstanceType,
+          minInstances: gpuMinInstances || 0,
+          maxInstances: gpuMaxInstances || 5,
+          nodePoolType: GKENodePoolType.GKE_NODE_POOL_TYPE_CUSTOM,
+        })
+      );
     }
-
 
     const data = new Contract({
       cluster: new Cluster({
@@ -369,45 +410,42 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
         kindValues: {
           case: "gkeKind",
           value: new GKE({
-            clusterName: clusterName,
+            clusterName,
             clusterVersion: clusterVersion || clusterVersionOptions[0].value,
-            region: region,
+            region,
             network: new GKENetwork({
               cidrRange: clusterNetworking.cidrRange,
               controlPlaneCidr: clusterNetworking.controlPlaneCidr,
               podCidr: clusterNetworking.podCidr,
               serviceCidr: clusterNetworking.serviceCidr,
             }),
-            nodePools
+            nodePools,
           }),
         },
       }),
     });
 
-    return data
-  }
-
+    return data;
+  };
 
   const createCluster = async () => {
-
     const err = validateInputs();
     if (err !== "") {
-      setErrorMessage(err)
-      setErrorDetails("")
+      setErrorMessage(err);
+      setErrorDetails("");
       return;
     }
     setIsLoading(true);
 
     setIsClicked(true);
 
-
     try {
       window.dataLayer?.push({
-        event: 'provision-attempt',
+        event: "provision-attempt",
         data: {
-          cloud: 'gcp',
-          email: user?.email
-        }
+          cloud: "gcp",
+          email: user?.email,
+        },
       });
     } catch (err) {
       console.log(err);
@@ -416,13 +454,13 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
     const data = createClusterObj();
 
     if (props.clusterId) {
-      data["cluster"]["clusterId"] = props.clusterId;
+      data.cluster.clusterId = props.clusterId;
     }
 
     try {
       setIsReadOnly(true);
       setErrorMessage("");
-      setErrorDetails("")
+      setErrorDetails("");
 
       if (!props.clusterId) {
         markStepStarted("provisioning-started", region);
@@ -453,31 +491,30 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
         })
         .catch((err) => {
           setErrorMessage("Error fetching clusters");
-          setErrorDetails(err)
+          setErrorDetails(err);
         });
-
     } catch (err) {
       const errMessage = err.response.data.error.replace("unknown: ", "");
       setIsClicked(false);
       setIsLoading(true);
-      showIntercomWithMessage({ message: "I am running into an issue provisioning a cluster." });
+      showIntercomWithMessage({
+        message: "I am running into an issue provisioning a cluster.",
+      });
       // TODO: handle different error conditions here from preflights
       setErrorMessage(DEFAULT_ERROR_MESSAGE);
-      setErrorDetails(errMessage)
+      setErrorDetails(errMessage);
     } finally {
       setIsReadOnly(false);
       setIsClicked(false);
       setIsLoading(true);
-
     }
-
   };
 
   useEffect(() => {
     setIsReadOnly(
       props.clusterId &&
-      (currentCluster?.status === "UPDATING" ||
-        currentCluster?.status === "UPDATING_UNAVAILABLE")
+        (currentCluster?.status === "UPDATING" ||
+          currentCluster?.status === "UPDATING_UNAVAILABLE")
     );
     setClusterName(
       `${currentProject.name.substring(0, 10)}-${Math.random()
@@ -487,7 +524,6 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
   }, []);
 
   useEffect(() => {
-
     const contract = props.selectedClusterVersion as any;
     if (contract?.cluster) {
       if (contract.cluster?.gkeKind?.nodePools) {
@@ -508,26 +544,24 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
         controlPlaneCidr: contract.cluster.gkeKind?.network?.controlPlaneCidr,
         podCidr: contract.cluster.gkeKind?.network?.podCidr,
         serviceCidr: contract.cluster.gkeKind?.network?.serviceCidr,
-      })
+      });
       setClusterNetworking(cn);
     }
   }, [props.selectedClusterVersion]);
 
   useEffect(() => {
     if (statusPreflight() == "" && !props.clusterId) {
-      setStep(1)
+      setStep(1);
 
-      preflightChecks()
+      preflightChecks();
     }
-
   }, [props.selectedClusterVersion, clusterNetworking, region]);
 
   const preflightChecks = async () => {
-
     try {
       setIsLoading(true);
       setPreflightData(null);
-      setPreflightFailed(true)
+      setPreflightFailed(true);
       setPreflightError("");
       const data = new PreflightCheckRequest({
         projectId: BigInt(currentProject.id),
@@ -541,27 +575,30 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
               controlPlaneCidr: clusterNetworking.controlPlaneCidr,
               podCidr: clusterNetworking.podCidr,
               serviceCidr: clusterNetworking.serviceCidr,
-            })
-          })
-        }
+            }),
+          }),
+        },
       });
       const preflightDataResp = await api.legacyPreflightCheck(
-        "<token>", data,
+        "<token>",
+        data,
         {
           id: currentProject.id,
         }
-      )
+      );
       // Check if any of the preflight checks has a message
       let hasMessage = false;
       let errors = "Preflight Checks Failed : ";
-      for (let check in preflightDataResp?.data?.Msg.preflight_checks) {
+      for (const check in preflightDataResp?.data?.Msg.preflight_checks) {
         if (preflightDataResp?.data?.Msg.preflight_checks[check]?.message) {
           hasMessage = true;
-          errors = errors + check + ", "
+          errors = errors + check + ", ";
         }
       }
       if (hasMessage) {
-        showIntercomWithMessage({ message: "I am running into an issue provisioning a cluster." });
+        showIntercomWithMessage({
+          message: "I am running into an issue provisioning a cluster.",
+        });
         markStepStarted("provisioning-failed", errors);
       }
       // If none of the checks have a message, set setPreflightFailed to false
@@ -570,13 +607,13 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
         setStep(2);
       }
       setPreflightData(preflightDataResp?.data?.Msg);
-      setIsLoading(false)
+      setIsLoading(false);
     } catch (err) {
-      setPreflightError(err)
-      setIsLoading(false)
+      setPreflightError(err);
+      setIsLoading(false);
       setPreflightFailed(true);
     }
-  }
+  };
 
   const renderForm = () => {
     // Render simplified form if initial create
@@ -586,11 +623,13 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
           currentStep={step}
           steps={[
             <>
-              <Text size={16}>Select a Google Cloud Region for your cluster</Text>
+              <Text size={16}>
+                Select a Google Cloud Region for your cluster
+              </Text>
               <Spacer y={1} />
               <Text color="helper">
-                Porter will provision your infrastructure in the
-                specified location.
+                Porter will provision your infrastructure in the specified
+                location.
               </Text>
               <Spacer height="10px" />
               <SelectRow
@@ -601,19 +640,26 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
                 scrollBuffer={true}
                 dropdownMaxHeight="240px"
                 setActiveValue={setRegion}
-                label="📍 GCP location" />
+                label="📍 GCP location"
+              />
               {renderAdvancedSettings()}
-
             </>,
             <>
-              <PreflightChecks provider='GCP' preflightData={preflightData} error={preflightError} />
-              <Spacer y={.5} />
-              {(preflightFailed && preflightData || preflightError) &&
+              <PreflightChecks
+                provider="GCP"
+                preflightData={preflightData}
+                error={preflightError}
+              />
+              <Spacer y={0.5} />
+              {((preflightFailed && preflightData) || preflightError) && (
                 <>
-                  {!preflightError && <Text color="helper">
-                    Preflight checks for the account didn't pass. Please fix the issues and retry.
-                  </Text>}
-                  < Button
+                  {!preflightError && (
+                    <Text color="helper">
+                      Preflight checks for the account didn't pass. Please fix
+                      the issues and retry.
+                    </Text>
+                  )}
+                  <Button
                     // disabled={isDisabled()}
                     disabled={isLoading}
                     onClick={preflightChecks}
@@ -621,18 +667,25 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
                     Retry Checks
                   </Button>
                 </>
-              }
+              )}
             </>,
             <>
               <Text size={16}>Provision your cluster</Text>
               <Spacer y={1} />
               <Button
-                disabled={isDisabled() || isLoading || preflightFailed || statusPreflight() != ""}
+                disabled={
+                  isDisabled() ||
+                  isLoading ||
+                  preflightFailed ||
+                  statusPreflight() != ""
+                }
                 onClick={createCluster}
                 status={getStatus()}
               >
                 Provision
-              </Button><Spacer y={1} /></>
+              </Button>
+              <Spacer y={1} />
+            </>,
           ].filter((x) => x)}
         />
       );
@@ -647,9 +700,8 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
             disabled={isReadOnly}
             value={gpuInstanceType}
             setValue={(x: string) => {
-              setGpuInstanceType(x)
-            }
-            }
+              setGpuInstanceType(x);
+            }}
             label="GPU Instance type"
           />
           <Spacer y={1} />
@@ -663,7 +715,7 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
             disabled={isReadOnly || isLoading}
             value={gpuMaxInstances.toString()}
             setValue={(x: number) => {
-              setGpuMaxInstances(x)
+              setGpuMaxInstances(x);
             }}
           />
           <Button
@@ -674,9 +726,9 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
             Provision
           </Button>
 
-          <Spacer y={.5} />
+          <Spacer y={0.5} />
         </>
-      )
+      );
     }
     // If settings, update full form
     return (
@@ -725,13 +777,16 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
           Provision
         </Button>
 
-        {
-          (!currentProject?.enable_reprovision && props.clusterId) &&
+        {!currentProject?.enable_reprovision && props.clusterId && (
           <>
             <Spacer y={1} />
-            <Text>Updates to the cluster are disabled on this project. Enable re-provisioning by contacting <a href="mailto:support@porter.run">Porter Support</a>.</Text>
+            <Text>
+              Updates to the cluster are disabled on this project. Enable
+              re-provisioning by contacting{" "}
+              <a href="mailto:support@porter.run">Porter Support</a>.
+            </Text>
           </>
-        }
+        )}
       </>
     );
   };
@@ -740,38 +795,30 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
     <>
       {renderForm()}
 
-
-      {user.isPorterUser &&
+      {user.isPorterUser && (
         <>
-
           <Spacer y={1} />
           <Text color="yellow">Visible to Admin Only</Text>
-          <Button
-            color="red"
-            onClick={createCluster}
-            status={getStatus()}
-          >
+          <Button color="red" onClick={createCluster} status={getStatus()}>
             Override Provision
           </Button>
         </>
-      }
-
+      )}
     </>
   );
 };
 
 export default withRouter(GCPProvisionerSettings);
 
-
 const StyledForm = styled.div`
-              position: relative;
-              padding: 30px 30px 25px;
-              border-radius: 5px;
-              background: ${({ theme }) => theme.fg};
-              border: 1px solid #494b4f;
-              font-size: 13px;
-              margin-bottom: 30px;
-              `;
+  position: relative;
+  padding: 30px 30px 25px;
+  border-radius: 5px;
+  background: ${({ theme }) => theme.fg};
+  border: 1px solid #494b4f;
+  font-size: 13px;
+  margin-bottom: 30px;
+`;
 
 const DEFAULT_ERROR_MESSAGE =
   "An error occurred while provisioning your infrastructure. Please try again.";
@@ -791,7 +838,7 @@ const ExpandHeader = styled.div<{ isExpanded: boolean }>`
                 margin - right: 7px;
               margin-left: -7px;
               transform: ${(props) =>
-    props.isExpanded ? "rotate(0deg)" : "rotate(-90deg)"};
+                props.isExpanded ? "rotate(0deg)" : "rotate(-90deg)"};
               transition: transform 0.1s ease;
   }
               `;

@@ -65,9 +65,9 @@ export default class GHIcon extends Component<PropsType, StateType> {
         <g
           id="Google-Button"
           stroke="none"
-          stroke-width="1"
+          strokeWidth="1"
           fill="none"
-          fill-rule="evenodd"
+          fillRule="evenodd"
         >
           <g id="9-PATCH" transform="translate(-608.000000, -160.000000)"></g>
           <g
@@ -80,7 +80,7 @@ export default class GHIcon extends Component<PropsType, StateType> {
               filter="url(#filter-1)"
             >
               <g id="button-bg">
-                <use fill="#FFFFFF" fill-rule="evenodd"></use>
+                <use fill="#FFFFFF" fillRule="evenodd"></use>
                 <use fill="none"></use>
                 <use fill="none"></use>
                 <use fill="none"></use>

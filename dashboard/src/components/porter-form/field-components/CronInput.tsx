@@ -1,13 +1,14 @@
-import InputRow from "components/form-components/InputRow";
 import React from "react";
-import useFormField from "../hooks/useFormField";
-import { CronField } from "../types";
-import { hasSetValue } from "../utils";
 import { isValidCron } from "cron-validator";
 import CronParser from "cronstrue";
 import styled from "styled-components";
-import DocsHelper from "components/DocsHelper";
+
 import DynamicLink from "components/DynamicLink";
+import InputRow from "components/form-components/InputRow";
+
+import useFormField from "../hooks/useFormField";
+import { type CronField } from "../types";
+import { hasSetValue } from "../utils";
 
 const CronInput: React.FC<CronField> = (props) => {
   const { id, variable, label, placeholder, value, isReadOnly } = props;

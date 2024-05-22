@@ -1,24 +1,25 @@
 import React, { useContext, useEffect, useState } from "react";
 import styled from "styled-components";
 
-import github from "assets/github.png";
-
-import api from "../../../shared/api";
-import { Context } from "shared/Context";
-import Loading from "../../../components/Loading";
 import Heading from "components/form-components/Heading";
 import Helper from "components/form-components/Helper";
-import ConfirmOverlay from "../../../components/ConfirmOverlay";
 
-interface Environment {
-  id: Number;
+import { Context } from "shared/Context";
+import github from "assets/github.png";
+
+import ConfirmOverlay from "../../../components/ConfirmOverlay";
+import Loading from "../../../components/Loading";
+import api from "../../../shared/api";
+
+type Environment = {
+  id: number;
   project_id: number;
   cluster_id: number;
   git_installation_id: number;
   name: string;
   git_repo_owner: string;
   git_repo_name: string;
-}
+};
 
 const PreviewEnvSettingsModal = () => {
   const [accessLoading, setAccessLoading] = useState(true);
@@ -26,9 +27,8 @@ const PreviewEnvSettingsModal = () => {
   const [accessData, setAccessData] = useState<Environment[]>([]);
   const [selectedEnvironment, setSelectedEnvironment] = useState<Environment>();
 
-  const { currentProject, currentCluster, setCurrentError } = useContext(
-    Context
-  );
+  const { currentProject, currentCluster, setCurrentError } =
+    useContext(Context);
 
   useEffect(() => {
     api
@@ -86,7 +86,9 @@ const PreviewEnvSettingsModal = () => {
         message={`Are you sure you want to disable preview environments in 
           ${selectedEnvironment?.git_repo_owner}/${selectedEnvironment?.git_repo_name}?`}
         onYes={handleDelete}
-        onNo={() => setSelectedEnvironment(null)}
+        onNo={() => {
+          setSelectedEnvironment(null);
+        }}
       />
       <Heading>
         <GitIcon src={github} /> Github

@@ -1,20 +1,20 @@
 import React, { Component } from "react";
 import styled from "styled-components";
+
+import close from "assets/close.png";
 import file from "assets/file.svg";
 import folder from "assets/folder.svg";
 import info from "assets/info.svg";
-import close from "assets/close.png";
 
 import api from "../../shared/api";
 import { Context } from "../../shared/Context";
-import { ActionConfigType, FileType } from "../../shared/types";
-
+import { type ActionConfigType, type FileType } from "../../shared/types";
 import Loading from "../Loading";
 
-interface AutoBuildpack {
+type AutoBuildpack = {
   name?: string;
   valid: boolean;
-}
+};
 
 type PropsType = {
   actionConfig: ActionConfigType | null;
@@ -60,20 +60,22 @@ export default class ContentsList extends Component<PropsType, StateType> {
   }
 
   setSubdirectory = (x: string) => {
-    this.setState({ currentDir: x }, () => this.updateContents());
+    this.setState({ currentDir: x }, () => {
+      this.updateContents();
+    });
   };
 
-  fetchContents = () => {
-    let { currentProject } = this.context;
+  fetchContents = async () => {
+    const { currentProject } = this.context;
     const { actionConfig, branch } = this.props;
 
     if (actionConfig.kind === "gitlab") {
-      return api
+      return await api
         .getGitlabFolderContent(
           "<token>",
           {
             repo_path: actionConfig.git_repo,
-            branch: branch,
+            branch,
             dir: this.state.currentDir || "./",
           },
           {
@@ -92,7 +94,7 @@ export default class ContentsList extends Component<PropsType, StateType> {
           };
         });
     }
-    return api.getBranchContents(
+    return await api.getBranchContents(
       "<token>",
       { dir: this.state.currentDir || "./" },
       {
@@ -101,17 +103,17 @@ export default class ContentsList extends Component<PropsType, StateType> {
         kind: "github",
         owner: actionConfig.git_repo.split("/")[0],
         name: actionConfig.git_repo.split("/")[1],
-        branch: branch,
+        branch,
       }
     );
   };
 
-  detectBuildpacks = () => {
-    let { currentProject } = this.context;
-    let { actionConfig, branch } = this.props;
+  detectBuildpacks = async () => {
+    const { currentProject } = this.context;
+    const { actionConfig, branch } = this.props;
 
     if (actionConfig.kind === "github") {
-      return api.detectBuildpack(
+      return await api.detectBuildpack(
         "<token>",
         {
           dir: this.state.currentDir || ".",
@@ -122,16 +124,16 @@ export default class ContentsList extends Component<PropsType, StateType> {
           kind: "github",
           owner: actionConfig.git_repo.split("/")[0],
           name: actionConfig.git_repo.split("/")[1],
-          branch: branch,
+          branch,
         }
       );
     }
 
-    return api.detectGitlabBuildpack(
+    return await api.detectGitlabBuildpack(
       "<token>",
       {
         repo_path: actionConfig.git_repo,
-        branch: branch,
+        branch,
         dir: this.state.currentDir || ".",
       },
       {
@@ -141,11 +143,11 @@ export default class ContentsList extends Component<PropsType, StateType> {
     );
   };
 
-  fetchProcfileContent = (procfilePath: string) => {
-    let { currentProject } = this.context;
-    let { actionConfig, branch } = this.props;
+  fetchProcfileContent = async (procfilePath: string) => {
+    const { currentProject } = this.context;
+    const { actionConfig, branch } = this.props;
     if (actionConfig.kind === "github") {
-      return api.getProcfileContents(
+      return await api.getProcfileContents(
         "<token>",
         {
           path: procfilePath,
@@ -156,16 +158,16 @@ export default class ContentsList extends Component<PropsType, StateType> {
           kind: "github",
           owner: actionConfig.git_repo.split("/")[0],
           name: actionConfig.git_repo.split("/")[1],
-          branch: branch,
+          branch,
         }
       );
     }
 
-    return api.getGitlabProcfileContents(
+    return await api.getGitlabProcfileContents(
       "<token>",
       {
         repo_path: actionConfig.git_repo,
-        branch: branch,
+        branch,
         path: procfilePath,
       },
       {
@@ -179,8 +181,8 @@ export default class ContentsList extends Component<PropsType, StateType> {
     // Get branch contents
     this.fetchContents()
       .then((res) => {
-        let files = [] as FileType[];
-        let folders = [] as FileType[];
+        const files = [] as FileType[];
+        const folders = [] as FileType[];
         res.data.map((x: FileType, i: number) => {
           x.type === "dir" ? folders.push(x) : files.push(x);
         });
@@ -191,7 +193,7 @@ export default class ContentsList extends Component<PropsType, StateType> {
         files.sort((a: FileType, b: FileType) => {
           return a.path < b.path ? 1 : 0;
         });
-        let contents = folders.concat(files);
+        const contents = folders.concat(files);
 
         this.setState({ contents, loading: false, error: false });
       })
@@ -216,7 +218,7 @@ export default class ContentsList extends Component<PropsType, StateType> {
         });
       });
 
-    let ppath =
+    const ppath =
       this.props.procfilePath ||
       `${this.state.currentDir ? this.state.currentDir : "."}/Procfile`;
     this.fetchProcfileContent(ppath)
@@ -229,7 +231,7 @@ export default class ContentsList extends Component<PropsType, StateType> {
   };
 
   renderContentList = () => {
-    let { contents, loading, error } = this.state;
+    const { contents, loading, error } = this.state;
     if (loading) {
       return (
         <LoadingWrapper>
@@ -240,15 +242,17 @@ export default class ContentsList extends Component<PropsType, StateType> {
       return <LoadingWrapper>Error loading repo contents.</LoadingWrapper>;
     }
     return contents.map((item: FileType, i: number) => {
-      let splits = item.path.split("/");
-      let fileName = splits[splits.length - 1];
+      const splits = item.path.split("/");
+      const fileName = splits[splits.length - 1];
       if (item.type === "dir") {
         return (
           <Item
             key={i}
             isSelected={item.path === this.state.currentDir}
             lastItem={i === contents.length - 1}
-            onClick={() => this.setSubdirectory(item.path)}
+            onClick={() => {
+              this.setSubdirectory(item.path);
+            }}
           >
             <img src={folder} />
             {fileName}
@@ -262,7 +266,9 @@ export default class ContentsList extends Component<PropsType, StateType> {
             key={i}
             lastItem={i === contents.length - 1}
             isADocker
-            onClick={() => this.props.setDockerfilePath(item.path)}
+            onClick={() => {
+              this.props.setDockerfilePath(item.path);
+            }}
           >
             <img src={file} />
             {fileName}
@@ -281,7 +287,7 @@ export default class ContentsList extends Component<PropsType, StateType> {
 
   renderJumpToParent = () => {
     if (this.state.currentDir !== "") {
-      let splits = this.state.currentDir.split("/");
+      const splits = this.state.currentDir.split("/");
       let subdir = "";
       if (splits.length !== 1) {
         subdir = this.state.currentDir.replace(splits[splits.length - 1], "");
@@ -291,7 +297,12 @@ export default class ContentsList extends Component<PropsType, StateType> {
       }
 
       return (
-        <Item lastItem={false} onClick={() => this.setSubdirectory(subdir)}>
+        <Item
+          lastItem={false}
+          onClick={() => {
+            this.setSubdirectory(subdir);
+          }}
+        >
           <BackLabel>..</BackLabel>
         </Item>
       );
@@ -314,10 +325,10 @@ export default class ContentsList extends Component<PropsType, StateType> {
       return;
     }
 
-    let dockerfiles = [] as string[];
+    const dockerfiles = [] as string[];
     this.state.contents.forEach((item: FileType, i: number) => {
-      let splits = item.path.split("/");
-      let fileName = splits[splits.length - 1];
+      const splits = item.path.split("/");
+      const fileName = splits[splits.length - 1];
       if (fileName.includes("Dockerfile")) {
         dockerfiles.push(fileName);
       }
@@ -338,7 +349,7 @@ export default class ContentsList extends Component<PropsType, StateType> {
 
   renderOverlay = () => {
     if (this.props.procfilePath) {
-      let processes = this.state.processes
+      const processes = this.state.processes
         ? Object.keys(this.state.processes)
         : [];
       if (this.state.processes == null) {
@@ -360,19 +371,19 @@ export default class ContentsList extends Component<PropsType, StateType> {
       return (
         <Overlay>
           <BgOverlay
-            onClick={() =>
+            onClick={() => {
               this.setState({ dockerfiles: [] }, () => {
                 this.props.setFolderPath("");
                 this.props.setProcfilePath("");
-              })
-            }
+              });
+            }}
           />
           <CloseButton
-            onClick={() =>
+            onClick={() => {
               this.setState({ dockerfiles: [] }, () => {
                 this.props.setProcfilePath("");
-              })
-            }
+              });
+            }}
           >
             <CloseButtonImg src={close} />
           </CloseButton>
@@ -408,8 +419,16 @@ export default class ContentsList extends Component<PropsType, StateType> {
     if (this.state.dockerfiles.length > 0 && !this.props.dockerfilePath) {
       return (
         <Overlay>
-          <BgOverlay onClick={() => this.setState({ dockerfiles: [] })} />
-          <CloseButton onClick={() => this.setState({ dockerfiles: [] })}>
+          <BgOverlay
+            onClick={() => {
+              this.setState({ dockerfiles: [] });
+            }}
+          />
+          <CloseButton
+            onClick={() => {
+              this.setState({ dockerfiles: [] });
+            }}
+          >
             <CloseButtonImg src={close} />
           </CloseButton>
           <Label>
@@ -421,11 +440,11 @@ export default class ContentsList extends Component<PropsType, StateType> {
               return (
                 <Row
                   key={i}
-                  onClick={() =>
+                  onClick={() => {
                     this.props.setDockerfilePath(
                       `${this.state.currentDir || "."}/${dockerfile}`
-                    )
-                  }
+                    );
+                  }}
                   isLast={this.state.dockerfiles.length - 1 === i}
                 >
                   <Indicator selected={false}></Indicator>
@@ -457,11 +476,15 @@ export default class ContentsList extends Component<PropsType, StateType> {
     ) {
       return (
         <Overlay>
-          <BgOverlay onClick={() => this.props.setDockerfilePath("")} />
+          <BgOverlay
+            onClick={() => {
+              this.props.setDockerfilePath("");
+            }}
+          />
           <CloseButton
-            onClick={() =>
-              this.props.setFolderPath(this.state.currentDir || "./")
-            }
+            onClick={() => {
+              this.props.setFolderPath(this.state.currentDir || "./");
+            }}
           >
             <CloseButtonImg src={close} />
           </CloseButton>
@@ -479,9 +502,9 @@ export default class ContentsList extends Component<PropsType, StateType> {
               Yes
             </ConfirmButton>
             <ConfirmButton
-              onClick={() =>
-                this.props.setFolderPath(this.state.currentDir || "./")
-              }
+              onClick={() => {
+                this.props.setFolderPath(this.state.currentDir || "./");
+              }}
             >
               No
             </ConfirmButton>
@@ -502,6 +525,7 @@ export default class ContentsList extends Component<PropsType, StateType> {
               <a
                 href="https://docs.porter.run/deploying-applications/deploying-from-github/selecting-application-and-build-method#customizing-buildpacks"
                 target="_blank"
+                rel="noreferrer"
               >
                 detected automatically
               </a>

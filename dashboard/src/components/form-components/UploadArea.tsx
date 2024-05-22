@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import styled from "styled-components";
+
 import upload from "assets/upload.svg";
 
 type PropsType = {
@@ -19,6 +20,7 @@ export default class UploadArea extends Component<PropsType, StateType> {
   state = {
     fileName: "",
   };
+
   handleChange = (e: any) => {
     this.props.setValue(e.target.value);
   };
@@ -26,7 +28,7 @@ export default class UploadArea extends Component<PropsType, StateType> {
   readFile = (file: File) => {
     const reader = new FileReader();
     reader.onload = async (e) => {
-      let text = e.target?.result as string;
+      const text = e.target?.result as string;
       this.props.setValue(text);
     };
     reader.readAsText(file, "UTF-8");

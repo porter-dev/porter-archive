@@ -1,13 +1,14 @@
 import React, { useContext } from "react";
-import {
-  GetFinalVariablesFunction,
-  SelectField,
-  SelectFieldState,
-} from "../types";
-import Selector from "../../Selector";
 import styled from "styled-components";
-import useFormField from "../hooks/useFormField";
+
 import { Context } from "../../../shared/Context";
+import Selector from "../../Selector";
+import useFormField from "../hooks/useFormField";
+import {
+  type GetFinalVariablesFunction,
+  type SelectField,
+  type SelectFieldState,
+} from "../types";
 import { hasSetValue } from "../utils";
 
 const Select: React.FC<SelectField> = (props) => {
@@ -17,11 +18,13 @@ const Select: React.FC<SelectField> = (props) => {
       [props.variable]: hasSetValue(props)
         ? props.value[0]
         : props.settings.type == "provider"
-        ? ({
-            gke: "gcp",
-            eks: "aws",
-            doks: "do",
-          } as Record<string, string>)[currentCluster.service] || "aws"
+        ? (
+            {
+              gke: "gcp",
+              eks: "aws",
+              doks: "do",
+            } as Record<string, string>
+          )[currentCluster.service] || "aws"
         : props.settings.options[0].value,
     },
   });
@@ -74,12 +77,13 @@ export const getFinalVariablesForSelect: GetFinalVariablesFunction = (
         [props.variable]: hasSetValue(props)
           ? props.value[0]
           : props.settings.type == "provider"
-          ? ({
-              gke: "gcp",
-              eks: "aws",
-              doks: "do",
-            } as Record<string, string>)[context.currentCluster.service] ||
-            "aws"
+          ? (
+              {
+                gke: "gcp",
+                eks: "aws",
+                doks: "do",
+              } as Record<string, string>
+            )[context.currentCluster.service] || "aws"
           : props.settings.options[0].value,
       };
 };

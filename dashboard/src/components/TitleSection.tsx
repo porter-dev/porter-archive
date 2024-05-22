@@ -1,7 +1,7 @@
 import React from "react";
 import styled from "styled-components";
 
-interface Props {
+type Props = {
   children: React.ReactNode;
   icon?: any;
   iconWidth?: string;
@@ -10,7 +10,7 @@ interface Props {
   materialIconClass?: string;
   handleNavBack?: () => void;
   onClick?: any;
-}
+};
 
 const TitleSection: React.FC<Props> = ({
   children,

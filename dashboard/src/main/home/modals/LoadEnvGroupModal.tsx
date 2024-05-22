@@ -1,22 +1,23 @@
 import React, { Component } from "react";
+import { isEmpty, isObject } from "lodash";
 import styled, { css } from "styled-components";
-import close from "assets/close.png";
-import sliders from "assets/sliders.svg";
+
+import DocsHelper from "components/DocsHelper";
+import CheckboxRow from "components/form-components/CheckboxRow";
+import Helper from "components/form-components/Helper";
+import { type KeyValue } from "components/form-components/KeyValueArray";
+import Loading from "components/Loading";
+import {
+  type PartialEnvGroup,
+  type PopulatedEnvGroup,
+} from "components/porter-form/types";
+import SaveButton from "components/SaveButton";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
+import close from "assets/close.png";
+import sliders from "assets/sliders.svg";
 
-import Loading from "components/Loading";
-import SaveButton from "components/SaveButton";
-import { KeyValue } from "components/form-components/KeyValueArray";
-import CheckboxRow from "components/form-components/CheckboxRow";
-import {
-  PartialEnvGroup,
-  PopulatedEnvGroup,
-} from "components/porter-form/types";
-import Helper from "components/form-components/Helper";
-import DocsHelper from "components/DocsHelper";
-import { isEmpty, isObject } from "lodash";
 import { formattedEnvironmentValue } from "../env-dashboard/EnvGroup";
 
 type PropsType = {
@@ -83,20 +84,21 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
       return;
     }
 
-    const populateEnvGroupsPromises = envGroups.map((envGroup) =>
-      api
-        .getEnvGroup<PopulatedEnvGroup>(
-          "<token>",
-          {},
-          {
-            id: this.context.currentProject.id,
-            cluster_id: this.context.currentCluster.id,
-            name: envGroup.name,
-            namespace: envGroup.namespace,
-            version: envGroup.version,
-          }
-        )
-        .then((res) => res.data)
+    const populateEnvGroupsPromises = envGroups.map(
+      async (envGroup) =>
+        await api
+          .getEnvGroup<PopulatedEnvGroup>(
+            "<token>",
+            {},
+            {
+              id: this.context.currentProject.id,
+              cluster_id: this.context.currentCluster.id,
+              name: envGroup.name,
+              namespace: envGroup.namespace,
+              version: envGroup.version,
+            }
+          )
+          .then((res) => res.data)
     );
 
     try {
@@ -112,7 +114,10 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
   };
 
   componentDidMount() {
-    if (Array.isArray(this.props.availableEnvGroups) && !this.context.currentProject.stacks_enabled) {
+    if (
+      Array.isArray(this.props.availableEnvGroups) &&
+      !this.context.currentProject.stacks_enabled
+    ) {
       this.setState({
         envGroups: this.props.availableEnvGroups,
         loading: false,
@@ -152,7 +157,9 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
               key={i}
               isSelected={this.state.selectedEnvGroup === envGroup}
               lastItem={i === this.state.envGroups.length - 1}
-              onClick={() => this.setState({ selectedEnvGroup: envGroup })}
+              onClick={() => {
+                this.setState({ selectedEnvGroup: envGroup });
+              }}
             >
               <img src={sliders} />
               {envGroup.name}
@@ -275,11 +282,11 @@ export default class LoadEnvGroupModal extends Component<PropsType, StateType> {
                 ) : (
                   <CheckboxRow
                     checked={this.state.shouldSync}
-                    toggle={() =>
+                    toggle={() => {
                       this.setState((prevState) => ({
                         shouldSync: !prevState.shouldSync,
-                      }))
-                    }
+                      }));
+                    }}
                     label="Sync environment group"
                     disabled={this.state.selectedEnvGroup?.meta_version === 1}
                   />
@@ -478,7 +485,9 @@ const ModalTitle = styled.div`
   margin: 0px 0px 13px;
   display: flex;
   flex: 1;
-  font-family: Work Sans, sans-serif;
+  font-family:
+    Work Sans,
+    sans-serif;
   font-size: 18px;
   color: #ffffff;
   user-select: none;

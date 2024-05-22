@@ -1,7 +1,8 @@
-import { get } from "lodash";
 import React from "react";
+import { get } from "lodash";
 import styled from "styled-components";
-import { UrlLinkField } from "../types";
+
+import { type UrlLinkField } from "../types";
 import { hasSetValue } from "../utils";
 
 const populate = (str: string, obj: unknown) => {
@@ -49,7 +50,7 @@ const UrlLink = (props: UrlLinkField) => {
     <>
       <Label>{label}</Label>
       <StyledServiceRow>
-        <a href={populatedUrl} target="_blank">
+        <a href={populatedUrl} target="_blank" rel="noreferrer">
           <i className="material-icons-outlined">link</i>
           {populatedUrl}
         </a>

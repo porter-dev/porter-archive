@@ -1,16 +1,13 @@
 import React, { useContext, useState } from "react";
 import { withRouter, type RouteComponentProps } from "react-router";
 import styled from "styled-components";
-import { z } from "zod";
 
 import GCPProvisionerSettings from "components/GCPProvisionerSettings";
-import GPUCostConsent from "components/GPUCostConsent";
 import Modal from "components/porter/Modal";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import ProvisionerSettings from "components/ProvisionerSettings";
 
-import api from "shared/api";
 import { Context } from "shared/Context";
 import { type InfraCredentials } from "shared/types";
 

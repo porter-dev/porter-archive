@@ -17,11 +17,9 @@ import DashboardPlaceholder from "components/porter/DashboardPlaceholder";
 import Fieldset from "components/porter/Fieldset";
 import PorterLink from "components/porter/Link";
 import SearchBar from "components/porter/SearchBar";
-import ShowIntercomButton from "components/porter/ShowIntercomButton";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import Toggle from "components/porter/Toggle";
-import { useAuthState } from "main/auth/context";
 import { useDefaultDeploymentTarget } from "lib/hooks/useDeploymentTarget";
 
 import api from "shared/api";

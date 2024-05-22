@@ -1,14 +1,14 @@
-import React, { useState, useContext } from "react";
+import React, { useContext, useState } from "react";
 import styled from "styled-components";
+
+import Banner from "components/porter/Banner";
+import Spacer from "components/porter/Spacer";
+import ProvisionerFlow from "components/ProvisionerFlow";
+import TitleSection from "components/TitleSection";
 
 import { Context } from "shared/Context";
 
-import Banner from "components/porter/Banner";
-
-import ProvisionerFlow from "components/ProvisionerFlow";
 import ClusterList from "./ClusterList";
-import TitleSection from "components/TitleSection";
-import Spacer from "components/porter/Spacer";
 
 type Props = {};
 
@@ -20,7 +20,11 @@ const ClusterSection = (props: Props) => {
   if (currentStep === "cloud") {
     return (
       <>
-        <TitleSection handleNavBack={() => setCurrentStep("")}>
+        <TitleSection
+          handleNavBack={() => {
+            setCurrentStep("");
+          }}
+        >
           <Title>
             <ClusterIcon>
               <svg
@@ -94,7 +98,11 @@ const ClusterSection = (props: Props) => {
   return (
     <>
       {(usage?.current.cluster > 1 || !currentCluster) && (
-        <Button onClick={() => setCurrentStep("cloud")}>
+        <Button
+          onClick={() => {
+            setCurrentStep("cloud");
+          }}
+        >
           <i className="material-icons">add</i> Create a cluster
         </Button>
       )}

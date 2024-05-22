@@ -1,15 +1,14 @@
 import React, { Component } from "react";
-import styled from "styled-components";
-import rocket from "assets/rocket.png";
 import Markdown from "markdown-to-jsx";
+import styled from "styled-components";
 
-import { Context } from "shared/Context";
-
-import { PorterTemplate } from "shared/types";
 import Helper from "components/form-components/Helper";
 import Selector from "components/Selector";
 
+import { Context } from "shared/Context";
 import { hardcodedNames } from "shared/hardcodedNameDict";
+import { type PorterTemplate } from "shared/types";
+import rocket from "assets/rocket.png";
 
 type PropsType = {
   currentTemplate: any;
@@ -51,7 +50,7 @@ export default class TemplateInfo extends Component<PropsType, StateType> {
   };
 
   renderMarkdown = () => {
-    let { currentTemplate, markdown } = this.props;
+    const { currentTemplate, markdown } = this.props;
     if (markdown) {
       return <Markdown>{markdown}</Markdown>;
     }
@@ -71,7 +70,7 @@ export default class TemplateInfo extends Component<PropsType, StateType> {
   };
 
   renderBanner = () => {
-    let { currentCluster } = this.context;
+    const { currentCluster } = this.context;
     if (!currentCluster) {
       return (
         <>
@@ -122,15 +121,15 @@ export default class TemplateInfo extends Component<PropsType, StateType> {
   };
 
   render() {
-    let { currentCluster } = this.context;
+    const { currentCluster } = this.context;
     let { name, icon, description } = this.props.currentTemplate;
-    let { currentTemplate } = this.props;
+    const { currentTemplate } = this.props;
 
     if (hardcodedNames[name]) {
       name = hardcodedNames[name];
     }
 
-    let versionOptions = this.props.currentTemplate.versions.map(
+    const versionOptions = this.props.currentTemplate.versions.map(
       (version: string) => {
         return {
           value: version,
@@ -145,7 +144,9 @@ export default class TemplateInfo extends Component<PropsType, StateType> {
           <Flex>
             <i
               className="material-icons"
-              onClick={() => this.props.setCurrentTemplate(null)}
+              onClick={() => {
+                this.props.setCurrentTemplate(null);
+              }}
             >
               keyboard_backspace
             </i>
@@ -157,9 +158,9 @@ export default class TemplateInfo extends Component<PropsType, StateType> {
           <StyledVersionSelector>
             <Selector
               activeValue={this.props.currentTemplate.currentVersion}
-              setActiveValue={(version) =>
-                this.props.setCurrentVersion(version)
-              }
+              setActiveValue={(version) => {
+                this.props.setCurrentVersion(version);
+              }}
               options={versionOptions}
               dropdownLabel="Version"
               width="150px"

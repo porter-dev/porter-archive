@@ -13,12 +13,7 @@ export function useCloudSqlSecret({
   projectId: number;
 }): boolean {
   const { data } = useQuery(
-    [
-      "getCloudSqlSecret",
-      projectId,
-      appName,
-      deploymentTargetId,
-    ],
+    ["getCloudSqlSecret", projectId, appName, deploymentTargetId],
     async () => {
       const res = await api.getCloudSqlSecret(
         "<token>",

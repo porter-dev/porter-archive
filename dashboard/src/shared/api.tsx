@@ -216,10 +216,11 @@ const getPorterAppEvent = baseApi<
     project_id: number;
     cluster_id: number;
     event_id: string;
+    porter_app_name: string;
   }
 >("GET", (pathParams) => {
-  const { project_id, cluster_id, event_id } = pathParams;
-  return `/api/projects/${project_id}/clusters/${cluster_id}/events/${event_id}`;
+  const { project_id, cluster_id, event_id, porter_app_name } = pathParams;
+  return `/api/projects/${project_id}/clusters/${cluster_id}/apps/${porter_app_name}/events/${event_id}`;
 });
 
 const createPorterApp = baseApi<

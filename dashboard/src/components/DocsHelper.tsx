@@ -1,7 +1,6 @@
 import React from "react";
-import styled from "styled-components";
-
 import { ClickAwayListener } from "@material-ui/core";
+import styled from "styled-components";
 
 type Props = {
   tooltipText: string;

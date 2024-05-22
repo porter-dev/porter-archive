@@ -4,8 +4,7 @@ import { Configuration, FrontendApi } from "@ory/client";
 import { type AxiosError } from "axios";
 import { useHistory } from "react-router-dom";
 
-export const basePath =
-  process.env.REACT_APP_ORY_URL || "http://localhost:4000";
+export const basePath = import.meta.env.VITE_ORY_URL || "http://localhost:4000";
 
 export const ory = new FrontendApi(
   new Configuration({

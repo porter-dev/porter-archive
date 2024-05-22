@@ -5,7 +5,6 @@ import styled from "styled-components";
 import { type IterableElement } from "type-fest";
 
 import Button from "components/porter/Button";
-import Icon from "components/porter/Icon";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import { type PorterAppFormData } from "lib/porter-apps";

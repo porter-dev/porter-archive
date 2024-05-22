@@ -1,7 +1,7 @@
 // import ClipboardJS from "clipboard";
-import ClipboardJS from "clipboard";
-import React, { Component, RefObject } from "react";
+import React, { Component, type RefObject } from "react";
 import Tooltip from "@material-ui/core/Tooltip";
+import ClipboardJS from "clipboard";
 import styled from "styled-components";
 
 type PropsType = {
@@ -72,7 +72,7 @@ export default class CopyToClipboard extends Component<PropsType, StateType> {
   }
 
   componentWillUnmount() {
-    if (this.state.clipboard && this.state.clipboard.destroy) {
+    if (this.state.clipboard?.destroy) {
       this.state.clipboard.destroy();
     }
   }

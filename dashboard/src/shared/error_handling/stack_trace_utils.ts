@@ -1,4 +1,4 @@
-import { StackFrame } from "stacktrace-js";
+import { type StackFrame } from "stacktrace-js";
 
 export const stackFramesToString = (stackFrames: StackFrame[]) => {
   return stackFrames

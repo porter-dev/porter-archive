@@ -1,19 +1,18 @@
-import React, { Component, useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import styled from "styled-components";
 
-import close from "assets/close.png";
-import { isAlphanumeric } from "shared/common";
-import api from "shared/api";
-import { Context } from "shared/Context";
-import { InfraType } from "shared/types";
-
-import InputRow from "components/form-components/InputRow";
-import CheckboxRow from "components/form-components/CheckboxRow";
-import SelectRow from "components/form-components/SelectRow";
-import Helper from "components/form-components/Helper";
-import Heading from "components/form-components/Heading";
-import SaveButton from "components/SaveButton";
 import CheckboxList from "components/form-components/CheckboxList";
+import CheckboxRow from "components/form-components/CheckboxRow";
+import Heading from "components/form-components/Heading";
+import Helper from "components/form-components/Helper";
+import InputRow from "components/form-components/InputRow";
+import SelectRow from "components/form-components/SelectRow";
+import SaveButton from "components/SaveButton";
+
+import { isAlphanumeric } from "shared/common";
+import { Context } from "shared/Context";
+import { type InfraType } from "shared/types";
+import close from "assets/close.png";
 
 type PropsType = {
   setSelectedProvisioner: (x: string | null) => void;
@@ -77,7 +76,7 @@ const DOFormSectionFC: React.FC<PropsType> = (props) => {
       // From the dashboard, only uncheck and disable if "creating" or "created"
       let filtered = selectedInfras;
       props.infras.forEach((infra: InfraType, i: number) => {
-        let { kind, status } = infra;
+        const { kind, status } = infra;
         if (status === "creating" || status === "created") {
           filtered = filtered.filter((item: any) => {
             return item.value !== kind;
@@ -93,7 +92,7 @@ const DOFormSectionFC: React.FC<PropsType> = (props) => {
   }, [props.projectName]);
 
   const setClusterNameIfNotSet = () => {
-    let projectName = props.projectName || context.currentProject?.name;
+    const projectName = props.projectName || context.currentProject?.name;
 
     if (!clusterNameSet && !clusterName.includes(`${projectName}-cluster`)) {
       setClusterName(
@@ -107,7 +106,7 @@ const DOFormSectionFC: React.FC<PropsType> = (props) => {
       return true;
     }
 
-    let { projectName } = props;
+    const { projectName } = props;
     if (projectName || projectName === "") {
       return (
         !isAlphanumeric(projectName) ||
@@ -122,7 +121,6 @@ const DOFormSectionFC: React.FC<PropsType> = (props) => {
   const catchError = (err: any) => {
     console.log(err);
     props.handleError();
-    return;
   };
 
   const doRedirect = (projectId: number) => {
@@ -138,7 +136,7 @@ const DOFormSectionFC: React.FC<PropsType> = (props) => {
   // TODO: handle generically (with > 2 steps)
   const onCreateDO = () => {
     props?.trackOnSave();
-    let { currentProject } = context;
+    const { currentProject } = context;
     doRedirect(currentProject.id);
   };
 
@@ -179,7 +177,11 @@ const DOFormSectionFC: React.FC<PropsType> = (props) => {
   return (
     <StyledAWSFormSection>
       <FormSection>
-        <CloseButton onClick={() => props.setSelectedProvisioner(null)}>
+        <CloseButton
+          onClick={() => {
+            props.setSelectedProvisioner(null);
+          }}
+        >
           <CloseButtonImg src={close} />
         </CloseButton>
         <Heading isAtTop={true}>DigitalOcean Settings</Heading>
@@ -213,7 +215,7 @@ const DOFormSectionFC: React.FC<PropsType> = (props) => {
         <CheckboxList
           options={provisionOptions}
           selected={selectedInfras}
-          setSelected={(x: { value: string; label: string }[]) => {
+          setSelected={(x: Array<{ value: string; label: string }>) => {
             setSelectedInfras(x);
             setIsFormDirty(true);
           }}

@@ -1,18 +1,22 @@
-import React, { useContext, useEffect, useMemo, useState } from "react";
-import { Context } from "shared/Context";
-import api from "shared/api";
+import React, { useContext, useEffect, useState } from "react";
+import semver from "semver";
 import styled from "styled-components";
 
 import Loading from "components/Loading";
-import { DISPLAY_TAGS_MAP, hardcodedIcons, hardcodedNames } from "shared/hardcodedNameDict";
-import { PorterTemplate } from "shared/types";
-import semver from "semver";
+import Spacer from "components/porter/Spacer";
 
+import api from "shared/api";
+import { Context } from "shared/Context";
+import {
+  DISPLAY_TAGS_MAP,
+  hardcodedIcons,
+  hardcodedNames,
+} from "shared/hardcodedNameDict";
+import { type PorterTemplate } from "shared/types";
+import job from "assets/job.png";
 import web from "assets/web.png";
 import worker from "assets/worker.png";
-import job from "assets/job.png";
-import fire from "assets/fire.svg"
-import Spacer from "components/porter/Spacer";
+
 type Props = {
   helm_repo_id?: number;
   templates?: PorterTemplate[];
@@ -43,7 +47,7 @@ const TemplateList: React.FC<Props> = ({
         {},
         {
           project_id: currentProject.id,
-          helm_repo_id: helm_repo_id,
+          helm_repo_id,
         }
       )
       .then(({ data }) => {
@@ -54,7 +58,7 @@ const TemplateList: React.FC<Props> = ({
           throw Error("Data is not an array");
         }
 
-        let sortedVersionData = data
+        const sortedVersionData = data
           .map((template: any) => {
             let versions = template.versions.reverse();
 
@@ -149,32 +153,33 @@ const TemplateList: React.FC<Props> = ({
             <TemplateDescription>{description}</TemplateDescription>
             <Spacer y={0.5} />
 
-            {Object.keys(DISPLAY_TAGS_MAP).map(tagKey => (
-              tags?.includes(tagKey) &&
-              <Tag
-                bottom="10px"
-                left="12px"
-                style={{ background: DISPLAY_TAGS_MAP[tagKey].color }}
-              >
-                {DISPLAY_TAGS_MAP[tagKey].label}
-              </Tag>
-            ))}
+            {Object.keys(DISPLAY_TAGS_MAP).map(
+              (tagKey) =>
+                tags?.includes(tagKey) && (
+                  <Tag
+                    bottom="10px"
+                    left="12px"
+                    style={{ background: DISPLAY_TAGS_MAP[tagKey].color }}
+                  >
+                    {DISPLAY_TAGS_MAP[tagKey].label}
+                  </Tag>
+                )
+            )}
           </TemplateBlock>
         );
       })}
     </TemplateListWrapper>
-
   );
 };
 
 export default TemplateList;
 
-const FireIcon = styled.img<{ size?: string, top?: string, right?: string }>`
-  height: ${props => props.size || '25px'};
+const FireIcon = styled.img<{ size?: string; top?: string; right?: string }>`
+  height: ${(props) => props.size || "25px"};
   position: absolute;
-  top: ${props => props.top || 'auto'};
-  right: ${props => props.right || 'auto'};
-  
+  top: ${(props) => props.top || "auto"};
+  right: ${(props) => props.right || "auto"};
+
   &:hover::after {
     content: "Popular";
     position: absolute;
@@ -191,16 +196,20 @@ const FireIcon = styled.img<{ size?: string, top?: string, right?: string }>`
   }
 `;
 
-const Tag = styled.div<{ size?: string, bottom?: string, left?: string }>`
+const Tag = styled.div<{ size?: string; bottom?: string; left?: string }>`
   position: absolute;
-  bottom: ${props => props.bottom || 'auto'};
-  left: ${props => props.left || 'auto'};
+  bottom: ${(props) => props.bottom || "auto"};
+  left: ${(props) => props.left || "auto"};
   font-size: 10px;
-  background: linear-gradient(45deg, rgba(88, 24, 219, 1) 0%, rgba(72, 12, 168, 1) 100%); // added gradient for shiny effect
+  background: linear-gradient(
+    45deg,
+    rgba(88, 24, 219, 1) 0%,
+    rgba(72, 12, 168, 1) 100%
+  ); // added gradient for shiny effect
   padding: 5px;
-  border-radius: 4px; 
+  border-radius: 4px;
   opacity: 0.85;
-  box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1)
+  box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
 `;
 
 const Placeholder = styled.div`
@@ -279,7 +288,7 @@ const TemplateBlock = styled.div`
   color: #ffffff;
   position: relative;
   border-radius: 5px;
-  background: ${props => props.theme.clickable.bg};
+  background: ${(props) => props.theme.clickable.bg};
   border: 1px solid #494b4f;
   :hover {
     border: 1px solid #7a7b80;

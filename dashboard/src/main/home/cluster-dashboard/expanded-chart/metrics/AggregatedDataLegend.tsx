@@ -1,14 +1,15 @@
 import React from "react";
+import chroma from "chroma-js";
 import * as stats from "simple-statistics";
 import styled from "styled-components";
-import chroma from "chroma-js";
-import { NormalizedMetricsData } from "./types";
+
+import { type NormalizedMetricsData } from "./types";
 import { AggregatedDataColors } from "./utils";
 
-interface AggregatedDataLegendProps {
+type AggregatedDataLegendProps = {
   data: NormalizedMetricsData[];
   hideAvg: boolean;
-}
+};
 
 const AggregatedDataLegend = ({ data, hideAvg }: AggregatedDataLegendProps) => {
   const min = stats.min(data.map((d) => d.value));
@@ -20,13 +21,13 @@ const AggregatedDataLegend = ({ data, hideAvg }: AggregatedDataLegendProps) => {
     aggregatedData = {
       min,
       max,
-    }
+    };
   } else {
     aggregatedData = {
       min,
       avg,
       max,
-    }
+    };
   }
 
   return (

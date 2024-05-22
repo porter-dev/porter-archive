@@ -1,23 +1,24 @@
-import Helper from "components/form-components/Helper";
-import SaveButton from "components/SaveButton";
-import TitleSection from "components/TitleSection";
 import React, { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router";
-
 import styled from "styled-components";
+import { useSnapshot } from "valtio";
+
+import DocsHelper from "components/DocsHelper";
+import Helper from "components/form-components/Helper";
+import Loading from "components/Loading";
+import SaveButton from "components/SaveButton";
+import TitleSection from "components/TitleSection";
+
+import { connectRegistryTracks } from "shared/anayltics";
+import api from "shared/api";
+import backArrow from "assets/back_arrow.png";
+
 import ProviderSelector, {
   registryOptions,
 } from "../../components/ProviderSelector";
-import backArrow from "assets/back_arrow.png";
-
-import FormFlowWrapper from "./forms/FormFlow";
 import { OFState } from "../../state";
-import { useSnapshot } from "valtio";
-import api from "shared/api";
-import Loading from "components/Loading";
 import Registry from "./components/Registry";
-import { connectRegistryTracks } from "shared/anayltics";
-import DocsHelper from "components/DocsHelper";
+import FormFlowWrapper from "./forms/FormFlow";
 
 const ConnectRegistry: React.FC<{}> = ({}) => {
   const snap = useSnapshot(OFState);
@@ -31,7 +32,7 @@ const ConnectRegistry: React.FC<{}> = ({}) => {
     snap.StepHandler.canGoBack && !snap.StepHandler.isSubFlow;
 
   useEffect(() => {
-    let hookState = { isSubscribed: true };
+    const hookState = { isSubscribed: true };
 
     getRegistries(hookState);
 

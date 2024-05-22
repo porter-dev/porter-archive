@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import _ from "lodash";
 import { useFormContext } from "react-hook-form";
 import { useHistory } from "react-router";
 import styled from "styled-components";

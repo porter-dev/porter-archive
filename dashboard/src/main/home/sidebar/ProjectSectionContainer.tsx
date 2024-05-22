@@ -1,18 +1,16 @@
 import React, { Component } from "react";
+import styled from "styled-components";
 
 import { Context } from "shared/Context";
-import ProjectButton from "./ProjectButton";
-
 import collapseSidebar from "assets/collapse-sidebar.svg";
 
-import styled from "styled-components";
+import ProjectButton from "./ProjectButton";
 
 type PropsType = {
   collapseSidebar: any;
 };
 
 type StateType = {};
-
 
 // Props in context to project section to trigger update on context change
 export default class ProjectSectionContainer extends Component<
@@ -22,7 +20,6 @@ export default class ProjectSectionContainer extends Component<
   state = {};
 
   render() {
-
     return (
       <StyledProjectSection>
         <ProjectButton
@@ -35,7 +32,6 @@ export default class ProjectSectionContainer extends Component<
       </StyledProjectSection>
     );
   }
-
 }
 
 ProjectSectionContainer.contextType = Context;
@@ -58,7 +54,7 @@ const SidebarToggleButton = styled.div`
   }
 
   :hover {
-    border: 1px solid ${props => props.theme.text.primary};
+    border: 1px solid ${(props) => props.theme.text.primary};
     > img {
       opacity: 0.9;
     }

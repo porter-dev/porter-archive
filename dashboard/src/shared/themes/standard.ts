@@ -10,6 +10,6 @@ const theme = {
     primary: "#fefefe",
     secondary: "#9999aa",
   },
-}
+};
 
 export default theme;

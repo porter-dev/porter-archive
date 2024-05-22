@@ -1,27 +1,31 @@
 import React, { useCallback, useContext } from "react";
-import { AuthzContext } from "./AuthzContext";
+
 import { isAuthorized } from "./authorization-helpers";
-import { ScopeType, Verbs } from "./types";
+import { AuthzContext } from "./AuthzContext";
+import { type ScopeType, type Verbs } from "./types";
 
-export const GuardedComponent = <ComponentProps extends object>(
-  scope: ScopeType,
-  resource: string,
-  verb: Verbs | Array<Verbs>
-) => (Component: any) => (props: ComponentProps) => {
-  const authContext = useContext(AuthzContext);
+export const GuardedComponent =
+  <ComponentProps extends object>(
+    scope: ScopeType,
+    resource: string,
+    verb: Verbs | Verbs[]
+  ) =>
+  (Component: any) =>
+  (props: ComponentProps) => {
+    const authContext = useContext(AuthzContext);
 
-  if (isAuthorized(authContext.currentPolicy, scope, resource, verb)) {
-    return <Component {...props} />;
-  }
+    if (isAuthorized(authContext.currentPolicy, scope, resource, verb)) {
+      return <Component {...props} />;
+    }
 
-  return null;
-};
+    return null;
+  };
 
 export type WithAuthProps = {
   isAuthorized: (
     scope: ScopeType,
-    resource: string | Array<string>,
-    verb: Verbs | Array<Verbs>
+    resource: string | string[],
+    verb: Verbs | Verbs[]
   ) => boolean;
 };
 
@@ -39,7 +43,7 @@ export function withAuth<P>(
     const authContext = useContext(AuthzContext);
 
     const isAuth = useCallback(
-      (scope: ScopeType, resource: string, verb: Verbs | Array<Verbs>) =>
+      (scope: ScopeType, resource: string, verb: Verbs | Verbs[]) =>
         isAuthorized(authContext.currentPolicy, scope, resource, verb),
       [authContext.currentPolicy]
     );

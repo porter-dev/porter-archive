@@ -1,10 +1,11 @@
 import React from "react";
+
 import InputRow from "../../form-components/InputRow";
 import useFormField from "../hooks/useFormField";
 import {
-  GetFinalVariablesFunction,
-  InputField,
-  StringInputFieldState,
+  type GetFinalVariablesFunction,
+  type InputField,
+  type StringInputFieldState,
 } from "../types";
 import { hasSetValue } from "../utils";
 
@@ -30,21 +31,17 @@ const Input: React.FC<InputField> = (props) => {
     value,
   } = props;
 
-  const {
-    state,
-    variables,
-    setVars,
-    setValidation,
-  } = useFormField<StringInputFieldState>(id, {
-    initValidation: {
-      validated: hasSetValue(props),
-    },
-    initVars: {
-      [variable]: hasSetValue(props)
-        ? clipOffUnit(settings?.unit, value[0])
-        : undefined,
-    },
-  });
+  const { state, variables, setVars, setValidation } =
+    useFormField<StringInputFieldState>(id, {
+      initValidation: {
+        validated: hasSetValue(props),
+      },
+      initVars: {
+        [variable]: hasSetValue(props)
+          ? clipOffUnit(settings?.unit, value[0])
+          : undefined,
+      },
+    });
 
   if (state == undefined) {
     return <></>;

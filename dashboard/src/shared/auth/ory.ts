@@ -5,7 +5,7 @@ import { type AxiosError } from "axios";
 import { useHistory } from "react-router-dom";
 
 export const basePath =
-  process.env.REACT_APP_ORY_URL || "http://localhost:4000";
+  import.meta.env.REACT_APP_ORY_URL || "http://localhost:4000";
 
 export const ory = new FrontendApi(
   new Configuration({

@@ -1,15 +1,12 @@
 import React, { Component } from "react";
 import styled from "styled-components";
-import close from "assets/close.png";
-import api from "shared/api";
-
-import { Context } from "shared/Context";
-import { ChartType } from "shared/types";
 
 import Loading from "components/Loading";
-
-import Markdown from "markdown-to-jsx";
 import SaveButton from "components/SaveButton";
+
+import api from "shared/api";
+import { Context } from "shared/Context";
+import { type ChartType } from "shared/types";
 
 type PropsType = {
   currentChart: ChartType;
@@ -29,7 +26,7 @@ export default class UpgradeChartModal extends Component<PropsType, StateType> {
   componentDidMount() {
     // get the chart update notes from the api
     let repoURL = this.context.capabilities.default_addon_helm_repo_url;
-    let chartName = this.props.currentChart.chart.metadata.name
+    const chartName = this.props.currentChart.chart.metadata.name
       .toLowerCase()
       .trim();
 
@@ -62,7 +59,7 @@ No upgrade notes available. This update should be backwards-compatible.
           return;
         }
 
-        let noteArr = res.data.upgrade_notes.map((note: any) => {
+        const noteArr = res.data.upgrade_notes.map((note: any) => {
           return `
 ## Version ${note.previous} -> ${note.target}
 ${note.note}
@@ -111,7 +108,9 @@ const ModalTitle = styled.div`
   margin: 0px 0px 13px;
   display: flex;
   flex: 1;
-  font-family: Work Sans, sans-serif;
+  font-family:
+    Work Sans,
+    sans-serif;
   font-size: 12px;
   color: #ffffff;
   user-select: none;
@@ -156,7 +155,9 @@ const StyledUpgradeChartModal = styled.div`
   background: #202227;
   font-size: 13px;
   line-height: 1.8em;
-  font-family: Work Sans, sans-serif;
+  font-family:
+    Work Sans,
+    sans-serif;
 `;
 const StyledContent = styled.div`
   /* Add your custom styles for the content here */

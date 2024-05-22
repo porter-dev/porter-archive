@@ -1,9 +1,11 @@
-import UnexpectedErrorPage from "components/UnexpectedErrorPage";
 import React from "react";
-import { ErrorBoundary } from "react-error-boundary";
 import * as Sentry from "@sentry/react";
+import { type Context, type Primitive } from "@sentry/types";
+import { ErrorBoundary } from "react-error-boundary";
 import StackTrace from "stacktrace-js";
-import { Context, Primitive } from "@sentry/types";
+
+import UnexpectedErrorPage from "components/UnexpectedErrorPage";
+
 import { stackFramesToString } from "./stack_trace_utils";
 
 export type PorterErrorBoundaryProps<OnResetProps = {}> = {
@@ -12,13 +14,9 @@ export type PorterErrorBoundaryProps<OnResetProps = {}> = {
   // Used in case the boundary shouldn't refresh but instead do other action
   onReset?: (props: OnResetProps) => unknown;
   // Add more tags to sentry errors
-  tags?: {
-    [key: string]: Primitive;
-  };
+  tags?: Record<string, Primitive>;
   // Add more context for sentry errors
-  context?: {
-    [key: string]: Context;
-  };
+  context?: Record<string, Context>;
 };
 
 const PorterErrorBoundary: React.FC<PorterErrorBoundaryProps> = ({
@@ -36,7 +34,7 @@ const PorterErrorBoundary: React.FC<PorterErrorBoundaryProps> = ({
       // Update the error stack with the StackTrace stack (this helps for minified environments)
       err.stack = stackFramesStringify;
 
-      if (process.env.ENABLE_SENTRY) {
+      if (import.meta.env.ENABLE_SENTRY) {
         Sentry.captureException(err, (scope) => {
           scope.setTags({
             error_boundary_location: errorBoundaryLocation,

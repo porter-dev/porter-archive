@@ -1,23 +1,19 @@
 import { useRef } from "react";
 
-export interface NewWebsocketOptions {
+export type NewWebsocketOptions = {
   onopen?: () => void;
   onmessage?: (evt: MessageEvent) => void;
   onerror?: (err: ErrorEvent) => void;
   onclose?: (ev: CloseEvent) => void;
-}
+};
 
-interface WebsocketConfig extends NewWebsocketOptions {
+type WebsocketConfig = {
   url: string;
-}
+} & NewWebsocketOptions;
 
-type WebsocketConfigMap = {
-  [id: string]: WebsocketConfig;
-};
+type WebsocketConfigMap = Record<string, WebsocketConfig>;
 
-type WebsocketMap = {
-  [id: string]: WebSocket;
-};
+type WebsocketMap = Record<string, WebSocket>;
 
 export const useWebsockets = () => {
   const websocketMap = useRef<WebsocketMap>({});
@@ -45,11 +41,11 @@ export const useWebsockets = () => {
       return;
     }
 
-    let protocol = window.location.protocol == "https:" ? "wss" : "ws";
+    const protocol = window.location.protocol == "https:" ? "wss" : "ws";
 
     const url = `${protocol}://${window.location.host}${apiEndpoint}`;
 
-    const mockFunction = () => { };
+    const mockFunction = () => {};
 
     const wsConfig: WebsocketConfig = {
       url,

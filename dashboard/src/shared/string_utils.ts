@@ -13,7 +13,7 @@ export const relativeDate = (date: string | number, future: boolean) => {
     return "N/A";
   }
 
-  // @ts-ignore
+  // @ts-expect-error
   const rtf = new Intl.RelativeTimeFormat("en", {
     localeMatcher: "best fit", // other values: "lookup"
     numeric: "auto", // other values: "auto"
@@ -52,7 +52,7 @@ export const timeFrom = (
   secondTime?: string | number
 ) => {
   // Get timestamps
-  let unixTime = new Date(time).getTime();
+  const unixTime = new Date(time).getTime();
   if (!unixTime) return;
 
   let now = new Date().getTime();
@@ -65,7 +65,7 @@ export const timeFrom = (
   let difference = unixTime / 1000 - now / 1000;
 
   // Setup return object
-  let tfn: any = {};
+  const tfn: any = {};
 
   // Check if time is in the past, present, or future
   tfn.when = "now";

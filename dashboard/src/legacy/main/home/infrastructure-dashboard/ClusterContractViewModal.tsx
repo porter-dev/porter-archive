@@ -1,0 +1,69 @@
+import React from "react";
+import { Contract } from "@porter-dev/api-contracts";
+import ClickToCopy from "legacy/components/porter/ClickToCopy";
+import Modal from "legacy/components/porter/Modal";
+import styled from "styled-components";
+
+import { useClusterContext } from "./ClusterContextProvider";
+
+type Props = {
+  onClose: () => void;
+};
+const ClusterContractViewModal: React.FC<Props> = ({ onClose }) => {
+  const { cluster } = useClusterContext();
+  return (
+    <Modal closeModal={onClose} width={"800px"}>
+      <div style={{ overflowY: "auto", maxHeight: "80vh" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <tbody>
+            <tr>
+              <StyledCell width={"100px"}>created_at</StyledCell>
+              <StyledCell>{cluster.contract?.created_at}</StyledCell>
+            </tr>
+            <tr>
+              <StyledCell width={"100px"}>condition</StyledCell>
+              <StyledCell>{cluster.contract?.condition}</StyledCell>
+            </tr>
+            <tr>
+              <StyledCell width={"100px"}>condition metadata</StyledCell>
+              <StyledCell>
+                {JSON.stringify(cluster.contract?.condition_metadata)}
+              </StyledCell>
+            </tr>
+            <tr>
+              <StyledCell width={"100px"}>decoded contract</StyledCell>
+              <StyledCell>
+                <pre>
+                  <ClickToCopy>
+                    {JSON.stringify(
+                      Contract.fromJsonString(
+                        atob(cluster.contract?.base64_contract ?? ""),
+                        {
+                          ignoreUnknownFields: true,
+                        }
+                      ),
+                      null,
+                      2
+                    )}
+                  </ClickToCopy>
+                </pre>
+              </StyledCell>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </Modal>
+  );
+};
+
+const StyledCell = styled.td<{ width?: string }>`
+  padding: 8px;
+  border: 1px solid #ddd;
+  text-align: left;
+  max-width: 200px;
+  word-wrap: break-word;
+  vertical-align: top;
+  width: ${(props) => props.width};
+`;
+
+export default ClusterContractViewModal;

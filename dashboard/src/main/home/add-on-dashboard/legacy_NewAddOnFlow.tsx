@@ -8,7 +8,6 @@ import Back from "components/porter/Back";
 import Container from "components/porter/Container";
 import Fieldset from "components/porter/Fieldset";
 import SearchBar from "components/porter/SearchBar";
-import Select from "components/porter/Select";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 

@@ -85,7 +85,11 @@ export function useDeploymentTargetList(input: { preview: boolean }): {
 } {
   const { currentProject, currentCluster } = useContext(Context);
 
-  const { data = [], isLoading, refetch } = useQuery(
+  const {
+    data = [],
+    isLoading,
+    refetch,
+  } = useQuery(
     [
       "listDeploymentTargets",
       currentProject?.id,

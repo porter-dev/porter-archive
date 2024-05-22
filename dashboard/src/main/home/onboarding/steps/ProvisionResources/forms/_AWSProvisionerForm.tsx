@@ -1,19 +1,21 @@
+import React, { useEffect, useState } from "react";
 import styled from "styled-components";
+import { useSnapshot } from "valtio";
+
+import Helper from "components/form-components/Helper";
 import InputRow from "components/form-components/InputRow";
 import SelectRow from "components/form-components/SelectRow";
+import Loading from "components/Loading";
 import SaveButton from "components/SaveButton";
 import { OFState } from "main/home/onboarding/state";
 import {
-  AWSProvisionerConfig,
-  AWSRegistryConfig,
+  type AWSProvisionerConfig,
+  type AWSRegistryConfig,
 } from "main/home/onboarding/types";
-import React, { useEffect, useState } from "react";
+
 import api from "shared/api";
-import { useSnapshot } from "valtio";
-import Loading from "components/Loading";
-import Helper from "components/form-components/Helper";
 import { readableDate } from "shared/string_utils";
-import { Infrastructure } from "shared/types";
+import { type Infrastructure } from "shared/types";
 
 const regionOptions = [
   { value: "us-east-1", label: "US East (N. Virginia) us-east-1" },
@@ -77,7 +79,7 @@ export const CredentialsForm: React.FC<{
 
         integrations.sort((a, b) => b.id - a.id);
 
-        let lastUsed = integrations.find((i) => {
+        const lastUsed = integrations.find((i) => {
           return (
             i.id === snap.StateHandler?.provision_resources?.credentials?.id
           );
@@ -199,7 +201,9 @@ export const CredentialsForm: React.FC<{
             <CancelButton
               text="Cancel"
               disabled={false}
-              onClick={() => setShowForm(false)}
+              onClick={() => {
+                setShowForm(false);
+              }}
               makeFlush={true}
               clearPosition={true}
               status=""
@@ -236,7 +240,12 @@ export const CredentialsForm: React.FC<{
       </PreviewRow>
       <Helper>
         Want to use a different account?{" "}
-        <A onClick={() => setShowForm(true)} href="#">
+        <A
+          onClick={() => {
+            setShowForm(true);
+          }}
+          href="#"
+        >
           Connect another account
         </A>
         .
@@ -244,7 +253,9 @@ export const CredentialsForm: React.FC<{
       <SaveButton
         text="Continue"
         disabled={false}
-        onClick={() => continueToNextStep(lastConnectedAccount?.id)}
+        onClick={() => {
+          continueToNextStep(lastConnectedAccount?.id);
+        }}
         makeFlush={true}
         clearPosition={true}
         status={buttonStatus}
@@ -282,7 +293,7 @@ export const SettingsForm: React.FC<{
     api
       .getInfra<Infrastructure[]>("<token>", {}, { project_id: project.id })
       .then(({ data }) => {
-        let sortFunc = (a: Infrastructure, b: Infrastructure) => {
+        const sortFunc = (a: Infrastructure, b: Infrastructure) => {
           return b.id < a.id ? -1 : b.id > a.id ? 1 : 0;
         };
 
@@ -345,7 +356,7 @@ export const SettingsForm: React.FC<{
   };
 
   const hasRegistryProvisioned = (
-    infras: { kind: string; status: string }[]
+    infras: Array<{ kind: string; status: string }>
   ) => {
     return !!infras.find(
       (i) => ["ecr", "gcr", "ecr"].includes(i.kind) && i.status === "created"
@@ -353,7 +364,7 @@ export const SettingsForm: React.FC<{
   };
 
   const hasClusterProvisioned = (
-    infras: { kind: string; status: string }[]
+    infras: Array<{ kind: string; status: string }>
   ) => {
     return !!infras.find(
       (i) => ["eks", "gks", "eks"].includes(i.kind) && i.status === "created"
@@ -382,7 +393,7 @@ export const SettingsForm: React.FC<{
         );
         return res?.data;
       } catch (error) {
-        return catchError(error);
+        catchError(error);
       }
     } else {
       try {
@@ -427,7 +438,7 @@ export const SettingsForm: React.FC<{
         );
         return res?.data;
       } catch (error) {
-        return catchError(error);
+        catchError(error);
       }
     } else {
       try {

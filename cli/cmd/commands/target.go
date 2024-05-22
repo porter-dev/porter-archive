@@ -10,6 +10,7 @@ import (
 	"text/tabwriter"
 
 	"github.com/fatih/color"
+	"github.com/google/uuid"
 	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/cli/cmd/config"
@@ -171,7 +172,24 @@ func deleteTarget(ctx context.Context, _ *types.GetAuthenticatedUserResponse, cl
 		return nil
 	}
 
-	err = client.DeleteDeploymentTarget(ctx, cliConf.Project, name)
+	// assume deletion will be for preview environments only for now
+	dts, err := client.ListDeploymentTargets(ctx, cliConf.Project, true)
+	if err != nil {
+		return fmt.Errorf("error listing targets: %w", err)
+	}
+
+	var targetID uuid.UUID
+	for _, dt := range dts.DeploymentTargets {
+		if dt.Name == name {
+			targetID = dt.ID
+			break
+		}
+	}
+	if targetID == uuid.Nil {
+		return fmt.Errorf("target '%s' not found", name)
+	}
+
+	err = client.DeleteDeploymentTarget(ctx, cliConf.Project, targetID)
 	if err != nil {
 		return fmt.Errorf("error deleting target: %w", err)
 	}

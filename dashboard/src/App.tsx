@@ -1,12 +1,12 @@
 import React, { Component } from "react";
-import { BrowserRouter } from "react-router-dom";
-import PorterErrorBoundary from "shared/error_handling/PorterErrorBoundary";
-import styled, { ThemeProvider, createGlobalStyle } from "styled-components";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter } from "react-router-dom";
+import styled, { createGlobalStyle, ThemeProvider } from "styled-components";
+
+import PorterErrorBoundary from "shared/error_handling/PorterErrorBoundary";
+import standard from "shared/themes/standard";
 
 import MainWrapper from "./main/MainWrapper";
-import midnight from "shared/themes/midnight";
-import standard from "shared/themes/standard";
 
 const queryClient = new QueryClient();
 

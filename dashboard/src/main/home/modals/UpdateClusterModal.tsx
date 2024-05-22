@@ -5,15 +5,12 @@ import styled from "styled-components";
 import ConfirmOverlay from "components/ConfirmOverlay";
 import InputRow from "components/form-components/InputRow";
 import SaveButton from "components/SaveButton";
-import { OFState } from "main/home/onboarding/state";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
 import { pushFiltered } from "shared/routing";
 import { NilCluster } from "shared/types";
-import close from "assets/close.png";
 
-import { Onboarding as OnboardingSaveType } from "../onboarding/types";
 
 type PropsType = RouteComponentProps & {
   setRefreshClusters: (x: boolean) => void;

@@ -19,7 +19,6 @@ import {
 } from "@porter-dev/api-contracts";
 import { withRouter, type RouteComponentProps } from "react-router";
 import styled from "styled-components";
-import { Integer } from "type-fest";
 
 import Heading from "components/form-components/Heading";
 import SelectRow from "components/form-components/SelectRow";
@@ -40,7 +39,6 @@ import Button from "./porter/Button";
 import Checkbox from "./porter/Checkbox";
 import Icon from "./porter/Icon";
 import Input from "./porter/Input";
-import InputSlider from "./porter/InputSlider";
 import Select from "./porter/Select";
 import Spacer from "./porter/Spacer";
 import Text from "./porter/Text";
@@ -698,9 +696,13 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       const data = new PreflightCheckRequest({
         contract,
       });
-      const preflightDataResp = await api.legacyPreflightCheck("<token>", data, {
-        id: currentProject.id,
-      });
+      const preflightDataResp = await api.legacyPreflightCheck(
+        "<token>",
+        data,
+        {
+          id: currentProject.id,
+        }
+      );
       // Check if any of the preflight checks has a message
       let hasMessage = false;
       let errors = "Preflight Checks Failed : ";

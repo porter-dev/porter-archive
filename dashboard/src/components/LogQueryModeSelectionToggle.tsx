@@ -1,13 +1,15 @@
-import DateTimePicker from "components/date-time-picker/DateTimePicker";
-import dayjs from "dayjs";
-import time from "assets/time.svg";
 import React from "react";
+import dayjs from "dayjs";
 import styled from "styled-components";
 
-interface LogQueryModeSelectionToggleProps {
+import DateTimePicker from "components/date-time-picker/DateTimePicker";
+
+import time from "assets/time.svg";
+
+type LogQueryModeSelectionToggleProps = {
   selectedDate?: Date;
   setSelectedDate: (date?: Date) => void;
-}
+};
 
 const LogQueryModeSelectionToggle = (
   props: LogQueryModeSelectionToggleProps
@@ -32,7 +34,9 @@ const LogQueryModeSelectionToggle = (
         </ToggleOption>
         <ToggleOption
           nudgeLeft
-          onClick={() => props.setSelectedDate(dayjs().toDate())}
+          onClick={() => {
+            props.setSelectedDate(dayjs().toDate());
+          }}
           selected={!!props.selectedDate}
         >
           <TimeIcon src={time} selected={!!props.selectedDate} />
@@ -63,11 +67,11 @@ const ToggleOption = styled.div<{ selected: boolean; nudgeLeft?: boolean }>`
   :hover {
     border: 1px solid #7a7b80;
     z-index: 2;
-  };
+  }
 `;
 
 const ToggleButton = styled.div`
-  background: #181B20;
+  background: #181b20;
   border-radius: 5px;
   font-size: 13px;
   height: 30px;

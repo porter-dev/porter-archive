@@ -1,17 +1,19 @@
 import React from "react";
-import BuildpackCard from "./BuildpackCard";
+import { DragDropContext, Droppable } from "react-beautiful-dnd";
+import { useFieldArray, useFormContext } from "react-hook-form";
+
+import Loading from "components/Loading";
+import Container from "components/porter/Container";
+import Error from "components/porter/Error";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
-import Loading from "components/Loading";
-import Error from "components/porter/Error";
-import { Droppable, DragDropContext } from "react-beautiful-dnd";
-import { Buildpack } from "main/home/app-dashboard/types/buildpack";
-import { useFieldArray, useFormContext } from "react-hook-form";
-import { PorterAppFormData } from "lib/porter-apps";
-import { BuildOptions } from "lib/porter-apps/build";
-import Container from "components/porter/Container";
+import { type Buildpack } from "main/home/app-dashboard/types/buildpack";
+import { type PorterAppFormData } from "lib/porter-apps";
+import { type BuildOptions } from "lib/porter-apps/build";
 
-interface Props {
+import BuildpackCard from "./BuildpackCard";
+
+type Props = {
   build: BuildOptions & {
     method: "pack";
   };
@@ -21,7 +23,7 @@ interface Props {
   isDetectingBuildpacks: boolean;
   detectBuildpacksError: string;
   droppableId: string;
-}
+};
 const BuildpackList: React.FC<Props> = ({
   build,
   availableBuildpacks,
@@ -80,7 +82,9 @@ const BuildpackList: React.FC<Props> = ({
     if (isDetectingBuildpacks) {
       return (
         <Container row>
-          <Text color="helper">Detecting buildpacks in your repo from path {build.context} </Text>
+          <Text color="helper">
+            Detecting buildpacks in your repo from path {build.context}{" "}
+          </Text>
           <Loading width="100px" />
         </Container>
       );

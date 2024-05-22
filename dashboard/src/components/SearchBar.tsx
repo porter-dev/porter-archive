@@ -1,13 +1,14 @@
 import React, { useEffect, useRef, useState } from "react";
-import Button from "./Button";
 import styled from "styled-components";
 
-interface Props {
+import Button from "./Button";
+
+type Props = {
   setSearchFilter: (x: string) => void;
   disabled: boolean;
   prompt?: string;
   fullWidth?: boolean;
-}
+};
 
 const SearchBar: React.FC<Props> = ({
   setSearchFilter,
@@ -24,7 +25,6 @@ const SearchBar: React.FC<Props> = ({
       inputRef.current.focus();
     }, 0);
   }, []);
-
 
   return (
     <SearchRowWrapper fullWidth={fullWidth}>
@@ -47,7 +47,9 @@ const SearchBar: React.FC<Props> = ({
       </SearchBarWrapper>
       <ButtonWrapper disabled={disabled}>
         <Button
-          onClick={() => setSearchFilter(searchInput)}
+          onClick={() => {
+            setSearchFilter(searchInput);
+          }}
           disabled={disabled}
         >
           Search
@@ -84,7 +86,7 @@ const ButtonWrapper = styled.div`
     props.disabled ? "#aaaabbee" : "#616FEEcc"};
   :hover {
     background: ${(props: { disabled?: boolean }) =>
-    props.disabled ? "" : "#505edddd"};
+      props.disabled ? "" : "#505edddd"};
   }
   height: 40px;
   display: flex;

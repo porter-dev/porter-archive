@@ -1,5 +1,6 @@
 import React from "react";
 import styled from "styled-components";
+
 import Tooltip from "./Tooltip";
 
 type Props = {
@@ -17,35 +18,34 @@ const ToggleRow: React.FC<Props> = ({
   disabled = false,
   disabledTooltip,
 }) => {
-  return (
-    disabled && disabledTooltip ?
-      <Tooltip content={disabledTooltip} position="right">
-        <StyledToggle>
-          <ToggleContainer
-            isToggled={isToggled}
-            onClick={disabled ? () => { } : onToggle}
-            disabled={disabled}
-          >
-            <ToggleDot />
-          </ToggleContainer>
-          {children}
-        </StyledToggle>
-      </Tooltip>
-      :
+  return disabled && disabledTooltip ? (
+    <Tooltip content={disabledTooltip} position="right">
       <StyledToggle>
         <ToggleContainer
           isToggled={isToggled}
-          onClick={disabled ? () => { } : onToggle}
+          onClick={disabled ? () => {} : onToggle}
           disabled={disabled}
         >
           <ToggleDot />
         </ToggleContainer>
         {children}
       </StyledToggle>
+    </Tooltip>
+  ) : (
+    <StyledToggle>
+      <ToggleContainer
+        isToggled={isToggled}
+        onClick={disabled ? () => {} : onToggle}
+        disabled={disabled}
+      >
+        <ToggleDot />
+      </ToggleContainer>
+      {children}
+    </StyledToggle>
   );
 };
 
-export default ToggleRow; 
+export default ToggleRow;
 
 const StyledToggle = styled.div`
   display: flex;
@@ -72,7 +72,7 @@ const ToggleContainer = styled.div<{
   background: ${(props) => (props.isToggled ? "#ffffff33" : "#ffffff11")};
   display: flex;
   align-items: center;
-  justify-content ${props => props.isToggled ? "flex-end" : "flex-start"};
+  justify-content ${(props) => (props.isToggled ? "flex-end" : "flex-start")};
   cursor: ${(props) => (props.disabled ? "not-allowed" : "pointer")};
   :hover {
     border: 1px solid #aaaabb;

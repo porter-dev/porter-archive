@@ -1,14 +1,14 @@
 export type CreateStackBody = {
   name: string;
-  app_resources: {
+  app_resources: Array<{
     name: string;
     source_config_name: string;
     template_name: string;
     template_version: string;
     template_repo_url?: string;
     values: unknown;
-  }[];
-  source_configs: {
+  }>;
+  source_configs: Array<{
     display_name: string;
     name: string;
     image_repo_uri: string;
@@ -20,18 +20,14 @@ export type CreateStackBody = {
       buildpack?: unknown;
       dockerfile?: unknown;
     };
-  }[];
+  }>;
 
-  env_groups: {
+  env_groups: Array<{
     name: string;
-    variables: {
-      [key: string]: string;
-    };
-    secret_variables: {
-      [key: string]: string;
-    };
+    variables: Record<string, string>;
+    secret_variables: Record<string, string>;
     linked_applications: string[];
-  }[];
+  }>;
 };
 
 export type CreateStackResponse = Stack;

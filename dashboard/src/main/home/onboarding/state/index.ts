@@ -1,8 +1,10 @@
-import api from "shared/api";
 import { proxy } from "valtio";
-import { CompressedOnboardingState, Onboarding } from "../types";
+
+import api from "shared/api";
+
+import { type CompressedOnboardingState, type Onboarding } from "../types";
 import { StateHandler } from "./StateHandler";
-import { Action, StepHandler } from "./StepHandler";
+import { StepHandler, type Action } from "./StepHandler";
 
 export const OFState = proxy({
   StateHandler,
@@ -44,10 +46,13 @@ export const OFState = proxy({
             },
             { project_id: OFState.StateHandler?.project?.id }
           )
-          .then((res) => console.log(res))
-          .catch((err) => console.log(err));
+          .then((res) => {
+            console.log(res);
+          })
+          .catch((err) => {
+            console.log(err);
+          });
       }
-
     },
     restoreState: (state: any) => {
       const prevState = decompressState(state);
@@ -68,7 +73,7 @@ const compressState = (state: typeof OFState) => {
   const registry = state.StateHandler?.connected_registry;
   const provision = state.StateHandler?.provision_resources;
 
-  let onboarding_state: CompressedOnboardingState = {
+  const onboarding_state: CompressedOnboardingState = {
     current_step: currentStep,
 
     connected_source: source,
@@ -100,7 +105,7 @@ const decompressState = (prev_state: any) => {
     name: state.project_name,
   };
 
-  let registry: any = {
+  const registry: any = {
     skip: state.skip_registry_connection,
     provider: state.registry_connection_provider,
     credentials: {
@@ -118,7 +123,7 @@ const decompressState = (prev_state: any) => {
     registry.settings.registry_url = state.registry_connection_data?.url;
   }
 
-  let provision: any = {
+  const provision: any = {
     skip: state.skip_resource_provision,
     provider: state.cluster_infra_provider,
     credentials: {

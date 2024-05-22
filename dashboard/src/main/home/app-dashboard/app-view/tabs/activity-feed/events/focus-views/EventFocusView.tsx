@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import _ from "lodash";
 import { useLocation } from "react-router";
 import styled from "styled-components";
 import { match } from "ts-pattern";
@@ -33,12 +32,13 @@ const EventFocusView: React.FC = () => {
   const { search } = useLocation();
   const queryParams = new URLSearchParams(search);
   const eventId = queryParams.get("event_id");
-  const { projectId, clusterId, tabUrlGenerator } = useLatestRevision();
+  const { projectId, clusterId, tabUrlGenerator, appName } =
+    useLatestRevision();
 
   const [event, setEvent] = useState<SupportedEventFocusViewEvent | null>(null);
 
   const { data } = useQuery(
-    ["getPorterAppEvent", projectId, clusterId, eventId, event],
+    ["getPorterAppEvent", projectId, clusterId, eventId, event, appName],
     async () => {
       if (eventId == null || eventId === "") {
         return null;
@@ -50,6 +50,7 @@ const EventFocusView: React.FC = () => {
           project_id: projectId,
           cluster_id: clusterId,
           event_id: eventId,
+          porter_app_name: appName,
         }
       );
       return porterAppEventValidator.parse(eventResp.data.event);

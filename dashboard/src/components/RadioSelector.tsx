@@ -4,7 +4,7 @@ import styled from "styled-components";
 type PropsType = {
   selected: string;
   setSelected: (x: string) => void;
-  options: { value: string; label: string }[];
+  options: Array<{ value: string; label: string }>;
 };
 
 type StateType = {};
@@ -15,11 +15,13 @@ export default class RadioSelector extends Component<PropsType, StateType> {
       <StyledRadioSelector>
         {this.props.options.map(
           (option: { label: string; value: string }, i: number) => {
-            let selected = option.value === this.props.selected;
+            const selected = option.value === this.props.selected;
             return (
               <RadioRow
                 key={option.value}
-                onClick={() => this.props.setSelected(option.value)}
+                onClick={() => {
+                  this.props.setSelected(option.value);
+                }}
               >
                 <Indicator selected={selected}>
                   {selected && <Circle />}

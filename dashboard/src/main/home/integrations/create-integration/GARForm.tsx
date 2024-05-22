@@ -1,3 +1,6 @@
+import React, { useContext, useState } from "react";
+import styled from "styled-components";
+
 import Heading from "components/form-components/Heading";
 import Helper from "components/form-components/Helper";
 import InputRow from "components/form-components/InputRow";
@@ -5,10 +8,9 @@ import SelectRow from "components/form-components/SelectRow";
 import UploadArea from "components/form-components/UploadArea";
 import SaveButton from "components/SaveButton";
 import { GAR_REGION_OPTIONS } from "main/home/onboarding/constants";
-import React, { useContext, useState } from "react";
+
 import api from "shared/api";
 import { Context } from "shared/Context";
-import styled from "styled-components";
 
 type GCPIntegration = {
   id: string;
@@ -114,9 +116,9 @@ const GARForm = (props: { closeForm: () => void }) => {
         <InputRow
           type="text"
           value={credentialsName}
-          setValue={(credentialsName: string) =>
-            setCredentialsName(credentialsName)
-          }
+          setValue={(credentialsName: string) => {
+            setCredentialsName(credentialsName);
+          }}
           isRequired={true}
           label="🏷️ Registry name"
           placeholder="ex: paper-straw"
@@ -125,7 +127,9 @@ const GARForm = (props: { closeForm: () => void }) => {
         <Heading>GCP settings</Heading>
         <Helper>Service account credentials for GCP permissions.</Helper>
         <UploadArea
-          setValue={(x: any) => setServiceAccountKey(x)}
+          setValue={(x: any) => {
+            setServiceAccountKey(x);
+          }}
           label="🔒 GCP key data (JSON)"
           placeholder="Choose a file or drag it here."
           width="100%"

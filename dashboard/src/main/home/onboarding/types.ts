@@ -111,7 +111,7 @@ export type SkipProvisionConfig = {
 
 export type SkipRegistryConnection = SkipProvisionConfig;
 
-export interface Onboarding {
+export type Onboarding = {
   current_step: string;
 
   project_id?: number;
@@ -136,9 +136,9 @@ export interface Onboarding {
   resource_provision_settings_region: string;
   resource_provision_settings_tier: string;
   resource_provision_settings_machine_type: string;
-}
+};
 
-export interface CompressedOnboardingState {
+export type CompressedOnboardingState = {
   current_step: string;
   connected_source: "github" | "docker";
 
@@ -156,9 +156,9 @@ export interface CompressedOnboardingState {
   cluster_infra_id: number;
   cluster_infra_credential_id: number;
   cluster_infra_provider: number;
-}
+};
 
-export interface OnboardingState {
+export type OnboardingState = {
   current_step: string;
 
   project_id?: number;
@@ -183,4 +183,4 @@ export interface OnboardingState {
   resource_provision_settings_region: string;
   resource_provision_settings_tier: string;
   resource_provision_settings_machine_type: string;
-}
+};

@@ -22,7 +22,7 @@ const Advanced: React.FC<AdvancedProps> = ({ index }) => {
           Specify how much time service processes are given to gracefully shut
           down when they receive SIGTERM
           <a
-            href="https://docs.porter.run/standard/deploying-applications/zero-downtime-deployments#graceful-shutdown"
+            href="https://docs.porter.run/configure/zero-downtime-deployments#graceful-shutdown"
             target="_blank"
             rel="noreferrer"
           >

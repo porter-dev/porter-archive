@@ -1,6 +1,7 @@
 package project
 
 import (
+	"fmt"
 	"net/http"
 
 	"connectrpc.com/connect"
@@ -36,6 +37,7 @@ func (p *ProjectDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	user, _ := ctx.Value(types.UserScope).(*models.User)
 	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
+	fmt.Println("DLAKJLASJFLKJLAJS")
 	if proj.GetFeatureFlag(models.CapiProvisionerEnabled, p.Config().LaunchDarklyClient) {
 		clusters, err := p.Config().Repo.Cluster().ListClustersByProjectID(proj.ID)
 		if err != nil {

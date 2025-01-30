@@ -11,6 +11,8 @@ import { useAuthn } from "../shared/auth/AuthnContext";
 import CurrentError from "./CurrentError";
 import Home from "./home/Home";
 
+import StatusPage from "./status/StatusPage";
+
 type PropsType = {};
 
 const Main: React.FC<PropsType> = () => {
@@ -59,6 +61,17 @@ const Main: React.FC<PropsType> = () => {
           path="/"
           render={() => {
             return <Redirect to="/dashboard" />;
+          }}
+        />
+         <Route
+          path={`/status`}
+          render={() => {
+            if (!this.state.isLoggedIn) {
+              return <Redirect to="/login" />;
+            } else if (!this.context.user?.email?.includes("@porter.run")) {
+              return <Redirect to="/dashboard" />;
+            }
+            return <StatusPage />;
           }}
         />
         <Route
